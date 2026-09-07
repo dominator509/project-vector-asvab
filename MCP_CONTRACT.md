@@ -1,0 +1,3 @@
+# MCP Contract Blueprint
+
+VECTOR is both an MCP server and optional MCP client. Server resources expose read-only evidence, approved content metadata, study-plan summaries, and diagnostics. Tools can create draft study artifacts, request practice-set generation, export redacted repair bundles, or invoke explicitly granted writing-agent workflows. Filesystem/process/network access is never generic; tools receive typed arguments and capability-scoped roots. Loopback is default. Every tool call gets correlation/audit metadata. External MCP servers are allowlisted and assigned per-server capabilities.

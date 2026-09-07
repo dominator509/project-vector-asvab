@@ -1,0 +1,3 @@
+# SPEC-005 Auth and Permissions
+
+Single-user local mode requires no cloud account. OS-user filesystem permissions protect local data. MCP binds to loopback by default and uses a local capability token with scoped grants. Optional future sync uses a separate SyncPort and is outside initial scope. Native provider clients authenticate themselves using their official login flows; VECTOR stores only adapter preferences and process metadata, never provider bearer/refresh tokens.

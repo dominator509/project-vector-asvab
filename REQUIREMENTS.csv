@@ -1,0 +1,61 @@
+requirement_id,domain,requirement,outcome,priority
+REQ-001,Onboarding,local privacy-minimal learner profile,OUTCOME-01,P0
+REQ-002,Diagnostic,cross-domain diagnostic and mastery uncertainty,OUTCOME-02,P0
+REQ-003,Adaptive plan,"daily plan from weakness, due review, AFQT/job goals, time",OUTCOME-03,P0
+REQ-004,Subtest coverage,GS AR WK PC MK EI AI SI MC AO modeled separately,OUTCOME-04,P0
+REQ-005,Practice,"custom drills, worked solutions, distractors, confidence, error notebook",OUTCOME-04,P0
+REQ-006,CAT simulator,no-backtracking and versioned public timing profiles,OUTCOME-05,P0
+REQ-007,Paper simulator,paper-style navigation/timing,OUTCOME-05,P0
+REQ-008,Tutor,source-grounded explanations and original variants,OUTCOME-06,P0
+REQ-009,Test integrity,reject controlled/leaked official question ingestion,OUTCOME-06,P0
+REQ-010,Analytics,offline mastery/speed/confidence/trends,OUTCOME-07,P0
+REQ-011,Readiness,uncertainty/calibration; never official-score claim,OUTCOME-07,P0
+REQ-012,Jobs/composites,versioned sourced formulas/job targets/freshness,OUTCOME-08,P0
+REQ-013,Retest planner,versioned policy data,OUTCOME-08,P0
+REQ-014,Local LLM,llama.cpp GGUF with optional user-selected unfiltered model,OUTCOME-09,P0
+REQ-015,Model transport,provider-neutral capabilities/auth/billing/terms contract,OUTCOME-10,P0
+REQ-016,Grok native,official CLI headless/ACP without credential access,OUTCOME-10,P0
+REQ-017,Codex native,official codex exec with ChatGPT login,OUTCOME-10,P0
+REQ-018,Claude native,"conditional official-client adapter, terms-gated",OUTCOME-10,P0
+REQ-019,Gemini policy,disable Gemini CLI OAuth bridge,OUTCOME-10,P0
+REQ-020,Evidence Vault,hash/url/license/retrieval/effective/trust/source snapshots,OUTCOME-11,P0
+REQ-021,Source refresh,diff/quarantine/rollback/freshness,OUTCOME-11,P0
+REQ-022,Question factory,original item + deterministic proof + independent verification,OUTCOME-11,P0
+REQ-023,Content packs,signed/versioned/reviewed packs,OUTCOME-11,P0
+REQ-024,Gemini Notebook,manual export; enterprise connector separate,OUTCOME-11,P0
+REQ-025,MCP server,scoped read-only-default study tools/resources,OUTCOME-12,P0
+REQ-026,MCP client,"allowlisted peers, consent/audit",OUTCOME-12,P0
+REQ-027,MCP security,untrusted-content authority isolation/prompt injection defense,OUTCOME-12,P0
+REQ-028,Crash capture,stack/minidump/log ring/build identity,OUTCOME-13,P0
+REQ-029,Crash redaction,double-redaction and secret canary tests,OUTCOME-13,P0
+REQ-030,Repair bundle,deterministic diagnostics/repro/hashes/consent manifest,OUTCOME-13,P0
+REQ-031,Repair broker,isolated worktree + coding-agent + GraphLock,OUTCOME-13,P0
+REQ-032,GitHub PR,official gh; explicit approval; no auto-merge,OUTCOME-13,P0
+REQ-033,Backup,atomic integrity-checked optional encrypted backup,OUTCOME-14,P0
+REQ-034,Recovery,forced termination/corruption recovery,OUTCOME-14,P0
+REQ-035,Export/delete,portable local export and full deletion,OUTCOME-14,P0
+REQ-036,Installer,signed Windows artifact + clean install/upgrade/uninstall,OUTCOME-15,P0
+REQ-037,Updater,signature/hash/atomic stage/rollback,OUTCOME-15,P0
+REQ-038,Accessibility,WCAG 2.2 AA + keyboard/Narrator/NVDA,OUTCOME-15,P0
+REQ-039,Performance,startup/UI/DB/search/background-work SLOs,OUTCOME-15,P0
+REQ-040,Observability,local redacted structured health/diagnostics,OUTCOME-15,P0
+REQ-041,Licensing,SBOM and commercial license release gate,OUTCOME-15,P0
+REQ-042,Offline,all core study functions with network disabled,OUTCOME-07,P0
+REQ-043,Spaced repetition,FSRS-compatible review engine,OUTCOME-03,P1
+REQ-044,Search,local FTS across lessons/errors/evidence,OUTCOME-04,P1
+REQ-045,Motivation,optional goals/streaks/achievements separate from mastery,OUTCOME-03,P1
+REQ-046,No ads,no behavioral ads/data brokerage,OUTCOME-15,P1
+REQ-047,Provider policy,signed/datable adapter disable policy,OUTCOME-10,P1
+REQ-048,Content QA,"review state, history, rollback, audit",OUTCOME-11,P1
+REQ-049,Difficulty,"internal calibration, no official psychometric equivalence claim",OUTCOME-07,P1
+REQ-050,Source ingestion,"sandbox parsing, license/trust checks, prompt-injection isolation",OUTCOME-11,P1
+REQ-051,Safe mode,crash-loop recovery without deleting learner data,OUTCOME-14,P1
+REQ-052,Privacy,"telemetry off, no sensitive enlistment-screening data",OUTCOME-15,P1
+REQ-053,Artifact identity,bind binary+migrations+content+SBOM,OUTCOME-15,P1
+REQ-054,Concurrency,idempotent attempts and safe DB/background workers,OUTCOME-14,P1
+REQ-055,Score input,optional user-entered official scores clearly typed as external,OUTCOME-07,P1
+REQ-056,Content provenance,every active item has objective/source/proof/review/hash,OUTCOME-11,P1
+REQ-057,Provider privacy,prompt egress classification and disclosure,OUTCOME-10,P1
+REQ-058,Terms freshness,adapter support fails closed on stale policy evidence,OUTCOME-10,P1
+REQ-059,Future sync seam,disabled SyncPort without cloud dependency,OUTCOME-15,P1
+REQ-060,Commercial name,working title requires trademark/name clearance before GA,OUTCOME-15,P1

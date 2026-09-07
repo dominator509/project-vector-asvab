@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GraphLock v3.1 Blocked Node Closure Record",
+  "type": "object",
+  "required": [
+    "node_id",
+    "status",
+    "blocked_at_utc",
+    "candidate_epoch",
+    "primary_blocker_class",
+    "blocked_requirement_ids",
+    "blocked_test_ids",
+    "blocked_artifacts",
+    "what_was_attempted",
+    "evidence_paths",
+    "evidence_hashes",
+    "exact_failure_observed",
+    "why_it_cannot_be_safely_completed",
+    "why_mocking_or_simulation_is_forbidden",
+    "downstream_nodes_blocked",
+    "downstream_nodes_not_blocked",
+    "capabilities_not_delivered",
+    "release_verdict_impact",
+    "unblock_condition",
+    "unblock_owner",
+    "followup_node_or_ticket",
+    "scheduler_instruction",
+    "prohibited_workarounds"
+  ],
+  "properties": {
+    "node_id": {
+      "type": "string",
+      "pattern": "^[A-Z]+-[0-9]{3,}$"
+    },
+    "status": {
+      "const": "CLOSED_BLOCKED"
+    },
+    "blocked_at_utc": {
+      "type": "string"
+    },
+    "candidate_epoch": {
+      "type": "string"
+    },
+    "commit_sha": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "primary_blocker_class": {
+      "enum": [
+        "BLOCKED_EXTERNAL_CREDENTIAL",
+        "BLOCKED_EXTERNAL_SERVICE",
+        "BLOCKED_MISSING_REQUIREMENT",
+        "BLOCKED_CONFLICTING_REQUIREMENTS",
+        "BLOCKED_SECURITY_OR_SAFETY_GATE",
+        "BLOCKED_UPSTREAM_NODE",
+        "BLOCKED_ENVIRONMENT",
+        "BLOCKED_VENDOR_LIMITATION",
+        "BLOCKED_LEGAL_OR_COMPLIANCE",
+        "BLOCKED_INSUFFICIENT_EVIDENCE"
+      ]
+    },
+    "secondary_blocker_classes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "blocked_test_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blocked_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "what_was_attempted": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "evidence_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "evidence_hashes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "exact_failure_observed": {
+      "type": "string",
+      "minLength": 1
+    },
+    "why_it_cannot_be_safely_completed": {
+      "type": "string",
+      "minLength": 1
+    },
+    "why_mocking_or_simulation_is_forbidden": {
+      "type": "string",
+      "minLength": 1
+    },
+    "downstream_nodes_blocked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "downstream_nodes_not_blocked": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilities_not_delivered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "release_verdict_impact": {
+      "type": "string",
+      "minLength": 1
+    },
+    "unblock_condition": {
+      "type": "string",
+      "minLength": 1
+    },
+    "unblock_owner": {
+      "enum": [
+        "human",
+        "vendor",
+        "platform",
+        "repo",
+        "unknown"
+      ]
+    },
+    "followup_node_or_ticket": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scheduler_instruction": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prohibited_workarounds": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": true
+}

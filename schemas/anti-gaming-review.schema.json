@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GraphLock v3.1 Anti-Gaming Review",
+  "type": "object",
+  "required": [
+    "node_id",
+    "requirement_ids",
+    "status_requested",
+    "production_entrypoints_exercised",
+    "real_code_paths_exercised",
+    "real_dependencies_exercised",
+    "side_effects_produced",
+    "independent_readbacks",
+    "negative_cases_verified",
+    "non_fixture_inputs_verified",
+    "mutation_checks",
+    "forbidden_patterns_scanned",
+    "test_files_modified_during_node",
+    "gate_files_modified_during_node",
+    "skipped_tests",
+    "mocked_final_paths",
+    "hardcoded_fixture_risks",
+    "catch_and_ignore_risks",
+    "verdict",
+    "reason"
+  ],
+  "properties": {
+    "node_id": {
+      "type": "string"
+    },
+    "requirement_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "status_requested": {
+      "enum": [
+        "DONE_VERIFIED"
+      ]
+    },
+    "production_entrypoints_exercised": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "real_code_paths_exercised": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "real_dependencies_exercised": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "side_effects_produced": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "independent_readbacks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "negative_cases_verified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "non_fixture_inputs_verified": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "mutation_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "forbidden_patterns_scanned": {
+      "const": true
+    },
+    "test_files_modified_during_node": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gate_files_modified_during_node": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skipped_tests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mocked_final_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hardcoded_fixture_risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "catch_and_ignore_risks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verdict": {
+      "enum": [
+        "PASS",
+        "FAIL"
+      ]
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": true
+}

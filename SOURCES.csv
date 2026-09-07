@@ -1,0 +1,18 @@
+source_id,publisher,title,url,trust,design_use,retrieved
+SRC-ASVAB-001,Official ASVAB,Subtests,https://www.officialasvab.com/counselors-educators/subtests/,A,"10 subtests, paper AI/SI combination",2026-08-28
+SRC-ASVAB-002,Official ASVAB,What to Expect,https://www.officialasvab.com/applicants/what-to-expect/,A,"CAT/PiCAT/P&P behavior, calculator rule, timings, controlled-item warning",2026-08-28
+SRC-ASVAB-003,Official ASVAB,Retest Policy,https://www.officialasvab.com/recruiters/asvab-retest-policy/,A,retest policy,2026-08-28
+SRC-ASVAB-004,Official ASVAB,Military Jobs,https://www.officialasvab.com/applicants/military-jobs/,A,service composite formulas/job planning,2026-08-28
+SRC-XAI-001,xAI,Grok CLI Headless,https://docs.x.ai/build/cli/headless-scripting,A,documented headless/ACP automation,2026-08-28
+SRC-OPENAI-001,OpenAI,Codex,https://github.com/openai/codex,A,"ChatGPT login, noninteractive CLI, Apache-2.0 code",2026-08-28
+SRC-ANTH-001,Anthropic,Claude Code Pro/Max,https://support.claude.com/en/articles/11145838-use-claude-code-with-your-pro-or-max-plan,A,subscription login,2026-08-28
+SRC-ANTH-002,Anthropic,Claude account login guidance,https://support.claude.com/en/articles/13189465-log-in-to-your-claude-account,A,terms-sensitive third-party guidance,2026-08-28
+SRC-GOOG-001,Google,Gemini CLI terms,https://github.com/google-gemini/gemini-cli/blob/main/docs/resources/tos-privacy.md,A,third-party OAuth bridge prohibited,2026-08-28
+SRC-GOOG-002,Google Cloud,Gemini Notebook Enterprise API,https://docs.cloud.google.com/gemini/enterprise/notebooklm-enterprise/docs/api-notebooks-sources,A,optional licensed API,2026-08-28
+SRC-TAURI,Tauri,Repository,https://github.com/tauri-apps/tauri,A,MIT/Apache-2.0 code,2026-08-28
+SRC-LLAMA,ggml-org,llama.cpp LICENSE,https://github.com/ggml-org/llama.cpp/blob/master/LICENSE,A,MIT,2026-08-28
+SRC-SQLITE,SQLite,Copyright,https://www.sqlite.org/copyright.html,A,public domain,2026-08-28
+SRC-FSRS,Open Spaced Repetition,fsrs-rs,https://github.com/open-spaced-repetition/fsrs-rs,A,BSD-3-Clause candidate,2026-08-28
+SRC-MCP,Model Context Protocol,Rust SDK Cargo,https://github.com/modelcontextprotocol/rust-sdk/blob/main/Cargo.toml,A,Apache-2.0 official SDK,2026-08-28
+SRC-GH,GitHub,GitHub CLI,https://github.com/cli/cli,A,MIT official client,2026-08-28
+SRC-QWEN,Qwen,Qwen3.5-9B,https://huggingface.co/Qwen/Qwen3.5-9B/tree/main,B,local model candidate; exact weight license recheck,2026-08-28

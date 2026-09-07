@@ -1,0 +1,3 @@
+# SPEC-008 Production Readiness
+
+Release requires a clean Windows build from locked dependencies, signed content-pack validation, exact-artifact smoke/E2E, offline cold-start proof, accessibility gates, security and dependency audit, performance budgets on declared hardware, backup/restore drill, crash-repair workflow drill, 484-test accounting, zero unauthorized drift, and a release verdict. Provider adapters can ship disabled when their capability/terms gate is not satisfied; core learning cannot depend on them.

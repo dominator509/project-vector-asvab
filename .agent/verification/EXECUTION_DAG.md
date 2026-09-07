@@ -1,0 +1,3 @@
+# Verification Execution DAG
+
+V-000 authorization/pin -> V-001 reality -> V-002 claims/anti-simulation -> V-003 applicability -> V-004 static/supply chain -> V-005 clean build/provenance -> V-006 smoke -> V-007 sanity -> V-008 full functionality -> V-009 API/integration/concurrency -> V-010 data semantics -> V-011 compatibility/upgrade/rollback -> V-012 regression/property/mutation. V-013 dynamic security depends on V-004 and V-006. V-014 exploratory depends on V-008 and V-013. V-015 accessibility -> V-016 performance -> V-017 soak -> V-018 stress/chaos -> V-019 recovery/observability -> V-020 exact-artifact cleanroom/deployment -> V-021 UAT/external gates/final accounting.

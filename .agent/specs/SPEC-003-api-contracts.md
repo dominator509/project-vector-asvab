@@ -1,0 +1,3 @@
+# SPEC-003 Service and MCP Contracts
+
+Internal application services expose typed Rust traits. The desktop UI invokes commands through a narrow Tauri boundary. MCP exposes least-privilege tools/resources for study plans, content drafting workflows, evidence lookup, and repair-bundle export; destructive or privacy-sensitive actions require an explicit capability. ModelTransport returns structured text/tool events plus provider provenance. Native CLI transports receive prompts through documented process interfaces and never receive harvested OAuth material.

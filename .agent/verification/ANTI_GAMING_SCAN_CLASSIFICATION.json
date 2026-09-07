@@ -1,0 +1,14 @@
+{
+  "scanner_exit": 0,
+  "raw_matches": 260,
+  "classification_counts": {
+    "scanner_or_schema_definition": 37,
+    "canonical_graphlock_verification_corpus": 203,
+    "control_plane_prohibition_language": 20,
+    "production_implementation": 0,
+    "other": 0
+  },
+  "production_implementation_matches": 0,
+  "blueprint_verdict": "PASS_AS_BLUEPRINT_NOT_AS_PRODUCT",
+  "release_state": "NO_GO_UNVERIFIED"
+}

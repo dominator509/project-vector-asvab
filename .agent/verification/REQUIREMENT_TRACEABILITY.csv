@@ -1,0 +1,61 @@
+requirement_id,requirement,spec,execplan,acceptance_test,status
+REQ-001,local privacy-minimal learner profile,SPEC-001,EP-002,AT-REQ-001,PENDING
+REQ-002,cross-domain diagnostic and mastery uncertainty,SPEC-001,EP-002,AT-REQ-002,PENDING
+REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",SPEC-001,EP-002,AT-REQ-003,PENDING
+REQ-004,GS AR WK PC MK EI AI SI MC AO modeled separately,SPEC-001,EP-002,AT-REQ-004,PENDING
+REQ-005,"custom drills, worked solutions, distractors, confidence, error notebook",SPEC-001,EP-002,AT-REQ-005,PENDING
+REQ-006,no-backtracking and versioned public timing profiles,SPEC-001,EP-002,AT-REQ-006,PENDING
+REQ-007,paper-style navigation/timing,SPEC-001,EP-002,AT-REQ-007,PENDING
+REQ-008,source-grounded explanations and original variants,SPEC-001,EP-002,AT-REQ-008,PENDING
+REQ-009,reject controlled/leaked official question ingestion,SPEC-001,EP-002,AT-REQ-009,PENDING
+REQ-010,offline mastery/speed/confidence/trends,SPEC-001,EP-004,AT-REQ-010,PENDING
+REQ-011,uncertainty/calibration; never official-score claim,SPEC-001,EP-004,AT-REQ-011,PENDING
+REQ-012,versioned sourced formulas/job targets/freshness,SPEC-001,EP-004,AT-REQ-012,PENDING
+REQ-013,versioned policy data,SPEC-001,EP-004,AT-REQ-013,PENDING
+REQ-014,llama.cpp GGUF with optional user-selected unfiltered model,SPEC-003,EP-004,AT-REQ-014,PENDING
+REQ-015,provider-neutral capabilities/auth/billing/terms contract,SPEC-003,EP-004,AT-REQ-015,PENDING
+REQ-016,official CLI headless/ACP without credential access,SPEC-003,EP-004,AT-REQ-016,PENDING
+REQ-017,official codex exec with ChatGPT login,SPEC-003,EP-004,AT-REQ-017,PENDING
+REQ-018,"conditional official-client adapter, terms-gated",SPEC-003,EP-004,AT-REQ-018,PENDING
+REQ-019,disable Gemini CLI OAuth bridge,SPEC-003,EP-004,AT-REQ-019,PENDING
+REQ-020,hash/url/license/retrieval/effective/trust/source snapshots,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-020,PENDING
+REQ-021,diff/quarantine/rollback/freshness,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-021,PENDING
+REQ-022,original item + deterministic proof + independent verification,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-022,PENDING
+REQ-023,signed/versioned/reviewed packs,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-023,PENDING
+REQ-024,manual export; enterprise connector separate,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-024,PENDING
+REQ-025,scoped read-only-default study tools/resources,SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-025,PENDING
+REQ-026,"allowlisted peers, consent/audit",SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-026,PENDING
+REQ-027,untrusted-content authority isolation/prompt injection defense,SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-027,PENDING
+REQ-028,stack/minidump/log ring/build identity,SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-028,PENDING
+REQ-029,double-redaction and secret canary tests,SPEC-004,EP-005,AT-REQ-029,PENDING
+REQ-030,deterministic diagnostics/repro/hashes/consent manifest,SPEC-004,EP-005,AT-REQ-030,PENDING
+REQ-031,isolated worktree + coding-agent + GraphLock,SPEC-004,EP-005,AT-REQ-031,PENDING
+REQ-032,official gh; explicit approval; no auto-merge,SPEC-004,EP-005,AT-REQ-032,PENDING
+REQ-033,atomic integrity-checked optional encrypted backup,SPEC-004,EP-005,AT-REQ-033,PENDING
+REQ-034,forced termination/corruption recovery,SPEC-004,EP-005,AT-REQ-034,PENDING
+REQ-035,portable local export and full deletion,SPEC-004,EP-005,AT-REQ-035,PENDING
+REQ-036,signed Windows artifact + clean install/upgrade/uninstall,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-036,PENDING
+REQ-037,signature/hash/atomic stage/rollback,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-037,PENDING
+REQ-038,WCAG 2.2 AA + keyboard/Narrator/NVDA,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-038,PENDING
+REQ-039,startup/UI/DB/search/background-work SLOs,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-039,PENDING
+REQ-040,local redacted structured health/diagnostics,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-040,PENDING
+REQ-041,SBOM and commercial license release gate,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-041,PENDING
+REQ-042,all core study functions with network disabled,SPEC-005/SPEC-006,EP-006,AT-REQ-042,PENDING
+REQ-043,FSRS-compatible review engine,SPEC-005/SPEC-006,EP-006,AT-REQ-043,PENDING
+REQ-044,local FTS across lessons/errors/evidence,SPEC-005/SPEC-006,EP-006,AT-REQ-044,PENDING
+REQ-045,optional goals/streaks/achievements separate from mastery,SPEC-005/SPEC-006,EP-006,AT-REQ-045,PENDING
+REQ-046,no behavioral ads/data brokerage,SPEC-005/SPEC-006,EP-006,AT-REQ-046,PENDING
+REQ-047,signed/datable adapter disable policy,SPEC-005/SPEC-006,EP-006,AT-REQ-047,PENDING
+REQ-048,"review state, history, rollback, audit",SPEC-005/SPEC-006,EP-006,AT-REQ-048,PENDING
+REQ-049,"internal calibration, no official psychometric equivalence claim",SPEC-005/SPEC-006,EP-006,AT-REQ-049,PENDING
+REQ-050,"sandbox parsing, license/trust checks, prompt-injection isolation",SPEC-008,EP-007/EP-009,AT-REQ-050,PENDING
+REQ-051,crash-loop recovery without deleting learner data,SPEC-008,EP-007/EP-009,AT-REQ-051,PENDING
+REQ-052,"telemetry off, no sensitive enlistment-screening data",SPEC-008,EP-007/EP-009,AT-REQ-052,PENDING
+REQ-053,bind binary+migrations+content+SBOM,SPEC-008,EP-007/EP-009,AT-REQ-053,PENDING
+REQ-054,idempotent attempts and safe DB/background workers,SPEC-008,EP-007/EP-009,AT-REQ-054,PENDING
+REQ-055,optional user-entered official scores clearly typed as external,SPEC-008,EP-007/EP-009,AT-REQ-055,PENDING
+REQ-056,every active item has objective/source/proof/review/hash,SPEC-008,EP-007/EP-009,AT-REQ-056,PENDING
+REQ-057,prompt egress classification and disclosure,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-057,PENDING
+REQ-058,adapter support fails closed on stale policy evidence,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-058,PENDING
+REQ-059,disabled SyncPort without cloud dependency,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-059,PENDING
+REQ-060,working title requires trademark/name clearance before GA,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-060,PENDING

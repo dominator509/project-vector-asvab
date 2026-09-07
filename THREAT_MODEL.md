@@ -1,0 +1,3 @@
+# Threat Model Summary
+
+Primary threats: malicious content packs/prompt injection; leaked or copyrighted test-item ingestion; provider credential theft; native CLI argument/shell injection; MCP confused deputy/path escape; poisoned model output entering canonical content; crash logs leaking personal data or answers; malicious repair agent patch; dependency/update compromise; local database corruption; false score/eligibility claims. Controls include evidence quarantine, structured process invocation without shell interpolation, no OAuth cache access, capability-based MCP, signed packs, deterministic answer validators, redaction, isolated worktrees, branch protection/no auto-merge, SBOM/provenance, backups, calibrated UI language, and fail-closed policy freshness.

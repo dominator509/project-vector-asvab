@@ -1,0 +1,3 @@
+# SPEC-004 UI/UX Behavior
+
+Primary views: onboarding, diagnostic, today plan, lesson, practice set, CAT simulator, paper simulator, review queue, readiness dashboard, branch/job explorer, source/evidence viewer, AI tutor, content/update manager, provider settings, privacy/crash center, accessibility settings. Keyboard-only operation is required. Test mode suppresses distracting UI and reproduces allowed navigation constraints. Every score estimate displays confidence/calibration context.

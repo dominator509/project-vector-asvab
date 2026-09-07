@@ -1,0 +1,4 @@
+claim,requirements,proof,status
+Core study works offline,REQ-001-REQ-013,offline exact-artifact E2E,PENDING
+Provider-native integrations are supported only where permitted,REQ-015-REQ-019,capability + terms + real dependency proof,PENDING
+Crash-to-repair workflow is gated and auditable,REQ-028,crash injection to audited PR,PENDING

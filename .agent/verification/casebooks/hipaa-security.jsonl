@@ -1,0 +1,125 @@
+{"test_id":"HIPAA-001","title":"Static Application Security Testing (SAST)","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-002","title":"Secure Code Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-003","title":"Manual Secure Code Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-004","title":"Peer Security Code Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-005","title":"Security-Focused Code Inspection","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-006","title":"Dynamic Application Security Testing (DAST)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-007","title":"Interactive Application Security Testing (IAST)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-008","title":"Runtime Application Self-Protection (RASP)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-009","title":"Web Application Penetration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-010","title":"Application Vulnerability Scanning","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-011","title":"Manual Application Penetration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-012","title":"API Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-013","title":"REST API Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-014","title":"GraphQL Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-015","title":"gRPC Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-016","title":"API Authentication Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-017","title":"API Authorization Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-018","title":"Software Composition Analysis (SCA)","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-019","title":"Open Source Dependency Scanning","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-020","title":"Third-Party Component Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-021","title":"License Compliance Scanning","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-022","title":"Software Bill of Materials (SBOM) Generation","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-023","title":"SBOM Vulnerability Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-024","title":"Software Supply Chain Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-025","title":"Build Provenance Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-026","title":"Artifact Integrity Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-027","title":"Dependency Provenance Validation","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-028","title":"Secure Build Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-029","title":"Container Image Security Scanning","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-030","title":"Container Runtime Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-031","title":"Kubernetes Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-032","title":"Infrastructure-as-Code Security Scanning","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-033","title":"Terraform Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-034","title":"CloudFormation Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-035","title":"Cloud Configuration Security Assessment","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-036","title":"Cloud Security Posture Management (CSPM) Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-037","title":"Authentication Mechanism Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-038","title":"Multi-Factor Authentication Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-039","title":"Authorization and Access Control Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-040","title":"Role-Based Access Control (RBAC) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-041","title":"Attribute-Based Access Control (ABAC) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-042","title":"Session Management Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-043","title":"Token and JWT Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-044","title":"Cryptographic Module Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-045","title":"Cryptographic Algorithm Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-046","title":"Encryption Implementation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-047","title":"TLS/SSL Configuration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-048","title":"Key Management Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-049","title":"Random Number Generator Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-050","title":"Input Validation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-051","title":"SQL Injection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-052","title":"Cross-Site Scripting (XSS) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-053","title":"OS Command Injection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-054","title":"LDAP Injection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-055","title":"XML & XPath Injection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-056","title":"Server-Side Request Forgery (SSRF) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-057","title":"Cross-Site Request Forgery (CSRF) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-058","title":"Secrets Scanning (Source/Repo) Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-059","title":"Hardcoded Credential Detection","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-060","title":"API Key Exposure Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-061","title":"Private Key Leakage Detection","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-062","title":"Secrets Management Controls Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-063","title":"Fuzz Testing (General) Planning","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-064","title":"Protocol Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-065","title":"File Format Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-066","title":"API Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-067","title":"Mutation-Based Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-068","title":"Business Logic Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-069","title":"Workflow & State Manipulation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-070","title":"Race Condition Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-071","title":"TOCTOU Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-072","title":"Authorization Bypass Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-073","title":"Threat Modeling","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-074","title":"Security Architecture Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-075","title":"Secure Design Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-076","title":"Logging & Monitoring Security Testing","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-077","title":"Audit Trail Integrity Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-078","title":"Alerting & Detection Validation","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-079","title":"Security Event Correlation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-080","title":"SIEM Integration Validation","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-081","title":"Data Protection at Rest Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-082","title":"Data Protection in Transit Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-083","title":"Data Loss Prevention (DLP) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-084","title":"PII/PHI Handling Compliance Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-085","title":"Data Retention & Deletion Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-086","title":"Configuration Hardening Validation","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-087","title":"Default Credential Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-088","title":"Environment Segregation Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-089","title":"Backup & Recovery Security Testing","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-090","title":"Disaster Recovery Security Validation","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-091","title":"Endpoint Security Integration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-092","title":"Host Hardening Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-093","title":"Privilege Escalation Path Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-094","title":"Local File Inclusion (LFI) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-095","title":"Remote File Inclusion (RFI) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-096","title":"Path Traversal Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-097","title":"Deserialization Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-098","title":"Memory Safety Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-099","title":"Secure Updates / Patch Mechanism Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-100","title":"End-of-Life Component Risk Assessment","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-101","title":"SBOM Validation Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-102","title":"Third-Party Dependency Risk Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-103","title":"Open Source License Compliance Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-104","title":"Secrets Lifecycle Management Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-105","title":"API Key Exposure Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-106","title":"Cloud IAM Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-107","title":"Cloud Storage Exposure Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-108","title":"Infrastructure as Code (IaC) Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-109","title":"Container Image Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-110","title":"Kubernetes Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-111","title":"Serverless Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-112","title":"API Rate Limiting & Abuse Protection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-113","title":"Business Logic Abuse Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-114","title":"Race Condition Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-115","title":"Time-of-Check-Time-of-Use (TOCTOU) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-116","title":"Session Management Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-117","title":"Token Security Testing (JWT/OAuth)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-118","title":"Multi-Factor Authentication (MFA) Validation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-119","title":"Account Recovery Workflow Security Testing","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-120","title":"Authorization Bypass Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-121","title":"GraphQL Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-122","title":"WebSocket Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-123","title":"Message Queue / Event Bus Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-124","title":"Data Integrity Validation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"HIPAA-125","title":"Supply Chain Trust Boundary Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}

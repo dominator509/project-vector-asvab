@@ -1,0 +1,202 @@
+{"test_id":"BC-001","title":"Smart Contract Static Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-002","title":"Automated Static Code Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-003","title":"Control Flow Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-004","title":"Data Flow Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-005","title":"Taint Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-006","title":"Pattern Matching Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-007","title":"Vulnerability Pattern Detection","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-008","title":"Smart Contract Dynamic Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-009","title":"Runtime Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-010","title":"Runtime Monitoring","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-011","title":"Transaction Monitoring","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-012","title":"Anomaly Detection","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-013","title":"Behavioral Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-014","title":"On-Chain Monitoring","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-015","title":"Smart Contract Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-016","title":"Property-Based Testing","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-017","title":"Invariant Testing","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-018","title":"Coverage-Guided Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-019","title":"Stateful Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-020","title":"Differential Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-021","title":"Grammar-Based Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-022","title":"Mutation-Based Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-023","title":"Formal Verification","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-024","title":"Symbolic Execution","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-025","title":"Model Checking","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-026","title":"Theorem Proving","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-027","title":"SMT Solving","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-028","title":"Bounded Model Checking","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-029","title":"Abstract Interpretation","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"BC-030","title":"Manual Code Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-031","title":"Expert Security Audit","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-032","title":"Peer Review","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-033","title":"Architecture Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-034","title":"Line-by-Line Code Inspection","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-035","title":"Smart Contract Penetration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-036","title":"Red Team Exercises","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-037","title":"Adversarial Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-038","title":"Exploit Simulation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-039","title":"Attack Surface Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-040","title":"Black Box Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-041","title":"Gray Box Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-042","title":"White Box Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-043","title":"Threat Modeling","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-044","title":"STRIDE Threat Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-045","title":"Attack Tree Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-046","title":"Data Flow Diagram (DFD) Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-047","title":"Attack Surface Mapping","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-048","title":"Risk-Based Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-049","title":"Reentrancy Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-050","title":"Integer Overflow/Underflow Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-051","title":"Front-Running Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-052","title":"Sandwich Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-053","title":"Flash Loan Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-054","title":"Oracle Manipulation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-055","title":"Timestamp Dependency Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-056","title":"Denial of Service (DoS) Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-057","title":"Gas Limit DoS Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-058","title":"Delegatecall Injection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-059","title":"Storage Collision Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-060","title":"Signature Replay Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-061","title":"Block Gas Limit Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-062","title":"Access Control Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-063","title":"Role-Based Access Control (RBAC) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-064","title":"Privilege Escalation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-065","title":"Authorization Bypass Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-066","title":"Permission Boundary Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-067","title":"Ownership Verification Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-068","title":"Cryptographic Primitive Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-069","title":"Side-Channel Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-070","title":"Key Management Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-071","title":"Signature Verification Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-072","title":"Randomness Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-073","title":"Verifiable Random Function (VRF) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-074","title":"Encryption Scheme Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-075","title":"Hash Function Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-076","title":"Proxy Contract Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-077","title":"Upgradability Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-078","title":"Storage Layout Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-079","title":"Initialization Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-080","title":"Transparent Proxy Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-081","title":"UUPS Proxy Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-082","title":"Beacon Proxy Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-083","title":"Implementation Verification Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-084","title":"Economic Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-085","title":"Game-Theoretic Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-086","title":"Incentive Mechanism Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-087","title":"Tokenomics Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-088","title":"MEV (Maximal Extractable Value) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-089","title":"Liquidity Pool Manipulation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-090","title":"Consensus Protocol Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-091","title":"Byzantine Fault Tolerance Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-092","title":"Consensus Security Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-093","title":"Validator Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-094","title":"Block Propagation Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-095","title":"Network Partition Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-096","title":"Finality Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-097","title":"Node Operation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-098","title":"Client Implementation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-099","title":"Execution Layer Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-100","title":"Consensus Layer Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-101","title":"Peer-to-Peer Network Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-102","title":"Network Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-103","title":"Oracle Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-104","title":"Oracle Data Integrity Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-105","title":"Cross-Chain Bridge Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-106","title":"Bridge Security Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-107","title":"Price Feed Manipulation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-108","title":"Cross-Chain Message Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-109","title":"Wallet Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-110","title":"Private Key Exposure Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-111","title":"Hardware Security Module (HSM) Testing","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-112","title":"Multi-Signature Wallet Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-113","title":"Seed Phrase Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-114","title":"Key Derivation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-115","title":"Transaction Signing Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-116","title":"ERC-20 Token Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-117","title":"ERC-721 Token Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-118","title":"ERC-1155 Token Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-119","title":"Token Integration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-120","title":"Token Standard Conformance Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-121","title":"Dependency Scanning","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-122","title":"Software Bill of Materials (SBOM) Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-123","title":"Package Vulnerability Scanning","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-124","title":"Third-Party Library Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-125","title":"Artifact Integrity Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-126","title":"Compiler Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-127","title":"CI/CD Pipeline Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"BC-128","title":"Automated Security Scanning","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-129","title":"Pre-Commit Security Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-130","title":"Build Security Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-131","title":"Deployment Security Verification","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"BC-132","title":"Secret Scanning","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-133","title":"Credential Exposure Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-134","title":"Private Key Leakage Detection","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-135","title":"API Key Exposure Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-136","title":"Hardcoded Secrets Detection","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-137","title":"Infrastructure-as-Code (IaC) Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"BC-138","title":"Configuration Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"BC-139","title":"Terraform Security Scanning","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"BC-140","title":"Container Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-141","title":"Kubernetes Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"BC-142","title":"Docker Image Scanning","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"BC-143","title":"DAO Governance Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-144","title":"Voting Mechanism Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-145","title":"Proposal Execution Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-146","title":"Treasury Management Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-147","title":"Governance Attack Simulation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-148","title":"Token-Based Voting Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-149","title":"Regulatory Compliance Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-150","title":"Privacy Compliance Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-151","title":"Data Protection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-152","title":"SOC 2 Compliance Verification","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-153","title":"ISO 27001 Compliance Testing","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"BC-154","title":"Code Coverage Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-155","title":"Statement Coverage Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-156","title":"Branch Coverage Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-157","title":"Function Coverage Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-158","title":"Path Coverage Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-159","title":"Unit Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-160","title":"Integration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-161","title":"System Integration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-162","title":"API Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-163","title":"End-to-End Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-164","title":"Regression Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-165","title":"Performance Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-166","title":"Load Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-167","title":"Stress Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-168","title":"Scalability Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-169","title":"Transaction Throughput Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-170","title":"Gas Optimization Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-171","title":"Input Validation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-172","title":"Boundary Value Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-173","title":"Input Sanitization Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-174","title":"Edge Case Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-175","title":"Overflow/Underflow Boundary Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-176","title":"Audit Trail Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-177","title":"Event Logging Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-178","title":"Immutability Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-179","title":"Tamper-Evidence Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-180","title":"Forensic Analysis Support Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-181","title":"Incident Response Testing","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-182","title":"Disaster Recovery Testing","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-183","title":"Emergency Pause Mechanism Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-184","title":"Circuit Breaker Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-185","title":"Rollback Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-186","title":"Recovery Procedure Verification","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-187","title":"Smart Contract Mutation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-188","title":"Test Suite Adequacy Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-189","title":"Mutation Score Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-190","title":"Sandwich Attack Stress Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-191","title":"Slippage Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-192","title":"Price Oracle Manipulation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-193","title":"Liquidity Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-194","title":"Governance Token Attack Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-195","title":"NFT Metadata Integrity Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-196","title":"Cross-Contract Call Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-197","title":"External Call Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-198","title":"Fallback Function Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-199","title":"Payable Function Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-200","title":"Self-Destruct Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-201","title":"Constructor Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"BC-202","title":"Modifier Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}

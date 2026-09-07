@@ -1,0 +1,142 @@
+{"test_id":"GEN-001","title":"Static Application Security Testing (SAST)","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-002","title":"Software Composition Analysis (SCA)","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-003","title":"Dependency Scanning","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-004","title":"License Compliance Scanning","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-005","title":"Secrets Scanning","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-006","title":"Credential Scanning","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-007","title":"Hardcoded Credential Detection","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-008","title":"Static Taint Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-009","title":"Data Flow Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-010","title":"Secure Code Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-011","title":"Manual Secure Code Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-012","title":"Source Code Security Audit","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-013","title":"Security Code Metrics Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-014","title":"Cyclomatic Complexity Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-015","title":"Dynamic Application Security Testing (DAST)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-016","title":"Interactive Application Security Testing (IAST)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-017","title":"Runtime Application Self-Protection (RASP)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-018","title":"Manual Penetration Testing","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-019","title":"Automated Penetration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-020","title":"Red Team Testing","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-021","title":"Purple Team Testing","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-022","title":"Adversary Emulation / Simulation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-023","title":"Breach and Attack Simulation (BAS)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-024","title":"Fuzz Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-025","title":"Coverage-Guided Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-026","title":"Grammar-Based Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-027","title":"Mutation-Based Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-028","title":"Protocol Fuzzing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-029","title":"Web Application Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-030","title":"API Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-031","title":"REST API Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-032","title":"GraphQL Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-033","title":"SOAP API Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-034","title":"Mobile Application Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-035","title":"Desktop Application Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-036","title":"Client-Side Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-037","title":"Microservices Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-038","title":"Serverless / FaaS Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-039","title":"Container Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-040","title":"Kubernetes Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-041","title":"Cloud-Native Application Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-042","title":"Vulnerability Scanning","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-043","title":"Vulnerability Assessment","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-044","title":"Weakness Enumeration Mapping (CWE)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-045","title":"Injection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-046","title":"SQL Injection Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-047","title":"Cross-Site Scripting (XSS) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-048","title":"Cross-Site Request Forgery (CSRF) Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-049","title":"Input Validation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-050","title":"Authentication Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-051","title":"Authorization Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-052","title":"Broken Access Control Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-053","title":"IDOR Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-054","title":"Privilege Escalation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-055","title":"Session Management Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-056","title":"Business Logic Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-057","title":"Cryptographic Implementation Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-058","title":"Weak Cryptography Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-059","title":"TLS/SSL Configuration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-060","title":"Side-Channel Resistance Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-061","title":"Security Misconfiguration Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-062","title":"Sensitive Data Exposure Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-063","title":"Logging and Monitoring Verification","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-064","title":"Infrastructure-as-Code (IaC) Security Scanning","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-065","title":"Configuration Hardening Validation","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-066","title":"Container Image Vulnerability Scanning","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-067","title":"Cloud Configuration Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-068","title":"Network Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-069","title":"Service Mesh Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-070","title":"API Gateway Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-071","title":"Sandbox and Isolated Environment Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-072","title":"Software Bill of Materials (SBOM) Generation and Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-073","title":"Dependency Integrity Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-074","title":"Build Provenance Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-075","title":"Artifact Signing Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-076","title":"Artifact Attestation Verification","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-077","title":"Binary Integrity Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-078","title":"Binary Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-079","title":"Reverse Engineering Security Analysis","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-080","title":"Third-Party Software Security Assessment","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-081","title":"CI/CD Pipeline Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-082","title":"Pre-Commit Security Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-083","title":"Pre-Build Security Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-084","title":"Post-Build Security Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-085","title":"Pre-Deployment Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-086","title":"Continuous Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-087","title":"Security Gate Enforcement","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-088","title":"Security Test Automation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-089","title":"Security Test Orchestration","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-090","title":"Security Requirements Testing (Requirements-Driven)","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-091","title":"Threat Modeling","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-092","title":"Attack Tree Analysis","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-093","title":"Abuse Case Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-094","title":"Misuse Case Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-095","title":"Architecture Security Assessment","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-096","title":"Secure Design Review","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-097","title":"Security Feature Design Review","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-098","title":"Security Control Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-099","title":"Compliance Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-100","title":"Policy-as-Code Testing","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-101","title":"Compliance-as-Code Validation","stage":"03-STATIC-DESIGN-SUPPLY-CHAIN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-102","title":"Regulatory Security Testing (e.g., GDPR)","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-103","title":"Common Criteria Security Evaluation","stage":"19-EXTERNAL-HUMAN","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-104","title":"Symbolic Execution","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-105","title":"Model-Based Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-106","title":"Property-Based Security Testing","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-107","title":"Formal Verification","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-108","title":"Security Property Verification","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-109","title":"Theorem Proving for Security Properties","stage":"11-FORMAL-PROPERTY-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-110","title":"Security Regression Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-111","title":"Incident Response Testing","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-112","title":"Security Baseline Validation","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-113","title":"Zero Trust Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-114","title":"Chaos Engineering for Security Resilience","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-115","title":"Fault Injection Security Testing","stage":"15-17-PERFORMANCE-STRESS-RECOVERY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-116","title":"Canary Release Security Validation","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-117","title":"Blue-Green Deployment Security Testing","stage":"04-BUILD-ARTIFACT-DEPLOYMENT","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-118","title":"Security Observability Validation","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-119","title":"Anomaly Detection Security Testing","stage":"17-RECOVERY-OBSERVABILITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-120","title":"Web Application Firewall (WAF) Effectiveness Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-121","title":"WAF Bypass Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"GEN-122","title":"Exploratory Security Testing","stage":"12-DYNAMIC-SECURITY","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-001","title":"Smoke & Infrastructure Verification","stage":"05-SMOKE","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-002","title":"Sanity & Build Verification","stage":"06-SANITY","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-003","title":"Full Functional Verification","stage":"07-FUNCTIONAL-REALITY","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-004","title":"API Contract & Security Validation","stage":"08-API-INTEGRATION","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-005","title":"Regression & Differential Verification","stage":"11-REGRESSION","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-006","title":"Ad Hoc & Exploratory Testing","stage":"13-EXPLORATORY","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-007","title":"Usability, Accessibility & DX Verification","stage":"14-USABILITY-A11Y-DX","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-008","title":"Performance & Workload Orchestration","stage":"15-PERFORMANCE","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-009","title":"Systemic Stress & Exhaustion Testing","stage":"17-STRESS-CHAOS","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-010","title":"Resilience & Recovery Verification","stage":"18-RECOVERY-DR","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-011","title":"Clean-Room Deployment Verification","stage":"19-FINAL-ARTIFACT","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-012","title":"Schema Evolution & Data Migration Verification","stage":"09-DATA-SEMANTICS","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-013","title":"Version-Skew & Compatibility Verification","stage":"10-COMPATIBILITY","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-014","title":"Downgrade & Rollback Compatibility Verification","stage":"10-COMPATIBILITY","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-015","title":"Import / Export / Data Portability Round-Trip","stage":"09-DATA-SEMANTICS","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-016","title":"Temporal, Timezone & Clock-Skew Verification","stage":"09-DATA-SEMANTICS","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-017","title":"I18N/L10N & Unicode Robustness Verification","stage":"09-DATA-SEMANTICS","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-018","title":"Soak, Endurance & Resource-Leak Verification","stage":"16-SOAK","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-019","title":"AI/Agentic Systems Safety & Capability Verification","stage":"12-AI-AGENT-SAFETY","status":"PENDING","evidence_path":""}
+{"test_id":"E2E-020","title":"User Acceptance Testing Orchestration","stage":"20-UAT-HUMAN","status":"PENDING","evidence_path":""}

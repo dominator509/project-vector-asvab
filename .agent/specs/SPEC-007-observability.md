@@ -1,0 +1,3 @@
+# SPEC-007 Observability
+
+Local structured logs, metrics, trace IDs, performance spans, and crash signatures are available without remote telemetry. Logs exclude question answer leakage in exam mode, secrets, OAuth artifacts, full prompts containing private learner data, and raw crash memory unless explicitly approved. Optional OTLP/Sentry adapters are disabled by default and pass the same redaction pipeline.

@@ -1,0 +1,3 @@
+# SPEC-006 Error Handling
+
+Typed errors cross boundaries as stable error codes plus safe user messages. Provider failure degrades to deterministic/local study paths. Invalid content packs fail closed and remain quarantined. Database corruption triggers read-only recovery guidance and backup restore; no automatic destructive reset. Crash reporting is consent-aware, redacted, and locally inspectable before upload/export.
