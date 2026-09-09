@@ -1,0 +1,12 @@
+[package]
+name = "vector-persistence"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+vector-domain = { path = "../vector-domain" }
+rusqlite.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
