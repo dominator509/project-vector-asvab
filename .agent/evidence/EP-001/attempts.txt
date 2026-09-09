@@ -1,0 +1,15 @@
+EP-001 bounded blocker ladder evidence
+
+Attempt 1: sh scripts/build.sh
+Observed exit code: 3
+Observed output: implementation repository surfaces Cargo.toml and package.json are absent; this blueprint correctly refuses to fabricate a green gate
+
+Attempt 2: sh scripts/test-unit.sh
+Observed exit code: 3
+Observed output: implementation repository surfaces Cargo.toml and package.json are absent; this blueprint correctly refuses to fabricate a green gate
+
+Attempt 3: sh scripts/db-setup.sh
+Observed exit code: 3
+Observed output: implementation repository surfaces Cargo.toml and package.json are absent; this blueprint correctly refuses to fabricate a green gate
+
+Direct inspection confirmed no Cargo.toml, package.json, apps/desktop, or crates implementation surfaces exist in the repository root. No standards-compliant alternate route can produce the required real Tauri/Rust/SQLite artifact without fabricating implementation or evidence.

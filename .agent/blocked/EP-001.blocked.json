@@ -1,0 +1,48 @@
+{
+  "node_id": "EP-001",
+  "status": "CLOSED_BLOCKED",
+  "blocked_at_utc": "2026-09-07T22:23:41Z",
+  "candidate_epoch": "EP-001-blocker-001",
+  "commit_sha": null,
+  "primary_blocker_class": "BLOCKED_MISSING_REQUIREMENT",
+  "secondary_blocker_classes": ["BLOCKED_INSUFFICIENT_EVIDENCE"],
+  "blocked_requirement_ids": ["REQ-039", "REQ-040", "REQ-041", "REQ-053"],
+  "blocked_test_ids": ["EP-001-UNIT", "EP-001-DESKTOP-LAUNCH", "EP-001-MIGRATION-SMOKE"],
+  "blocked_artifacts": ["Cargo.toml", "package.json", "Tauri desktop artifact", "SQLite migration artifact"],
+  "what_was_attempted": [
+    "Ran sh scripts/preflight.sh; it exited 0 and reported the blueprint pack valid but no implementation capability.",
+    "Ran sh scripts/build.sh; it exited 3 at the implementation-surface guard.",
+    "Ran sh scripts/test-unit.sh; it exited 3 at the implementation-surface guard.",
+    "Ran sh scripts/db-setup.sh; it exited 3 at the implementation-surface guard.",
+    "Inspected repository structure and confirmed the required implementation manifests and source directories are absent.",
+    "Checked for a repository-defined kanban or frontier-audit integration; no such capability or contract is present."
+  ],
+  "evidence_paths": [
+    ".agent/evidence/PREFLIGHT/pack.txt",
+    ".agent/evidence/EP-001/attempts.txt",
+    "scripts/_require_impl.sh",
+    "scripts/build.sh",
+    "scripts/test-unit.sh",
+    "scripts/db-setup.sh"
+  ],
+  "evidence_hashes": [
+    "d2de85a757ee06aa8170809d70b3b049c82722b12b58aabe9e1b157ae159b303",
+    "7c78839694b81a30d142d25a1f5fcd362e2e286eb5d1c47287735bff018fd962",
+    "9808ba0fb26088136bdf869a219b3368650ce8b8892a68b0e981af32b613a9d2",
+    "d141f5459560d1c4055eba52627334f278c735cb12a784100bef42fd937d4416",
+    "8aedeb0be733084df90b4fd7d0d29dd79a3fbcac802e24ab951a9ff478d1635c",
+    "241fe1edc00e629a0998420c131947cda10dcf03799729faffaa610d206fc0de"
+  ],
+  "exact_failure_observed": "The implementation guard exits 3 because Cargo.toml and package.json are absent; all artifact, unit, and migration commands therefore refuse to proceed.",
+  "why_it_cannot_be_safely_completed": "EP-001 requires a real Tauri shell, Rust workspace, React shell, and SQLite bootstrap. Those production surfaces do not exist, so completion would require inventing code or claiming unexecuted behavior.",
+  "why_mocking_or_simulation_is_forbidden": "AGENTS.md Reality Law and EP-001's acceptance oracle require real public-boundary artifact execution, persistence/readback, and negative proof; mocks or blueprint-only summaries cannot establish those outcomes.",
+  "downstream_nodes_blocked": [],
+  "downstream_nodes_not_blocked": [],
+  "capabilities_not_delivered": ["desktop shell", "Rust workspace", "React shell", "SQLite bootstrap", "configuration", "artifact identity"],
+  "release_verdict_impact": "NO_GO_UNVERIFIED; no product artifact or production-readiness claim is permitted.",
+  "unblock_condition": "An implementation worktree must add the architecture-conforming Tauri/Rust/React/SQLite surfaces, tests, lockfiles, and traceability, then rerun the exact EP-001 gates and obtain independent frontier audit PASS.",
+  "unblock_owner": "repo",
+  "followup_node_or_ticket": "EP-001 re-dispatch to an implementation executor (jules) with a frontier audit card for codex before closure",
+  "scheduler_instruction": "Keep EP-001 CLOSED_BLOCKED; do not dispatch downstream nodes. Reopen only after the unblock condition is evidenced.",
+  "prohibited_workarounds": ["Do not fabricate Cargo.toml or package.json solely to satisfy the guard.", "Do not replace desktop or migration proof with mocks, screenshots, or health-check output.", "Do not mark EP-001 NODE_DONE without independent frontier audit PASS and real artifact evidence."]
+}

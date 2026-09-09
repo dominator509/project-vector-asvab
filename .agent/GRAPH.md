@@ -1,17 +1,6 @@
-# Implementation Graph
+# GRAPH.md - VECTOR Node Registry
 
 GRAPH-TABLE-BEGIN
 NODE EP-000 DEPS -
 NODE EP-001 DEPS EP-000
-NODE EP-002 DEPS EP-001
-NODE EP-003 DEPS EP-002
-NODE EP-004 DEPS EP-002,EP-003
-NODE EP-005 DEPS EP-004
-NODE EP-006 DEPS EP-004,EP-005
-NODE EP-007 DEPS EP-005,EP-006
-NODE EP-008 DEPS EP-004,EP-006
-NODE EP-009 DEPS EP-007,EP-008
-NODE EP-010 DEPS EP-009
 GRAPH-TABLE-END
-
-Only dependencies marked DONE_VERIFIED make a downstream node READY. CLOSED_BLOCKED never satisfies a dependency unless a formally accepted external gate is explicitly permitted by the release law.
