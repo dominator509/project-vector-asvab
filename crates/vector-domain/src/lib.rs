@@ -4,3 +4,5 @@ pub mod profile;
 
 pub use config::AppConfig;
 pub mod artifact_test;
+pub mod learner_test;
+pub mod subtests;

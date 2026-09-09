@@ -4860,6 +4860,8 @@ name = "vector-content"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
+ "sha2",
  "vector-domain",
 ]
 
@@ -4941,6 +4943,7 @@ name = "vector-questions"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "sha2",
  "vector-domain",
 ]
 
