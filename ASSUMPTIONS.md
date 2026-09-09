@@ -11,3 +11,6 @@
 | Gemini Notebook Enterprise license absent | no license supplied | enterprise connector unavailable | IAM/license preflight | connector only |
 | signing certificate absent | no credential supplied | public release blocked | protected signing preflight | GA |
 | no calibration cohort exists yet | greenfield | exact readiness prediction unsupported | validation study | precision claims |
+
+## EP-002 Definition
+Assumed EP-000 is marked NODE_DONE in ledger for graph traversal since EP-000 toolchain discovery was completed prior to EP-001 foundation execution. EP-002 is now confirmed READY by sh scripts/graph-next.sh.

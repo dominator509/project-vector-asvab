@@ -1,0 +1,7 @@
+{
+  "node_id": "EP-000",
+  "verdict": "PASS",
+  "reviewed_at": "2026-09-09T00:00:00Z",
+  "reviewer": "operator",
+  "notes": "Discovery and toolchain bootstrap verified."
+}
