@@ -1,0 +1,11 @@
+generated pack validation: ok
+WARN: possible incomplete prose/code in scripts/validate-generated-pack.py
+WARN: possible incomplete prose/code in scripts/anti-gaming-scan.py
+git version 2.43.0
+Python 3.12.3
+rustc 1.98.1 (48a229cea 2026-09-01)
+cargo 1.98.1 (797e8a9bc 2026-08-05)
+v24.16.0
+0.35.0
+Preflight records capability presence; optional absences do not become fake passes.
+preflight_exit=0

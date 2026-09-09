@@ -1,0 +1,4 @@
+generated pack validation: ok
+WARN: possible incomplete prose/code in scripts/validate-generated-pack.py
+WARN: possible incomplete prose/code in scripts/anti-gaming-scan.py
+pack_validation_exit=0
