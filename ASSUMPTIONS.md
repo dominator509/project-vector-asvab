@@ -14,3 +14,6 @@
 
 ## EP-002 Definition
 Assumed EP-000 is marked NODE_DONE in ledger for graph traversal since EP-000 toolchain discovery was completed prior to EP-001 foundation execution. EP-002 is now confirmed READY by sh scripts/graph-next.sh.
+
+## EP-003 Definition
+EP-000, EP-001, and EP-002 are complete and verified in ledger. EP-003 (data and persistence) is defined and confirmed READY by `sh scripts/graph-next.sh`.
