@@ -1,2 +1,0 @@
-line 1: missing event_id
-hash_ledger_exit=1
