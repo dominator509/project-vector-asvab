@@ -29,9 +29,11 @@ required = [
 for rel in required:
     exists(rel)
 
+SKIP_PARTS = {".git", "node_modules", ".venv", "target", "dist", "build"}
+
 # Placeholder residue.
 for p in root.rglob("*"):
-    if p.is_file() and p.stat().st_size < 5_000_000 and any(part not in {".git", "node_modules", ".venv", "target", "dist", "build"} for part in p.parts):
+    if p.is_file() and p.stat().st_size < 5_000_000 and not (set(p.parts) & SKIP_PARTS):
         try:
             text = p.read_text("utf-8")
         except UnicodeDecodeError:

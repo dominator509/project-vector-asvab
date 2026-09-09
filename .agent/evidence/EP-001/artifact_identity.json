@@ -1,0 +1,9 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.24s
+     Running `target/debug/vector-tools artifact-identity --binary Cargo.toml --migrations migrations/001_initial.sql --content package.json --sbom pnpm-workspace.yaml`
+{
+  "artifact_identity_digest": "01823fb198f8bd930d93efde88fe0fee14001f1a2ff86fb11783dc489b702e55",
+  "binary_hash": "9d93c428ecb3ad0a54e974a3685b03903c62c8d83d932ac534c512471e425faa",
+  "content_hash": "97e6b293c4995bf8d7b1204ce6d07f5954001a052cde57891a2f923de0686db7",
+  "migrations_hash": "5c8f50d6545c6c8790c116a27ff571f4cc08f04366d98931d88b43ab75c86be3",
+  "sbom_hash": "8ee2803c7c6a56c2366ea8a52248ee24b6d2ea0724dddec104534e7e032783f4"
+}

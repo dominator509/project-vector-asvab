@@ -1,0 +1,15 @@
+[package]
+name = "vector-tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+vector-persistence = { path = "../../crates/vector-persistence" }
+vector-observability = { path = "../../crates/vector-observability" }
+clap.workspace = true
+rusqlite.workspace = true
+anyhow.workspace = true
+sha2.workspace = true
+serde.workspace = true
+serde_json.workspace = true

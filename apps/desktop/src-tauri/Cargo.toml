@@ -1,0 +1,18 @@
+[package]
+name = "vector-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+vector-domain = { path = "../../../crates/vector-domain" }
+vector-observability = { path = "../../../crates/vector-observability" }
+vector-persistence = { path = "../../../crates/vector-persistence" }
+tauri.workspace = true
+tauri-plugin-sql.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
