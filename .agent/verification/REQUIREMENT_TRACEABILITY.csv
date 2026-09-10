@@ -1,13 +1,13 @@
 requirement_id,requirement,spec,execplan,acceptance_test,status
-REQ-001,local privacy-minimal learner profile,SPEC-001,EP-002,AT-REQ-001,PENDING
-REQ-002,cross-domain diagnostic and mastery uncertainty,SPEC-001,EP-002,AT-REQ-002,PENDING
-REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",SPEC-001,EP-002,AT-REQ-003,PENDING
-REQ-004,GS AR WK PC MK EI AI SI MC AO modeled separately,SPEC-001,EP-002,AT-REQ-004,PENDING
+REQ-001,local privacy-minimal learner profile,SPEC-001,EP-002,AT-REQ-001,DONE
+REQ-002,cross-domain diagnostic and mastery uncertainty,SPEC-001,EP-002,AT-REQ-002,DONE
+REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",SPEC-001,EP-002,AT-REQ-003,DONE
+REQ-004,GS AR WK PC MK EI AI SI MC AO modeled separately,SPEC-001,EP-002,AT-REQ-004,DONE
 REQ-005,"custom drills, worked solutions, distractors, confidence, error notebook",SPEC-001,EP-002,AT-REQ-005,PENDING
 REQ-006,no-backtracking and versioned public timing profiles,SPEC-001,EP-002,AT-REQ-006,PENDING
-REQ-007,paper-style navigation/timing,SPEC-001,EP-002,AT-REQ-007,PENDING
+REQ-007,paper-style navigation/timing,SPEC-001,EP-002,AT-REQ-007,DONE
 REQ-008,source-grounded explanations and original variants,SPEC-001,EP-002,AT-REQ-008,PENDING
-REQ-009,reject controlled/leaked official question ingestion,SPEC-001,EP-002,AT-REQ-009,PENDING
+REQ-009,reject controlled/leaked official question ingestion,SPEC-001,EP-002,AT-REQ-009,DONE
 REQ-010,offline mastery/speed/confidence/trends,SPEC-001,EP-004,AT-REQ-010,PENDING
 REQ-011,uncertainty/calibration; never official-score claim,SPEC-001,EP-004,AT-REQ-011,PENDING
 REQ-012,versioned sourced formulas/job targets/freshness,SPEC-001,EP-004,AT-REQ-012,PENDING
@@ -19,9 +19,9 @@ REQ-017,official codex exec with ChatGPT login,SPEC-003,EP-004,AT-REQ-017,PENDIN
 REQ-018,"conditional official-client adapter, terms-gated",SPEC-003,EP-004,AT-REQ-018,PENDING
 REQ-019,disable Gemini CLI OAuth bridge,SPEC-003,EP-004,AT-REQ-019,PENDING
 REQ-020,hash/url/license/retrieval/effective/trust/source snapshots,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-020,PENDING
-REQ-021,diff/quarantine/rollback/freshness,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-021,PENDING
-REQ-022,original item + deterministic proof + independent verification,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-022,PENDING
-REQ-023,signed/versioned/reviewed packs,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-023,PENDING
+REQ-021,diff/quarantine/rollback/freshness,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-021,DONE
+REQ-022,original item + deterministic proof + independent verification,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-022,DONE
+REQ-023,signed/versioned/reviewed packs,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-023,DONE
 REQ-024,manual export; enterprise connector separate,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-024,PENDING
 REQ-025,scoped read-only-default study tools/resources,SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-025,PENDING
 REQ-026,"allowlisted peers, consent/audit",SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-026,PENDING

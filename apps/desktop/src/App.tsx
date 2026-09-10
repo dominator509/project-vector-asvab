@@ -1,4 +1,4 @@
-const appStyle = { padding: '2rem', fontFamily: 'sans-serif' };
+const appStyle = { padding: "2rem", fontFamily: "sans-serif" };
 
 export default function App() {
   return (
