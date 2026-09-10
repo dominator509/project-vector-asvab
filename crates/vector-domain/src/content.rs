@@ -57,7 +57,7 @@ impl ContentPack {
 
     pub fn sign(&self, _key: &str) -> Self {
         let mut signed_pack = self.clone();
-        signed_pack.signature = Some("signature_value_1234".to_string());
+        signed_pack.signature = Some("dummy_signature".to_string());
         signed_pack.reviewed = true;
         signed_pack
     }
