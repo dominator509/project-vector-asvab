@@ -1,5 +1,5 @@
-use crate::mastery::Mastery;
 use serde::{Deserialize, Serialize};
+use crate::mastery::Mastery;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PlanGoal {
@@ -20,10 +20,16 @@ impl AdaptivePlan {
             target_duration: duration,
         }
     }
+
     pub fn drills(&self) -> &[String] {
         &self.drills
     }
+
     pub fn target_duration(&self) -> chrono::Duration {
         self.target_duration
+    }
+
+    pub fn complete_drill(&mut self, drill: &str) {
+        self.drills.retain(|d| d != drill);
     }
 }

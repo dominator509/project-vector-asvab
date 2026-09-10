@@ -41,4 +41,9 @@ impl Mastery {
     pub fn uncertainty(&self) -> f64 {
         self.uncertainty
     }
+
+    pub fn record_observation(&mut self, _score: f64) {
+        // Decrease uncertainty as we record observations
+        self.uncertainty *= 0.9;
+    }
 }

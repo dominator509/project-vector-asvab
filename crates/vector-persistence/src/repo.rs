@@ -1,5 +1,5 @@
-use crate::db::DatabaseError;
 use rusqlite::{params, Connection, OptionalExtension};
+use crate::db::DatabaseError;
 
 pub struct MasteryRepository<'a> {
     conn: &'a Connection,
@@ -24,6 +24,10 @@ impl<'a> MasteryRepository<'a> {
     }
 
     pub fn get_mastery(&self, user_id: &str) -> Result<Option<f64>, DatabaseError> {
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS mastery (user_id TEXT PRIMARY KEY, score REAL)",
+            [],
+        )?;
         let score: Option<f64> = self
             .conn
             .query_row(
@@ -58,6 +62,10 @@ impl<'a> EvidenceVault<'a> {
     }
 
     pub fn get_snapshot(&self, hash: &str) -> Result<Option<String>, DatabaseError> {
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS evidence_vault (hash TEXT PRIMARY KEY, content TEXT)",
+            [],
+        )?;
         let content: Option<String> = self
             .conn
             .query_row(
@@ -93,6 +101,10 @@ impl<'a> PrStateRepository<'a> {
     }
 
     pub fn is_approved(&self, pr_id: &str) -> Result<bool, DatabaseError> {
+        self.conn.execute(
+            "CREATE TABLE IF NOT EXISTS pr_state (pr_id TEXT PRIMARY KEY, approved INTEGER)",
+            [],
+        )?;
         let approved: Option<i32> = self
             .conn
             .query_row(

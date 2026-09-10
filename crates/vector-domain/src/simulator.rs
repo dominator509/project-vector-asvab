@@ -1,5 +1,5 @@
-use crate::mastery::Subtest;
 use serde::{Deserialize, Serialize};
+use crate::mastery::Subtest;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SimulatorState {
@@ -34,5 +34,9 @@ impl PaperSimulator {
 
     pub fn can_navigate_back(&self) -> bool {
         true // Paper simulator allows navigating backward
+    }
+
+    pub fn complete(&mut self) {
+        self.state = SimulatorState::Completed;
     }
 }

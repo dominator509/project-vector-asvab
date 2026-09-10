@@ -4,60 +4,59 @@ mod domain_tests {
     use crate::ingestion::{IngestionError, QuestionIngestion, SourceType};
     use crate::mastery::{Mastery, Subtest};
     use crate::plan::{AdaptivePlan, PlanGoal};
-    use crate::profile::LearnerProfile;
+    use crate::profile::{LearnerProfile, ProfileError};
     use crate::simulator::{PaperSimulator, SimulatorState};
     use uuid::Uuid;
 
-    // REQ-001: local privacy-minimal learner profile
     #[test]
     fn test_req_001_privacy_minimal_profile() {
-        let profile = LearnerProfile::new("Learner", 50);
+        let profile = LearnerProfile::new("Learner", 50).unwrap();
         assert_ne!(profile.id, Uuid::nil());
-        // Verify no PII fields exist like email, ssn, etc. in the struct serialization
         let json = serde_json::to_string(&profile).unwrap();
         assert!(!json.contains("email"));
         assert!(!json.contains("password"));
+
+        let invalid = LearnerProfile::new("", 50);
+        assert!(matches!(invalid, Err(ProfileError::InvalidName)));
+
+        let invalid_score = LearnerProfile::new("Test", 100);
+        assert!(matches!(invalid_score, Err(ProfileError::InvalidTargetScore)));
     }
 
-    // REQ-002: cross-domain diagnostic and mastery uncertainty
     #[test]
     fn test_req_002_diagnostic_mastery_uncertainty() {
-        let mastery = Mastery::new();
+        let mut mastery = Mastery::new();
         assert_eq!(mastery.diagnostic_score(), 0.0);
-        assert_eq!(mastery.uncertainty(), 1.0); // high uncertainty initially
+        assert_eq!(mastery.uncertainty(), 1.0);
+
+        mastery.record_observation(1.0);
+        assert!(mastery.uncertainty() < 1.0);
     }
 
-    // REQ-003: daily plan from weakness, due review, AFQT/job goals, time
     #[test]
     fn test_req_003_adaptive_plan() {
-        let plan = AdaptivePlan::generate(
+        let mut plan = AdaptivePlan::generate(
             &Mastery::new(),
             PlanGoal::AFQT(50),
             chrono::Duration::minutes(30),
         );
         assert!(!plan.drills().is_empty());
         assert_eq!(plan.target_duration(), chrono::Duration::minutes(30));
+
+        plan.complete_drill("drill_1");
+        assert!(!plan.drills().contains(&"drill_1".to_string()));
     }
 
-    // REQ-004: GS AR WK PC MK EI AI SI MC AO modeled separately
     #[test]
     fn test_req_004_subtests_modeled() {
         let subjects = vec![
-            Subtest::GS,
-            Subtest::AR,
-            Subtest::WK,
-            Subtest::PC,
-            Subtest::MK,
-            Subtest::EI,
-            Subtest::AI,
-            Subtest::SI,
-            Subtest::MC,
-            Subtest::AO,
+            Subtest::GS, Subtest::AR, Subtest::WK, Subtest::PC,
+            Subtest::MK, Subtest::EI, Subtest::AI, Subtest::SI,
+            Subtest::MC, Subtest::AO,
         ];
         assert_eq!(subjects.len(), 10);
     }
 
-    // REQ-007: paper-style navigation/timing
     #[test]
     fn test_req_007_paper_simulator() {
         let mut sim = PaperSimulator::new(Subtest::AR, chrono::Duration::minutes(36));
@@ -65,19 +64,20 @@ mod domain_tests {
         sim.start();
         assert_eq!(sim.state(), SimulatorState::InProgress);
         assert!(sim.can_navigate_back());
+
+        sim.complete();
+        assert_eq!(sim.state(), SimulatorState::Completed);
     }
 
-    // REQ-009: reject controlled/leaked official question ingestion
     #[test]
     fn test_req_009_reject_official_questions() {
         let result = QuestionIngestion::ingest(SourceType::OfficialLeaked, "Some question text");
-        assert!(matches!(
-            result,
-            Err(IngestionError::ControlledMaterialRejected)
-        ));
+        assert!(matches!(result, Err(IngestionError::ControlledMaterialRejected)));
+
+        let valid = QuestionIngestion::ingest(SourceType::PublicDomain, "Some question text");
+        assert!(valid.is_ok());
     }
 
-    // REQ-021: diff/quarantine/rollback/freshness
     #[test]
     fn test_req_021_quarantine_freshness() {
         let mut pack = ContentPack::new("Pack 1");
@@ -88,7 +88,6 @@ mod domain_tests {
         assert_eq!(pack.status(), ContentStatus::Active);
     }
 
-    // REQ-022: original item + deterministic proof + independent verification
     #[test]
     fn test_req_022_original_item_proof() {
         let item = QuestionItem::new("What is 2+2?", AnswerProof::Deterministic("4".to_string()));
@@ -96,7 +95,6 @@ mod domain_tests {
         assert!(!item.is_derived());
     }
 
-    // REQ-023: signed/versioned/reviewed packs
     #[test]
     fn test_req_023_signed_versioned_packs() {
         let pack = ContentPack::new("Pack 1");
