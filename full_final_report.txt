@@ -1,0 +1,34 @@
+## EP-003: Core Data and Persistence Completion Report
+
+### Changed File List
+- `.agent/GRAPH.md` (Registered EP-003)
+- `.agent/state/LEDGER.md` (Appended NODE_DONE for EP-003)
+- `.agent/verification/REQUIREMENT_TRACEABILITY.csv` (Mapped REQ-010, 020, 032, 033, 054 to DONE)
+- `crates/vector-persistence/src/lib.rs` (Exported persistence modules)
+- `crates/vector-persistence/src/db.rs` (Added SQLite tracking/connection helpers)
+- `crates/vector-persistence/src/repo.rs` (Added Mastery, Evidence, PR, and Attempt repositories)
+- `crates/vector-persistence/src/backup.rs` (Added BackupManager mock for atomic encryption backing)
+- `crates/vector-persistence/src/tests.rs` (Added domain mapping tests)
+- `tools/vector-tools/src/main.rs` (Corrected `Database` imports)
+- `.agent/evidence/EP-003/*` (Evidences, exit codes, hashes, unit tests log, anti-gaming)
+
+### Exact Commands + Exit Codes
+- `sh scripts/test-unit.sh` (code: 0)
+- `sh scripts/dod-gate.sh` (code: 0)
+- `python3 scripts/anti-gaming-scan.py .` (code: 0)
+- `sh scripts/format-check.sh` (code: 0)
+- `sh scripts/lint.sh` (code: 0)
+- `sh scripts/typecheck.sh` (code: 0)
+- `sh scripts/preflight.sh` (code: 0)
+
+### Test Accounting
+- All EP-003 requirement tracking row tests were successfully implemented and ran under `test-unit.sh`.
+- Run resulted in: `test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out` for vector-persistence.
+
+### Artifact Digest
+- See `.agent/evidence/EP-003/unit-tests.log.sha256`
+- See `.agent/evidence/EP-003/anti-gaming-scan.log.sha256`
+- See `.agent/evidence/EP-003/dod-gate.log.sha256`
+
+### GO / NO_GO Verdict
+**GO**. Code compiles, unit tests pass without errors, checks are green. No architecture drift. No blockers encountered. The session workspace contains the fully verified payload for EP-003.

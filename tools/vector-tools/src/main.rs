@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use vector_persistence::{Database, MigrationManager};
+use vector_persistence::db::{Database, MigrationManager};
 
 #[derive(Parser)]
 #[command(name = "vector-tools")]

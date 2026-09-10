@@ -1,20 +1,20 @@
-use rusqlite::{Connection, Result};
-use std::path::Path;
+use rusqlite::Connection;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum DatabaseError {
+    #[error("SQLite error: {0}")]
+    Sqlite(#[from] rusqlite::Error),
+}
 
 pub struct Database {
     conn: Connection,
 }
 
 impl Database {
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let conn = Connection::open(path)?;
-        conn.execute_batch("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;")?;
-        Ok(Self { conn })
-    }
-
-    pub fn open_in_memory() -> Result<Self> {
+    pub fn open_in_memory() -> Result<Self, DatabaseError> {
         let conn = Connection::open_in_memory()?;
-        conn.execute_batch("PRAGMA foreign_keys = ON;")?;
+        conn.execute("CREATE TABLE IF NOT EXISTS migrations (id TEXT PRIMARY KEY, applied_at DATETIME DEFAULT CURRENT_TIMESTAMP)", [])?;
         Ok(Self { conn })
     }
 
@@ -24,42 +24,28 @@ impl Database {
 }
 
 pub struct MigrationManager;
-
 impl MigrationManager {
     pub fn apply_migrations(
         conn: &Connection,
-        sql_migrations: &[(&str, &str)],
-    ) -> anyhow::Result<usize> {
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS schema_migrations (
-                version INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-            );",
-            [],
-        )?;
-
-        let mut applied_count = 0;
-        for (version_str, sql) in sql_migrations {
-            let version: i32 = version_str.parse()?;
-            let count: i32 = conn.query_row(
-                "SELECT COUNT(*) FROM schema_migrations WHERE version = ?1",
-                [version],
-                |row| row.get(0),
-            )?;
-
-            if count == 0 {
-                let tx = conn.unchecked_transaction()?;
-                tx.execute_batch(sql)?;
-                tx.execute(
-                    "INSERT INTO schema_migrations (version, name) VALUES (?1, ?2)",
-                    rusqlite::params![version, version_str],
-                )?;
-                tx.commit()?;
-                applied_count += 1;
+        migrations: &[(&str, &str)],
+    ) -> Result<usize, DatabaseError> {
+        let mut count = 0;
+        for (id, sql) in migrations {
+            let mut stmt = conn.prepare("SELECT 1 FROM migrations WHERE id = ?1")?;
+            if !stmt.exists([id])? {
+                conn.execute_batch(sql)?;
+                conn.execute("INSERT INTO migrations (id) VALUES (?1)", [id])?;
+                count += 1;
             }
         }
+        Ok(count)
+    }
+}
 
-        Ok(applied_count)
+impl Database {
+    pub fn open(path: &str) -> Result<Self, DatabaseError> {
+        let conn = Connection::open(path)?;
+        conn.execute("CREATE TABLE IF NOT EXISTS migrations (id TEXT PRIMARY KEY, applied_at DATETIME DEFAULT CURRENT_TIMESTAMP)", [])?;
+        Ok(Self { conn })
     }
 }
