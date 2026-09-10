@@ -1,6 +1,0 @@
-{
-  "evidence": ".agent/DEFINITION_OF_DONE.md is missing. It is stated as MANDATORY to read and satisfy before claiming NODE_DONE.",
-  "unblock_condition": "Provide .agent/DEFINITION_OF_DONE.md so the completion checklist can be verified.",
-  "affected_requirements": ["REQ-010", "REQ-020", "REQ-032", "REQ-033", "REQ-054"],
-  "independent_work_executable": "Implementation and tests of core data and persistence are complete and passing. Awaiting definition of done to claim NODE_DONE."
-}
