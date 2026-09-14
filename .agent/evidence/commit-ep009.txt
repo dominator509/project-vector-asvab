@@ -1,0 +1,43 @@
+EP-009: packaging and release — node closed
+
+A REAL WINDOWS RELEASE BINARY WAS BUILT AND RUN.
+
+  target/release/vector-desktop.exe — 11,728,384 bytes, sha256 f40c8bb1...
+  Built with the Tauri CLI in release profile, launched as a process, observed
+  running, and then bound into the artifact identity below.
+
+REQ-053 / REQ-037 (artifact identity): six components are bound — binary,
+migrations, content, SBOM, third-party licenses and the build commit. The
+previous implementation bound only four, omitting licenses and the commit, so a
+license change or a different commit would not have invalidated the identity.
+It also hashed the literal string "MISSING" for an absent file, so a manifest
+built from entirely missing inputs still produced a confident-looking digest.
+Missing is now a hard error.
+
+Verification re-derives every digest from disk rather than trusting the
+manifest. Proven live: the real binary verifies clean, and the SAME check
+against a copy with ONE byte flipped fails with an exact recorded-vs-actual
+mismatch.
+
+REQ-041 (SBOM and license gate): the SBOM reads 131 packages actually installed
+in node_modules/.pnpm, because pnpm-lock.yaml records versions but not licenses.
+It refuses to invent them — an unstated license is an error. It found six
+distinct licenses (MIT 110, Apache-2.0 8, ISC 8, BSD-2-Clause 2, BSD-3-Clause 2,
+CC-BY-4.0 1) and correctly surfaced caniuse-lite's CC-BY-4.0 as
+attribution-required rather than waving it through. A third-party notices file
+is generated from the same data.
+
+Also fixed: scripts/build.sh's native-bundling gate probes for glib-2.0, a LINUX
+library, so it reported NOT_RUNNABLE_ENV(headless) on Windows while the native
+build in fact succeeds. That misleading branch is why no real artifact had ever
+been produced.
+
+Evidence: 457 tests passing across 46 binaries, 0 failures. 10/10 mutations
+detected. All eleven COMMANDS.md gates exit 0.
+
+HONEST STATUS: four of this node's eight requirements are PARTIAL, not DONE.
+REQ-036 needs a SIGNED installer — no certificate exists here, and no installer
+was produced. REQ-037's signature half is likewise pending; only digest
+verification is done. REQ-038's manual screen-reader validation and REQ-060's
+trademark clearance are human/legal gates and are recorded in the ledger under
+"External gates" so a release verdict cannot silently treat them as met.

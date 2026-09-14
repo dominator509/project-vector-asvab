@@ -4946,6 +4946,8 @@ name = "vector-platform"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
+ "sha2",
  "vector-domain",
 ]
 
@@ -4990,6 +4992,7 @@ dependencies = [
  "sha2",
  "vector-observability",
  "vector-persistence",
+ "vector-platform",
 ]
 
 [[package]]

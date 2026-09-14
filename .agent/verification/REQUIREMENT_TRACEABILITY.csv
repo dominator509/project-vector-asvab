@@ -34,12 +34,12 @@ REQ-032,official gh; explicit approval; no auto-merge,SPEC-002,EP-003/EP-005,AT-
 REQ-033,atomic integrity-checked optional encrypted backup,SPEC-002,EP-003,AT-REQ-033-EP003,DONE_EXCEPT_OPTIONAL_ENCRYPTION
 REQ-034,forced termination/corruption recovery,SPEC-002/SPEC-004,EP-003/EP-005,AT-REQ-034-EP003,PARTIAL_PERSISTENCE_RECOVERY_DONE_UI_FLOW_PENDING
 REQ-035,portable local export and full deletion,SPEC-004,EP-005,AT-REQ-035-EP005,DONE_A11Y_SETTINGS_AND_PRIVACY_CONTROLS
-REQ-036,signed Windows artifact + clean install/upgrade/uninstall,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-036,PENDING
-REQ-037,signature/hash/atomic stage/rollback,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-037,PENDING
-REQ-038,WCAG 2.2 AA + keyboard/Narrator/NVDA,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-038,PENDING
-REQ-039,startup/UI/DB/search/background-work SLOs,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-039,PENDING
-REQ-040,local redacted structured health/diagnostics,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-040,PENDING
-REQ-041,SBOM and commercial license release gate,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-041,PENDING
+REQ-036,signed Windows artifact + clean install/upgrade/uninstall,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-036-EP009,PARTIAL_UNSIGNED_BINARY_BUILT_AND_RUNS_INSTALLER_AND_SIGNING_PENDING
+REQ-037,signature/hash/atomic stage/rollback,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-037-EP009,PARTIAL_DIGEST_VERIFY_AND_TAMPER_DETECTION_DONE_SIGNATURE_PENDING
+REQ-038,WCAG 2.2 AA + keyboard/Narrator/NVDA,SPEC-004,EP-000/EP-001/EP-009,AT-REQ-038-EP005,PARTIAL_AUTOMATED_A11Y_DONE_MANUAL_SCREEN_READER_EXTERNAL_GATE
+REQ-039,startup/UI/DB/search/background-work SLOs,SPEC-007,EP-000/EP-001/EP-009,AT-REQ-039-EP009,PARTIAL_SLO_TRACKER_AND_PERF_BOUNDS_DONE_ARTIFACT_SLO_PENDING
+REQ-040,local redacted structured health/diagnostics,SPEC-007,EP-000/EP-001/EP-009,AT-REQ-040-EP008,PARTIAL_EVENTS_AND_HEALTH_STATES_DONE_HEALTH_UI_PENDING
+REQ-041,SBOM and commercial license release gate,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-041-EP009,DONE_SBOM_131_PACKAGES_AND_LICENSE_POLICY_ENFORCED
 REQ-042,all core study functions with network disabled,SPEC-003,EP-004/EP-006,AT-REQ-042-EP004,DONE_CORE_CLASSIFICATION_ENFORCED
 REQ-043,spaced repetition FSRS-compatible review engine,SPEC-003,EP-004/EP-006,AT-REQ-043-EP004,DONE_FSRS_ENGINE
 REQ-044,local FTS across lessons/errors/evidence,SPEC-004,EP-005,AT-REQ-044-EP005,DONE_LOCAL_SEARCH
@@ -51,11 +51,11 @@ REQ-049,"internal calibration, no official psychometric equivalence claim",SPEC-
 REQ-050,"sandbox parsing, license/trust checks, prompt-injection isolation",SPEC-002,EP-007,AT-REQ-050-EP007,DONE_INGESTION_SANDBOX
 REQ-051,crash-loop recovery without deleting learner data,SPEC-006,EP-007,AT-REQ-051-EP007,DONE_SAFE_MODE_NON_DESTRUCTIVE_LADDER
 REQ-052,"telemetry off, no sensitive enlistment-screening data",SPEC-005,EP-007,AT-REQ-052-EP007,DONE_TELEMETRY_OFF_AND_SCREENING_PROHIBITED
-REQ-053,bind binary+migrations+content+SBOM,SPEC-008,EP-007/EP-009,AT-REQ-053,PENDING
+REQ-053,Artifact identity bind binary+migrations+content+SBOM,SPEC-008,EP-007/EP-009,AT-REQ-053-EP009,DONE_SIX_COMPONENT_IDENTITY_LIVEFIRED
 REQ-054,idempotent attempts and safe DB/background workers,SPEC-002,EP-003/EP-007/EP-009,AT-REQ-054-EP003,PARTIAL_EP003_IDEMPOTENCY_DONE_WORKERS_PENDING
 REQ-055,optional user-entered official scores clearly typed as external,SPEC-003,EP-007,AT-REQ-055-EP007,DONE_EXTERNAL_SCORE_TYPING
 REQ-056,every active item has objective/source/proof/review/hash,SPEC-002,EP-007,AT-REQ-056-EP007,DONE_ITEM_PROVENANCE_AND_LIFECYCLE
 REQ-057,prompt egress classification and disclosure,SPEC-005,EP-008,AT-REQ-057-EP008,DONE_EGRESS_CLASSIFIER_AND_EVENT_CLASSES
 REQ-058,adapter support fails closed on stale policy evidence,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-058,PENDING
 REQ-059,future sync seam disabled SyncPort without cloud dependency,SPEC-003,EP-008,AT-REQ-059-EP008,DONE_SYNCPORT_DISABLED
-REQ-060,working title requires trademark/name clearance before GA,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-060,PENDING
+REQ-060,working title requires trademark/name clearance before GA,SPEC-008,EP-009,AT-REQ-060-EP009,BLOCKED_EXTERNAL_LEGAL_CLEARANCE_REQUIRED

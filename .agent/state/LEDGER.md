@@ -11,3 +11,16 @@
 | EP-006 | NODE_DONE | 2026-09-10T18:00:00Z | .agent/evidence/EP-006 |
 | EP-007 | NODE_DONE | 2026-09-10T22:00:00Z | .agent/evidence/EP-007 |
 | EP-008 | NODE_DONE | 2026-09-11T04:00:00Z | .agent/evidence/EP-008 |
+| EP-009 | NODE_DONE | 2026-09-11T10:00:00Z | .agent/evidence/EP-009 |
+
+## External gates (not blockers of the node)
+
+These are requirements whose evidence cannot be produced inside this repository.
+They are recorded here so a release verdict does not silently treat them as met.
+
+| Requirement | Gate | Why it cannot be satisfied here |
+|---|---|---|
+| REQ-036 | Windows code signing certificate | Signing requires a private key held by the release owner. An unsigned binary was built and executed; signing is a release-authority action. |
+| REQ-038 | Manual screen-reader validation (Narrator/NVDA) | Requires a human using assistive technology. Automated checks exist; they do not substitute. PREFLIGHT PF-017. |
+| REQ-060 | Trademark / name clearance | A legal judgement with no in-repo evidence. Must be resolved before GA. |
+

@@ -1,0 +1,36 @@
+{
+  "components": [
+    {
+      "component": "Binary",
+      "digest": "f40c8bb1bd8274b1606e91704d5d1b8a362ea4f3d77e33d0dbcf18244d26ee93",
+      "bytes": 11728384
+    },
+    {
+      "component": "Migrations",
+      "digest": "be59b1317bc984a2e5b13aeea51eb0a41943caff81783018bca97881233de1c3",
+      "bytes": 4384
+    },
+    {
+      "component": "Content",
+      "digest": "2d38d74671d1db4d571638ddb7cfeac5f78df817951df04b8f79896eb9247c53",
+      "bytes": 411
+    },
+    {
+      "component": "Sbom",
+      "digest": "dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42",
+      "bytes": 19132
+    },
+    {
+      "component": "Licenses",
+      "digest": "538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8",
+      "bytes": 4222
+    },
+    {
+      "component": "GitSha",
+      "digest": "3ca57643dfc7a12fc530234de02ca27dc46f64ebdbcf00e8a2f00e77090da4e2",
+      "bytes": null
+    }
+  ],
+  "identity_digest": "35df37e5a55810a4ed6e1b01d1b98eb2adfda39dae8b15727ec1aec01b7d7182",
+  "version": "0.1.0"
+}

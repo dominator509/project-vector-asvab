@@ -1,0 +1,86 @@
+{
+  "node_id": "EP-009",
+  "requirement_ids": ["REQ-036", "REQ-037", "REQ-041", "REQ-053"],
+  "status_requested": "DONE_VERIFIED",
+  "production_entrypoints_exercised": [
+    "vector-tools `artifact-identity` building an identity from the real release binary",
+    "vector-tools `artifact-identity --verify` re-deriving digests from files on disk",
+    "vector-tools `sbom` reading 131 installed packages and rendering SPDX",
+    "Tauri release build producing target/release/vector-desktop.exe",
+    "the release binary launched as a real process (PID observed, survived 5 seconds)"
+  ],
+  "real_code_paths_exercised": [
+    "crates/vector-platform/src/release.rs (identity, verification, SBOM, notices, lockfile and manifest parsing)",
+    "tools/vector-tools/src/main.rs (artifact-identity and sbom commands)",
+    "apps/desktop/src-tauri (Tauri release build)"
+  ],
+  "real_dependencies_exercised": [
+    "Tauri 2.11 CLI building a native Windows binary in release profile",
+    "sha2 for artifact digests",
+    "the real pnpm dependency tree (131 installed packages) for license data",
+    "rusqlite, serde, chrono as compiled into the shipped binary"
+  ],
+  "side_effects_produced": [
+    "target/release/vector-desktop.exe — an 11,728,384-byte release binary",
+    ".agent/evidence/EP-009/sbom.spdx — 659-line SPDX 2.3 document",
+    ".agent/evidence/EP-009/THIRD_PARTY_NOTICES.md — 137-line notices file",
+    ".agent/evidence/EP-009/artifact_identity.json — a six-component identity",
+    "Evidence logs with exit codes and SHA-256 hashes"
+  ],
+  "independent_readbacks": [
+    "The recorded identity was re-verified by re-reading every file from disk and re-deriving each digest, not by trusting the manifest",
+    "The release binary was executed and observed as a running process",
+    "The SBOM was regenerated from installed package manifests rather than from the lockfile's version list",
+    "License counts were cross-checked by grouping the rendered SPDX output"
+  ],
+  "negative_cases_verified": [
+    "A byte-flipped copy of the release binary FAILS verification with an exact recorded-vs-actual mismatch",
+    "A missing artifact file fails verification",
+    "A forged binding digest fails verification even when components are intact",
+    "A missing identity component is a hard error, not a placeholder",
+    "A present-but-empty component digest is refused",
+    "An empty SBOM is refused",
+    "An unstated or blank license is refused",
+    "GPL-3.0-only, AGPL-3.0-only, SSPL-1.0 and BUSL-1.1 are refused",
+    "CC-BY-4.0 is permitted but reported as attribution-required rather than silently accepted"
+  ],
+  "non_fixture_inputs_verified": [
+    "The identity binds the real 11.19 MB release binary, the real migrations file, the real built index.html, the real generated SBOM, the real generated notices file, and the actual git SHA",
+    "License data comes from the 131 packages actually installed in node_modules/.pnpm, not a hand-written list",
+    "Tamper detection was proven against a real byte flip in a copy of the shipped binary"
+  ],
+  "mutation_checks": [
+    "10 meaningful mutations attempted, 10 detected",
+    "Missing component, empty component, order-dependent digest, unnormalized line endings, skipped digest comparison, skipped binding re-derivation all detected",
+    "Empty SBOM, unstated license defaulted, allowlist not enforced, attribution not reported all detected",
+    "Recorded in .agent/evidence/EP-009/mutation-proof.txt"
+  ],
+  "forbidden_patterns_scanned": true,
+  "test_files_modified_during_node": [
+    "crates/vector-platform/src/release.rs (clippy: manual_contains replaced with contains(), useless format! replaced with a literal)"
+  ],
+  "gate_files_modified_during_node": [],
+  "skipped_tests": [],
+  "mocked_final_paths": [],
+  "hardcoded_fixture_risks": [
+    "The migration and content paths passed to artifact-identity in evidence are single representative files rather than a directory digest; a directory-level digest is the correct eventual form for content packs"
+  ],
+  "catch_and_ignore_risks": [
+    "scripts/build.sh reports NOT_RUNNABLE_ENV(headless) for native Tauri bundling because it probes for glib-2.0, a Linux library. On Windows the native build SUCCEEDS, so that branch is misleading here. The real Tauri release build was run directly and produced the artifact."
+  ],
+  "verdict": "PASS",
+  "reason": "The release artifact identity is real and live-fired. A genuine 11.19 MB Windows release binary was built with the Tauri CLI, executed as a process, and bound into a six-component identity alongside the real migrations file, built content, generated SBOM, generated third-party notices and the actual git SHA. Verification re-derives every digest from disk and detects a single-byte tamper with an exact mismatch. The SBOM reads 131 installed packages and correctly refuses to invent licenses, surfacing the one attribution-required dependency (caniuse-lite, CC-BY-4.0) rather than waving it through. 10 of 10 mutations detected.",
+  "real_vulnerabilities_found": [
+    "The previous artifact-identity implementation substituted the literal string \"MISSING\" for an absent file and hashed that, so a manifest built from entirely missing inputs still produced a confident-looking digest. Missing is now a hard error.",
+    "The previous implementation bound only four components and omitted the third-party licenses and the build commit, so a license change or a different commit would not have invalidated the identity.",
+    "scripts/build.sh's native-bundling gate probes for glib-2.0 (a Linux library) and therefore reports NOT_RUNNABLE_ENV on Windows even though the native build succeeds. It masked the fact that a real Windows artifact was buildable."
+  ],
+  "known_limitations": [
+    "REQ-036 requires a SIGNED Windows installer with clean install/upgrade/uninstall. A release binary exists and runs, but no installer was produced and NO CODE SIGNING was performed — no certificate is available in this environment. REQ-036 is therefore recorded as PARTIAL, not DONE.",
+    "The build is unsigned, so an updater would be unable to verify it. Updater metadata and the update/rollback drill are not implemented.",
+    "REQ-038 (WCAG 2.2 AA with Narrator/NVDA validation) is not claimed. Automated accessibility checks exist from EP-005; manual screen-reader validation is an external human gate (PREFLIGHT PF-017).",
+    "REQ-039 (SLOs) and REQ-040 (health/diagnostics) remain partially addressed: EP-008 implements structured events and health states, but no SLO measurement runs against the shipped artifact.",
+    "REQ-060 (trademark/name clearance) is a legal judgement with no in-repo evidence; it is recorded as an open external gate rather than satisfied.",
+    "The content component of the identity is a single index.html file rather than a content-pack directory digest."
+  ]
+}

@@ -1,0 +1,68 @@
+=== EP-009 MUTATION / NEGATIVE PROOF — release identity and SBOM ===
+
+--------------------------------------------------------------------------------
+ARTIFACT IDENTITY (REQ-037, REQ-053)
+
+MUT-R1: missing component allowed
+  change : release.rs  "None => Err(MissingComponent)" -> "None => continue"
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+MUT-R2: empty component allowed
+  change : release.rs  EmptyComponent check removed
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+MUT-R3: identity digest becomes order-dependent
+  change : release.rs  component sort removed before hashing
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+MUT-R4: line endings not normalized before hashing
+  change : release.rs  of_text hashes raw bytes
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+MUT-R5: verification skips the digest comparison
+  change : release.rs  "if actual.digest != recorded.digest" -> "if false"
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+MUT-R6: binding digest not re-derived during verification
+  change : release.rs  "if derived != self.identity_digest" -> "if false"
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+SBOM AND LICENSE POLICY (REQ-041)
+
+MUT-R7: empty SBOM accepted
+  change : release.rs  SbomError::Empty check removed
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+MUT-R8: unstated license treated as MIT
+  change : release.rs  UnknownLicense error replaced with a default
+  result : FAILED (23 passed; 1 failed)          verdict: DETECTED
+
+MUT-R9: license allowlist not enforced
+  change : release.rs  IncompatibleLicense check disabled
+  result : FAILED (22 passed; 2 failed)          verdict: DETECTED
+
+MUT-R10: attribution duty not reported
+  change : release.rs  attribution_required never matches
+  result : FAILED (22 passed; 2 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+LIVE-FIRE NEGATIVE PROOF (recorded in livefire.log)
+
+  Identity built from the real 11,728,384-byte release binary verifies clean
+  against the files on disk (exit 0).
+
+  The SAME verification against a copy of the binary with ONE byte flipped
+  fails with an exact mismatch:
+    "component binary does not match: recorded f40c8bb1..., actual 5f8683cd..."
+  (exit 1)
+
+  This is the property REQ-037 depends on: verification re-derives digests from
+  the artifact rather than trusting a recorded manifest.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted : 10
+  detected                       : 10
+  live-fire tamper detection     : 1 byte flip detected with exact digest mismatch
+  workspace tests after restore  : 457 passing across 46 binaries, 0 failures
