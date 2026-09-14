@@ -129,10 +129,14 @@ fn more_reviews_produce_longer_intervals_for_the_same_rating() {
 
 #[test]
 fn higher_desired_retention_produces_shorter_intervals() {
-    let mut low = FsrsParameters::default();
-    low.desired_retention = 0.75;
-    let mut high = FsrsParameters::default();
-    high.desired_retention = 0.97;
+    let low = FsrsParameters {
+        desired_retention: 0.75,
+        ..FsrsParameters::default()
+    };
+    let high = FsrsParameters {
+        desired_retention: 0.97,
+        ..FsrsParameters::default()
+    };
 
     let low_fsrs = Fsrs::new(low).expect("valid");
     let high_fsrs = Fsrs::new(high).expect("valid");
@@ -208,26 +212,38 @@ fn intervals_are_clamped_to_sane_bounds() {
 
 #[test]
 fn invalid_parameters_are_rejected_at_the_boundary() {
-    let mut bad_retention = FsrsParameters::default();
-    bad_retention.desired_retention = 1.0;
+    let bad_retention = FsrsParameters {
+        desired_retention: 1.0,
+        ..FsrsParameters::default()
+    };
     assert!(
         Fsrs::new(bad_retention).is_err(),
         "retention 1.0 must be refused"
     );
 
-    let mut zero = FsrsParameters::default();
-    zero.desired_retention = 0.0;
+    let zero = FsrsParameters {
+        desired_retention: 0.0,
+        ..FsrsParameters::default()
+    };
     assert!(Fsrs::new(zero).is_err(), "retention 0.0 must be refused");
 
-    let mut negative = FsrsParameters::default();
-    negative.w[3] = -1.0;
+    let mut negative_weights = FsrsParameters::default().w;
+    negative_weights[3] = -1.0;
+    let negative = FsrsParameters {
+        w: negative_weights,
+        ..FsrsParameters::default()
+    };
     assert!(
         Fsrs::new(negative).is_err(),
         "negative weight must be refused"
     );
 
-    let mut nan = FsrsParameters::default();
-    nan.w[0] = f64::NAN;
+    let mut nan_weights = FsrsParameters::default().w;
+    nan_weights[0] = f64::NAN;
+    let nan = FsrsParameters {
+        w: nan_weights,
+        ..FsrsParameters::default()
+    };
     assert!(Fsrs::new(nan).is_err(), "NaN weight must be refused");
 }
 

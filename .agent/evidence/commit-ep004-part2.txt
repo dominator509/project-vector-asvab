@@ -1,0 +1,33 @@
+EP-004 (part 2): model transport router, provider policy gates, real icons
+
+REQ-015 (provider-neutral transport contract) and REQ-014/016/017/018/019
+(per-provider policy), encoding the AI_TRANSPORTS.md hard rules as enforced,
+tested behavior rather than prose:
+
+- transport.rs: ModelTransport declares id, documented transport, auth owner,
+  billing mode, capabilities, privacy class, dated policy record and health.
+  select_transport() is the single routing enforcement point and refuses with a
+  typed reason, preferring the local adapter when several are eligible (ADR-003).
+- Rule 5: a stale, revoked, future-dated or malformed policy record disables the
+  adapter. Staleness fails closed: an unverified-recently policy is not assumed
+  to still hold.
+- Rule 6: a LocalOnly request can never select a network provider. If no local
+  adapter qualifies the request FAILS rather than silently leaking.
+- Rule 4: API-key environment variables are scrubbed for subscription lanes so
+  a native client cannot silently fall back to metered billing; an explicitly
+  chosen API lane keeps its key.
+- Rule 7: provider text is bounded and NUL-checked before use.
+- REQ-019/ADR-006: the Gemini CLI OAuth bridge is modelled as an explicitly
+  disabled adapter and is unreachable even when its client is healthy.
+
+Fixes a pre-existing blocker: every Tauri icon was a 70-byte PNG placeholder
+saved under .ico/.icns extensions. This made `cargo test --workspace` fail
+outright ("resource file ... is not in 3.00 format"), so the full workspace
+could not be tested at all. scripts/generate-icons.py now produces genuine
+multi-resolution ICO (6 sizes), ICNS (7 sizes) and the PNGs tauri.conf.json
+references.
+
+Evidence: 18 transport tests. 7/7 security-critical mutations detected (privacy
+gate, disabled flag, policy permit, staleness, key scrubbing, output bound,
+capability filter). Workspace: 76 tests passing across 28 binaries, all
+COMMANDS.md gates exit 0.
