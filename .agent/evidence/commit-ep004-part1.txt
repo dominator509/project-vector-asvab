@@ -1,0 +1,28 @@
+EP-004 (part 1): FSRS scheduling and adaptive study planning
+
+Implements the learning-mechanics half of EP-004 on top of the EP-003
+persistence layer.
+
+REQ-043 (FSRS-compatible review engine):
+- fsrs.rs implements the FSRS-4.5 memory model: power forgetting curve
+  R(t) = (1 + t/(9S))^-1, its inverse for retention-targeted intervals,
+  initial stability/difficulty curves, difficulty mean reversion, stability
+  growth on success, and stability collapse on lapse.
+- Parameters are a persisted 17-weight structure with validation, so a
+  schedule is reproducible from stored state (SPEC-001) and a corrupt
+  parameter set is refused rather than silently producing nonsense.
+
+REQ-011 (readiness) and REQ-003 (adaptive plan):
+- selection.rs replaces the previous placeholder planner that returned
+  hard-coded "drill_1"/"drill_2" names. Priority now derives from real
+  inputs: due reviews, mastery distance from goal, and estimate uncertainty.
+- Readiness is emitted as a band that widens with uncertainty and subtest
+  disagreement. official_score_claim is always false (ADR-010,
+  SCORING_AND_READINESS.md): no precise predicted score before a validation
+  cohort exists.
+- A learner at goal with nothing due receives an EMPTY plan, so the planner
+  cannot pad the schedule with busy-work.
+
+Evidence: 25 tests (13 FSRS + 12 selection). 8/8 meaningful mutations detected,
+including lapse handling, forgetting-curve inversion, stability growth,
+due-review weighting, time-budget enforcement, and the readiness-band width.
