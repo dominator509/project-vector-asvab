@@ -45,10 +45,22 @@ CASES = [
         True,
     ),
     (
-        "shell-style placeholder must FAIL",
-        "bad_shell.sh",
-        f'echo "deploying to {SHELL_PARAM}"',
+        "shell-style placeholder in a Markdown doc must FAIL",
+        "bad_shell.md",
+        f"Deploy to {SHELL_PARAM} before continuing.",
         True,
+    ),
+    (
+        "shell-style expansion in CODE must PASS (it is real syntax)",
+        "ok_code.ts",
+        f"const url = `http://{SHELL_PARAM}/api`;",
+        False,
+    ),
+    (
+        "shell-style expansion in a shell script must PASS (real syntax)",
+        "ok_script.sh",
+        f'echo "deploying to {SHELL_PARAM}"',
+        False,
     ),
     (
         "angle placeholder must FAIL",

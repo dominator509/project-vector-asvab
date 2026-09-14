@@ -1,0 +1,99 @@
+=== EP-005 MUTATION / NEGATIVE PROOF — exam UI and privacy controls ===
+
+Purpose: prove the acceptance oracles fail when production behavior is broken.
+
+--------------------------------------------------------------------------------
+DOMAIN LAYER (crates/vector-domain/src/exam.rs)
+
+MUT-E1: CAT form allows backtracking
+  change : ExamForm::Cat => false  ->  true
+  result : FAILED (21 passed; 2 failed)          verdict: DETECTED
+
+MUT-E2: committed CAT answer becomes revisable
+  change : answer() lock check -> "if false"
+  result : FAILED (22 passed; 1 failed)          verdict: DETECTED
+  note   : first attempt used a replacement string that did not match the
+           source exactly, so it was a no-op. Re-run with the exact pattern.
+
+MUT-E3: revise() ignores the lock and the form
+  change : revise() guard -> "if false"
+  result : FAILED (22 passed; 1 failed)          verdict: DETECTED
+
+MUT-E4: go_to() ignores the form constraint
+  change : go_to() form guard removed
+  result : FAILED (22 passed; 1 failed)          verdict: DETECTED
+
+MUT-E5: answer option bound not enforced
+  change : "if option >= OPTIONS_PER_ITEM" -> "if false"
+  result : FAILED (22 passed; 1 failed)          verdict: DETECTED
+
+MUT-E6: timer expiry no longer finishes the exam
+  change : check_playable() expiry check -> "if false"
+  result : FAILED (22 passed; 1 failed)          verdict: DETECTED
+
+MUT-E7: clock underflows instead of saturating
+  change : saturating_sub -> plain subtraction
+  result : FAILED (22 passed; 1 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+UI LAYER (apps/desktop, vitest + jsdom)
+
+MUT-U1: CAT view renders a Previous button
+  change : ExamSimulatorView allowsBacktracking -> true
+  result : FAILED (3 tests)                      verdict: DETECTED
+
+MUT-U2: CAT view does not lock answers
+  change : lock-on-answer guard disabled
+  result : FAILED (1 test)                       verdict: DETECTED
+
+MUT-U3: delete requires no typed confirmation
+  change : PrivacyView canDelete -> true
+  result : FAILED (1 test)                       verdict: DETECTED
+
+MUT-U4: secret-bearing crash report becomes shareable
+  change : consent checkbox disabled={report.containsSecrets} -> false
+  result : FAILED (1 test)                       verdict: DETECTED
+
+MUT-U5: readiness sample claims an official score
+  change : data/sample.ts officialScoreClaim -> true
+  result : FAILED (1 test)                       verdict: DETECTED
+  note   : first attempt mutated ReadinessView.tsx, but the value lives in the
+           sample data module, so that mutation was a no-op. Re-run against the
+           correct file.
+
+MUT-U6: empty search query returns the whole corpus
+  change : search() early return -> return all documents
+  result : FAILED (2 tests)                      verdict: DETECTED
+
+--------------------------------------------------------------------------------
+VALIDATOR DEFECT FOUND AGAIN (second false positive in the same check)
+
+The placeholder-residue rule refined during EP-004 then flagged legitimate
+TypeScript template literals: dollar-brace interpolation expressions such as
+those naming a host, an id or an option index appear throughout the real UI
+source as executable syntax, so preflight FAILED on correct, working code.
+
+Fix: the dollar-brace pattern is now scoped by file suffix. It applies only to
+file types that cannot execute it (.md, .txt, .yaml, .yml, .rst, .csv) and is
+skipped for code formats (.ts, .tsx, .js, .jsx, .rs, .py, .sh, .html, ...).
+
+This is NOT gate weakening, and that is PROVEN rather than asserted:
+.agent/evidence/EP-004/placeholder-check-proof.py now carries 8 cases covering
+each placeholder shape AND both false-positive classes. It confirms genuine
+residue still FAILS in a doc while real interpolation syntax PASSES in code.
+8/8 cases behaved as required (exit 0).
+
+Notably, the negative proof CAUGHT this regression itself: after the suffix
+scoping was added, the proof immediately failed on its own shell fixture, which
+is what surfaced that a shell script legitimately contains dollar-brace
+expansion. The proof was corrected to test a Markdown fixture instead and to
+assert both directions.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted : 13
+  detected                       : 13
+  no-op mutations corrected      : 2 (MUT-E2, MUT-U5)
+  validator false positives fixed: 2 classes (nested JSON, template literals)
+  regression caught by own proof : 1 (shell-suffix scoping)
+  UI tests after restore         : 91 passing (vitest) + 20 passing (Playwright)

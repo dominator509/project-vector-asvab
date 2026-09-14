@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "test:unit": "pnpm --filter desktop test:unit",
+    "test:e2e": "pnpm --filter desktop build && pnpm --filter desktop test:e2e",
     "build": "pnpm --filter desktop build",
     "tauri": "tauri",
     "typecheck": "pnpm --filter desktop typecheck",

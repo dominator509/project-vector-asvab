@@ -1,0 +1,83 @@
+{
+  "node": "EP-005",
+  "reviewed_at": "2026-09-10",
+  "verdict": "PASS",
+  "requirements_covered": [
+    "REQ-005", "REQ-006", "REQ-029", "REQ-030",
+    "REQ-031", "REQ-034", "REQ-035", "REQ-044"
+  ],
+  "requirements_delivered": {
+    "REQ-005": "Practice view with custom drills, worked solutions, per-distractor rationales, confidence capture and an error notebook. All exercised by vitest and a Playwright E2E flow.",
+    "REQ-006": "Exam simulation domain rules in vector-domain::exam plus the CAT/paper UI. CAT forbids backtracking and commits each answer; paper allows review and revision. Timing profiles are versioned and source-dated.",
+    "REQ-029": "Crash center surfaces redaction status and per-report pass count, and blocks sharing while a report still contains secrets.",
+    "REQ-035": "Accessibility settings (contrast, motion, focus, verbose announcements, spacing, font scale) plus a portable local export control and a fully-deleting delete path gated behind a typed confirmation.",
+    "REQ-044": "Local full-text search across lessons, error notebook and evidence, with category filters, prefix matching, deterministic ranking and snippets."
+  },
+  "requirements_deferred_with_reason": {
+    "REQ-030": "The repair-bundle consent manifest UI entry point exists in the privacy center, but deterministic bundle generation (diagnostics, repro steps, hashes) is EP-008 work. No bundle is produced by this node and none is claimed.",
+    "REQ-031": "The repair broker (isolated worktree + coding agent + GraphLock) is EP-008 work. The PR record store it will use landed in EP-003; no broker runs here.",
+    "REQ-034": "Forced-termination and corruption recovery are covered at the persistence layer by EP-003 (WAL, digest-verified restore, corruption rejection). No EP-005 UI recovery flow is claimed beyond that."
+  },
+  "stub_check": {
+    "verdict": "PASS",
+    "note": "No stub or placeholder production behaviour was added. A previous vacuous test (expect(true).toBe(true)) was deleted and replaced with real DOM-driven assertions. Views whose content belongs to a later node render an explicitly labelled 'delivered by a later node' note rather than fabricated content.",
+    "files_reviewed": [
+      "apps/desktop/src/App.tsx",
+      "apps/desktop/src/app/views.ts",
+      "apps/desktop/src/accessibility/settings.ts",
+      "apps/desktop/src/search/search.ts",
+      "apps/desktop/src/views/PracticeView.tsx",
+      "apps/desktop/src/views/ExamSimulatorView.tsx",
+      "apps/desktop/src/views/ReadinessView.tsx",
+      "apps/desktop/src/views/ReviewQueueView.tsx",
+      "apps/desktop/src/views/PrivacyView.tsx",
+      "apps/desktop/src/views/SearchView.tsx",
+      "apps/desktop/src/views/AccessibleSettings.tsx",
+      "crates/vector-domain/src/exam.rs"
+    ]
+  },
+  "thin_test_check": {
+    "verdict": "PASS",
+    "note": "111 tests across three suites. Behaviour is asserted through roles, accessible names and user events rather than implementation details, so the tests fail when real behaviour breaks (proven by 13/13 detected mutations).",
+    "test_count": 111,
+    "suites": {
+      "vitest": {
+        "App.test.tsx": 14,
+        "views/views.test.tsx": 48,
+        "search/search.test.ts": 19,
+        "accessibility/settings.test.ts": 10
+      },
+      "playwright_e2e": 20,
+      "rust_exam": 23
+    }
+  },
+  "evidence_sticker_check": {
+    "verdict": "PASS",
+    "note": "Evidence is real command output with exit codes and SHA-256 hashes. The E2E suite runs against the production `dist/` bundle served by vite preview, not a dev server, so the artifact itself is exercised."
+  },
+  "test_weakening_check": {
+    "verdict": "PASS",
+    "note": "No assertion was deleted, skipped or loosened. The vacuous placeholder test was replaced with stronger coverage; two tests that carried an unused setup variable were strengthened to actually drive the interaction."
+  },
+  "real_defects_found_and_fixed": [
+    "Playwright could not start the preview server: vite preview binds to `localhost`, which resolved to IPv6 ::1 only, while Playwright probed IPv4 127.0.0.1, producing a 120s startup timeout rather than a test failure. The host is now pinned explicitly to 127.0.0.1 in both the command and the base URL.",
+    "test:e2e was referenced by scripts/test-e2e.sh but did not exist in any package.json, so the E2E gate could never pass. The script is now defined at both the root and the desktop package.",
+    "The exam timer had a setState function that was never wired up, so the countdown never ran. It is now a real interval that saturates at zero and submits the exam, matching the domain rules.",
+    "Clipy flagged ExamSession::next() as confusable with std::iter::Iterator::next; renamed to advance() for an unambiguous public API.",
+    "Three unused-variable typecheck errors (TS6133) blocked the build; the tests that carried them were strengthened rather than silenced."
+  ],
+  "validator_defect_found_and_fixed": {
+    "file": "scripts/validate-generated-pack.py",
+    "defect": "The placeholder-residue check (already narrowed once during EP-004 for nested JSON) then flagged legitimate TypeScript template literals such as `${id}` and `${optionIndex}` as unrendered placeholders, failing preflight against correct, executable UI source.",
+    "fix": "The `${...}` pattern is now scoped by file suffix: it applies only to formats that cannot execute it (.md, .txt, .yaml, .yml, .rst, .csv) and is skipped for source formats.",
+    "is_this_gate_weakening": "NO, and it is proven. .agent/evidence/EP-004/placeholder-check-proof.py was extended to 8 cases covering every placeholder shape plus both known false-positive classes, asserting that genuine residue still FAILS in a document while real interpolation syntax PASSES in code. 8/8 behaved as required.",
+    "proof_note": "The proof caught this regression itself: it initially failed on its own .sh fixture, which is what revealed that a shell script legitimately contains `${...}`.",
+    "proof_artifact": ".agent/evidence/EP-005/placeholder-negative-proof.log"
+  },
+  "known_limitations": [
+    "The UI runs against sample data in apps/desktop/src/data/sample.ts. It is not yet wired to the Rust persistence layer through Tauri IPC; that integration belongs to the desktop-shell work that follows. No end-to-end claim is made that a learner's real attempts reach SQLite from the UI.",
+    "Several views (onboarding, diagnostic, lesson, explore, evidence, tutor, content, providers) are registered in navigation with an explicit 'delivered by a later node' note. They are reachable and keyboard-operable but their content is not built.",
+    "The test-mode chrome suppression is asserted as 'the exam view renders without the today-plan chrome alongside it'. Full distraction suppression across every view is not claimed.",
+    "Human accessibility validation (PREFLIGHT PF-017) remains an external gate. Automated checks cover roles, names, keyboard operation and ARIA attributes; they do not replace testing with assistive-technology users."
+  ]
+}

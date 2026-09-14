@@ -1,0 +1,54 @@
+EP-005: user interface, accessibility and local search — node closed
+
+Delivers the primary UI surface (SPEC-004) with real components, real keyboard
+operation and a Playwright E2E suite against the production bundle.
+
+REQ-006 (CAT/paper exam UX):
+- vector-domain/src/exam.rs models the behavioural constraint that matters: the
+  CAT form commits each answer and forbids backtracking, while the paper form
+  allows review and revision. Timing profiles are versioned and source-dated.
+- The UI does not render a back control at all on the CAT form. A disabled
+  button would imply the action is sometimes available, which is false.
+
+REQ-005 (practice): drills with worked solutions, per-distractor rationales,
+confidence capture and an error notebook.
+
+REQ-035 (accessibility): contrast, reduced motion, always-visible focus, verbose
+announcements, relaxed spacing and a bounded font scale, plus portable export
+and a full-delete path gated behind a typed confirmation.
+
+REQ-044 (search): local full-text search across lessons, error notebook and
+evidence with category filters, prefix matching and deterministic ranking.
+
+REQ-029: crash center surfaces redaction status and blocks sharing while a
+report still contains secrets.
+
+The application shell provides a skip link, navigation/main landmarks, roving
+arrow-key navigation, Home/End support, aria-current on the active view and a
+polite live region announcing navigation.
+
+Test infrastructure that was missing entirely and is now wired:
+- jsdom + @testing-library/react + user-event + jest-dom for component tests.
+- Playwright for E2E, with test:e2e defined in the root and desktop package.json
+  (scripts/test-e2e.sh had always called it, but it did not exist, so the E2E
+  gate could never pass).
+- The previous vacuous test asserting `expect(true).toBe(true)` was deleted and
+  replaced with real DOM-driven assertions.
+
+Defects fixed:
+- Playwright could not start the preview server: vite preview bound to
+  `localhost` (IPv6 ::1) while Playwright probed IPv4, giving a 120s timeout
+  rather than a test failure. Host is now pinned to 127.0.0.1 on both sides.
+- The exam timer's state setter was never wired up, so the countdown never ran.
+  It is now a real interval that saturates at zero and submits, matching the
+  domain rules.
+- The placeholder validator (already narrowed in EP-004 for nested JSON) then
+  flagged legitimate TypeScript template literals as unrendered placeholders.
+  The dollar-brace pattern is now scoped by file suffix. Proven not to be gate
+  weakening: the negative proof was extended to 8 cases covering every
+  placeholder shape and both false-positive classes; 8/8 behaved as required.
+  The proof caught this regression itself.
+
+Evidence: 91 vitest tests + 20 Playwright E2E tests against the production
+build + 23 Rust exam tests. 13/13 meaningful mutations detected. All ten
+COMMANDS.md gates exit 0 with recorded exit codes and SHA-256 hashes.

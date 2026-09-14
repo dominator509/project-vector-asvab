@@ -2,6 +2,7 @@ pub mod artifact_test;
 pub mod config;
 pub mod content;
 pub mod errors;
+pub mod exam;
 pub mod ingestion;
 pub mod mastery;
 pub mod plan;

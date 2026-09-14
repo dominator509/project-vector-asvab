@@ -3,8 +3,8 @@ REQ-001,local privacy-minimal learner profile,SPEC-001,EP-002,AT-REQ-001,DONE
 REQ-002,cross-domain diagnostic and mastery uncertainty,SPEC-001,EP-002,AT-REQ-002,DONE
 REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",SPEC-001,EP-002,AT-REQ-003,DONE
 REQ-004,GS AR WK PC MK EI AI SI MC AO modeled separately,SPEC-001,EP-002,AT-REQ-004,DONE
-REQ-005,"custom drills, worked solutions, distractors, confidence, error notebook",SPEC-001,EP-002,AT-REQ-005,PENDING
-REQ-006,no-backtracking and versioned public timing profiles,SPEC-001,EP-002,AT-REQ-006,PENDING
+REQ-005,"custom drills, worked solutions, distractors, confidence, error notebook",SPEC-004,EP-005,AT-REQ-005-EP005,DONE_PRACTICE_VIEW_AND_NOTEBOOK
+REQ-006,no-backtracking and versioned public timing profiles,SPEC-004,EP-005,AT-REQ-006-EP005,DONE_CAT_CONSTRAINT_AND_TIMING_PROFILES
 REQ-007,paper-style navigation/timing,SPEC-001,EP-002,AT-REQ-007,DONE
 REQ-008,source-grounded explanations and original variants,SPEC-003,EP-002/EP-004,AT-REQ-008-EP004,DONE_GROUNDING_RETRIEVAL
 REQ-009,reject controlled/leaked official question ingestion,SPEC-001,EP-002,AT-REQ-009,DONE
@@ -27,13 +27,13 @@ REQ-025,MCP server scoped read-only-default study tools/resources,SPEC-003,EP-00
 REQ-026,MCP client allowlisted peers consent/audit,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-026-EP004,PARTIAL_ALLOWLIST_CONSENT_AUDIT_DONE_PEER_TRANSPORT_PENDING
 REQ-027,MCP untrusted-content authority isolation/prompt injection defense,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-027-EP004,DONE_AUTHORITY_ISOLATION
 REQ-028,stack/minidump/log ring/build identity,SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-028,PENDING
-REQ-029,double-redaction and secret canary tests,SPEC-004,EP-005,AT-REQ-029,PENDING
-REQ-030,deterministic diagnostics/repro/hashes/consent manifest,SPEC-004,EP-005,AT-REQ-030,PENDING
-REQ-031,isolated worktree + coding-agent + GraphLock,SPEC-004,EP-005,AT-REQ-031,PENDING
+REQ-029,double-redaction and secret canary tests,SPEC-004,EP-005/EP-008,AT-REQ-029-EP005,PARTIAL_CRASH_CENTER_CONSENT_DONE_BUNDLE_REDACTION_EP008
+REQ-030,deterministic diagnostics/repro/hashes/consent manifest,SPEC-004,EP-008,AT-REQ-030-EP008,PENDING_EP008
+REQ-031,isolated worktree + coding-agent + GraphLock,SPEC-004,EP-008,AT-REQ-031-EP008,PENDING_EP008
 REQ-032,official gh; explicit approval; no auto-merge,SPEC-002,EP-003/EP-005,AT-REQ-032-EP003,PARTIAL_EP003_RECORD_DONE_GH_LANE_PENDING
 REQ-033,atomic integrity-checked optional encrypted backup,SPEC-002,EP-003,AT-REQ-033-EP003,DONE_EXCEPT_OPTIONAL_ENCRYPTION
-REQ-034,forced termination/corruption recovery,SPEC-004,EP-005,AT-REQ-034,PENDING
-REQ-035,portable local export and full deletion,SPEC-004,EP-005,AT-REQ-035,PENDING
+REQ-034,forced termination/corruption recovery,SPEC-002/SPEC-004,EP-003/EP-005,AT-REQ-034-EP003,PARTIAL_PERSISTENCE_RECOVERY_DONE_UI_FLOW_PENDING
+REQ-035,portable local export and full deletion,SPEC-004,EP-005,AT-REQ-035-EP005,DONE_A11Y_SETTINGS_AND_PRIVACY_CONTROLS
 REQ-036,signed Windows artifact + clean install/upgrade/uninstall,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-036,PENDING
 REQ-037,signature/hash/atomic stage/rollback,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-037,PENDING
 REQ-038,WCAG 2.2 AA + keyboard/Narrator/NVDA,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-038,PENDING
@@ -42,7 +42,7 @@ REQ-040,local redacted structured health/diagnostics,SPEC-008,EP-000/EP-001/EP-0
 REQ-041,SBOM and commercial license release gate,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-041,PENDING
 REQ-042,all core study functions with network disabled,SPEC-003,EP-004/EP-006,AT-REQ-042-EP004,DONE_CORE_CLASSIFICATION_ENFORCED
 REQ-043,spaced repetition FSRS-compatible review engine,SPEC-003,EP-004/EP-006,AT-REQ-043-EP004,DONE_FSRS_ENGINE
-REQ-044,local FTS across lessons/errors/evidence,SPEC-005/SPEC-006,EP-006,AT-REQ-044,PENDING
+REQ-044,local FTS across lessons/errors/evidence,SPEC-004,EP-005,AT-REQ-044-EP005,DONE_LOCAL_SEARCH
 REQ-045,optional goals/streaks/achievements separate from mastery,SPEC-005/SPEC-006,EP-006,AT-REQ-045,PENDING
 REQ-046,no behavioral ads/data brokerage,SPEC-005/SPEC-006,EP-006,AT-REQ-046,PENDING
 REQ-047,signed/datable adapter disable policy,SPEC-005/SPEC-006,EP-006,AT-REQ-047,PENDING

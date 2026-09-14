@@ -33,31 +33,48 @@ SKIP_PARTS = {".git", "node_modules", ".venv", "target", "dist", "build"}
 
 # Placeholder residue.
 #
-# The intent is to catch unrendered template syntax (e.g. "{{name}}" or
-# "${name}") left in a shipped file. A bare "{{" / "}}" substring is NOT that
-# signal: valid nested JSON necessarily contains "}}" wherever an object closes
-# inside another object, so the earlier substring test reported every nested
-# JSON file as placeholder residue. The check below targets actual placeholder
-# shapes, which is strictly narrower and has no false positives on valid JSON.
+# The intent is to catch unrendered template syntax left in a shipped file.
+#
+# Two false positives have already been removed from this check, both proven by
+# the pack failing to validate against entirely correct files:
+#
+#  1. A bare "{{" / "}}" substring is NOT placeholder residue: valid nested JSON
+#     necessarily contains "}}" wherever an object closes inside another object.
+#  2. "${name}" is legitimate, executable TypeScript/JavaScript template-literal
+#     syntax. It is only placeholder-like in file types that cannot execute it
+#     (Markdown, YAML, plain text), so that pattern is scoped by suffix below.
+#
+# The rule set is narrower than the original, never broader, and
+# .agent/evidence/EP-004/placeholder-check-proof.py proves genuine residue of
+# every shape is still caught.
 PLACEHOLDER_PATTERNS = [
-    # Mustache/handlebars/jinja style: double-brace identifier.
+    # Mustache/handlebars/jinja style: double-brace identifier. Applies to all
+    # file types, since this syntax is not valid in any shipped language here.
     re.compile(r"\{\{\s*[A-Za-z_][A-Za-z0-9_.]*\s*\}\}"),
-    # Unrendered shell/Ansible style parameter expansion.
-    re.compile(r"\$\{[A-Za-z_][A-Za-z0-9_]*\}"),
     # Angle-bracket placeholder tokens.
     re.compile(r"<PLACEHOLDER>|<TODO>|<FIXME>", re.I),
 ]
 
+# File types where "${name}" cannot be executable, so it is placeholder residue.
+SHELL_STYLE_SUFFIXES = {".md", ".markdown", ".txt", ".yaml", ".yml", ".rst", ".csv"}
+SHELL_STYLE_PATTERN = re.compile(r"\$\{[A-Za-z_][A-Za-z0-9_]*\}")
 
-def placeholder_hits(text: str) -> list[str]:
+# Source and template formats where "${...}" is real interpolation syntax.
+CODE_SUFFIXES = {
+    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs",
+    ".rs", ".py", ".sh", ".ps1", ".html", ".vue", ".svelte",
+}
+
+
+def placeholder_hits(text: str, suffix: str = "") -> list[str]:
     """Return the placeholder-shaped matches found in text.
 
     A file that parses as JSON is skipped: its braces are structural, and a
     JSON document cannot contain an unrendered template placeholder without
     also being invalid JSON.
 
-    This validator's own source is skipped, since the pattern definitions above
-    necessarily contain the literal placeholder shapes being searched for.
+    This validator's own source is skipped by the caller, since the pattern
+    definitions above necessarily contain the literal shapes being searched for.
     """
     if text.lstrip().startswith(("{", "[")):
         try:
@@ -65,9 +82,15 @@ def placeholder_hits(text: str) -> list[str]:
             return []
         except (ValueError, RecursionError):
             pass
+
     hits: list[str] = []
     for pat in PLACEHOLDER_PATTERNS:
         hits.extend(m.group(0) for m in pat.finditer(text))
+
+    # Only treat "${...}" as residue where it cannot be executable code.
+    if suffix in SHELL_STYLE_SUFFIXES and suffix not in CODE_SUFFIXES:
+        hits.extend(m.group(0) for m in SHELL_STYLE_PATTERN.finditer(text))
+
     return hits
 
 
@@ -81,7 +104,7 @@ for p in root.rglob("*"):
             text = p.read_text("utf-8")
         except UnicodeDecodeError:
             continue
-        hits = placeholder_hits(text)
+        hits = placeholder_hits(text, p.suffix.lower())
         if hits:
             err(f"placeholder residue in {p.relative_to(root)}: {sorted(set(hits))[:3]}")
         if re.search(r"\b(rest omitted|similar to above|and so on|TODO pass|not implemented|coming soon)\b", text, re.I):

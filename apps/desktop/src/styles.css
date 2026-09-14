@@ -1,0 +1,305 @@
+/*
+ * Project VECTOR desktop styles.
+ *
+ * Accessibility intent:
+ *  - all interactive elements keep a visible :focus-visible outline;
+ *  - colour is never the only carrier of meaning (correct answers also carry a
+ *    text label, error states also carry an alert role);
+ *  - the font scale is driven by --vector-font-scale, set from settings.
+ */
+
+:root {
+  --vector-font-scale: 1;
+  --vector-letter-spacing: normal;
+  --vector-word-spacing: normal;
+  --vector-line-height: 1.6;
+  --vector-transition-duration: 160ms;
+
+  --vector-bg: #f7f8fa;
+  --vector-fg: #14181f;
+  --vector-muted: #55606f;
+  --vector-accent: #0b5fff;
+  --vector-surface: #ffffff;
+  --vector-border: #d3d8e0;
+  --vector-good: #1a7f4b;
+  --vector-bad: #b3261e;
+}
+
+.vector-app.high-contrast {
+  --vector-bg: #000000;
+  --vector-fg: #ffffff;
+  --vector-muted: #e6e6e6;
+  --vector-accent: #7fc4ff;
+  --vector-surface: #0a0a0a;
+  --vector-border: #ffffff;
+  --vector-good: #6ff2a8;
+  --vector-bad: #ff9c92;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.vector-app {
+  background: var(--vector-bg);
+  color: var(--vector-fg);
+  font-size: calc(1rem * var(--vector-font-scale));
+  letter-spacing: var(--vector-letter-spacing);
+  word-spacing: var(--vector-word-spacing);
+  line-height: var(--vector-line-height);
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+/* Visible focus is mandatory for keyboard-only operation. */
+:focus-visible {
+  outline: 3px solid var(--vector-accent);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--vector-surface);
+  padding: 0.5rem 1rem;
+}
+
+.skip-link:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+  z-index: 10;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.app-subtitle {
+  margin: 0.25rem 0 1rem;
+  color: var(--vector-muted);
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .app-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+nav[aria-label="Primary"] {
+  background: var(--vector-surface);
+  border: 1px solid var(--vector-border);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.nav-list button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  transition: background var(--vector-transition-duration);
+}
+
+.nav-list button:hover {
+  background: color-mix(in srgb, var(--vector-accent) 12%, transparent);
+}
+
+.nav-list button[aria-current="page"] {
+  background: var(--vector-accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+main {
+  background: var(--vector-surface);
+  border: 1px solid var(--vector-border);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+fieldset {
+  border: 1px solid var(--vector-border);
+  border-radius: 6px;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+}
+
+legend {
+  font-weight: 600;
+  padding: 0 0.35rem;
+}
+
+.option-row {
+  display: block;
+  margin: 0.35rem 0;
+}
+
+.rationale {
+  display: block;
+  color: var(--vector-muted);
+  font-size: 0.92em;
+  margin-left: 1.6rem;
+}
+
+.correct-tag {
+  color: var(--vector-good);
+  font-weight: 600;
+}
+
+.subtest-tag,
+.result-category,
+.source-line,
+.crash-meta,
+.help-text,
+.reason {
+  color: var(--vector-muted);
+  font-size: 0.9em;
+}
+
+.solution {
+  border-left: 4px solid var(--vector-accent);
+  padding-left: 0.9rem;
+  margin-top: 1rem;
+}
+
+button {
+  background: var(--vector-accent);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  margin: 0.35rem 0.35rem 0.35rem 0;
+  padding: 0.45rem 0.9rem;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.exam-rule,
+.locked-note,
+.disclaimer,
+.pending-note {
+  background: color-mix(in srgb, var(--vector-accent) 10%, transparent);
+  border-left: 4px solid var(--vector-accent);
+  padding: 0.6rem 0.8rem;
+}
+
+.timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.band-meter {
+  background: var(--vector-border);
+  border-radius: 999px;
+  height: 1.1rem;
+  overflow: hidden;
+  position: relative;
+  width: min(28rem, 100%);
+}
+
+.band-fill {
+  background: var(--vector-accent);
+  display: block;
+  height: 100%;
+}
+
+.search-results {
+  list-style: none;
+  padding: 0;
+}
+
+.search-results li {
+  border-top: 1px solid var(--vector-border);
+  padding: 0.7rem 0;
+}
+
+.search-results h4 {
+  margin: 0 0 0.2rem;
+}
+
+.snippet {
+  margin: 0.2rem 0 0;
+}
+
+.setting-row {
+  margin: 0.5rem 0;
+}
+
+.review-card {
+  border: 1px solid var(--vector-border);
+  border-radius: 6px;
+  padding: 0.9rem;
+}
+
+.card-stats {
+  display: grid;
+  grid-template-columns: max-content auto;
+  gap: 0.2rem 1rem;
+  margin: 0.6rem 0;
+}
+
+.card-stats dt {
+  color: var(--vector-muted);
+}
+
+.card-stats dd {
+  margin: 0;
+}
+
+/*
+ * Respect the OS-level motion preference in addition to the in-app setting.
+ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
