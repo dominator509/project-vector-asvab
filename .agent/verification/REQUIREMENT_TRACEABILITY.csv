@@ -8,7 +8,7 @@ REQ-006,no-backtracking and versioned public timing profiles,SPEC-001,EP-002,AT-
 REQ-007,paper-style navigation/timing,SPEC-001,EP-002,AT-REQ-007,DONE
 REQ-008,source-grounded explanations and original variants,SPEC-001,EP-002,AT-REQ-008,PENDING
 REQ-009,reject controlled/leaked official question ingestion,SPEC-001,EP-002,AT-REQ-009,DONE
-REQ-010,offline mastery/speed/confidence/trends,SPEC-001,EP-004,AT-REQ-010,PENDING
+REQ-010,offline mastery/speed/confidence/trends,SPEC-002,EP-003/EP-004,AT-REQ-010-EP003,PARTIAL_EP003_STORAGE_DONE_ANALYTICS_UI_PENDING
 REQ-011,uncertainty/calibration; never official-score claim,SPEC-001,EP-004,AT-REQ-011,PENDING
 REQ-012,versioned sourced formulas/job targets/freshness,SPEC-001,EP-004,AT-REQ-012,PENDING
 REQ-013,versioned policy data,SPEC-001,EP-004,AT-REQ-013,PENDING
@@ -18,7 +18,7 @@ REQ-016,official CLI headless/ACP without credential access,SPEC-003,EP-004,AT-R
 REQ-017,official codex exec with ChatGPT login,SPEC-003,EP-004,AT-REQ-017,PENDING
 REQ-018,"conditional official-client adapter, terms-gated",SPEC-003,EP-004,AT-REQ-018,PENDING
 REQ-019,disable Gemini CLI OAuth bridge,SPEC-003,EP-004,AT-REQ-019,PENDING
-REQ-020,hash/url/license/retrieval/effective/trust/source snapshots,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-020,PENDING
+REQ-020,hash/url/license/retrieval/effective/trust/source snapshots,SPEC-002,EP-002/EP-003/EP-004,AT-REQ-020-EP003,PARTIAL_EP003_VAULT_DONE_UI_PENDING
 REQ-021,diff/quarantine/rollback/freshness,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-021,DONE
 REQ-022,original item + deterministic proof + independent verification,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-022,DONE
 REQ-023,signed/versioned/reviewed packs,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-023,DONE
@@ -30,8 +30,8 @@ REQ-028,stack/minidump/log ring/build identity,SPEC-003/SPEC-005,EP-004/EP-006/E
 REQ-029,double-redaction and secret canary tests,SPEC-004,EP-005,AT-REQ-029,PENDING
 REQ-030,deterministic diagnostics/repro/hashes/consent manifest,SPEC-004,EP-005,AT-REQ-030,PENDING
 REQ-031,isolated worktree + coding-agent + GraphLock,SPEC-004,EP-005,AT-REQ-031,PENDING
-REQ-032,official gh; explicit approval; no auto-merge,SPEC-004,EP-005,AT-REQ-032,PENDING
-REQ-033,atomic integrity-checked optional encrypted backup,SPEC-004,EP-005,AT-REQ-033,PENDING
+REQ-032,official gh; explicit approval; no auto-merge,SPEC-002,EP-003/EP-005,AT-REQ-032-EP003,PARTIAL_EP003_RECORD_DONE_GH_LANE_PENDING
+REQ-033,atomic integrity-checked optional encrypted backup,SPEC-002,EP-003,AT-REQ-033-EP003,DONE_EXCEPT_OPTIONAL_ENCRYPTION
 REQ-034,forced termination/corruption recovery,SPEC-004,EP-005,AT-REQ-034,PENDING
 REQ-035,portable local export and full deletion,SPEC-004,EP-005,AT-REQ-035,PENDING
 REQ-036,signed Windows artifact + clean install/upgrade/uninstall,SPEC-008,EP-000/EP-001/EP-009,AT-REQ-036,PENDING
@@ -52,7 +52,7 @@ REQ-050,"sandbox parsing, license/trust checks, prompt-injection isolation",SPEC
 REQ-051,crash-loop recovery without deleting learner data,SPEC-008,EP-007/EP-009,AT-REQ-051,PENDING
 REQ-052,"telemetry off, no sensitive enlistment-screening data",SPEC-008,EP-007/EP-009,AT-REQ-052,PENDING
 REQ-053,bind binary+migrations+content+SBOM,SPEC-008,EP-007/EP-009,AT-REQ-053,PENDING
-REQ-054,idempotent attempts and safe DB/background workers,SPEC-008,EP-007/EP-009,AT-REQ-054,PENDING
+REQ-054,idempotent attempts and safe DB/background workers,SPEC-002,EP-003/EP-007/EP-009,AT-REQ-054-EP003,PARTIAL_EP003_IDEMPOTENCY_DONE_WORKERS_PENDING
 REQ-055,optional user-entered official scores clearly typed as external,SPEC-008,EP-007/EP-009,AT-REQ-055,PENDING
 REQ-056,every active item has objective/source/proof/review/hash,SPEC-008,EP-007/EP-009,AT-REQ-056,PENDING
 REQ-057,prompt egress classification and disclosure,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-057,PENDING

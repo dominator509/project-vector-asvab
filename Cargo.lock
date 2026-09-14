@@ -4922,9 +4922,12 @@ name = "vector-persistence"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "rusqlite",
+ "sha2",
  "thiserror 1.0.69",
  "tracing",
+ "uuid",
  "vector-domain",
 ]
 

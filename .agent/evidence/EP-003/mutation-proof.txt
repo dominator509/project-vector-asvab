@@ -1,0 +1,79 @@
+=== EP-003 MUTATION / NEGATIVE PROOF ===
+
+Purpose: prove the acceptance oracle actually fails when production behavior is
+deliberately broken. A test suite that passes under mutation proves nothing.
+
+Method: mutate a production source file, run `cargo test -p vector-persistence`,
+record the result, then restore the file and confirm green again.
+
+--------------------------------------------------------------------------------
+MUTATION 1: attempts idempotency disabled
+  change : repo.rs  "INSERT OR IGNORE INTO attempts" -> "INSERT OR REPLACE INTO attempts"
+  expect : attempt_recording_is_idempotent_by_id MUST fail
+  result : FAILED  (test result: FAILED. 16 passed; 1 failed)
+  verdict: DETECTED
+
+MUTATION 2: PR approval guard removed
+  change : repo.rs  "if !pr.approved || pr.approved_by.is_none() {" -> "if false {"
+  expect : pr_records_require_explicit_approval_and_never_auto_merge MUST fail
+  result : FAILED  (test result: FAILED. 16 passed; 1 failed)
+  verdict: DETECTED
+  note   : the first version of this test PASSED under this mutation because the
+           SQL WHERE clause also refused the merge. The test was strengthened to
+           assert the refusal names the missing approval, so the guard itself is
+           now proven rather than the downstream predicate.
+
+MUTATION 3: backup digest verification removed
+  change : backup.rs  "if actual != expected {" -> "if false {"
+  expect : restore_rejects_a_corrupted_backup MUST fail
+  result : FAILED  (test result: FAILED. 16 passed; 1 failed)
+  verdict: DETECTED
+  note   : this mutation is what proved the free-page corruption case matters.
+           PRAGMA integrity_check alone tolerated a flipped byte in unused space,
+           so the recorded digest is the guard that actually protects restores.
+
+MUTATION 4: evidence vault immutability trigger removed
+  change : 002_ep003_persistence.sql  DROP the evidence_records_no_update trigger
+  expect : evidence_vault_stores_snapshots_and_rejects_mutation MUST fail
+  result : FAILED  (test result: FAILED. 16 passed; 1 failed)
+  verdict: DETECTED
+  note   : immutability is enforced in the database, not merely by Rust code, so
+           the trigger is the real guarantee.
+
+MUTATION 5: PR approver CHECK constraint removed
+  change : 002_ep003_persistence.sql  remove "CHECK (approved = 0 OR approved_by IS NOT NULL)"
+  expect : approval_flag_without_an_approver_cannot_be_merged MUST fail
+  result : FAILED  (test result: FAILED. 16 passed; 1 failed)
+  verdict: DETECTED
+
+MUTATION 6: content-pack rollback becomes a no-op
+  change : repo.rs  rollback sets prior pack status to 'superseded' instead of 'active'
+  expect : content_pack_rollback_restores_previous_active_pack MUST fail
+  result : FAILED  (test result: FAILED. 16 passed; 1 failed)
+  verdict: DETECTED
+
+MUTATION 7: backup WAL checkpoint removed
+  change : backup.rs  remove "PRAGMA wal_checkpoint(TRUNCATE)"
+  expect : backup tests MUST fail (unfolded WAL means the file copy is incomplete)
+  result : FAILED  (test result: FAILED. 13 passed; 4 failed)
+  verdict: DETECTED
+
+MUTATION 8: schema drops data on re-migration
+  change : 002_ep003_persistence.sql  prepend "DROP TABLE IF EXISTS attempts;"
+  expect : migration/restore tests MUST fail
+  result : FAILED  (test result: FAILED. 16 passed; 1 failed)
+  verdict: DETECTED
+
+MUTATION RUN THAT WAS DISCARDED AS INVALID:
+  change : backup.rs  wal_checkpoint(TRUNCATE) -> wal_checkpoint(PASSIVE)
+  result : PASSED
+  reason : not a behavior change on a freshly checkpointed small database, so it
+           is not a meaningful mutation. Recorded here rather than hidden.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted : 8
+  detected by the oracle         : 8
+  surviving mutations            : 0
+  tests after restoration        : 20 passed; 0 failed  (3 lib + 17 acceptance)
+  stability                      : 5 consecutive full runs, all green

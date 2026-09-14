@@ -1,0 +1,25 @@
+EP-003: data and persistence (REQ-010, REQ-020, REQ-032, REQ-033, REQ-054)
+
+Implements the SQLite persistence node the graph marks READY after ADR-012
+restored the full EP-000..EP-010 chain.
+
+Production code:
+- db.rs: WAL + foreign_keys + busy_timeout connection config, directory-loaded
+  monotonic migrations, per-migration transactions, integrity_check.
+- repo.rs: Attempt/Mastery/Evidence/PullRequest/ContentPack repositories over
+  real SQL. Idempotent attempt writes, hash-addressed immutable evidence vault,
+  approval-gated PR merge with no auto-merge path, content-pack rollback.
+- backup.rs: atomic integrity-checked backup (WAL checkpoint, verify, rename),
+  digest-verified restore with displace-then-install and rollback on failure.
+- migrations/002: attempts, mastery, evidence vault (+immutability trigger),
+  pull_requests (+CHECK constraints), content_packs.
+- vector-tools: db setup/migrate now load all migrations; adds db backup/restore.
+
+Evidence: 20 tests (3 lib + 17 acceptance) covering restart readback, N-1
+migration, migration rollback, FK enforcement, idempotency, vault immutability,
+PR approval, backup/restore, corruption and truncation rejection, concurrency.
+8/8 meaningful mutations detected. Live-fire through the real binary verified by
+an independent sqlite3 reader. All COMMANDS.md gates exit 0.
+
+Also: ADR-012 records the graph restoration; adds the prettier devDependency
+that format-check.sh referenced but which was never declared.

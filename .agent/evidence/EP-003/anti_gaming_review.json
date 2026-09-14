@@ -1,0 +1,51 @@
+{
+  "node": "EP-003",
+  "reviewed_at": "2026-09-10",
+  "verdict": "PASS",
+  "requirements_covered": ["REQ-010", "REQ-020", "REQ-032", "REQ-033", "REQ-054"],
+  "stub_check": {
+    "verdict": "PASS",
+    "note": "Every repository method issues real SQL against the live connection. No in-memory shadow state, no constant return values, no unfinished markers in production paths.",
+    "files_reviewed": [
+      "crates/vector-persistence/src/db.rs",
+      "crates/vector-persistence/src/repo.rs",
+      "crates/vector-persistence/src/backup.rs",
+      "migrations/002_ep003_persistence.sql"
+    ]
+  },
+  "thin_test_check": {
+    "verdict": "PASS",
+    "note": "20 tests exercise semantics, boundaries, negative behavior, persistence-across-restart, concurrency, corruption, and recovery. Not happy-path-only.",
+    "test_count": 20,
+    "behaviors": [
+      "migration applies, is monotonic, and is idempotent",
+      "migration from N-1 preserves pre-existing rows",
+      "exact readback after process restart via a new connection",
+      "analytics aggregate persisted rows and isolate subtests",
+      "attempt recording is exactly-once under replay",
+      "evidence vault dedupes by content hash and refuses mutation",
+      "PR merge requires explicit named approval and is not repeatable",
+      "approval-without-approver is unrepresentable in the schema",
+      "backup digest matches the archive on disk",
+      "restore rolls back to snapshot state",
+      "corrupted backup is rejected and live data untouched",
+      "truncated backup is rejected and live data untouched",
+      "foreign key orphans are rejected",
+      "concurrent writers lose no updates under WAL + busy timeout",
+      "content-pack rollback restores the prior active version",
+      "opening a directory as a database fails loudly"
+    ]
+  },
+  "evidence_sticker_check": {
+    "verdict": "PASS",
+    "note": "Evidence files are real command output with exit codes plus SHA-256 hashes, not assertion files. livefire.log contains an executed end-to-end transcript verified by an independent sqlite3 reader."
+  },
+  "test_weakening_check": {
+    "verdict": "PASS",
+    "note": "No assertion was deleted, skipped, or loosened to obtain a green run. Two tests were corrected because they were initially wrong (missing learner seed and a free-page byte flip), and both corrections made them strictly stronger."
+  },
+  "known_limitations": [
+    "Backup encryption is reported via the manifest 'encrypted' flag but no encryption is applied in this node; REQ-033 requires encryption to be optional, and a plain integrity-checked backup satisfies the current requirement. Encryption at rest is deferred to EP-006 security work and is recorded here as outstanding rather than silently claimed.",
+    "Concurrency is proven at process/thread level against a single SQLite file. Multi-machine or network-filesystem concurrency is out of scope for a local-first desktop application (ADR-003)."
+  ]
+}

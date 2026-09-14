@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use vector_persistence::backup::{BackupManager, RestoreOutcome};
 use vector_persistence::{Database, MigrationManager};
 
 #[derive(Parser)]
@@ -39,6 +40,32 @@ enum DbCommands {
         #[arg(long, default_value = "vector.db")]
         db_path: String,
     },
+    Backup {
+        #[arg(long, default_value = "vector.db")]
+        db_path: String,
+        #[arg(long)]
+        dest: PathBuf,
+    },
+    Restore {
+        #[arg(long, default_value = "vector.db")]
+        db_path: String,
+        #[arg(long)]
+        source: PathBuf,
+        /// Optional SHA-256 the archive must match before it is applied.
+        #[arg(long)]
+        checksum: Option<String>,
+    },
+}
+
+/// Directory holding the numbered SQL migrations.
+fn migrations_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../migrations")
+}
+
+fn migrate(db_path: &str) -> Result<usize> {
+    let mut db = Database::open(db_path)?;
+    let migrations = MigrationManager::load_from_dir(&migrations_dir())?;
+    MigrationManager::apply(&mut db, &migrations)
 }
 
 fn main() -> Result<()> {
@@ -48,19 +75,42 @@ fn main() -> Result<()> {
         Commands::Db { action } => match action {
             DbCommands::Setup { db_path } => {
                 println!("Setting up database at {}", db_path);
-                let db = Database::open(&db_path)?;
-                let initial_sql = include_str!("../../../migrations/001_initial.sql");
-                let count =
-                    MigrationManager::apply_migrations(db.connection(), &[("1", initial_sql)])?;
+                let count = migrate(&db_path)?;
                 println!("Database setup complete. Applied {} migrations.", count);
             }
             DbCommands::Migrate { db_path } => {
                 println!("Migrating database at {}", db_path);
-                let db = Database::open(&db_path)?;
-                let initial_sql = include_str!("../../../migrations/001_initial.sql");
-                let count =
-                    MigrationManager::apply_migrations(db.connection(), &[("1", initial_sql)])?;
+                let count = migrate(&db_path)?;
                 println!("Migration complete. Applied {} migrations.", count);
+            }
+            DbCommands::Backup { db_path, dest } => {
+                let db = Database::open(&db_path)?;
+                let manifest = BackupManager::create(&db, &dest)?;
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&serde_json::json!({
+                        "path": manifest.path.display().to_string(),
+                        "checksum": manifest.checksum,
+                        "bytes": manifest.bytes,
+                        "integrity": manifest.integrity,
+                        "encrypted": manifest.encrypted,
+                        "attempt_rows": manifest.attempt_rows,
+                    }))?
+                );
+            }
+            DbCommands::Restore {
+                db_path,
+                source,
+                checksum,
+            } => {
+                let mut db = Database::open(&db_path)?;
+                let outcome =
+                    BackupManager::restore_verified(&mut db, &source, checksum.as_deref())?;
+                match outcome {
+                    RestoreOutcome::Restored { rows } => {
+                        println!("Restored {} attempt rows from {}", rows, source.display());
+                    }
+                }
             }
         },
         Commands::ArtifactIdentity {
