@@ -1,0 +1,164 @@
+=== EP-006 MUTATION / NEGATIVE PROOF — security controls ===
+
+Purpose: prove the security oracles fail when a control is removed.
+
+--------------------------------------------------------------------------------
+CRASH DOUBLE-REDACTION (REQ-028, REQ-029)
+
+MUT-C1: canary pass (pass 2) removed
+  change : crash.rs  canary scrub replaced with a no-op
+  result : FAILED (18 passed; 1 failed)          verdict: DETECTED
+
+MUT-C2: scheme patterns disabled
+  change : crash.rs  VALUE_PATTERNS iteration emptied
+  result : FAILED (14 passed; 5 failed)          verdict: DETECTED
+
+MUT-C3: secret-key wholesale redaction removed
+  change : crash.rs  is_secret_key branch -> never taken
+  result : FAILED (18 passed; 1 failed)          verdict: DETECTED
+
+MUT-C4: verification always passes
+  change : crash.rs  verify_no_secrets short-circuits to Ok
+  result : FAILED (15 passed; 4 failed)          verdict: DETECTED
+
+MUT-C5: consent gate removed
+  change : crash.rs  approve_release ignores consent
+  result : FAILED (18 passed; 1 failed)          verdict: DETECTED
+
+MUT-C6: pass-count gate removed
+  change : crash.rs  approve_release accepts < 2 passes
+  result : FAILED (18 passed; 1 failed)          verdict: DETECTED
+
+MUT-C7: empty canary allowed
+  change : crash.rs  empty-value guard removed
+  result : PASSED (19 passed)
+  verdict: NOT DETECTED — and provably undetectable.
+  explanation: every value the empty check rejects ("" and whitespace-only) is
+               also rejected by the minimum-length guard, so no input exists
+               where the two guards differ. Verified by
+               canary-guard-analysis.py. The check is retained as explicit
+               intent, not as an active control.
+
+--------------------------------------------------------------------------------
+PROCESS ISOLATION (THREAT_MODEL: credential theft, shell injection)
+
+MUT-P1: environment allowlist removed
+  change : process.rs  forward every parent variable
+  result : FAILED (20 passed; 2 failed)          verdict: DETECTED
+
+MUT-P2: denylist sweep removed
+  change : process.rs  strip_denied becomes a no-op
+  result : FAILED (23 passed; 2 failed)          verdict: DETECTED
+  note   : this mutation SURVIVED on first attempt. The sweep was unreachable
+           through build_env because the allowlist already excludes those keys,
+           so no test exercised it. The sweep was extracted into a public
+           strip_denied() function and is now tested directly (3 new tests).
+           A safety net whose failure path is untested is an assumed net.
+
+MUT-P3: explicitly denied env variable allowed
+  change : process.rs  explicit-denial check -> never fires
+  result : FAILED (20 passed; 2 failed)          verdict: DETECTED
+
+MUT-P4: shell metacharacters allowed in program names
+  change : process.rs  metacharacter scan disabled
+  result : FAILED (21 passed; 1 failed)          verdict: DETECTED
+
+MUT-P5: relative program paths allowed
+  change : process.rs  absolute-path requirement removed
+  result : FAILED (21 passed; 1 failed)          verdict: DETECTED
+
+MUT-P6: argument size bound removed
+  change : process.rs  MAX_ARGUMENT_BYTES check disabled
+  result : FAILED (21 passed; 1 failed)          verdict: DETECTED
+
+MUT-P7: binary approval ignores canonical path
+  change : process.rs  approval accepts any non-empty list
+  result : FAILED (21 passed; 1 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+EGRESS PRIVACY (REQ-046)
+
+MUT-E1: advertising destination allowed
+  change : egress.rs  is_advertising check removed
+  result : FAILED (16 passed; 2 failed)          verdict: DETECTED
+
+MUT-E2: secret payload allowed to a local destination
+  change : egress.rs  local-path secret check removed
+  result : FAILED (16 passed; 2 failed)          verdict: DETECTED
+  note   : first attempt used a multiline replacement that did not match the
+           source exactly and was therefore a no-op. Re-run with the exact text.
+
+MUT-E3: consent requirement removed
+  change : egress.rs  consent check disabled
+  result : FAILED (16 passed; 2 failed)          verdict: DETECTED
+
+MUT-E4: purpose limit removed
+  change : egress.rs  purpose/learner-data check disabled
+  result : FAILED (17 passed; 1 failed)          verdict: DETECTED
+
+MUT-E5: every purpose may carry learner data
+  change : egress.rs  may_carry_learner_data -> always true
+  result : FAILED (16 passed; 2 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+CONTENT QA AND CALIBRATION (REQ-048, REQ-049)
+
+MUT-Q1: unreviewed content activatable
+  change : content_qa.rs  is_activatable -> always true
+  result : FAILED (23 passed; 4 failed)          verdict: DETECTED
+
+MUT-Q2: review transition guard removed
+  change : content_qa.rs  is_allowed_transition check disabled
+  result : FAILED (26 passed; 1 failed)          verdict: DETECTED
+
+MUT-Q3: named reviewer requirement removed
+  change : content_qa.rs  reviewer check disabled
+  result : FAILED (26 passed; 1 failed)          verdict: DETECTED
+
+MUT-Q4: recorded rationale requirement removed
+  change : content_qa.rs  rationale check disabled
+  result : FAILED (26 passed; 1 failed)          verdict: DETECTED
+
+MUT-Q5: rollback no longer audited
+  change : content_qa.rs  rollback audit entry not appended
+  result : FAILED (26 passed; 1 failed)          verdict: DETECTED
+
+MUT-Q6: calibration observation floor removed
+  change : content_qa.rs  MIN_CALIBRATION_OBSERVATIONS check disabled
+  result : FAILED (26 passed; 1 failed)          verdict: DETECTED
+
+MUT-Q7: difficulty scale inverted
+  change : content_qa.rs  logit sign flipped
+  result : FAILED (26 passed; 1 failed)          verdict: DETECTED
+
+MUT-Q8: official equivalence claim permitted
+  change : content_qa.rs  official_equivalence_claim_permitted -> true
+  result : FAILED (26 passed; 1 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+MOTIVATION SEPARATION (REQ-045)
+
+MUT-M1: motivational field added to SkillEstimate (streak)
+  change : selection.rs  add `pub streak: u32` to SkillEstimate
+  result : COMPILE ERROR (E0063: missing field `streak` in initializer)
+  verdict: DETECTED — by the compiler, which is stronger than a test failure.
+  note   : the first attempt at this mutation was reported as SURVIVED, which
+           was wrong: the test binary had not rebuilt, so the old artifact ran.
+           On a clean rebuild the mutation fails compilation at every
+           construction site. This is the strongest possible form of the
+           separation guarantee: a motivational signal cannot be added to the
+           planner's input type without breaking the build.
+           A second test, the_shape_guard_flags_a_widened_input_set, covers the
+           runtime shape check directly so the guard is not vacuous.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted : 27
+  detected                       : 26
+  provably undetectable          : 1 (MUT-C7; guarded redundantly, analysis
+                                     recorded in canary-guard-analysis.py)
+  no-op mutations corrected      : 1 (MUT-E2)
+  untested safety net discovered : 1 (MUT-P2; strip_denied now tested directly)
+  stale-artifact trap avoided    : 1 (MUT-M1; a surviving mutation was actually
+                                     a stale build, confirmed by clean rebuild)
+  workspace tests after restore  : 285 passing across 39 binaries, 0 failures

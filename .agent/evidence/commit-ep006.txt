@@ -1,0 +1,53 @@
+EP-006: security and permissions — node closed
+
+Delivers the security controls named in SECURITY.md and THREAT_MODEL.md.
+
+REC-028/029 (crash capture, double redaction):
+- crash.rs implements two independent redaction passes over different signals.
+  Pass 1 is structural: it redacts by key name AND by secret shape (bearer
+  tokens, provider key prefixes, JWTs, connection-string passwords, private-key
+  blocks, email addresses). Pass 2 scrubs registered canaries verbatim.
+- This closes a real gap: the pre-existing RedactedLogger redacts by key name
+  only, so a credential inside a panic message, stack trace or log line would
+  have shipped unredacted.
+- verify_no_secrets() is the release gate. Redaction that ran is not redaction
+  that worked, so the bundle is scanned rather than trusted. approve_release()
+  fails closed on missing consent, fewer than two passes, or any residual secret.
+
+Process isolation (SECURITY.md "structured process invocation without shell
+interpolation"; THREAT_MODEL credential theft and CLI injection):
+- process.rs models a command as program + argument vector, never a string, so
+  shell syntax in an argument is inert data.
+- The environment is built from an ALLOWLIST, not a denylist, so an
+  unenumerated credential cannot leak. A final denylist sweep backs it up.
+- Provider-binary impersonation is refused by exact canonical path.
+
+REQ-046 (egress privacy): every outbound request is classified. Advertising and
+data-brokerage destinations are refused even with consent, learner data requires
+per-destination consent, secrets can never be transmitted, and purposes such as
+update checks cannot carry learner data at all.
+
+REQ-048 (content QA): review state, named-reviewer and rationale requirements,
+permitted transitions, append-only audit history and audited rollback. Only
+Approved content is activatable.
+
+REQ-049 (difficulty): internal calibration from observed attempts with an
+observation floor and a finite logit scale. The learner-facing wording states
+the value is VECTOR's own estimate; official_equivalence_claim_permitted() is
+false and tested.
+
+REQ-045 (motivation separate from mastery): asserted structurally. Adding a
+motivational field to the planner's input type fails compilation at every
+construction site, which is stronger than a runtime check.
+
+Defects found and fixed:
+- An untested safety net: the environment denylist sweep was unreachable through
+  build_env, so removing it changed nothing observable and the mutation
+  survived. It is now a public strip_denied() with three direct tests.
+- A stale-artifact trap: a mutation initially appeared to survive, but the test
+  binary had not rebuilt. On a clean rebuild it fails compilation. Recorded
+  because "mutation survived" and "build was stale" are easy to confuse.
+
+Evidence: 285 tests passing across 39 binaries, 0 failures. 26/27 meaningful
+mutations detected (1 provably undetectable and documented). All ten
+COMMANDS.md gates exit 0 with recorded exit codes and SHA-256 hashes.

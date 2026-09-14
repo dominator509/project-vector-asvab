@@ -4913,6 +4913,7 @@ name = "vector-observability"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "regex",
  "serde",
  "serde_json",
  "tracing",

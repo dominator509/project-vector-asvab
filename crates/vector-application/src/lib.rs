@@ -1,9 +1,11 @@
-//! Project VECTOR application service layer (EP-004).
+//! Project VECTOR application service layer (EP-004, EP-006).
 //!
 //! Owns cross-cutting application policy that spans the domain crates: the
-//! offline-core guarantee (REQ-042) and the typed service boundary the desktop
-//! UI invokes (SPEC-003).
+//! offline-core guarantee (REQ-042), the egress privacy classifier and no-ads
+//! guarantee (REQ-046), and the typed service boundary the desktop UI invokes
+//! (SPEC-003).
 
+pub mod egress;
 pub mod offline;
 
 /// Initialize the application core.

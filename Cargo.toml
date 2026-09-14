@@ -38,3 +38,7 @@ tauri = { version = "2.1.0" }
 tauri-build = { version = "2.0.0" }
 tauri-plugin-sql = { version = "2.0.0", features = ["sqlite"] }
 clap = { version = "4.5", features = ["derive"] }
+# Used by crash redaction to recognize credential shapes that appear in values
+# (bearer tokens, API-key prefixes, private-key blocks). A key-name-only
+# redactor cannot catch these.
+regex = "1.11"

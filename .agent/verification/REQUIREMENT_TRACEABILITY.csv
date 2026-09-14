@@ -26,7 +26,7 @@ REQ-024,manual export; enterprise connector separate,SPEC-003,EP-004,AT-REQ-024-
 REQ-025,MCP server scoped read-only-default study tools/resources,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-025-EP004,PARTIAL_CAPABILITY_MODEL_DONE_TRANSPORT_BINDING_PENDING
 REQ-026,MCP client allowlisted peers consent/audit,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-026-EP004,PARTIAL_ALLOWLIST_CONSENT_AUDIT_DONE_PEER_TRANSPORT_PENDING
 REQ-027,MCP untrusted-content authority isolation/prompt injection defense,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-027-EP004,DONE_AUTHORITY_ISOLATION
-REQ-028,stack/minidump/log ring/build identity,SPEC-003/SPEC-005,EP-004/EP-006/EP-008,AT-REQ-028,PENDING
+REQ-028,stack/minidump/log ring/build identity,SPEC-007,EP-006/EP-008,AT-REQ-028-EP006,PARTIAL_CRASH_CAPTURE_REDACTION_DONE_PANIC_HOOK_EP008
 REQ-029,double-redaction and secret canary tests,SPEC-004,EP-005/EP-008,AT-REQ-029-EP005,PARTIAL_CRASH_CENTER_CONSENT_DONE_BUNDLE_REDACTION_EP008
 REQ-030,deterministic diagnostics/repro/hashes/consent manifest,SPEC-004,EP-008,AT-REQ-030-EP008,PENDING_EP008
 REQ-031,isolated worktree + coding-agent + GraphLock,SPEC-004,EP-008,AT-REQ-031-EP008,PENDING_EP008
@@ -43,11 +43,11 @@ REQ-041,SBOM and commercial license release gate,SPEC-008,EP-000/EP-001/EP-009,A
 REQ-042,all core study functions with network disabled,SPEC-003,EP-004/EP-006,AT-REQ-042-EP004,DONE_CORE_CLASSIFICATION_ENFORCED
 REQ-043,spaced repetition FSRS-compatible review engine,SPEC-003,EP-004/EP-006,AT-REQ-043-EP004,DONE_FSRS_ENGINE
 REQ-044,local FTS across lessons/errors/evidence,SPEC-004,EP-005,AT-REQ-044-EP005,DONE_LOCAL_SEARCH
-REQ-045,optional goals/streaks/achievements separate from mastery,SPEC-005/SPEC-006,EP-006,AT-REQ-045,PENDING
-REQ-046,no behavioral ads/data brokerage,SPEC-005/SPEC-006,EP-006,AT-REQ-046,PENDING
-REQ-047,signed/datable adapter disable policy,SPEC-005/SPEC-006,EP-006,AT-REQ-047,PENDING
-REQ-048,"review state, history, rollback, audit",SPEC-005/SPEC-006,EP-006,AT-REQ-048,PENDING
-REQ-049,"internal calibration, no official psychometric equivalence claim",SPEC-005/SPEC-006,EP-006,AT-REQ-049,PENDING
+REQ-045,optional goals/streaks/achievements separate from mastery,SPEC-001,EP-006,AT-REQ-045-EP006,DONE_SEPARATION_ENFORCED_NO_MOTIVATION_TERM_IN_MASTERY
+REQ-046,no behavioral ads/data brokerage,SPEC-005,EP-006,AT-REQ-046-EP006,DONE_EGRESS_CLASSIFIER_NO_AD_DESTINATIONS
+REQ-047,signed/datable adapter disable policy,SPEC-003,EP-004/EP-006,AT-REQ-047-EP004,DONE_POLICY_GATE_AND_EGRESS_CONSTRAINT
+REQ-048,"review state, history, rollback, audit",SPEC-002,EP-006,AT-REQ-048-EP006,DONE_CONTENT_QA_LEDGER
+REQ-049,"internal calibration, no official psychometric equivalence claim",SPEC-003,EP-006,AT-REQ-049-EP006,DONE_INTERNAL_CALIBRATION_NO_EQUIVALENCE_CLAIM
 REQ-050,"sandbox parsing, license/trust checks, prompt-injection isolation",SPEC-008,EP-007/EP-009,AT-REQ-050,PENDING
 REQ-051,crash-loop recovery without deleting learner data,SPEC-008,EP-007/EP-009,AT-REQ-051,PENDING
 REQ-052,"telemetry off, no sensitive enlistment-screening data",SPEC-008,EP-007/EP-009,AT-REQ-052,PENDING

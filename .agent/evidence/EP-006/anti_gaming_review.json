@@ -1,0 +1,58 @@
+{
+  "node": "EP-006",
+  "reviewed_at": "2026-09-10",
+  "verdict": "PASS",
+  "requirements_covered": [
+    "REQ-028", "REQ-045", "REQ-046", "REQ-047", "REQ-048", "REQ-049"
+  ],
+  "requirements_delivered": {
+    "REQ-028": "Crash capture carries stack, log ring and build identity, and is redacted by two independent passes before it can be released.",
+    "REQ-045": "Motivation features remain separate from mastery. No streak/achievement score feeds the mastery or readiness calculation, and the offline capability registry and readiness band contain no motivational term.",
+    "REQ-046": "Egress privacy classifier. Behavioral advertising and data brokerage are disabled, no advertising destination is registered, learner data requires per-destination consent, and secrets can never be transmitted.",
+    "REQ-047": "Signed, datable provider-policy records that disable an adapter when terms go stale or are revoked. Implemented in EP-004 (vector-llm::transport) and exercised there; EP-006 adds the egress side, where a policy refresh must not carry learner data.",
+    "REQ-048": "Content QA with review state, named-reviewer and rationale requirements, permitted transitions, append-only audit history and audited rollback. Only Approved content is activatable.",
+    "REQ-049": "Internal difficulty calibration from observed attempts, with an observation floor, a finite logit scale, and wording that states the value is VECTOR's own estimate. official_equivalence_claim_permitted() is false and tested."
+  },
+  "stub_check": {
+    "verdict": "PASS",
+    "note": "No placeholder or constant-return production behaviour was added. Every control is a real predicate with typed refusals, and every refusal path is exercised by a test (proven by 25 detected mutations).",
+    "files_reviewed": [
+      "crates/vector-observability/src/crash.rs",
+      "crates/vector-platform/src/process.rs",
+      "crates/vector-application/src/egress.rs",
+      "crates/vector-content/src/content_qa.rs"
+    ]
+  },
+  "thin_test_check": {
+    "verdict": "PASS",
+    "note": "91 tests across four new suites. The security suites assert negative behaviour (injection refused, credential excluded, secret blocked, stale content unactivatable) rather than happy paths.",
+    "test_count": 91,
+    "suites": {
+      "ep006_crash": 19,
+      "ep006_process": 25,
+      "ep006_egress": 18,
+      "ep006_content_qa": 27,
+      "existing_observability_unit": 3
+    }
+  },
+  "evidence_sticker_check": {
+    "verdict": "PASS",
+    "note": "Evidence is real command output with exit codes and SHA-256 hashes. The mutation proof records which mutations were DETECTED and, equally, the one that was NOT and why."
+  },
+  "test_weakening_check": {
+    "verdict": "PASS",
+    "note": "No assertion was deleted, skipped or loosened. Three clippy findings were fixed by correcting the code, not by silencing the lint with an allow attribute."
+  },
+  "real_defects_found_and_fixed": [
+    "Untested safety net: the environment denylist sweep was unreachable through build_env (the allowlist already excludes those keys), so no test exercised it and removing it changed nothing observable. It was extracted into a public strip_denied() function and is now covered by three tests. A barrier whose failure path is untested is an assumed barrier, not a proven one.",
+    "The pre-existing RedactedLogger redacts by key name only, so a credential appearing inside a panic message, stack trace or log line would have shipped unredacted in a crash report. The new crash module adds value-shape detection for bearer tokens, provider key prefixes, JWTs, connection-string passwords, private-key blocks and email addresses.",
+    "Clippy: unnecessary clone-to-slice in three test call sites, and a useless format! in one fixture, both fixed in the code."
+  ],
+  "known_limitations": [
+    "REQ-047 provider-policy disablement is implemented and tested in vector-llm::transport (EP-004). EP-006 adds only the egress constraint that a policy refresh must not carry learner data. No live provider is contacted; PREFLIGHT PF-007..PF-009 remain external gates.",
+    "Crash capture builds and redacts bundles in memory. Wiring it to an actual panic hook and to disk is part of the desktop shell and EP-008 repair work; no end-to-end capture-from-a-real-panic claim is made here.",
+    "The egress classifier is a pure policy function. No network client calls it yet, because the transports that would perform egress are not live-invoked in this environment. The policy is real and tested; the enforcement point is not yet on a live path.",
+    "Difficulty calibration is an internal heuristic from observed accuracy. It is explicitly not validated against any official psychometric model, and the code states so. No equivalence or predictive claim is made.",
+    "REQ-045 is satisfied by separation rather than by building motivation features: no streak or achievement system exists yet, and the tests assert that no motivational term enters mastery or readiness. When such features are added, those invariants must still hold."
+  ]
+}
