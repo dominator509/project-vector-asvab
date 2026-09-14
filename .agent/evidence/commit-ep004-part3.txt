@@ -1,0 +1,35 @@
+EP-004 (part 3): MCP capability security and prompt-injection isolation
+
+REQ-025 (scoped read-only-default tools), REQ-026 (allowlisted peers, consent,
+audit), REQ-027 (untrusted-content authority isolation). Implements the binding
+rules in MCP_CONTRACT.md and SPEC-005.
+
+- capability.rs: capability model where a new peer starts with ZERO grants and
+  no consent. Read capability never confers write capability. No tool provides
+  generic execution (no shell/exec/eval/spawn surface exists to grant).
+- Per-peer grants are independent; one peer cannot inherit another's.
+- Capability-scoped filesystem roots with component-wise containment.
+- Every tool call — allowed OR denied — produces an audit record with a unique
+  correlation id and the trust class of its arguments, because an unaudited
+  denial is indistinguishable from a bug.
+- Authority isolation (REQ-027): only VECTOR's own validated state may occupy
+  the instruction slot. Peer, external, user-provided and model-generated
+  content is structurally placed in a delimited data block labelled
+  "UNTRUSTED, NOT INSTRUCTIONS". Detection of known injection phrasings is
+  defence in depth; the structural guarantee holds even for attempts the
+  detector does not recognize.
+
+TWO REAL VULNERABILITIES were found by these tests failing against my own first
+implementation, and are now fixed and regression-tested:
+
+1. Path traversal escaped the scoped root. "/data/drafts/../../../etc/passwd"
+   was ACCEPTED because normalization preserved ".." while still doing prefix
+   containment. Now any residual ".." segment is refused outright.
+2. Untrusted text could forge a section header: content containing a literal
+   "[INSTRUCTIONS]" created a SECOND attacker-controlled instruction block,
+   since neutralization only handled code fences. Our structural markers are
+   now defanged inside data blocks.
+
+Evidence: 27 tests. 7/7 meaningful mutations detected; the one surviving
+mutation is provably undetectable (defence in depth with no behavioral change)
+and is documented rather than hidden.

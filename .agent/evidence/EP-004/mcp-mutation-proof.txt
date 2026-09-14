@@ -1,0 +1,80 @@
+=== EP-004 MUTATION / NEGATIVE PROOF — MCP security (REQ-025, REQ-026, REQ-027) ===
+
+Requirement: prove the MCP security oracle fails when a control is removed.
+
+MUTATION M1: user-consent check removed
+  change : capability.rs  "if !peer.user_consented {" -> "if false {"
+  result : FAILED (26 passed; 1 failed)
+  verdict: DETECTED
+
+MUTATION M2: capability (least-privilege) check removed
+  change : capability.rs  "if !peer.capabilities.contains(&tool.required_capability) {" -> "if false {"
+  result : FAILED (23 passed; 4 failed)
+  verdict: DETECTED
+
+MUTATION M3: argument-size bound removed
+  change : capability.rs  "if argument_bytes > tool.max_argument_bytes {" -> "if false {"
+  result : FAILED (26 passed; 1 failed)
+  verdict: DETECTED
+
+MUTATION M4: peer allowlist bypassed
+  change : capability.rs  peer lookup forced to the first registered peer
+  result : FAILED (24 passed; 3 failed)
+  verdict: DETECTED
+  note   : first attempt used an invalid replacement pattern that did not
+           compile/match; re-run with a valid mutation as shown above.
+
+MUTATION M5: path-traversal guard removed
+  change : capability.rs  'if normalized.split("/").any(|seg| seg == "..") {' -> "if false {"
+  result : FAILED (26 passed; 1 failed)
+  verdict: DETECTED
+
+MUTATION M6: empty-scoped-roots check removed
+  change : capability.rs  "if peer.scoped_roots.is_empty() {" -> "if false {"
+  result : PASSED (27 passed)
+  verdict: NOT DETECTED — and correctly so.
+  explanation: this check is defence in depth, not the primary control. With no
+               roots the containment loop finds no matching root and still
+               refuses. The behavior is unchanged, so no test can distinguish it.
+               Recorded rather than removed, because the explicit early return
+               documents intent.
+
+MUTATION M7: untrusted content permitted to act as instructions
+  change : capability.rs  may_be_instruction -> always true
+  result : FAILED (20 passed; 7 failed)
+  verdict: DETECTED
+
+MUTATION M8: data-block delimiter neutralization disabled
+  change : capability.rs  neutralize_delimiters returns text unchanged
+  result : FAILED (26 passed; 1 failed)
+  verdict: DETECTED
+
+--------------------------------------------------------------------------------
+TWO REAL VULNERABILITIES FOUND BY THIS ORACLE (not by mutation — by the tests
+failing on first run against my own first implementation):
+
+1. PATH TRAVERSAL ESCAPED THE SCOPED ROOT.
+   "/data/drafts/../../../etc/passwd" was ACCEPTED. The first implementation
+   normalized paths but preserved ".." segments while still doing prefix
+   containment, so the escaping path retained the "/data/drafts" prefix.
+   Fix: any normalized path still containing a ".." segment is refused
+   outright. Refusing rather than resolving is deliberate — lexical resolution
+   cannot account for symlinks, so an escaping path is never safe to accept.
+
+2. UNTRUSTED TEXT COULD FORGE A SECTION HEADER.
+   Untrusted content containing the literal "[INSTRUCTIONS]" produced a SECOND
+   instruction section in the rendered prompt, because neutralization handled
+   only code fences. A model reading the output would see two instruction
+   blocks, the second attacker-controlled.
+   Fix: neutralize our own structural markers inside data blocks.
+
+Both were caught because the tests asserted the security property rather than
+the implementation's happy path. Both are now covered by mutation M5 and M8.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted : 8
+  detected                       : 7
+  not detectable by construction : 1 (documented above, defense in depth)
+  real vulnerabilities found     : 2 (both fixed and now regression-tested)
+  tests after restoration        : 27 passed; 0 failed
