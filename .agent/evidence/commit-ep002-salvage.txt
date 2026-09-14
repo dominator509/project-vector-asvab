@@ -1,0 +1,41 @@
+EP-002 salvage: recover the ASVAB subtest domain knowledge (REQ-004)
+
+Assesses whether the stranded EP-000/EP-002 work is salvageable, and salvages
+the part that is. Full reasoning in
+.agent/evidence/EP-002/salvage-assessment.md.
+
+RECOVERED from the unmerged branch feat/EP-001-desktop-foundation (0a51831),
+which is 4 commits ahead of main and was never merged:
+
+  Subtest now carries the official two-letter codes, learner-facing names, a
+  case-insensitive from_code() parse, a canonical ALL list, and — the part that
+  matters — is_afqt(), which encodes that the AFQT is composed of two verbal
+  (WK, PC) and two mathematics (AR, MK) subtests. The other six contribute to
+  line scores, never to the AFQT. The enum previously could not express this, so
+  scoring logic treating all ten subtests as AFQT inputs would compute a wrong
+  composite.
+
+The branch's separate AsvabSubtest enum was deliberately NOT imported. Two enums
+for one concept is the same duplicate-implementation problem as leaving a stub
+beside its replacement.
+
+REJECTED, with reasons recorded so neither is re-imported:
+
+  - pack.rs verify_signature() is a string prefix match
+    (starts_with("SIG_<pubkey>_")), not a signature check. It is worse than no
+    check, because a reviewer would believe provenance had been verified.
+  - learner_test.rs asserts the length of a vector the test itself built. It
+    would pass if the enum had three variants. Its replacement asserts
+    properties of the enum's own data and is proven non-vacuous by mutation:
+    adding GS to the AFQT set, removing MK from it, and colliding two codes are
+    all DETECTED.
+
+Not adopted: vector-study/exam.rs is convergent with the EP-005 ExamSession,
+which additionally enforces commit, lock and time-expiry.
+
+EP-002 is NOT closed by this. Still outstanding: the hardcoded AdaptivePlan
+stub (REQ-003), the dummy_signature stub (REQ-023), the recorded unit-tests
+exit code of 1 on a NODE_DONE node, the three .log files that were never
+committed, and the absent anti-gaming review.
+
+Tests: 466 passing across 47 binaries, 0 failures. All gates exit 0.
