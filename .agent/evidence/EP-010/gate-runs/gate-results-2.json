@@ -1,0 +1,128 @@
+[
+  {
+    "test_id": "GEN-006",
+    "title": "Credential Scanning",
+    "command": "python3 scripts/secret-scan.py",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-007",
+    "title": "Hardcoded Credential Detection",
+    "command": "python3 scripts/secret-scan.py",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-024",
+    "title": "Fuzz Testing",
+    "command": "cargo test -p vector-application --test ep007_property_fuzz",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-025",
+    "title": "Property-Based Testing",
+    "command": "cargo test -p vector-study --test ep004_fsrs",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-026",
+    "title": "Mutation Testing",
+    "command": "sh -c test -f .agent/evidence/EP-009/mutation-proof.txt",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-030",
+    "title": "Input Validation Testing",
+    "command": "cargo test -p vector-questions --test ep007_ingestion",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-031",
+    "title": "Cross-Site Scripting (XSS) Testing",
+    "command": "cargo test -p vector-questions --test ep007_ingestion",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-035",
+    "title": "Cryptographic Validation",
+    "command": "cargo test -p vector-platform --test ep009_release",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-036",
+    "title": "Key Management Testing",
+    "command": "cargo test -p vector-llm --test ep004_transport",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-041",
+    "title": "Access Control Testing",
+    "command": "cargo test -p vector-mcp --test ep004_mcp_security",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-042",
+    "title": "Authorization Testing",
+    "command": "cargo test -p vector-repair --test ep008_broker",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-043",
+    "title": "Session Management Testing",
+    "command": "cargo test -p vector-persistence",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-044",
+    "title": "SQL Injection Testing",
+    "command": "cargo test -p vector-persistence --test ep003_acceptance",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-050",
+    "title": "Backup and Recovery Testing",
+    "command": "cargo test -p vector-application --test ep007_performance",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-051",
+    "title": "Disaster Recovery Testing",
+    "command": "cargo test -p vector-persistence --test ep003_acceptance",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-055",
+    "title": "Logging and Monitoring Testing",
+    "command": "cargo test -p vector-observability --test ep006_crash",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-060",
+    "title": "Data Privacy Testing",
+    "command": "cargo test -p vector-application --test ep007_safe_mode_privacy",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-070",
+    "title": "Rate Limiting Testing",
+    "command": "cargo test -p vector-llm --test ep004_transport",
+    "exit_code": 0,
+    "status": "PASS"
+  }
+]

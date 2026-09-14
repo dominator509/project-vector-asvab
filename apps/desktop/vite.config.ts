@@ -20,6 +20,10 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test-setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // Unit tests live beside their source; integration tests live in
+    // `integration/` and exercise cross-layer data shapes rather than a single
+    // module. Keeping them separate lets `test:unit` and `test:integration`
+    // report distinct counts.
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "integration/**/*.test.{ts,tsx}"],
   },
 });

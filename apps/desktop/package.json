@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "test:unit": "vitest run",
+    "test:unit": "vitest run src",
+    "test:integration": "vitest run integration",
+    "test:smoke": "playwright test e2e/smoke.spec.ts",
+    "test:live-fire": "playwright test e2e/live-fire.spec.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

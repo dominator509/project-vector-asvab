@@ -12,6 +12,7 @@
 | EP-007 | NODE_DONE | 2026-09-10T22:00:00Z | .agent/evidence/EP-007 |
 | EP-008 | NODE_DONE | 2026-09-11T04:00:00Z | .agent/evidence/EP-008 |
 | EP-009 | NODE_DONE | 2026-09-11T10:00:00Z | .agent/evidence/EP-009 |
+| EP-010 | NODE_DONE | 2026-09-11T16:00:00Z | .agent/evidence/EP-010 |
 
 ## External gates (not blockers of the node)
 

@@ -1,0 +1,117 @@
+[
+  {
+    "test_id": "E2E-001",
+    "status": "PASS",
+    "command": "sh scripts/smoke-test.sh"
+  },
+  {
+    "test_id": "E2E-002",
+    "status": "PASS",
+    "command": "sh scripts/build.sh"
+  },
+  {
+    "test_id": "E2E-003",
+    "status": "PASS",
+    "command": "sh scripts/live-fire.sh"
+  },
+  {
+    "test_id": "E2E-004",
+    "status": "PASS",
+    "command": "cargo test -p vector-mcp --test ep004_mcp_security"
+  },
+  {
+    "test_id": "E2E-005",
+    "status": "PASS",
+    "command": "cargo test --workspace"
+  },
+  {
+    "test_id": "E2E-006",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep007_property_fuzz"
+  },
+  {
+    "test_id": "E2E-007",
+    "status": "PASS",
+    "command": "sh scripts/test-e2e.sh"
+  },
+  {
+    "test_id": "E2E-008",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep007_performance"
+  },
+  {
+    "test_id": "E2E-009",
+    "status": "PASS",
+    "command": "cargo test -p vector-persistence --test ep003_acceptance"
+  },
+  {
+    "test_id": "E2E-010",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep007_performance"
+  },
+  {
+    "test_id": "E2E-012",
+    "status": "PASS",
+    "command": "cargo test -p vector-persistence --test ep003_acceptance"
+  },
+  {
+    "test_id": "E2E-015",
+    "status": "PASS",
+    "command": "cargo test -p vector-content --test ep004_notebook"
+  },
+  {
+    "test_id": "E2E-016",
+    "status": "PASS",
+    "command": "cargo test -p vector-domain --test ep004_policy"
+  },
+  {
+    "test_id": "E2E-017",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep007_property_fuzz"
+  },
+  {
+    "test_id": "E2E-019",
+    "status": "PASS",
+    "command": "cargo test -p vector-mcp --test ep004_mcp_security"
+  },
+  {
+    "test_id": "SUP-001",
+    "status": "PASS",
+    "command": "sh scripts/reality-gate.sh"
+  },
+  {
+    "test_id": "SUP-002",
+    "status": "PASS",
+    "command": "sh -c test -s .agent/verification/REQUIREMENT_TRACEABILITY.csv"
+  },
+  {
+    "test_id": "SUP-003",
+    "status": "PASS",
+    "command": "sh -c test -f target/release/vector-desktop.exe"
+  },
+  {
+    "test_id": "SUP-006",
+    "status": "PASS",
+    "command": "cargo test -p vector-persistence --test ep003_acceptance"
+  },
+  {
+    "test_id": "SUP-007",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep004_offline"
+  },
+  {
+    "test_id": "SUP-009",
+    "status": "PASS",
+    "command": "sh -c test -s COMMANDS.md"
+  },
+  {
+    "test_id": "SUP-011",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep008_bundle_events_sync"
+  },
+  {
+    "test_id": "SUP-012",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep007_performance"
+  }
+]

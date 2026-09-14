@@ -5,6 +5,9 @@
   "scripts": {
     "test:unit": "pnpm --filter desktop test:unit",
     "test:e2e": "pnpm --filter desktop build && pnpm --filter desktop test:e2e",
+    "test:smoke": "pnpm --filter desktop test:smoke",
+    "test:integration": "pnpm --filter desktop test:integration",
+    "test:live-fire": "pnpm --filter desktop test:live-fire",
     "build": "pnpm --filter desktop build",
     "tauri": "tauri",
     "typecheck": "pnpm --filter desktop typecheck",

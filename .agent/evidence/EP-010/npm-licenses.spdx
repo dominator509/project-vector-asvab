@@ -1,0 +1,791 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: project-vector-0.1.0
+
+PackageName: agent-base
+SPDXID: SPDXRef-npm-agent-base
+PackageVersion: 7.1.4
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: ansi-regex
+SPDXID: SPDXRef-npm-ansi-regex
+PackageVersion: 5.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: ansi-styles
+SPDXID: SPDXRef-npm-ansi-styles
+PackageVersion: 4.3.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: ansi-styles
+SPDXID: SPDXRef-npm-ansi-styles
+PackageVersion: 5.2.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: aria-query
+SPDXID: SPDXRef-npm-aria-query
+PackageVersion: 5.3.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: aria-query
+SPDXID: SPDXRef-npm-aria-query
+PackageVersion: 5.3.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: assertion-error
+SPDXID: SPDXRef-npm-assertion-error
+PackageVersion: 2.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: asynckit
+SPDXID: SPDXRef-npm-asynckit
+PackageVersion: 0.4.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: baseline-browser-mapping
+SPDXID: SPDXRef-npm-baseline-browser-mapping
+PackageVersion: 2.11.21
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: browserslist
+SPDXID: SPDXRef-npm-browserslist
+PackageVersion: 4.28.9
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: cac
+SPDXID: SPDXRef-npm-cac
+PackageVersion: 6.7.14
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: call-bind-apply-helpers
+SPDXID: SPDXRef-npm-call-bind-apply-helpers
+PackageVersion: 1.0.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: caniuse-lite
+SPDXID: SPDXRef-npm-caniuse-lite
+PackageVersion: 1.0.30001810
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: CC-BY-4.0
+
+PackageName: chai
+SPDXID: SPDXRef-npm-chai
+PackageVersion: 5.3.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: chalk
+SPDXID: SPDXRef-npm-chalk
+PackageVersion: 3.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: check-error
+SPDXID: SPDXRef-npm-check-error
+PackageVersion: 2.1.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: color-convert
+SPDXID: SPDXRef-npm-color-convert
+PackageVersion: 2.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: color-name
+SPDXID: SPDXRef-npm-color-name
+PackageVersion: 1.1.4
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: combined-stream
+SPDXID: SPDXRef-npm-combined-stream
+PackageVersion: 1.0.8
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: convert-source-map
+SPDXID: SPDXRef-npm-convert-source-map
+PackageVersion: 2.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: css.escape
+SPDXID: SPDXRef-npm-css.escape
+PackageVersion: 1.5.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: cssstyle
+SPDXID: SPDXRef-npm-cssstyle
+PackageVersion: 4.6.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: csstype
+SPDXID: SPDXRef-npm-csstype
+PackageVersion: 3.2.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: data-urls
+SPDXID: SPDXRef-npm-data-urls
+PackageVersion: 5.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: debug
+SPDXID: SPDXRef-npm-debug
+PackageVersion: 4.4.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: decimal.js
+SPDXID: SPDXRef-npm-decimal.js
+PackageVersion: 10.6.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: deep-eql
+SPDXID: SPDXRef-npm-deep-eql
+PackageVersion: 5.0.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: delayed-stream
+SPDXID: SPDXRef-npm-delayed-stream
+PackageVersion: 1.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: dequal
+SPDXID: SPDXRef-npm-dequal
+PackageVersion: 2.0.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: dom-accessibility-api
+SPDXID: SPDXRef-npm-dom-accessibility-api
+PackageVersion: 0.5.16
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: dom-accessibility-api
+SPDXID: SPDXRef-npm-dom-accessibility-api
+PackageVersion: 0.6.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: dunder-proto
+SPDXID: SPDXRef-npm-dunder-proto
+PackageVersion: 1.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: electron-to-chromium
+SPDXID: SPDXRef-npm-electron-to-chromium
+PackageVersion: 1.5.425
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+
+PackageName: entities
+SPDXID: SPDXRef-npm-entities
+PackageVersion: 6.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: BSD-2-Clause
+
+PackageName: es-define-property
+SPDXID: SPDXRef-npm-es-define-property
+PackageVersion: 1.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: es-errors
+SPDXID: SPDXRef-npm-es-errors
+PackageVersion: 1.3.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: es-module-lexer
+SPDXID: SPDXRef-npm-es-module-lexer
+PackageVersion: 1.7.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: es-object-atoms
+SPDXID: SPDXRef-npm-es-object-atoms
+PackageVersion: 1.1.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: es-set-tostringtag
+SPDXID: SPDXRef-npm-es-set-tostringtag
+PackageVersion: 2.1.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: esbuild
+SPDXID: SPDXRef-npm-esbuild
+PackageVersion: 0.21.5
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: escalade
+SPDXID: SPDXRef-npm-escalade
+PackageVersion: 3.2.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: estree-walker
+SPDXID: SPDXRef-npm-estree-walker
+PackageVersion: 3.0.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: expect-type
+SPDXID: SPDXRef-npm-expect-type
+PackageVersion: 1.4.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: form-data
+SPDXID: SPDXRef-npm-form-data
+PackageVersion: 4.0.6
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: function-bind
+SPDXID: SPDXRef-npm-function-bind
+PackageVersion: 1.1.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: gensync
+SPDXID: SPDXRef-npm-gensync
+PackageVersion: 1.0.0-beta.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: get-intrinsic
+SPDXID: SPDXRef-npm-get-intrinsic
+PackageVersion: 1.3.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: get-proto
+SPDXID: SPDXRef-npm-get-proto
+PackageVersion: 1.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: gopd
+SPDXID: SPDXRef-npm-gopd
+PackageVersion: 1.2.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: has-flag
+SPDXID: SPDXRef-npm-has-flag
+PackageVersion: 4.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: has-symbols
+SPDXID: SPDXRef-npm-has-symbols
+PackageVersion: 1.1.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: has-tostringtag
+SPDXID: SPDXRef-npm-has-tostringtag
+PackageVersion: 1.0.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: hasown
+SPDXID: SPDXRef-npm-hasown
+PackageVersion: 2.0.4
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: html-encoding-sniffer
+SPDXID: SPDXRef-npm-html-encoding-sniffer
+PackageVersion: 4.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: http-proxy-agent
+SPDXID: SPDXRef-npm-http-proxy-agent
+PackageVersion: 7.0.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: https-proxy-agent
+SPDXID: SPDXRef-npm-https-proxy-agent
+PackageVersion: 7.0.6
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: iconv-lite
+SPDXID: SPDXRef-npm-iconv-lite
+PackageVersion: 0.6.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: indent-string
+SPDXID: SPDXRef-npm-indent-string
+PackageVersion: 4.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: is-potential-custom-element-name
+SPDXID: SPDXRef-npm-is-potential-custom-element-name
+PackageVersion: 1.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: js-tokens
+SPDXID: SPDXRef-npm-js-tokens
+PackageVersion: 4.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: jsdom
+SPDXID: SPDXRef-npm-jsdom
+PackageVersion: 25.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: jsesc
+SPDXID: SPDXRef-npm-jsesc
+PackageVersion: 3.1.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: json5
+SPDXID: SPDXRef-npm-json5
+PackageVersion: 2.2.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: lodash
+SPDXID: SPDXRef-npm-lodash
+PackageVersion: 4.18.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: loose-envify
+SPDXID: SPDXRef-npm-loose-envify
+PackageVersion: 1.4.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: loupe
+SPDXID: SPDXRef-npm-loupe
+PackageVersion: 3.2.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: lru-cache
+SPDXID: SPDXRef-npm-lru-cache
+PackageVersion: 10.4.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+
+PackageName: lru-cache
+SPDXID: SPDXRef-npm-lru-cache
+PackageVersion: 5.1.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+
+PackageName: lz-string
+SPDXID: SPDXRef-npm-lz-string
+PackageVersion: 1.5.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: magic-string
+SPDXID: SPDXRef-npm-magic-string
+PackageVersion: 0.30.21
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: math-intrinsics
+SPDXID: SPDXRef-npm-math-intrinsics
+PackageVersion: 1.1.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: mime-db
+SPDXID: SPDXRef-npm-mime-db
+PackageVersion: 1.52.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: mime-types
+SPDXID: SPDXRef-npm-mime-types
+PackageVersion: 2.1.35
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: min-indent
+SPDXID: SPDXRef-npm-min-indent
+PackageVersion: 1.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: ms
+SPDXID: SPDXRef-npm-ms
+PackageVersion: 2.1.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: nanoid
+SPDXID: SPDXRef-npm-nanoid
+PackageVersion: 3.3.18
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: node-releases
+SPDXID: SPDXRef-npm-node-releases
+PackageVersion: 2.0.54
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: nwsapi
+SPDXID: SPDXRef-npm-nwsapi
+PackageVersion: 2.2.27
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: parse5
+SPDXID: SPDXRef-npm-parse5
+PackageVersion: 7.3.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: pathe
+SPDXID: SPDXRef-npm-pathe
+PackageVersion: 1.1.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: pathval
+SPDXID: SPDXRef-npm-pathval
+PackageVersion: 2.0.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: picocolors
+SPDXID: SPDXRef-npm-picocolors
+PackageVersion: 1.1.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+
+PackageName: playwright
+SPDXID: SPDXRef-npm-playwright
+PackageVersion: 1.49.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: playwright-core
+SPDXID: SPDXRef-npm-playwright-core
+PackageVersion: 1.49.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: postcss
+SPDXID: SPDXRef-npm-postcss
+PackageVersion: 8.5.28
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: prettier
+SPDXID: SPDXRef-npm-prettier
+PackageVersion: 3.4.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: pretty-format
+SPDXID: SPDXRef-npm-pretty-format
+PackageVersion: 27.5.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: punycode
+SPDXID: SPDXRef-npm-punycode
+PackageVersion: 2.3.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: react
+SPDXID: SPDXRef-npm-react
+PackageVersion: 18.3.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: react-dom
+SPDXID: SPDXRef-npm-react-dom
+PackageVersion: 18.3.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: react-is
+SPDXID: SPDXRef-npm-react-is
+PackageVersion: 17.0.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: react-refresh
+SPDXID: SPDXRef-npm-react-refresh
+PackageVersion: 0.17.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: redent
+SPDXID: SPDXRef-npm-redent
+PackageVersion: 3.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: rollup
+SPDXID: SPDXRef-npm-rollup
+PackageVersion: 4.63.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: rrweb-cssom
+SPDXID: SPDXRef-npm-rrweb-cssom
+PackageVersion: 0.7.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: rrweb-cssom
+SPDXID: SPDXRef-npm-rrweb-cssom
+PackageVersion: 0.8.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: safer-buffer
+SPDXID: SPDXRef-npm-safer-buffer
+PackageVersion: 2.1.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: saxes
+SPDXID: SPDXRef-npm-saxes
+PackageVersion: 6.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+
+PackageName: scheduler
+SPDXID: SPDXRef-npm-scheduler
+PackageVersion: 0.23.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: semver
+SPDXID: SPDXRef-npm-semver
+PackageVersion: 6.3.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+
+PackageName: siginfo
+SPDXID: SPDXRef-npm-siginfo
+PackageVersion: 2.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+
+PackageName: source-map-js
+SPDXID: SPDXRef-npm-source-map-js
+PackageVersion: 1.2.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: BSD-3-Clause
+
+PackageName: stackback
+SPDXID: SPDXRef-npm-stackback
+PackageVersion: 0.0.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: std-env
+SPDXID: SPDXRef-npm-std-env
+PackageVersion: 3.10.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: strip-indent
+SPDXID: SPDXRef-npm-strip-indent
+PackageVersion: 3.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: supports-color
+SPDXID: SPDXRef-npm-supports-color
+PackageVersion: 7.2.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: symbol-tree
+SPDXID: SPDXRef-npm-symbol-tree
+PackageVersion: 3.2.4
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tinybench
+SPDXID: SPDXRef-npm-tinybench
+PackageVersion: 2.9.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tinyexec
+SPDXID: SPDXRef-npm-tinyexec
+PackageVersion: 0.3.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tinypool
+SPDXID: SPDXRef-npm-tinypool
+PackageVersion: 1.1.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tinyrainbow
+SPDXID: SPDXRef-npm-tinyrainbow
+PackageVersion: 1.2.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tinyspy
+SPDXID: SPDXRef-npm-tinyspy
+PackageVersion: 3.0.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tldts
+SPDXID: SPDXRef-npm-tldts
+PackageVersion: 6.1.86
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tldts-core
+SPDXID: SPDXRef-npm-tldts-core
+PackageVersion: 6.1.86
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: tough-cookie
+SPDXID: SPDXRef-npm-tough-cookie
+PackageVersion: 5.1.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: BSD-3-Clause
+
+PackageName: tr46
+SPDXID: SPDXRef-npm-tr46
+PackageVersion: 5.1.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: typescript
+SPDXID: SPDXRef-npm-typescript
+PackageVersion: 5.9.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: update-browserslist-db
+SPDXID: SPDXRef-npm-update-browserslist-db
+PackageVersion: 1.3.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: vite
+SPDXID: SPDXRef-npm-vite
+PackageVersion: 5.4.21
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: vite-node
+SPDXID: SPDXRef-npm-vite-node
+PackageVersion: 2.1.9
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: vitest
+SPDXID: SPDXRef-npm-vitest
+PackageVersion: 2.1.9
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: w3c-xmlserializer
+SPDXID: SPDXRef-npm-w3c-xmlserializer
+PackageVersion: 5.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: webidl-conversions
+SPDXID: SPDXRef-npm-webidl-conversions
+PackageVersion: 7.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: BSD-2-Clause
+
+PackageName: whatwg-encoding
+SPDXID: SPDXRef-npm-whatwg-encoding
+PackageVersion: 3.1.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: whatwg-mimetype
+SPDXID: SPDXRef-npm-whatwg-mimetype
+PackageVersion: 4.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: whatwg-url
+SPDXID: SPDXRef-npm-whatwg-url
+PackageVersion: 14.2.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: why-is-node-running
+SPDXID: SPDXRef-npm-why-is-node-running
+PackageVersion: 2.3.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: ws
+SPDXID: SPDXRef-npm-ws
+PackageVersion: 8.21.3
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: xml-name-validator
+SPDXID: SPDXRef-npm-xml-name-validator
+PackageVersion: 5.0.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
+
+PackageName: xmlchars
+SPDXID: SPDXRef-npm-xmlchars
+PackageVersion: 2.2.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: yallist
+SPDXID: SPDXRef-npm-yallist
+PackageVersion: 3.1.1
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: ISC
+

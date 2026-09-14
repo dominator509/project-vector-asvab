@@ -1,0 +1,22 @@
+# cargo-audit configuration for Project VECTOR.
+#
+# Two advisories are known and accepted with reachability analysis. Ignoring
+# them by *identifier* keeps every other advisory fatal, which is the property
+# that matters: the gate still fails on anything new.
+#
+# Full analysis: .agent/evidence/EP-010/assess-vulnerabilities.py
+
+[advisories]
+ignore = [
+    # rsa arrives via sqlx-mysql, the MySQL driver. VECTOR enables only the
+    # `sqlite` feature of tauri-plugin-sql and speaks SQLite (ADR-002), so the
+    # vulnerable RSA decryption path is never reached.
+    "RUSTSEC-2023-0071",
+
+    # Affects the PostgreSQL and MySQL binary protocols. VECTOR uses the SQLite
+    # driver, which the advisory does not cover. The fix landed in sqlx 0.8.1
+    # but requires libsqlite3-sys ^0.30, which conflicts with rusqlite 0.31's
+    # ^0.28. Upgrading both is a substantive persistence-layer change and is
+    # recorded as required follow-up rather than performed at the ship gate.
+    "RUSTSEC-2024-0363",
+]

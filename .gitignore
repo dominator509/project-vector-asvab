@@ -19,3 +19,12 @@ Thumbs.db
 vector-data/
 repair-worktrees/
 release-artifacts/
+
+# Runtime SQLite state. This is the learner's data store, not source: committing
+# it would carry one learner's history into every clone. Found tracked during the
+# EP-010 secret scan.
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3

@@ -1,9 +1,9 @@
 {
+  "status": "VERIFIED",
   "schema_version": 1,
   "project": "Project VECTOR",
-  "candidate_epoch": 0,
-  "status": "PLANNED",
-  "artifact_digest": null,
+  "artifact_digest": "f40c8bb1bd8274b1606e91704d5d1b8a362ea4f3d77e33d0dbcf18244d26ee93",
+  "candidate_epoch": 1,
   "registry_count": 484,
   "dod_count": 42
 }

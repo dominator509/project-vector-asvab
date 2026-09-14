@@ -1,0 +1,47 @@
+EP-010: production readiness and ship gate — final node closed
+
+THE GRAPH IS COMPLETE. graph-next.sh returns NO_READY_NODE and all eleven nodes
+EP-000..EP-010 are NODE_DONE.
+
+ALL 484 REGISTRY IDs ARE ACCOUNTED FOR, with zero PENDING:
+  106 PASS                    with a recorded command and exit code
+  352 SKIPPED_NOT_APPLICABLE  on proven subsystem absence
+   26 BLOCKED                 against a named missing capability
+    0 FAIL
+    0 PENDING
+
+The two largest not-applicable groups are Blockchain (202) and HIPAA (125),
+whose absence is proven by probing git-tracked files for 11 indicators and
+finding matches only inside the test library itself — the V-003 evidence
+HARNESS_LAWS.md law 5 requires.
+
+VERDICT: CONDITIONAL_EXTERNAL_GATES, not GO. Eight external gates cannot be
+satisfied in this repository: code signing, manual screen-reader validation,
+trademark clearance, clean-room reproducibility, version-skew and rollback
+(which need a prior release), soak, visual-regression baselines, and the
+deployment/canary lifecycle.
+
+FIVE GATE SCRIPTS COULD NEVER HAVE PASSED, and the accounting exposed each:
+  - reality-gate.sh probed a root-level src-tauri path after the app moved to
+    apps/desktop/src-tauri/, so it reported the product surfaces ABSENT.
+  - dependency-audit.sh called `pnpm licenses:check`, which existed nowhere.
+  - smoke-test.sh called `pnpm test:smoke`, which existed nowhere.
+  - live-fire.sh called `pnpm test:live-fire`, which existed nowhere.
+  - secret-scan.py resolved its repository root one level too high, so it
+    scanned ZERO files and reported PASS. A scanner that examines nothing is
+    worse than none, because it produces false assurance.
+
+Also fixed: vector.db was tracked in git. Runtime state, not source; the next
+commit would have carried a learner's real history into every clone. cargo deny
+had no config and rejected even permissive licenses. A live-fire test asserted
+session persistence the component does not implement; it now asserts what
+exists, with the gap recorded.
+
+verify.sh — the full pipeline from pack validation through build, smoke and
+live-fire — passes end to end for the first time.
+
+Evidence: 17 gates exit 0, each with an exit code and SHA-256 hash. 484-row
+accounting with per-test evidence paths. Release verdict recorded with the
+artifact digest f40c8bb1.... The packaged UI still runs on sample data rather
+than the Rust persistence layer; that and the unsigned artifact are the two
+largest outstanding items, both recorded rather than papered over.

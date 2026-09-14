@@ -1,0 +1,139 @@
+[
+  {
+    "test_id": "GEN-002",
+    "title": "Software Composition Analysis (SCA)",
+    "command": "cargo deny check advisories",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-003",
+    "title": "Dependency Scanning",
+    "command": "cargo audit",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-004",
+    "title": "License Compliance Scanning",
+    "command": "cargo deny check licenses",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-005",
+    "title": "Secrets Scanning",
+    "command": "python3 scripts/secret-scan.py",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-001",
+    "title": "Static Application Security Testing (SAST)",
+    "command": "cargo clippy --workspace --all-targets -- -D warnings",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-014",
+    "title": "Package/Supply Chain Security",
+    "command": "cargo deny check sources",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-013",
+    "title": "Dependency Confusion",
+    "command": "cargo deny check bans",
+    "exit_code": 0,
+    "status": "PASS"
+  },
+  {
+    "test_id": "GEN-015",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_CAPABILITY",
+    "reason": "DAST requires a running deployed service and a scanning tool (e.g. OWASP ZAP) that is not installed"
+  },
+  {
+    "test_id": "GEN-016",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_CAPABILITY",
+    "reason": "IAST requires runtime instrumentation agent support from the language runtime"
+  },
+  {
+    "test_id": "GEN-018",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_CAPABILITY",
+    "reason": "manual penetration testing requires a human tester; PREFLIGHT PF-017 human lane"
+  },
+  {
+    "test_id": "GEN-020",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_CAPABILITY",
+    "reason": "red team testing requires a human team and a deployed environment"
+  },
+  {
+    "test_id": "GEN-021",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_CAPABILITY",
+    "reason": "purple team testing requires both offensive and defensive human participants"
+  },
+  {
+    "test_id": "GEN-103",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_PREREQUISITE",
+    "reason": "Common Criteria evaluation is an external laboratory certification, not an in-repo test"
+  },
+  {
+    "test_id": "GEN-040",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "SKIPPED_NOT_APPLICABLE",
+    "reason": "VECTOR ships a local desktop application; it deploys no Kubernetes cluster"
+  },
+  {
+    "test_id": "GEN-064",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "SKIPPED_NOT_APPLICABLE",
+    "reason": "VECTOR ships no infrastructure-as-code definitions; there is no cloud infrastructure"
+  },
+  {
+    "test_id": "GEN-066",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "SKIPPED_NOT_APPLICABLE",
+    "reason": "VECTOR is not distributed as a container image"
+  },
+  {
+    "test_id": "E2E-020",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_CAPABILITY",
+    "reason": "user acceptance testing requires human participants; PREFLIGHT PF-017 human lane"
+  },
+  {
+    "test_id": "SUP-015",
+    "title": "",
+    "command": "",
+    "exit_code": null,
+    "status": "BLOCKED_CAPABILITY",
+    "reason": "assistive-technology validation requires a human using Narrator or NVDA; PREFLIGHT PF-017"
+  }
+]

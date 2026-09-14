@@ -61,6 +61,19 @@ enum Commands {
         #[arg(long, default_value = "0.1.0")]
         version: String,
     },
+    /// Generate the V-000..V-021 release accounting from the master registry.
+    ///
+    /// Every registry ID is accounted for. A not-applicable classification is
+    /// only assigned when a subsystem probe proves the subsystem is absent, as
+    /// HARNESS_LAWS.md law 5 requires.
+    Account {
+        #[arg(long, default_value = ".agent/verification/MASTER_TEST_REGISTRY.csv")]
+        registry: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+        #[arg(long)]
+        summary_out: Option<PathBuf>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -262,7 +275,161 @@ fn main() -> Result<()> {
                 sbom.licenses().len()
             );
         }
+        Commands::Account {
+            registry,
+            out,
+            summary_out,
+        } => {
+            use vector_platform::accounting::{classify, render_csv, AccountingSummary};
+
+            let text = std::fs::read_to_string(&registry)?;
+            let rows = parse_registry(&text)?;
+
+            // Subsystem probes. Each records what it searched for and what it
+            // found, so an absence claim is falsifiable rather than asserted.
+            //
+            // Tracked files only (`git ls-files`), because an untracked scratch
+            // file is not part of the product.
+            let tracked = tracked_files()?;
+
+            let probes = vec![
+                probe_subsystem(
+                    "blockchain",
+                    &[
+                        ".sol",
+                        "solidity",
+                        "web3",
+                        "ethers",
+                        "smart_contract",
+                        "smart-contract",
+                    ],
+                    &tracked,
+                ),
+                probe_subsystem(
+                    "hipaa",
+                    &["hipaa", "phi_", "patient_", "healthcare", "medical_record"],
+                    &tracked,
+                ),
+            ];
+
+            for probe in &probes {
+                println!("probe {}: absent={}", probe.name, probe.is_absent());
+                for found in &probe.found {
+                    println!("  found: {found}");
+                }
+            }
+
+            let accounted: Vec<_> = rows.iter().map(|row| classify(row, &probes)).collect();
+            let summary = AccountingSummary::of(&accounted);
+
+            std::fs::write(&out, render_csv(&accounted))?;
+            println!(
+                "wrote {} ({} rows, {} PENDING)",
+                out.display(),
+                summary.total,
+                summary.count(vector_platform::accounting::TestStatus::Pending)
+            );
+            for (status, count) in &summary.by_status {
+                println!("  {status}: {count}");
+            }
+
+            if let Some(path) = summary_out {
+                std::fs::write(&path, serde_json::to_string_pretty(&summary)?)?;
+                println!("wrote summary to {}", path.display());
+            }
+        }
     }
 
     Ok(())
+}
+
+/// Parse the master test registry CSV.
+///
+/// Written by hand rather than pulling a CSV crate, because the registry is a
+/// simple five-column file and a dependency for this would need its own license
+/// review.
+fn parse_registry(text: &str) -> Result<Vec<vector_platform::accounting::RegistryRow>> {
+    let mut lines = text.lines();
+    let header = lines.next().unwrap_or_default();
+    let columns: Vec<&str> = header.split(',').map(|c| c.trim()).collect();
+
+    let index_of = |name: &str| -> Result<usize> {
+        columns
+            .iter()
+            .position(|c| *c == name)
+            .ok_or_else(|| anyhow::anyhow!("registry is missing the {name} column"))
+    };
+
+    let id_at = index_of("test_id")?;
+    let group_at = index_of("source_group")?;
+    let kind_at = index_of("kind")?;
+    let stage_at = index_of("default_stage")?;
+    let applicability_at = index_of("applicability")?;
+
+    let mut rows = Vec::new();
+    for line in lines {
+        if line.trim().is_empty() {
+            continue;
+        }
+        // The registry contains no quoted fields, so a plain split is exact.
+        let fields: Vec<&str> = line.split(',').collect();
+        if fields.len() <= applicability_at {
+            continue;
+        }
+        rows.push(vector_platform::accounting::RegistryRow {
+            test_id: fields[id_at].trim().to_string(),
+            source_group: fields[group_at].trim().to_string(),
+            kind: fields[kind_at].trim().to_string(),
+            default_stage: fields[stage_at].trim().to_string(),
+            applicability: fields[applicability_at].trim().to_string(),
+        });
+    }
+    Ok(rows)
+}
+
+/// List files tracked by git.
+fn tracked_files() -> Result<Vec<String>> {
+    let output = std::process::Command::new("git")
+        .args(["ls-files"])
+        .output()?;
+    if !output.status.success() {
+        anyhow::bail!("git ls-files failed; cannot probe the repository");
+    }
+    let text = String::from_utf8_lossy(&output.stdout);
+    Ok(text.lines().map(|l| l.trim().to_string()).collect())
+}
+
+/// Probe for a subsystem by searching tracked file paths.
+///
+/// The test library itself is excluded: the registry's own prompt files mention
+/// blockchain and HIPAA extensively and would otherwise make every subsystem
+/// look present.
+fn probe_subsystem(
+    name: &str,
+    indicators: &[&str],
+    tracked: &[String],
+) -> vector_platform::accounting::SubsystemProbe {
+    const LIBRARY_PREFIXES: &[&str] = &[
+        ".agent/verification/source-library/",
+        ".agent/verification/casebooks/",
+        ".agent/verification/APPLICABILITY_MATRIX.csv",
+        ".agent/verification/MASTER_TEST_REGISTRY.csv",
+        ".agent/verification/BLOCKCHAIN_008_022_RECONSTRUCTED.md",
+    ];
+
+    let found: Vec<String> = tracked
+        .iter()
+        .filter(|path| !LIBRARY_PREFIXES.iter().any(|p| path.starts_with(p)))
+        .filter(|path| {
+            let lower = path.to_lowercase();
+            indicators.iter().any(|i| lower.contains(&i.to_lowercase()))
+        })
+        .cloned()
+        .collect();
+
+    vector_platform::accounting::SubsystemProbe {
+        name: name.to_string(),
+        indicators: indicators.iter().map(|i| (*i).to_string()).collect(),
+        found,
+    }
 }

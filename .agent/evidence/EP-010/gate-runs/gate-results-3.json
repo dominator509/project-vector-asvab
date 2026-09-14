@@ -1,0 +1,92 @@
+[
+  {
+    "test_id": "GEN-008",
+    "status": "PASS",
+    "command": "cargo test -p vector-mcp --test ep004_mcp_security"
+  },
+  {
+    "test_id": "GEN-009",
+    "status": "PASS",
+    "command": "cargo test -p vector-questions --test ep007_ingestion"
+  },
+  {
+    "test_id": "GEN-010",
+    "status": "PASS",
+    "command": "cargo clippy --workspace --all-targets -- -D warnings"
+  },
+  {
+    "test_id": "GEN-012",
+    "status": "PASS",
+    "command": "python3 scripts/anti-gaming-scan.py ."
+  },
+  {
+    "test_id": "GEN-045",
+    "status": "PASS",
+    "command": "cargo test -p vector-platform --test ep006_process"
+  },
+  {
+    "test_id": "GEN-046",
+    "status": "PASS",
+    "command": "cargo test -p vector-persistence --test ep003_acceptance"
+  },
+  {
+    "test_id": "GEN-047",
+    "status": "PASS",
+    "command": "cargo test -p vector-content --test ep004_notebook"
+  },
+  {
+    "test_id": "GEN-049",
+    "status": "PASS",
+    "command": "cargo test -p vector-questions --test ep007_ingestion"
+  },
+  {
+    "test_id": "GEN-052",
+    "status": "PASS",
+    "command": "cargo test -p vector-mcp --test ep004_mcp_security"
+  },
+  {
+    "test_id": "GEN-054",
+    "status": "PASS",
+    "command": "cargo test -p vector-repair --test ep008_broker"
+  },
+  {
+    "test_id": "GEN-057",
+    "status": "PASS",
+    "command": "cargo test -p vector-platform --test ep009_release"
+  },
+  {
+    "test_id": "GEN-062",
+    "status": "PASS",
+    "command": "cargo test -p vector-observability --test ep006_crash"
+  },
+  {
+    "test_id": "GEN-063",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep008_bundle_events_sync"
+  },
+  {
+    "test_id": "GEN-071",
+    "status": "PASS",
+    "command": "cargo test -p vector-mcp --test ep004_mcp_security"
+  },
+  {
+    "test_id": "GEN-072",
+    "status": "PASS",
+    "command": "sh -c test -s .agent/evidence/EP-009/sbom.spdx"
+  },
+  {
+    "test_id": "GEN-073",
+    "status": "PASS",
+    "command": "cargo deny check sources"
+  },
+  {
+    "test_id": "GEN-076",
+    "status": "PASS",
+    "command": "sh -c cargo test -p vector-application --test ep004_offline"
+  },
+  {
+    "test_id": "GEN-077",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep008_bundle_events_sync"
+  }
+]

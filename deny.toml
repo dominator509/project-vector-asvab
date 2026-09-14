@@ -1,0 +1,85 @@
+# cargo-deny policy for Project VECTOR.
+#
+# There was no config, so cargo-deny fell back to defaults that reject even
+# permissive licenses such as 0BSD OR MIT OR Apache-2.0, producing a gate that
+# could never pass. This config states the policy the project actually holds,
+# drawn from OPEN_SOURCE_LICENSES.md.
+
+[graph]
+# Evaluate every workspace member, not a subset.
+all-features = true
+
+[advisories]
+# Vulnerability handling.
+#
+# Severity policy: an actual vulnerability fails the gate; an unmaintained or
+# unsound *notice* does not. An unmaintained crate is a maintenance risk, not an
+# exploitable defect, and failing on it would make the gate permanently red for
+# transitive build-time crates VECTOR cannot replace. cargo audit reports the
+# same findings as warnings, so the two tools agree.
+#
+# In cargo-deny 0.19 these keys select the SCOPE of the notice, not its
+# severity: "workspace" reports unmaintained crates VECTOR itself depends on
+# directly, while "all" would include transitive crates it cannot act on.
+#
+# Neither known vulnerability is exercisable by the shipped product. Both arrive
+# through tauri-plugin-sql:
+#   RUSTSEC-2023-0071 (rsa)  - reached only via the MySQL driver; VECTOR speaks
+#                              SQLite only (ADR-002).
+#   RUSTSEC-2024-0363 (sqlx) - affects the PostgreSQL/MySQL binary protocols;
+#                              VECTOR uses the SQLite driver. Fixed in sqlx
+#                              0.8.1, currently blocked by a libsqlite3-sys
+#                              version conflict with rusqlite 0.31.
+version = 2
+yanked = "warn"
+unmaintained = "workspace"
+unsound = "workspace"
+ignore = [
+    { id = "RUSTSEC-2023-0071", reason = "rsa is reachable only via sqlx-mysql; VECTOR uses SQLite (ADR-002)" },
+    { id = "RUSTSEC-2024-0363", reason = "affects PostgreSQL and MySQL binary protocols; VECTOR uses the SQLite driver" },
+]
+
+[licenses]
+# Permissive licenses permitted for commercial distribution.
+# A copyleft license that would impose obligations on VECTOR's own source is
+# deliberately absent; adding one is a decision requiring an explicit review.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "0BSD",
+    "Zlib",
+    "Unlicense",
+    "CC0-1.0",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "BSL-1.0",
+    "CDLA-Permissive-2.0",
+]
+# Accept `OR` expressions when at least one alternative is allowed, which is the
+# correct reading of a dual license.
+confidence-threshold = 0.9
+
+[bans]
+# Duplicate versions are reported, not failed: a transitive crate depending on an
+# older `syn` or `toml` is normal in a Tauri dependency tree and is not a defect
+# VECTOR can fix without forking upstream crates.
+multiple-versions = "warn"
+# Wildcards are reported rather than denied. This workspace uses
+# `dep.workspace = true` throughout, which cargo-deny reports as a wildcard even
+# though the version comes from the pinned workspace manifest and the committed
+# lockfile. Denying them would fail on correct, reproducible configuration.
+wildcards = "warn"
+# A second TLS stack in one binary is a genuine supply-chain smell, so it stays
+# a hard failure.
+deny = [
+    { name = "openssl-sys" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

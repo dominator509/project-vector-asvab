@@ -1,0 +1,10 @@
+{
+  "total": 484,
+  "by_status": {
+    "BLOCKED_CAPABILITY": 21,
+    "BLOCKED_PREREQUISITE": 5,
+    "PASS": 106,
+    "SKIPPED_NOT_APPLICABLE": 352
+  },
+  "pending": 0
+}

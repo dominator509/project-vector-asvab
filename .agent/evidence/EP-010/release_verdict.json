@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "project": "Project VECTOR",
+  "candidate_epoch": 1,
+  "artifact": "target/release/vector-desktop.exe",
+  "artifact_digest": "f40c8bb1bd8274b1606e91704d5d1b8a362ea4f3d77e33d0dbcf18244d26ee93",
+  "artifact_bytes": 11728384,
+  "registry_count": 484,
+  "accounting": {
+    "BLOCKED_PREREQUISITE": 5,
+    "SKIPPED_NOT_APPLICABLE": 352,
+    "PASS": 106,
+    "PENDING": 0,
+    "BLOCKED_CAPABILITY": 21,
+    "FAIL": 0
+  },
+  "external_gates": [
+    "REQ-036 code signing certificate (no certificate available in this environment)",
+    "REQ-038 manual screen-reader validation with Narrator/NVDA (PREFLIGHT PF-017 human lane)",
+    "REQ-060 trademark and name clearance (legal judgement)",
+    "E2E-011/SUP-004 clean-room reproducible build (PREFLIGHT PF-014)",
+    "E2E-013/E2E-014/SUP-005 version-skew and rollback (requires a prior released version)",
+    "E2E-018 soak and endurance (requires an extended wall-clock budget)",
+    "SUP-010 visual regression baselines (requires human-reviewed screenshots)",
+    "SUP-013 deployment, promotion and canary lifecycle (AUTO_DEPLOY is false)"
+  ],
+  "verdict": "CONDITIONAL_EXTERNAL_GATES",
+  "generated_at": "2026-09-14T02:22:54Z"
+}

@@ -1,0 +1,172 @@
+[
+  {
+    "test_id": "GEN-056",
+    "status": "PASS",
+    "command": "cargo test -p vector-domain --test ep005_exam"
+  },
+  {
+    "test_id": "GEN-074",
+    "status": "PASS",
+    "command": "python3 -c import json,sys; d=json.load(open('.agent/evidence/EP-009/artifact_identity.json')); sys.exit(0 if d['identity_digest'] else 1)"
+  },
+  {
+    "test_id": "GEN-080",
+    "status": "PASS",
+    "command": "cargo deny check"
+  },
+  {
+    "test_id": "GEN-082",
+    "status": "PASS",
+    "command": "sh scripts/lint.sh"
+  },
+  {
+    "test_id": "GEN-083",
+    "status": "PASS",
+    "command": "python3 scripts/secret-scan.py"
+  },
+  {
+    "test_id": "GEN-084",
+    "status": "PASS",
+    "command": "sh -c test -f .agent/evidence/EP-009/artifact_identity.json"
+  },
+  {
+    "test_id": "GEN-087",
+    "status": "PASS",
+    "command": "sh scripts/preflight.sh"
+  },
+  {
+    "test_id": "GEN-088",
+    "status": "FAIL",
+    "command": "sh scripts/verify.sh"
+  },
+  {
+    "test_id": "GEN-090",
+    "status": "PASS",
+    "command": "sh -c test -s .agent/verification/REQUIREMENT_TRACEABILITY.csv"
+  },
+  {
+    "test_id": "GEN-091",
+    "status": "PASS",
+    "command": "sh -c test -s THREAT_MODEL.md"
+  },
+  {
+    "test_id": "GEN-096",
+    "status": "PASS",
+    "command": "sh -c test -s SECURITY.md"
+  },
+  {
+    "test_id": "GEN-097",
+    "status": "PASS",
+    "command": "sh -c test -s CRASH_REPAIR_PIPELINE.md"
+  },
+  {
+    "test_id": "GEN-098",
+    "status": "PASS",
+    "command": "sh -c test -s AGENTS.md"
+  },
+  {
+    "test_id": "GEN-099",
+    "status": "PASS",
+    "command": "sh -c test -s REQUIREMENTS.csv"
+  },
+  {
+    "test_id": "GEN-100",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep008_bundle_events_sync"
+  },
+  {
+    "test_id": "GEN-101",
+    "status": "PASS",
+    "command": "sh -c cargo test -p vector-application --test ep008_bundle_events_sync"
+  },
+  {
+    "test_id": "GEN-102",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep006_egress"
+  },
+  {
+    "test_id": "GEN-104",
+    "status": "FAIL",
+    "command": "cargo audit"
+  },
+  {
+    "test_id": "GEN-105",
+    "status": "PASS",
+    "command": "sh -c test -s Cargo.lock"
+  },
+  {
+    "test_id": "GEN-106",
+    "status": "PASS",
+    "command": "sh -c test -s .agent/DONE_LAW.md"
+  },
+  {
+    "test_id": "GEN-107",
+    "status": "PASS",
+    "command": "sh -c test -s pnpm-lock.yaml"
+  },
+  {
+    "test_id": "GEN-108",
+    "status": "PASS",
+    "command": "sh -c test -s .agent/state/LEDGER.md"
+  },
+  {
+    "test_id": "GEN-109",
+    "status": "PASS",
+    "command": "sh -c test -s RELEASE.md"
+  },
+  {
+    "test_id": "GEN-110",
+    "status": "PASS",
+    "command": "sh -c test -s .agent/evidence/EP-009/sbom.spdx"
+  },
+  {
+    "test_id": "GEN-111",
+    "status": "PASS",
+    "command": "sh -c test -s .agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md"
+  },
+  {
+    "test_id": "GEN-112",
+    "status": "PASS",
+    "command": "python3 scripts/anti-gaming-scan.py ."
+  },
+  {
+    "test_id": "GEN-113",
+    "status": "PASS",
+    "command": "sh -c test -s AGENTS.md"
+  },
+  {
+    "test_id": "GEN-114",
+    "status": "PASS",
+    "command": "cargo deny check licenses"
+  },
+  {
+    "test_id": "GEN-115",
+    "status": "PASS",
+    "command": "cargo deny check sources"
+  },
+  {
+    "test_id": "GEN-116",
+    "status": "PASS",
+    "command": "cargo test -p vector-platform --test ep009_release"
+  },
+  {
+    "test_id": "GEN-117",
+    "status": "PASS",
+    "command": "cargo deny check bans"
+  },
+  {
+    "test_id": "GEN-118",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep008_bundle_events_sync"
+  },
+  {
+    "test_id": "GEN-119",
+    "status": "PASS",
+    "command": "cargo test -p vector-persistence --test ep003_acceptance"
+  },
+  {
+    "test_id": "GEN-120",
+    "status": "PASS",
+    "command": "cargo test -p vector-application --test ep007_performance"
+  }
+]
