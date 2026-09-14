@@ -1,0 +1,115 @@
+=== EP-008 MUTATION / NEGATIVE PROOF — bundles, events, repair broker, sync ===
+
+--------------------------------------------------------------------------------
+CRASH BUNDLE (REQ-028, REQ-030)
+
+MUT-B1: bundle consent gate removed
+  change : bundle.rs  assemble_bundle passes `true` instead of consent.granted
+  result : FAILED (33 passed; 1 failed)          verdict: DETECTED
+
+MUT-B2: residual-secret re-verification removed
+  change : bundle.rs  the explicit verify_no_secrets call in assemble_bundle
+  result : PASSED (34 passed)
+  verdict: NOT DETECTED — and provably undetectable through this path.
+  explanation: approve_release already calls verify_no_secrets internally, so
+               the second call can never observe anything the first did not.
+               The test that plants a residual secret (a leaked canary appended
+               to the log ring) is caught by approve_release itself. The extra
+               call is defence in depth against a future change to
+               approve_release's internals, and is retained for that reason.
+
+MUT-B3: reproduction actionability gate removed
+  change : bundle.rs  "if !repro.is_actionable()" -> "if false"
+  result : FAILED (33 passed; 1 failed)          verdict: DETECTED
+
+MUT-B4: bundle entry path safety guard removed
+  change : bundle.rs  "if !is_safe_entry_path(&entry.path)" -> "if false"
+  result : PASSED (34 passed)
+  verdict: NOT DETECTED — and provably undetectable through this path.
+  explanation: every entry path the assembler produces is a hardcoded literal
+               ("manifest.json", "diagnostic.json", ...), all of which are safe
+               by construction, so the guard cannot fire. Verified in
+               entry-path-guard-analysis.py. The predicate itself IS covered by
+               a dedicated test (unsafe_bundle_entry_paths_are_rejected), which
+               is why the function is tested but the in-assembler guard is not.
+               Retained deliberately: it protects against a future change that
+               derives an entry path from capture content.
+
+--------------------------------------------------------------------------------
+STRUCTURED EVENTS AND HEALTH (REQ-057)
+
+MUT-E1: study free-text refusal removed
+  change : events.rs  is_free_text_key check -> never fires
+  result : FAILED (33 passed; 1 failed)          verdict: DETECTED
+
+MUT-E2: attribute size bound removed
+  change : events.rs  MAX_ATTRIBUTE_BYTES check removed
+  result : FAILED (33 passed; 1 failed)          verdict: DETECTED
+
+MUT-E3: process liveness counts as a health proof
+  change : events.rs  can_support_healthy -> always true
+  result : FAILED (33 passed; 1 failed)          verdict: DETECTED
+  note   : this is the rule OBSERVABILITY.md states explicitly, and it is the
+           most common way a health screen lies to its reader.
+
+MUT-E4: non-public events become exportable
+  change : events.rs  RedactionClass::exportable -> always true
+  result : FAILED (32 passed; 2 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+REPAIR BROKER (REQ-031)
+
+MUT-R1: PR approval gate removed
+  change : broker.rs  may_open_pull_request ignores stage/approved
+  result : FAILED (20 passed; 1 failed)          verdict: DETECTED
+
+MUT-R2: patch preview requirement removed
+  change : broker.rs  grant_approval no longer requires preview
+  result : FAILED (19 passed; 2 failed)          verdict: DETECTED
+
+MUT-R3: reproduction requirement removed
+  change : broker.rs  propose_fix no longer requires reproduction
+  result : FAILED (20 passed; 1 failed)          verdict: DETECTED
+
+MUT-R4: auto-merge enabled
+  change : broker.rs  may_merge -> true
+  result : FAILED (20 passed; 1 failed)          verdict: DETECTED
+  note   : CRASH_REPAIR_PIPELINE.md forbids default auto-merge; this mutation is
+           the direct test of that prohibition.
+
+MUT-R5: forbidden paths ignored in repair scope
+  change : broker.rs  the forbidden-path check returned early-computed only
+  result : FAILED (20 passed; 1 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+DISABLED SYNC SEAM (REQ-059)
+
+MUT-S1: sync port enabled
+  change : sync_port.rs  sync_enabled -> true
+  result : FAILED (33 passed; 1 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+ANTI-GAMING REVIEW SCHEMA ENFORCEMENT
+
+  Negative proof: .agent/evidence/EP-008/review-schema-proof.py
+  7/7 cases behaved as required:
+    - compliant review PASSES
+    - missing required fields FAILS
+    - empty non-empty-list field FAILS
+    - missing forbidden_patterns_scanned FAILS
+    - blank reason FAILS
+    - wrong node_id FAILS
+    - verdict FAIL FAILS
+  This check was added because the validator previously read only `verdict`,
+  and five reviews satisfied the gate while missing 19 of the 20 fields the
+  shipped schema requires.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted   : 14
+  detected                         : 12
+  provably undetectable            : 2 (MUT-B2, MUT-B4; both defense in depth
+                                       against future changes, both analyzed in
+                                       entry-path-guard-analysis.py)
+  no-op mutations corrected        : 1 (MUT-B2 pattern)
+  tests after restore              : 55 in the EP-008 suites

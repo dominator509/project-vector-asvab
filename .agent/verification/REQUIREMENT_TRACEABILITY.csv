@@ -26,10 +26,10 @@ REQ-024,manual export; enterprise connector separate,SPEC-003,EP-004,AT-REQ-024-
 REQ-025,MCP server scoped read-only-default study tools/resources,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-025-EP004,PARTIAL_CAPABILITY_MODEL_DONE_TRANSPORT_BINDING_PENDING
 REQ-026,MCP client allowlisted peers consent/audit,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-026-EP004,PARTIAL_ALLOWLIST_CONSENT_AUDIT_DONE_PEER_TRANSPORT_PENDING
 REQ-027,MCP untrusted-content authority isolation/prompt injection defense,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-027-EP004,DONE_AUTHORITY_ISOLATION
-REQ-028,stack/minidump/log ring/build identity,SPEC-007,EP-006/EP-008,AT-REQ-028-EP006,PARTIAL_CRASH_CAPTURE_REDACTION_DONE_PANIC_HOOK_EP008
-REQ-029,double-redaction and secret canary tests,SPEC-004,EP-005/EP-008,AT-REQ-029-EP005,PARTIAL_CRASH_CENTER_CONSENT_DONE_BUNDLE_REDACTION_EP008
-REQ-030,deterministic diagnostics/repro/hashes/consent manifest,SPEC-004,EP-008,AT-REQ-030-EP008,PENDING_EP008
-REQ-031,isolated worktree + coding-agent + GraphLock,SPEC-004,EP-008,AT-REQ-031-EP008,PENDING_EP008
+REQ-028,stack/minidump/log ring/build identity,SPEC-007,EP-006/EP-008,AT-REQ-028-EP008,DONE_CAPTURE_REDACTION_AND_BUNDLE_ASSEMBLY
+REQ-029,double-redaction and secret canary tests,SPEC-007,EP-005/EP-008,AT-REQ-029-EP008,DONE_REDACTION_VERIFIED_AND_BUNDLE_GATED
+REQ-030,deterministic diagnostics/repro/hashes/consent manifest,SPEC-007,EP-008,AT-REQ-030-EP008,DONE_DETERMINISTIC_BUNDLE_WITH_CONSENT_MANIFEST
+REQ-031,isolated worktree + coding-agent + GraphLock,SPEC-003,EP-008,AT-REQ-031-EP008,PARTIAL_WORKFLOW_AND_GATES_DONE_REAL_WORKTREE_PENDING
 REQ-032,official gh; explicit approval; no auto-merge,SPEC-002,EP-003/EP-005,AT-REQ-032-EP003,PARTIAL_EP003_RECORD_DONE_GH_LANE_PENDING
 REQ-033,atomic integrity-checked optional encrypted backup,SPEC-002,EP-003,AT-REQ-033-EP003,DONE_EXCEPT_OPTIONAL_ENCRYPTION
 REQ-034,forced termination/corruption recovery,SPEC-002/SPEC-004,EP-003/EP-005,AT-REQ-034-EP003,PARTIAL_PERSISTENCE_RECOVERY_DONE_UI_FLOW_PENDING
@@ -55,7 +55,7 @@ REQ-053,bind binary+migrations+content+SBOM,SPEC-008,EP-007/EP-009,AT-REQ-053,PE
 REQ-054,idempotent attempts and safe DB/background workers,SPEC-002,EP-003/EP-007/EP-009,AT-REQ-054-EP003,PARTIAL_EP003_IDEMPOTENCY_DONE_WORKERS_PENDING
 REQ-055,optional user-entered official scores clearly typed as external,SPEC-003,EP-007,AT-REQ-055-EP007,DONE_EXTERNAL_SCORE_TYPING
 REQ-056,every active item has objective/source/proof/review/hash,SPEC-002,EP-007,AT-REQ-056-EP007,DONE_ITEM_PROVENANCE_AND_LIFECYCLE
-REQ-057,prompt egress classification and disclosure,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-057,PENDING
+REQ-057,prompt egress classification and disclosure,SPEC-005,EP-008,AT-REQ-057-EP008,DONE_EGRESS_CLASSIFIER_AND_EVENT_CLASSES
 REQ-058,adapter support fails closed on stale policy evidence,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-058,PENDING
-REQ-059,disabled SyncPort without cloud dependency,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-059,PENDING
+REQ-059,future sync seam disabled SyncPort without cloud dependency,SPEC-003,EP-008,AT-REQ-059-EP008,DONE_SYNCPORT_DISABLED
 REQ-060,working title requires trademark/name clearance before GA,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-060,PENDING

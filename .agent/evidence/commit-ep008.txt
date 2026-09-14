@@ -1,0 +1,52 @@
+EP-008: observability and repair operations — node closed
+
+THE MOST IMPORTANT FINDING IS A GATE WEAKNESS, NOT A FEATURE.
+
+scripts/validate-generated-pack.py checked only `verdict == PASS` on
+anti-gaming reviews. Five of this session's own reviews (EP-003..EP-007)
+satisfied that gate while missing 19 of the 20 fields the repository's own
+schemas/anti-gaming-review.schema.json requires — exactly the "evidence
+sticker" failure DONE_LAW.md warns about, undetectable by the gate meant to
+catch it.
+
+The check now enforces the full schema, reading the required-field list from the
+shipped schema so the two cannot drift. It is proven load-bearing rather than
+merely present: .agent/evidence/EP-008/review-schema-proof.py builds disposable
+packs with seven defective reviews and confirms the validator fails on each.
+7/7 behaved as required.
+
+All five reviews were rewritten to schema compliance. EP-001's review was a
+six-line note and was also rewritten, with an explicit attestation scope stating
+it records the state of EP-001's artifacts as verified from EP-003 onward and
+does not claim to re-execute a prior session.
+
+EP-000 and EP-002 have NO anti-gaming review at all. They are reported as
+warnings and are NOT claimed as verified. EP-002's recorded unit-tests exit code
+is 1 with no log, which is a pre-existing anomaly this node surfaces but does not
+resolve.
+
+REQ-028/029/030 (crash bundle): deterministic assembly of the six components
+CRASH_REPAIR_PIPELINE.md names, gated by the same release check the crash center
+uses. Determinism is proven by rendering twice and by reversing entry order.
+Consent, two redaction passes, a residual-secret scan and an actionable
+reproduction recipe are all required.
+
+REQ-057 (events and health): structured events with sequence, correlation,
+bounded attributes and a redaction class. Study free text is refused by key.
+Only Public-class events are exportable. Health distinguishes healthy, disabled,
+unconfigured, unavailable and stale-policy, and a Healthy verdict on process
+liveness alone is REFUSED — the rule OBSERVABILITY.md states explicitly.
+
+REQ-031 (repair broker): the eight-step pipeline as a state machine so a caller
+cannot reach a pull request without having passed reproduction, evidence,
+preview and explicit approval. may_merge() is false at every stage, which is
+what makes "no default auto-merge" a property rather than a setting. The scope
+refuses learner data even if a caller grants it.
+
+REQ-059 (sync seam): SyncPort refuses every direction, no endpoint is
+configured, and the app requires no cloud account.
+
+Evidence: 433 tests passing across 45 binaries, 0 failures. 12/14 mutations
+detected, with both survivors analyzed in entry-path-guard-analysis.py as
+defence in depth whose removal is unobservable through the public API. All
+eleven COMMANDS.md gates exit 0.

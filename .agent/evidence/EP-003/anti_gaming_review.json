@@ -1,51 +1,95 @@
 {
-  "node": "EP-003",
-  "reviewed_at": "2026-09-10",
+  "node_id": "EP-003",
+  "requirement_ids": ["REQ-010", "REQ-020", "REQ-032", "REQ-033", "REQ-054"],
+  "status_requested": "DONE_VERIFIED",
+  "production_entrypoints_exercised": [
+    "vector-tools `db setup` binary against a real on-disk SQLite file",
+    "vector-tools `db migrate` binary (idempotent re-run)",
+    "vector-tools `db backup` binary producing a real archive",
+    "vector-tools `db restore` binary restoring into a live database",
+    "vector_persistence::repo public repository API"
+  ],
+  "real_code_paths_exercised": [
+    "crates/vector-persistence/src/db.rs (connection config, migration load/apply)",
+    "crates/vector-persistence/src/repo.rs (Attempt/Mastery/Evidence/PullRequest/ContentPack repos)",
+    "crates/vector-persistence/src/backup.rs (create/restore_verified/sha256_file)",
+    "tools/vector-tools/src/main.rs (db setup/migrate/backup/restore commands)",
+    "migrations/002_ep003_persistence.sql"
+  ],
+  "real_dependencies_exercised": [
+    "rusqlite (bundled SQLite) with real file-backed databases",
+    "SQLite WAL journal mode and busy-timeout concurrency",
+    "sha2 for archive digests",
+    "chrono for timestamps",
+    "uuid for record identity"
+  ],
+  "side_effects_produced": [
+    "Database files created and migrated on disk under .agent/evidence/EP-003/livefire/",
+    "Backup archives written to real paths with recorded SHA-256 digests",
+    "Rows inserted, deleted and restored in a live SQLite database",
+    "Evidence logs with exit codes and hashes written under .agent/evidence/EP-003/"
+  ],
+  "independent_readbacks": [
+    "Restored rows re-read with the Python standard-library sqlite3 module, not the project's Rust code (livefire/drive.py), confirming the on-disk result independently",
+    "Schema and migration versions listed by an independent sqlite3 reader",
+    "Manifest digest recomputed from the archive file and compared to the recorded checksum"
+  ],
+  "negative_cases_verified": [
+    "Corrupted backup archive (byte flip) is rejected and live data is untouched",
+    "Truncated backup archive is rejected and live data is untouched",
+    "Restore digest mismatch is always refused",
+    "Foreign-key orphan insert is rejected by the schema",
+    "Duplicate migration versions are rejected at load time",
+    "Invalid migration rolls back and leaves earlier versions applied",
+    "Evidence vault UPDATE is refused by a database trigger",
+    "PR merge without explicit named approval is refused",
+    "A row claiming approval with no approver is unrepresentable (CHECK constraint)",
+    "Opening a directory as a database fails loudly",
+    "Replayed attempt with the same id is a no-op (exactly-once)",
+    "Invalid mastery score or trust outside [0,1] is refused"
+  ],
+  "non_fixture_inputs_verified": [
+    "Live-fire driver used data generated at run time, not a checked-in fixture",
+    "Concurrency test spawned 4 writer threads and 2 reader threads against one real database file",
+    "Migration from N-1 applied real migrations from the migrations/ directory",
+    "Backup manifest counted rows actually present in the archive"
+  ],
+  "mutation_checks": [
+    "MUT1 attempts idempotency disabled (INSERT OR REPLACE) -> test FAILED, detected",
+    "MUT2 PR approval guard removed -> test FAILED after the assertion was strengthened to check the refusal reason",
+    "MUT3 backup digest verification removed -> test FAILED, detected",
+    "MUT4 evidence-vault immutability trigger removed -> test FAILED, detected",
+    "MUT5 PR approver CHECK constraint removed -> test FAILED, detected",
+    "MUT6 content-pack rollback became a no-op -> test FAILED, detected",
+    "MUT7 backup WAL checkpoint removed -> 4 tests FAILED, detected",
+    "MUT8 schema drops data on re-migration -> test FAILED, detected",
+    "Recorded in .agent/evidence/EP-003/mutation-proof.txt"
+  ],
+  "forbidden_patterns_scanned": true,
+  "test_files_modified_during_node": [
+    "crates/vector-persistence/src/db_test.rs (updated to the new MigrationManager signature)",
+    "crates/vector-persistence/tests/ep003_acceptance.rs (tests strengthened: learner seeding for FK tables; corruption test extended to assert digest enforcement)"
+  ],
+  "gate_files_modified_during_node": [
+    "scripts/validate-generated-pack.py (placeholder-residue false positive on nested JSON; proven not to weaken detection)",
+    "apps/desktop/package.json and pnpm-lock.yaml (added the prettier devDependency that format-check.sh referenced but which was never declared)"
+  ],
+  "skipped_tests": [],
+  "mocked_final_paths": [],
+  "hardcoded_fixture_risks": [
+    "apps/desktop/src/data/sample.ts contains demonstration content in the UI layer; it is not used by any EP-003 persistence path and is not presented as sourced content"
+  ],
+  "catch_and_ignore_risks": [
+    "install.sh output was truncated for readability in the shell, but the command exit code was recorded and is 0"
+  ],
   "verdict": "PASS",
-  "requirements_covered": ["REQ-010", "REQ-020", "REQ-032", "REQ-033", "REQ-054"],
-  "stub_check": {
-    "verdict": "PASS",
-    "note": "Every repository method issues real SQL against the live connection. No in-memory shadow state, no constant return values, no unfinished markers in production paths.",
-    "files_reviewed": [
-      "crates/vector-persistence/src/db.rs",
-      "crates/vector-persistence/src/repo.rs",
-      "crates/vector-persistence/src/backup.rs",
-      "migrations/002_ep003_persistence.sql"
-    ]
-  },
-  "thin_test_check": {
-    "verdict": "PASS",
-    "note": "20 tests exercise semantics, boundaries, negative behavior, persistence-across-restart, concurrency, corruption, and recovery. Not happy-path-only.",
-    "test_count": 20,
-    "behaviors": [
-      "migration applies, is monotonic, and is idempotent",
-      "migration from N-1 preserves pre-existing rows",
-      "exact readback after process restart via a new connection",
-      "analytics aggregate persisted rows and isolate subtests",
-      "attempt recording is exactly-once under replay",
-      "evidence vault dedupes by content hash and refuses mutation",
-      "PR merge requires explicit named approval and is not repeatable",
-      "approval-without-approver is unrepresentable in the schema",
-      "backup digest matches the archive on disk",
-      "restore rolls back to snapshot state",
-      "corrupted backup is rejected and live data untouched",
-      "truncated backup is rejected and live data untouched",
-      "foreign key orphans are rejected",
-      "concurrent writers lose no updates under WAL + busy timeout",
-      "content-pack rollback restores the prior active version",
-      "opening a directory as a database fails loudly"
-    ]
-  },
-  "evidence_sticker_check": {
-    "verdict": "PASS",
-    "note": "Evidence files are real command output with exit codes plus SHA-256 hashes, not assertion files. livefire.log contains an executed end-to-end transcript verified by an independent sqlite3 reader."
-  },
-  "test_weakening_check": {
-    "verdict": "PASS",
-    "note": "No assertion was deleted, skipped, or loosened to obtain a green run. Two tests were corrected because they were initially wrong (missing learner seed and a free-page byte flip), and both corrections made them strictly stronger."
-  },
+  "reason": "All five requirements are implemented against real SQLite with real file-backed databases and verified by an independent reader. Two genuine defects were found and fixed: a Windows file-locking failure in restore, and the discovery that PRAGMA integrity_check alone does not detect a byte flip in a SQLite free page, which is why digest verification was added.",
+  "real_vulnerabilities_found": [
+    "Restore could not replace a live database on Windows because the process held a lock on its own file; fixed by disposing the connection before the swap and rolling back on failure",
+    "PRAGMA integrity_check tolerates corruption in unused pages, so a corrupted backup could have restored silently altered data; fixed with digest verification via restore_verified"
+  ],
   "known_limitations": [
-    "Backup encryption is reported via the manifest 'encrypted' flag but no encryption is applied in this node; REQ-033 requires encryption to be optional, and a plain integrity-checked backup satisfies the current requirement. Encryption at rest is deferred to EP-006 security work and is recorded here as outstanding rather than silently claimed.",
-    "Concurrency is proven at process/thread level against a single SQLite file. Multi-machine or network-filesystem concurrency is out of scope for a local-first desktop application (ADR-003)."
+    "Backup encryption is reported via the manifest 'encrypted' flag but no encryption is applied in this node; REQ-033 treats encryption as optional and this is recorded as outstanding rather than claimed",
+    "Concurrency is proven at thread level against a single SQLite file; multi-machine concurrency is out of scope for a local-first desktop application (ADR-003)"
   ]
 }

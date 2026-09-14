@@ -1,0 +1,99 @@
+{
+  "node_id": "EP-008",
+  "requirement_ids": ["REQ-028", "REQ-029", "REQ-030", "REQ-031", "REQ-057", "REQ-059"],
+  "status_requested": "DONE_VERIFIED",
+  "production_entrypoints_exercised": [
+    "vector_observability::bundle::assemble_bundle crash-bundle assembler",
+    "vector_observability::events::EventRing recording API",
+    "vector_observability::events::ComponentHealth::validate health gate",
+    "vector_repair::broker::RepairCase full eight-step pipeline",
+    "vector_repair::broker::RepairCase::may_open_pull_request approval gate",
+    "vector_application::sync_port::SyncPort refusal API",
+    "scripts/validate-generated-pack.py anti-gaming review enforcement"
+  ],
+  "real_code_paths_exercised": [
+    "crates/vector-observability/src/bundle.rs",
+    "crates/vector-observability/src/events.rs",
+    "crates/vector-repair/src/broker.rs",
+    "crates/vector-application/src/sync_port.rs",
+    "scripts/validate-generated-pack.py"
+  ],
+  "real_dependencies_exercised": [
+    "serde/serde_json for bundle, event and case serialization",
+    "the real crash redaction pipeline from EP-006 (bundles refuse an unredacted capture)",
+    "std::fs and subprocess for the validator negative proof"
+  ],
+  "side_effects_produced": [
+    "Crash bundles rendered deterministically to strings and serialized",
+    "Evidence logs with exit codes and SHA-256 hashes under .agent/evidence/EP-008/",
+    "Disposable packs created and removed by the review-schema negative proof",
+    "Five EP-003..EP-007 anti-gaming reviews rewritten to schema compliance"
+  ],
+  "independent_readbacks": [
+    "Bundle rendering re-run twice and compared byte-for-byte to prove determinism",
+    "Bundle entries reversed and re-rendered to prove ordering does not affect the artifact",
+    "NDJSON event output re-parsed line-by-line as JSON by an independent parser",
+    "Disposable packs validated by invoking the validator as a subprocess, not by calling its internals"
+  ],
+  "negative_cases_verified": [
+    "A bundle cannot assemble without consent",
+    "A bundle cannot assemble with fewer than two redaction passes",
+    "A bundle cannot assemble while a residual secret remains",
+    "A bundle cannot assemble with a non-actionable reproduction recipe (no steps, or expected/observed unstated)",
+    "Unsafe bundle entry paths are rejected",
+    "A zero-capacity event ring is refused",
+    "Study free text keys are refused as event attributes",
+    "Oversized attributes are refused; missing identifiers are refused",
+    "A secret attribute cannot appear on a Public-class event",
+    "Non-public events are excluded from export",
+    "A Healthy verdict on process liveness alone is refused",
+    "The repair case cannot skip stages; reproduction must precede the fix; evidence must precede preview; preview must precede approval",
+    "A pull request cannot be opened without explicit approval",
+    "The broker never merges, at any stage including fully approved",
+    "The repair scope refuses forbidden paths even when a caller grants them",
+    "A scope forbidding nothing is refused",
+    "Every sync direction is refused and no endpoint is configured"
+  ],
+  "non_fixture_inputs_verified": [
+    "Bundles were assembled from a real EP-006 redacted capture with a registered canary, not a hand-built struct",
+    "The repair pipeline was driven through all eight documented steps, not asserted stage-by-stage in isolation",
+    "The validator negative proof built disposable packs and invoked the real validator binary"
+  ],
+  "mutation_checks": [
+    "14 meaningful mutations attempted, 12 detected, 2 provably undetectable",
+    "Bundle consent gate, reproduction actionability gate all detected",
+    "Event free-text refusal, attribute bound, liveness-as-health-proof and export classification all detected",
+    "Repair PR approval gate, preview requirement, reproduction requirement, auto-merge and scope forbidden-path checks all detected",
+    "Sync port enablement detected",
+    "MUT-B2 and MUT-B4 survive because approve_release already re-verifies, and because every assembled entry path is a hardcoded literal. Both analyzed in entry-path-guard-analysis.py.",
+    "Recorded in .agent/evidence/EP-008/mutation-proof.txt"
+  ],
+  "forbidden_patterns_scanned": true,
+  "test_files_modified_during_node": [
+    "crates/vector-repair/tests/ep008_broker.rs (corrected an assertion that expected a generic OutOfOrder error where the implementation correctly reports the more specific NotPreviewed, and introduced a PipelineStep alias for clippy)"
+  ],
+  "gate_files_modified_during_node": [
+    "scripts/validate-generated-pack.py — the anti-gaming review check previously read only `verdict`. It now enforces the full schema this repository ships. This is a gate STRENGTHENING, proven by a 7-case negative proof."
+  ],
+  "skipped_tests": [],
+  "mocked_final_paths": [],
+  "hardcoded_fixture_risks": [
+    "The crash bundle's reproduction recipe in tests is synthetic; no real crash was injected end-to-end from a running application"
+  ],
+  "catch_and_ignore_risks": [
+    "The two surviving mutations are defense-in-depth checks whose removal is unobservable through the public API. They are retained deliberately and recorded honestly rather than deleted or hidden."
+  ],
+  "verdict": "PASS",
+  "reason": "Six requirements implemented across four new modules with 55 tests in the EP-008 suites and 433 passing workspace-wide. The most significant finding is a gate weakness rather than a feature: the pack validator checked only `verdict == PASS` on anti-gaming reviews, so five of this session's own reviews satisfied the gate while missing 19 of the 20 fields the shipped schema requires. The check now enforces the schema, proven load-bearing by a 7-case negative proof, and the five reviews plus EP-001's six-line stub were rewritten to comply.",
+  "real_vulnerabilities_found": [
+    "The generated-pack validator trusted a single string field on anti-gaming reviews. Five reviews (EP-003 through EP-007) passed the gate with 19 of 20 required evidence fields absent, and EP-001's review was a six-line note. This is precisely the 'evidence sticker' failure DONE_LAW.md warns about, and the gate could not detect it.",
+    "EP-000 and EP-002 have no anti-gaming review at all. They are reported as warnings rather than silently accepted, and are NOT claimed as verified by this node."
+  ],
+  "known_limitations": [
+    "The crash bundle assembles and renders in memory. Wiring it to a real panic hook, to disk, and to the upload path is desktop-shell work that remains outstanding; no end-to-end capture-from-a-real-panic claim is made.",
+    "The repair broker models the workflow and its gates as a state machine. It does not create a real git worktree or invoke a real coding agent; the GitHub integration does not exist and no PR has been opened.",
+    "EP-000 and EP-002 remain without anti-gaming reviews. They were closed by a prior session and this node does not attest to their evidence quality. EP-002's recorded unit-tests exit code is 1 with no corresponding log, which is a pre-existing anomaly this node surfaces but does not resolve.",
+    "REQ-039 (SLOs) and REQ-041 (SBOM and license gate) remain PENDING and are not claimed here.",
+    "Structured events and health states are implemented and tested; the health UI that would display them is part of the desktop shell work."
+  ]
+}

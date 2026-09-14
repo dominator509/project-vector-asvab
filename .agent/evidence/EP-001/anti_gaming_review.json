@@ -1,7 +1,69 @@
 {
   "node_id": "EP-001",
+  "requirement_ids": ["REQ-039", "REQ-040", "REQ-041", "REQ-053"],
+  "status_requested": "DONE_VERIFIED",
+  "production_entrypoints_exercised": [
+    "Cargo workspace build across all member crates",
+    "Tauri desktop shell configured in apps/desktop/src-tauri",
+    "vector-tools `db setup` and `db migrate` against a real SQLite file",
+    "React shell built by vite into dist/",
+    "Playwright E2E against the built desktop bundle (added in EP-005)"
+  ],
+  "real_code_paths_exercised": [
+    "Cargo.toml workspace member configuration",
+    "crates/vector-persistence/src/db.rs migration application (exercised by db setup)",
+    "apps/desktop/src/App.tsx React shell",
+    "apps/desktop/src-tauri/tauri.conf.json desktop configuration"
+  ],
+  "real_dependencies_exercised": [
+    "Rust toolchain 1.97.1 with the committed Cargo.lock",
+    "Node 24.14.1 and pnpm 0.34.6 with the committed pnpm-lock.yaml",
+    "rusqlite bundled SQLite",
+    "Tauri 2 CLI and winres build tooling"
+  ],
+  "side_effects_produced": [
+    "Compiled Rust workspace under target/",
+    "Production UI bundle under apps/desktop/dist/",
+    "SQLite database created and migrated on disk by db setup"
+  ],
+  "independent_readbacks": [
+    "Migration versions read back from schema_migrations by an independent sqlite3 reader",
+    "The built dist/ bundle served over HTTP and driven by a real browser rather than inspected as source"
+  ],
+  "negative_cases_verified": [
+    "tests/vector-persistence db_test asserts migrations are idempotent and that an invalid migration rolls back",
+    "Duplicate migration versions are rejected at load time",
+    "Opening a directory as a database fails loudly"
+  ],
+  "non_fixture_inputs_verified": [
+    "db setup ran against a freshly created on-disk database, not an in-memory stand-in",
+    "Playwright served the real vite build output"
+  ],
+  "mutation_checks": [
+    "EP-001 predates this session and shipped no mutation proof of its own. The infrastructure it established is covered by later nodes: 29 mutations in EP-004, 13 in EP-005, 26 in EP-006 and 24 in EP-007 all exercised crates and layers introduced here."
+  ],
+  "forbidden_patterns_scanned": true,
+  "test_files_modified_during_node": [
+    "crates/vector-persistence/src/db_test.rs was updated in EP-003 when the MigrationManager signature changed"
+  ],
+  "gate_files_modified_during_node": [
+    "scripts/generate-icons.py added in EP-004. Every Tauri icon was a 70-byte PNG placeholder saved under .ico/.icns extensions, which made `cargo test --workspace` fail outright with 'resource file ... is not in 3.00 format'. Real multi-resolution assets are now generated."
+  ],
+  "skipped_tests": [],
+  "mocked_final_paths": [],
+  "hardcoded_fixture_risks": [
+    "apps/desktop/src/data/sample.ts supplies demonstration UI content and is not presented as sourced material"
+  ],
+  "catch_and_ignore_risks": [],
   "verdict": "PASS",
-  "reviewed_at": "2026-09-09T01:30:00Z",
-  "reviewer": "jules",
-  "notes": "Real Cargo workspace, React shell, SQLite migrations, and requirement tests implemented and verified."
+  "reason": "The foundation this node established is real and load-bearing: an eleven-crate Cargo workspace that builds clean, a pnpm workspace with a committed lockfile, a Tauri shell, and SQLite migrations that apply against a real file. Every later node built on it without rework. This review was authored retroactively during EP-008 to satisfy the schema the repository ships; the original file was a six-line note asserting PASS without any of the required evidence fields, which the strengthened validator now rejects.",
+  "attestation_scope": "This review attests to the state of EP-001's artifacts as verified during EP-003 through EP-008. It does not claim to have re-executed EP-001's original session, which predates this work.",
+  "real_vulnerabilities_found": [
+    "Every Tauri icon was a 70-byte PNG placeholder saved under .ico and .icns extensions. This blocked `cargo test --workspace` entirely, so the full workspace had never been testable. Fixed in EP-004 via scripts/generate-icons.py."
+  ],
+  "known_limitations": [
+    "REQ-039 (startup/UI/DB/search/background-work SLOs), REQ-040 (structured health/diagnostics) and REQ-041 (SBOM and commercial license release gate) are attributed to EP-001 in traceability but remain PENDING. This review does not claim them; EP-008 implements structured local events and health states, and EP-009 owns the SBOM and license gate.",
+    "The desktop application has not been launched as a packaged Tauri window in this environment; UI verification ran through the vite preview server and Playwright.",
+    "The original EP-001 session produced no mutation proof of its own, so the mutation coverage cited here belongs to the later nodes that exercised this foundation."
+  ]
 }

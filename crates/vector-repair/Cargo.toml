@@ -6,4 +6,6 @@ license.workspace = true
 
 [dependencies]
 vector-domain = { path = "../vector-domain" }
+vector-observability = { path = "../vector-observability" }
 serde.workspace = true
+serde_json.workspace = true

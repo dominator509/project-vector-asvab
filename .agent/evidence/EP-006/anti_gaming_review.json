@@ -1,58 +1,92 @@
 {
-  "node": "EP-006",
-  "reviewed_at": "2026-09-10",
-  "verdict": "PASS",
-  "requirements_covered": [
-    "REQ-028", "REQ-045", "REQ-046", "REQ-047", "REQ-048", "REQ-049"
+  "node_id": "EP-006",
+  "requirement_ids": ["REQ-028", "REQ-045", "REQ-046", "REQ-047", "REQ-048", "REQ-049"],
+  "status_requested": "DONE_VERIFIED",
+  "production_entrypoints_exercised": [
+    "vector_observability::crash::redact_capture and approve_release release gate",
+    "vector_platform::process::build_spec and build_env subprocess boundary",
+    "vector_application::egress::authorize_egress classifier",
+    "vector_content::content_qa::ContentQa review ledger",
+    "vector_content::content_qa::calibrate difficulty estimator"
   ],
-  "requirements_delivered": {
-    "REQ-028": "Crash capture carries stack, log ring and build identity, and is redacted by two independent passes before it can be released.",
-    "REQ-045": "Motivation features remain separate from mastery. No streak/achievement score feeds the mastery or readiness calculation, and the offline capability registry and readiness band contain no motivational term.",
-    "REQ-046": "Egress privacy classifier. Behavioral advertising and data brokerage are disabled, no advertising destination is registered, learner data requires per-destination consent, and secrets can never be transmitted.",
-    "REQ-047": "Signed, datable provider-policy records that disable an adapter when terms go stale or are revoked. Implemented in EP-004 (vector-llm::transport) and exercised there; EP-006 adds the egress side, where a policy refresh must not carry learner data.",
-    "REQ-048": "Content QA with review state, named-reviewer and rationale requirements, permitted transitions, append-only audit history and audited rollback. Only Approved content is activatable.",
-    "REQ-049": "Internal difficulty calibration from observed attempts, with an observation floor, a finite logit scale, and wording that states the value is VECTOR's own estimate. official_equivalence_claim_permitted() is false and tested."
-  },
-  "stub_check": {
-    "verdict": "PASS",
-    "note": "No placeholder or constant-return production behaviour was added. Every control is a real predicate with typed refusals, and every refusal path is exercised by a test (proven by 25 detected mutations).",
-    "files_reviewed": [
-      "crates/vector-observability/src/crash.rs",
-      "crates/vector-platform/src/process.rs",
-      "crates/vector-application/src/egress.rs",
-      "crates/vector-content/src/content_qa.rs"
-    ]
-  },
-  "thin_test_check": {
-    "verdict": "PASS",
-    "note": "91 tests across four new suites. The security suites assert negative behaviour (injection refused, credential excluded, secret blocked, stale content unactivatable) rather than happy paths.",
-    "test_count": 91,
-    "suites": {
-      "ep006_crash": 19,
-      "ep006_process": 25,
-      "ep006_egress": 18,
-      "ep006_content_qa": 27,
-      "existing_observability_unit": 3
-    }
-  },
-  "evidence_sticker_check": {
-    "verdict": "PASS",
-    "note": "Evidence is real command output with exit codes and SHA-256 hashes. The mutation proof records which mutations were DETECTED and, equally, the one that was NOT and why."
-  },
-  "test_weakening_check": {
-    "verdict": "PASS",
-    "note": "No assertion was deleted, skipped or loosened. Three clippy findings were fixed by correcting the code, not by silencing the lint with an allow attribute."
-  },
-  "real_defects_found_and_fixed": [
-    "Untested safety net: the environment denylist sweep was unreachable through build_env (the allowlist already excludes those keys), so no test exercised it and removing it changed nothing observable. It was extracted into a public strip_denied() function and is now covered by three tests. A barrier whose failure path is untested is an assumed barrier, not a proven one.",
-    "The pre-existing RedactedLogger redacts by key name only, so a credential appearing inside a panic message, stack trace or log line would have shipped unredacted in a crash report. The new crash module adds value-shape detection for bearer tokens, provider key prefixes, JWTs, connection-string passwords, private-key blocks and email addresses.",
-    "Clippy: unnecessary clone-to-slice in three test call sites, and a useless format! in one fixture, both fixed in the code."
+  "real_code_paths_exercised": [
+    "crates/vector-observability/src/crash.rs",
+    "crates/vector-platform/src/process.rs",
+    "crates/vector-application/src/egress.rs",
+    "crates/vector-content/src/content_qa.rs"
+  ],
+  "real_dependencies_exercised": [
+    "regex 1.11 for credential-shape recognition",
+    "sha2 for content hashing",
+    "std::process environment construction semantics",
+    "tempfile-backed filesystem for binary-impersonation checks"
+  ],
+  "side_effects_produced": [
+    "Evidence logs with exit codes and SHA-256 hashes under .agent/evidence/EP-006/",
+    "Temporary files created and removed for binary-approval tests",
+    "Analysis artifact canary-guard-analysis.py"
+  ],
+  "independent_readbacks": [
+    "Redaction re-verified by an independent scan (verify_no_secrets) rather than trusting that redaction ran",
+    "Serialized crash bundles inspected to confirm no secret survives serialization",
+    "Environment maps inspected after construction to confirm denied keys are absent"
+  ],
+  "negative_cases_verified": [
+    "A raw capture fails verification; a redacted one passes",
+    "A canary with no recognizable scheme is still removed",
+    "Private-key blocks, bearer tokens, provider key prefixes and connection-string passwords are detected without any canary registered",
+    "Release is refused without consent, with fewer than two passes, and with any residual secret",
+    "Shell metacharacters in a program name are refused",
+    "A relative program path is refused; a lookalike binary in another directory is not approved",
+    "Credentials in the parent environment never reach a child process; explicitly passing a denied variable is a hard error",
+    "An advertising destination is refused even with consent and even for anonymous data",
+    "A secret payload is refused for every purpose and even to a local destination",
+    "Unreviewed, in-review and rejected content cannot be activated; skipped review transitions are refused",
+    "Rollback requires a reason and is recorded rather than hidden",
+    "Calibration refuses below the observation floor and never claims official equivalence"
+  ],
+  "non_fixture_inputs_verified": [
+    "The crash fixture plants secrets in every field a real crash populates: panic message, stack, structured context and log ring",
+    "Binary-approval tests create real executable files in temp directories at run time",
+    "Rollback and audit sequences are driven through the public API rather than manipulating state directly"
+  ],
+  "mutation_checks": [
+    "26 meaningful mutations attempted, 25 detected, 1 provably undetectable",
+    "Canary pass removal, scheme-pattern disabling, key-based redaction removal, verification short-circuit, consent gate and pass-count gate all detected",
+    "Environment allowlist removal, denylist sweep removal, explicit-denial removal, metacharacter scan removal, absolute-path requirement, argument bound and binary approval all detected",
+    "Advertising gate, local secret check, consent requirement, purpose limit and learner-data permission all detected",
+    "Activation gate, transition guard, reviewer requirement, rationale requirement, rollback audit, calibration floor, difficulty inversion and equivalence claim all detected",
+    "MUT-C7 (empty canary allowed) is provably undetectable: every value it rejects is also rejected by the minimum-length guard, verified in canary-guard-analysis.py",
+    "Recorded in .agent/evidence/EP-006/mutation-proof.txt"
+  ],
+  "forbidden_patterns_scanned": true,
+  "test_files_modified_during_node": [
+    "crates/vector-observability/tests/ep006_crash.rs (replaced a useless format! with a string literal)",
+    "crates/vector-platform/tests/ep006_process.rs (replaced unnecessary clones with std::slice::from_ref, and added three direct tests for strip_denied)",
+    "crates/vector-study/tests/ep006_motivation_separation.rs (added a direct shape-guard test after the first mutation attempt proved the guard could be vacuous)"
+  ],
+  "gate_files_modified_during_node": [
+    "Cargo.toml workspace dependencies (added regex, used by credential-shape redaction)"
+  ],
+  "skipped_tests": [],
+  "mocked_final_paths": [],
+  "hardcoded_fixture_risks": [
+    "The canary values in tests are sentinels, which is their purpose; the scheme patterns are also exercised with no canary registered so detection does not depend on them"
+  ],
+  "catch_and_ignore_risks": [
+    "The environment denylist sweep was unreachable through build_env, so removing it changed nothing observable and the mutation survived. It was extracted into a testable strip_denied() with three direct tests. A barrier whose failure path is untested is an assumed barrier."
+  ],
+  "verdict": "PASS",
+  "reason": "Six requirements implemented across four new modules with 91 tests. The pre-existing redaction was key-name-only and would have leaked a credential appearing in a panic message, stack trace or log line; the new crash module adds value-shape detection plus a canary pass and an independent verification gate. 25 of 26 mutations detected, with the one exception analyzed and documented as provably undetectable.",
+  "real_vulnerabilities_found": [
+    "The existing RedactedLogger redacted by key name only, so a credential inside a panic message, stack trace or log line would have shipped unredacted in a crash report",
+    "The environment denylist sweep was an untested safety net whose removal was undetectable"
   ],
   "known_limitations": [
-    "REQ-047 provider-policy disablement is implemented and tested in vector-llm::transport (EP-004). EP-006 adds only the egress constraint that a policy refresh must not carry learner data. No live provider is contacted; PREFLIGHT PF-007..PF-009 remain external gates.",
-    "Crash capture builds and redacts bundles in memory. Wiring it to an actual panic hook and to disk is part of the desktop shell and EP-008 repair work; no end-to-end capture-from-a-real-panic claim is made here.",
-    "The egress classifier is a pure policy function. No network client calls it yet, because the transports that would perform egress are not live-invoked in this environment. The policy is real and tested; the enforcement point is not yet on a live path.",
-    "Difficulty calibration is an internal heuristic from observed accuracy. It is explicitly not validated against any official psychometric model, and the code states so. No equivalence or predictive claim is made.",
-    "REQ-045 is satisfied by separation rather than by building motivation features: no streak or achievement system exists yet, and the tests assert that no motivational term enters mastery or readiness. When such features are added, those invariants must still hold."
+    "REQ-047 provider-policy disablement is implemented and tested in vector-llm::transport (EP-004); EP-006 adds only the egress constraint that a policy refresh must not carry learner data. No live provider is contacted (PREFLIGHT PF-007..PF-009 remain external gates).",
+    "Crash captures are built and redacted in memory. Wiring them to a real panic hook and to disk is EP-008 work; no end-to-end capture-from-a-real-panic claim is made here.",
+    "The egress classifier is a pure policy function and no network client calls it yet, because the transports that would perform egress are not live-invoked in this environment.",
+    "Difficulty calibration is an internal heuristic from observed accuracy and is explicitly not validated against any official psychometric model.",
+    "REQ-045 is satisfied by separation rather than by building motivation features: no streak or achievement system exists yet, and tests assert no motivational term enters mastery or readiness."
   ]
 }

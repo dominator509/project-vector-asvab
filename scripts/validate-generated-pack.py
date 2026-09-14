@@ -31,6 +31,22 @@ for rel in required:
 
 SKIP_PARTS = {".git", "node_modules", ".venv", "target", "dist", "build"}
 
+# Anti-gaming review contract, read from the schema this repository ships so the
+# validator and the schema cannot drift apart.
+ANTI_GAMING_REVIEW_SCHEMA = root / "schemas" / "anti-gaming-review.schema.json"
+ANTI_GAMING_REVIEW_REQUIRED: list[str] = []
+ANTI_GAMING_REVIEW_NONEMPTY_LISTS: list[str] = []
+if ANTI_GAMING_REVIEW_SCHEMA.exists():
+    _schema = json.loads(ANTI_GAMING_REVIEW_SCHEMA.read_text("utf-8"))
+    ANTI_GAMING_REVIEW_REQUIRED = list(_schema.get("required", []))
+    ANTI_GAMING_REVIEW_NONEMPTY_LISTS = [
+        name
+        for name, spec in _schema.get("properties", {}).items()
+        if spec.get("type") == "array" and spec.get("minItems", 0) > 0
+    ]
+else:
+    err("missing schemas/anti-gaming-review.schema.json")
+
 # Placeholder residue.
 #
 # The intent is to catch unrendered template syntax left in a shipped file.
@@ -181,9 +197,45 @@ if ledger.exists():
         else:
             try:
                 data = json.loads(review.read_text('utf-8'))
-                if data.get('verdict') != 'PASS': err(f"anti_gaming_review for {node} is not PASS")
             except Exception as exc:
                 err(f"cannot parse anti_gaming_review for {node}: {exc}")
+                continue
+
+            # Enforce the schema this repository ships. Checking only
+            # `verdict == PASS` let a review satisfy the gate while carrying
+            # none of the required evidence: five reviews passed with 19 of the
+            # 20 required fields absent. A gate that reads one string is an
+            # evidence sticker, not a gate.
+            required = ANTI_GAMING_REVIEW_REQUIRED
+            missing = [field for field in required if field not in data]
+            if missing:
+                err(
+                    f"anti_gaming_review for {node} is missing required "
+                    f"field(s): {', '.join(missing)}"
+                )
+            if data.get('node_id') not in (None, node):
+                err(
+                    f"anti_gaming_review for {node} declares node_id "
+                    f"{data.get('node_id')!r}"
+                )
+            if data.get('verdict') != 'PASS':
+                err(f"anti_gaming_review for {node} is not PASS")
+            # Fields the schema requires to be non-empty lists.
+            for field in ANTI_GAMING_REVIEW_NONEMPTY_LISTS:
+                if field in data and not (
+                    isinstance(data[field], list) and len(data[field]) > 0
+                ):
+                    err(
+                        f"anti_gaming_review for {node} field {field} must be a "
+                        f"non-empty list"
+                    )
+            if data.get('forbidden_patterns_scanned') is not True:
+                err(
+                    f"anti_gaming_review for {node} must set "
+                    f"forbidden_patterns_scanned to true"
+                )
+            if not str(data.get('reason', '')).strip():
+                err(f"anti_gaming_review for {node} needs a non-empty reason")
 
 if errors:
     print("generated pack validation: failed")
