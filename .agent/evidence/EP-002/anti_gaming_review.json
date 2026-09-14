@@ -1,0 +1,114 @@
+{
+  "node_id": "EP-002",
+  "requirement_ids": [
+    "REQ-001", "REQ-002", "REQ-003", "REQ-004", "REQ-007",
+    "REQ-009", "REQ-021", "REQ-022", "REQ-023"
+  ],
+  "status_requested": "DONE_VERIFIED",
+  "production_entrypoints_exercised": [
+    "vector_domain::mastery::Subtest public API (code, name, from_code, is_afqt, ALL)",
+    "vector_domain::content::ContentPack public API (new, sign, verify, set_version, stage_update, rollback)",
+    "vector_domain::ingestion::QuestionIngestion::ingest",
+    "vector_domain::simulator::PaperSimulator public API",
+    "vector_domain::profile::LearnerProfile public API",
+    "the full scripts/test-unit.sh suite across 47 test binaries"
+  ],
+  "real_code_paths_exercised": [
+    "crates/vector-domain/src/mastery.rs",
+    "crates/vector-domain/src/content.rs",
+    "crates/vector-domain/src/ingestion.rs",
+    "crates/vector-domain/src/simulator.rs",
+    "crates/vector-domain/src/profile.rs",
+    "crates/vector-domain/src/tests.rs",
+    "crates/vector-domain/tests/ep002_salvage.rs"
+  ],
+  "real_dependencies_exercised": [
+    "ed25519-dalek 2.2.0 for content-pack signing and verification (real cryptographic signatures, not a hash or a prefix match)",
+    "serde/serde_json for record round-tripping",
+    "chrono for freshness measurement",
+    "uuid for profile identity"
+  ],
+  "side_effects_produced": [
+    "Signature bytes produced by real Ed25519 signing over a length-prefixed canonical payload",
+    "Six gate logs with exit codes and SHA-256 hashes under .agent/evidence/EP-002/",
+    "Signal-based test failures under deliberate mutation (recorded below)"
+  ],
+  "independent_readbacks": [
+    "Signatures verified against the embedded public key by rebuilding the payload from the pack's current fields, so a mutated field is detected rather than trusted",
+    "Serde round-trips re-read every persisted domain type and compared field-by-field",
+    "Subtest codes cross-checked against the official ten via a sorted comparison against a literal list, not against the enum's own iteration order"
+  ],
+  "negative_cases_verified": [
+    "An unsigned pack fails verification with NotSigned",
+    "Tampering with the content hash after signing fails verification",
+    "Tampering with the pack name after signing fails verification",
+    "A corrupted signature byte fails verification",
+    "A signature of the wrong length is refused as MalformedSignature",
+    "A signer key of the wrong length is refused as MalformedKey",
+    "A pack with no signer key is refused as NoSigner",
+    "A pack created with an empty content hash is refused at construction",
+    "Bumping the version clears the signature rather than leaving a stale one",
+    "A signature cannot be transplanted between two distinct packs",
+    "Two packs that would collide without length-prefixing produce different signatures",
+    "Leaked official question material is rejected at ingestion",
+    "Permitted source types are NOT rejected (a check that refused everything would otherwise pass the test above)",
+    "A learner profile cannot gain an identifying field without failing the exact-field-set assertion"
+  ],
+  "non_fixture_inputs_verified": [
+    "Signing keys are derived deterministically from fixed seeds, so tests are exactly reproducible without an RNG dependency",
+    "The payload-collision test constructs two genuinely distinct packs whose version numbers differ by a factor of ~1.9 billion, rather than contriving a near-miss",
+    "Subtest assertions read the enum's own data via Subtest::ALL and Subtest::code rather than a literal built inside the test"
+  ],
+  "mutation_checks": [
+    "sign() returns a constant signature -> DETECTED (4 tests failed)",
+    "verify() always succeeds -> DETECTED (4 tests failed)",
+    "content_hash excluded from the signed payload -> DETECTED (1 test failed)",
+    "length prefixes removed from the payload -> DETECTED (1 test failed, after the collision test was written to isolate it)",
+    "sign() ignores the supplied key -> DETECTED (3 tests failed)",
+    "GS wrongly added to is_afqt -> DETECTED (2 tests failed)",
+    "MK wrongly removed from is_afqt -> DETECTED (2 tests failed)",
+    "Two subtests given the same code -> DETECTED (4 tests failed)",
+    "domain tag removed from the payload -> SURVIVED, and recorded as defence in depth: it guards against cross-protocol replay, and there is no second message type in this crate to distinguish it from"
+  ],
+  "forbidden_patterns_scanned": true,
+  "test_files_modified_during_node": [
+    "crates/vector-domain/src/tests.rs was rewritten. Three of its tests could not fail when the code was wrong; the replacement tests are mutation-proven.",
+    "crates/vector-domain/tests/ep002_salvage.rs added, asserting properties of the Subtest enum's own data."
+  ],
+  "gate_files_modified_during_node": [
+    "crates/vector-domain/Cargo.toml and Cargo.lock: added ed25519-dalek 2.2.0. License policy re-checked and passes (BSD-3-Clause, within the release allowlist)."
+  ],
+  "skipped_tests": [],
+  "mocked_final_paths": [],
+  "hardcoded_fixture_risks": [
+    "The test signing keys are fixed seeds. This is intentional and does not weaken the tests: the properties under test are key-relative (different keys must produce different signatures, a signature must not transfer between packs), so a fixed key exercises them fully."
+  ],
+  "catch_and_ignore_risks": [
+    "The domain tag mutation survives. It is genuine defence in depth rather than a tested control, and is recorded as such rather than left unmentioned."
+  ],
+  "verdict": "PASS",
+  "reason": "EP-002's closure was not supportable as originally recorded: its evidence directory held a unit-tests exit code of 1 on a NODE_DONE node, three .sha256 files hashing logs that were never committed, and no anti-gaming review (the original was a three-line {\"verdict\":\"PASS\"} sticker, deleted in 65ca5f4). Two stubs remained in the crate this node owns. This review attests to the node's state AFTER remediation: both stubs are gone, real Ed25519 signing has replaced the dummy signature, the three unfalsifiable tests have been replaced with mutation-proven ones, and all six gate logs are committed with real exit codes. This review does not attest to the original session's work, which it could not verify.",
+  "attestation_scope": "Authored by a later session during EP-010 remediation. It records the state of EP-002's artifacts as verified by that session and does not claim to have re-executed the original 2026-09-09 session.",
+  "original_closure_defects_found": [
+    "unit-tests.exitcode recorded 1 (a failure) while the node was marked NODE_DONE",
+    "anti-gaming-scan.log, dod-gate.log and unit-tests.log were never committed; only their SHA-256 hashes were, so nothing could be verified",
+    "the anti-gaming review was three lines containing only {\"verdict\": \"PASS\"}, and was deleted in commit 65ca5f4",
+    "test_req_023_signed_versioned_packs was PROVEN VACUOUS: mutating sign() to return an empty string still passed it",
+    "test_req_004_subtests_modeled asserted the length of a vector the test itself constructed, never touching the Subtest enum",
+    "test_req_003_adaptive_plan asserted only that the drill list was non-empty, which the hardcoded stub satisfied",
+    "two commits titled 'EP-003' and authored by google-labs-jules[bot] flipped unit-tests.exitcode from 1 to 0 and rewrote the hashes; those commits are on the unmerged branch jules-15445701925711240996-2fe6800f and are NOT on main"
+  ],
+  "remediation_performed": [
+    "Deleted crates/vector-domain/src/plan.rs. The real planner already exists in vector_study::selection from EP-004; two implementations of one concept, one real and one fake, is worse than one.",
+    "Replaced ContentPack::sign with real Ed25519 signing. The previous method returned the literal \"dummy_signature\", ignored the key, and force-set reviewed = true.",
+    "Removed the domain copies of AnswerProof and QuestionItem, superseded by vector_questions::ingestion (EP-007).",
+    "Rewrote tests.rs and added tests/ep002_salvage.rs.",
+    "Regenerated every gate log and exit code in this directory from real command runs."
+  ],
+  "known_limitations": [
+    "REQ-003's planner is implemented in vector_study::selection (EP-004), not in this crate. It cannot live in vector-domain because vector-study depends on it. The traceability row should reflect EP-004 as the implementation site.",
+    "REQ-022's question factory is implemented in vector_questions::ingestion (EP-007), not in this crate, for the same layering reason.",
+    "Lifecycle state (status, freshness) is deliberately not covered by the signature. A consumer that needs to attest when a pack was reviewed must use the content QA ledger, not the signature.",
+    "Content packs are signed in memory. No key provisioning, rotation or revocation is implemented, and PREFLIGHT PF-013 (content signing test key) remains an external capability probe."
+  ]
+}

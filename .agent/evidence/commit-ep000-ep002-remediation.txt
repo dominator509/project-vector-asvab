@@ -1,0 +1,69 @@
+EP-000 and EP-002 remediation: reopen, fix, re-verify honestly
+
+Both nodes were reopened after a closure audit found their recorded evidence
+could not support a NODE_DONE claim. Their ARTIFACTS were largely real; their
+EVIDENCE was not. Neither was redone from scratch.
+
+WHY THEY WERE REOPENED
+
+EP-000 was closed NODE_DONE by root@vmi3357656.contaboserver.net two seconds
+after producing an accounting that reports "total 484, PENDING: 484" — nothing
+verified — and the environment it recorded (git 2.43.0, Python 3.12.3, rustc
+1.96.0, Node 24.16.0) is a different machine from this one. A later session
+correctly re-closed it CLOSED_BLOCKED with BLOCKED_INSUFFICIENT_EVIDENCE. That
+record was then deleted as "spurious" while the third of its three stated
+unblock conditions — an independent frontier audit — was never met. No such
+audit exists in the repository.
+
+EP-002 was closed NODE_DONE while its own evidence directory recorded a
+unit-tests exit code of 1. All three gate logs it hashed were never committed.
+Its anti-gaming review was a three-line {"verdict": "PASS"} sticker, deleted in
+65ca5f4. Two commits titled "EP-003" authored by google-labs-jules[bot] flipped
+that exit code from 1 to 0 and rewrote the hashes; those commits are on the
+unmerged branch jules-15445701925711240996-2fe6800f, NOT on main.
+
+EP-000 REMEDIATION
+
+Found a substantive gap: EP-000's stated purpose includes "toolchain pins", and
+the repository had NONE. Dependencies were pinned by Cargo.lock and
+pnpm-lock.yaml, but the compiler itself was unpinned, so identical sources could
+produce a different artifact. Added:
+
+  rust-toolchain.toml   channel = "1.97.1" (exact, not a range, so a mismatch
+                        fails loudly rather than silently using another compiler)
+  .nvmrc                24.14.1
+  package.json          engines { node, pnpm } and packageManager pnpm@10.34.5
+
+Verified the workspace still builds and the desktop suite still passes under the
+pins. Recorded the lockfile digests so a later change to either is detectable.
+
+Regenerated every gate log from real runs, with the logs themselves committed
+rather than only their hashes.
+
+EP-002 REMEDIATION (see 223dd40 for the code changes)
+
+The two stubs are gone, real Ed25519 signing replaced the dummy signature, and
+the three unfalsifiable tests were replaced with mutation-proven ones.
+Regenerated all evidence and wrote a schema-compliant review recording the
+original defects, the remediation, and what remains unverified.
+
+TRACEABILITY CORRECTIONS
+
+Four requirements were mapped to the wrong implementation site:
+
+  REQ-003  the real planner is vector_study::selection (EP-004), not
+           vector-domain — vector-study depends on vector-domain, so it cannot
+           live there
+  REQ-022  the question factory is vector_questions::ingestion (EP-007)
+  REQ-023  now genuinely implemented in vector-domain (real Ed25519 signing)
+  REQ-058  was recorded PENDING; it is implemented and tested in
+           vector-llm::transport and vector-domain::policy (EP-004). Three
+           tests prove it fails closed on stale, future-dated and malformed
+           policy evidence.
+
+Requirement accounting is now 42 DONE, 18 PARTIAL or BLOCKED, 0 PENDING. The 18
+are honest partial states (UI wiring pending, or external gates requiring a
+signing certificate, a human screen-reader validator, or legal clearance).
+
+Tests: 485 passing across 47 binaries, 0 failures. Full gate sweep green,
+including verify.sh end to end.

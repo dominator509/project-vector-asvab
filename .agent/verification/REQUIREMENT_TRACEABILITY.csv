@@ -1,7 +1,7 @@
 requirement_id,requirement,spec,execplan,acceptance_test,status
 REQ-001,local privacy-minimal learner profile,SPEC-001,EP-002,AT-REQ-001,DONE
 REQ-002,cross-domain diagnostic and mastery uncertainty,SPEC-001,EP-002,AT-REQ-002,DONE
-REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",SPEC-001,EP-002,AT-REQ-003,DONE
+REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",SPEC-001,EP-002/EP-004,AT-REQ-003-EP004,DONE_IMPLEMENTED_IN_VECTOR_STUDY_SELECTION
 REQ-004,GS AR WK PC MK EI AI SI MC AO modeled separately,SPEC-001,EP-002,AT-REQ-004,DONE
 REQ-005,"custom drills, worked solutions, distractors, confidence, error notebook",SPEC-004,EP-005,AT-REQ-005-EP005,DONE_PRACTICE_VIEW_AND_NOTEBOOK
 REQ-006,no-backtracking and versioned public timing profiles,SPEC-004,EP-005,AT-REQ-006-EP005,DONE_CAT_CONSTRAINT_AND_TIMING_PROFILES
@@ -20,8 +20,8 @@ REQ-018,Claude native conditional official-client adapter terms-gated,SPEC-003,E
 REQ-019,disable Gemini CLI OAuth bridge,SPEC-003,EP-004,AT-REQ-019-EP004,DONE_BRIDGE_DISABLED_AND_UNREACHABLE
 REQ-020,hash/url/license/retrieval/effective/trust/source snapshots,SPEC-002,EP-002/EP-003/EP-004,AT-REQ-020-EP003,PARTIAL_EP003_VAULT_DONE_UI_PENDING
 REQ-021,diff/quarantine/rollback/freshness,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-021,DONE
-REQ-022,original item + deterministic proof + independent verification,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-022,DONE
-REQ-023,signed/versioned/reviewed packs,SPEC-001,EP-002/EP-003/EP-004,AT-REQ-023,DONE
+REQ-022,original item + deterministic proof + independent verification,SPEC-002,EP-002/EP-007,AT-REQ-022-EP007,DONE_IMPLEMENTED_IN_VECTOR_QUESTIONS_INGESTION
+REQ-023,signed/versioned/reviewed packs,SPEC-002,EP-002,AT-REQ-023-EP002,DONE_REAL_ED25519_SIGNING
 REQ-024,manual export; enterprise connector separate,SPEC-003,EP-004,AT-REQ-024-EP004,DONE_MANUAL_EXPORT_CONNECTOR_SEPARATE
 REQ-025,MCP server scoped read-only-default study tools/resources,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-025-EP004,PARTIAL_CAPABILITY_MODEL_DONE_TRANSPORT_BINDING_PENDING
 REQ-026,MCP client allowlisted peers consent/audit,SPEC-003,EP-004/EP-006/EP-008,AT-REQ-026-EP004,PARTIAL_ALLOWLIST_CONSENT_AUDIT_DONE_PEER_TRANSPORT_PENDING
@@ -56,6 +56,6 @@ REQ-054,idempotent attempts and safe DB/background workers,SPEC-002,EP-003/EP-00
 REQ-055,optional user-entered official scores clearly typed as external,SPEC-003,EP-007,AT-REQ-055-EP007,DONE_EXTERNAL_SCORE_TYPING
 REQ-056,every active item has objective/source/proof/review/hash,SPEC-002,EP-007,AT-REQ-056-EP007,DONE_ITEM_PROVENANCE_AND_LIFECYCLE
 REQ-057,prompt egress classification and disclosure,SPEC-005,EP-008,AT-REQ-057-EP008,DONE_EGRESS_CLASSIFIER_AND_EVENT_CLASSES
-REQ-058,adapter support fails closed on stale policy evidence,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-058,PENDING
+REQ-058,adapter support fails closed on stale policy evidence,SPEC-007/SPEC-008,EP-004,AT-REQ-058-EP004,DONE_FAILS_CLOSED_AND_TESTED
 REQ-059,future sync seam disabled SyncPort without cloud dependency,SPEC-003,EP-008,AT-REQ-059-EP008,DONE_SYNCPORT_DISABLED
 REQ-060,working title requires trademark/name clearance before GA,SPEC-008,EP-009,AT-REQ-060-EP009,BLOCKED_EXTERNAL_LEGAL_CLEARANCE_REQUIRED

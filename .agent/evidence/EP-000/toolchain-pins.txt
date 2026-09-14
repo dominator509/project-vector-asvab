@@ -1,0 +1,44 @@
+=== EP-000 toolchain pins ===
+Generated: 2026-09-14T08:59:22Z
+
+--- pinned toolchains (declaration files) ---
+rust-toolchain.toml :
+    # Rust toolchain pin.
+    #
+    # EP-000's stated purpose includes "toolchain pins". The repository had none:
+    # dependencies were pinned through Cargo.lock, but the compiler itself was
+    # unpinned, so a build could resolve a different rustc and produce a different
+    # artifact from identical sources. That defeats the reproducibility the release
+    # gate depends on (REQ-037, and the clean-room gate in EP-010).
+    #
+    # `channel` is an exact version, not a range, so a mismatch fails loudly instead
+    # of silently compiling with a different compiler.
+    #
+    # To upgrade: change the channel, run the full suite, and regenerate the
+    # artifact identity, because the artifact digest changes with the toolchain.
+    
+    [toolchain]
+    channel = "1.97.1"
+    components = ["rustfmt", "clippy"]
+    profile = "minimal"
+.nvmrc :
+    24.14.1
+package.json engines: {"node":">=24.14.0 <25.0.0","pnpm":">=10.34.0 <11.0.0"}
+package.json packageManager: pnpm@10.34.5
+
+--- observed versions in this environment ---
+git : git version 2.55.0.windows.2
+python3 : Python 3.14.4
+rustc : rustc 1.97.1 (8bab26f4f 2026-07-14)
+cargo : cargo 1.97.1 (c980f4866 2026-06-30)
+node : v24.14.1
+corepack : 0.34.6
+pnpm     : 10.34.5
+
+--- dependency pinning (lockfiles) ---
+Cargo.lock : 143245 bytes  sha256=0207548452cd72b4d64393c1415cbd39aa91ceceba26b6b4b000de8536304a71
+pnpm-lock.yaml : 73914 bytes  sha256=650d1fb0bf48a4f54cecf16f83d565e6c3c4fc80127e57c76772635e9ab290ac
+
+--- license inventory (EP-009) ---
+.agent/evidence/EP-009/sbom.spdx : 131 dependencies enumerated
+.agent/evidence/EP-009/THIRD_PARTY_NOTICES.md : present (4222 bytes)

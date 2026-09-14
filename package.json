@@ -2,6 +2,12 @@
   "name": "vector-monorepo",
   "private": true,
   "version": "0.1.0",
+  "//engines": "EP-000 requires toolchain pins. Declaring them here makes a wrong runtime fail at install rather than producing a build nobody can reproduce.",
+  "engines": {
+    "node": ">=24.14.0 <25.0.0",
+    "pnpm": ">=10.34.0 <11.0.0"
+  },
+  "packageManager": "pnpm@10.34.5",
   "scripts": {
     "test:unit": "pnpm --filter desktop test:unit",
     "test:e2e": "pnpm --filter desktop build && pnpm --filter desktop test:e2e",

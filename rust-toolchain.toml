@@ -1,0 +1,18 @@
+# Rust toolchain pin.
+#
+# EP-000's stated purpose includes "toolchain pins". The repository had none:
+# dependencies were pinned through Cargo.lock, but the compiler itself was
+# unpinned, so a build could resolve a different rustc and produce a different
+# artifact from identical sources. That defeats the reproducibility the release
+# gate depends on (REQ-037, and the clean-room gate in EP-010).
+#
+# `channel` is an exact version, not a range, so a mismatch fails loudly instead
+# of silently compiling with a different compiler.
+#
+# To upgrade: change the channel, run the full suite, and regenerate the
+# artifact identity, because the artifact digest changes with the toolchain.
+
+[toolchain]
+channel = "1.97.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
