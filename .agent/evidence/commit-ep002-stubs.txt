@@ -1,0 +1,61 @@
+EP-002: remove the two domain stubs, implement real Ed25519 content-pack signing
+
+Two stubs in crates/vector-domain implemented nothing while satisfying their
+tests. Both are now gone.
+
+1. plan::AdaptivePlan::generate returned a hardcoded ["drill_1", "drill_2"],
+   ignoring the mastery state, the goal and the available time it was handed.
+   DELETED rather than implemented, because the real planner already exists in
+   vector_study::selection::generate_plan (EP-004) — it derives priority from
+   due reviews, mastery distance and uncertainty, returns an empty plan when
+   nothing needs work, and is covered by property tests over generated input.
+   It cannot live in vector-domain because vector-study depends on it, so
+   delegating would be circular. Two implementations of one concept, one real
+   and one fake, is worse than one: a reader cannot tell which they have found.
+
+2. ContentPack::sign returned the literal "dummy_signature", ignored the
+   supplied key entirely, and force-set reviewed = true — three separate
+   falsehoods in one method. REPLACED with real Ed25519 signing via
+   ed25519-dalek 2 (BSD-3-Clause, within the release license policy).
+
+   Design decisions worth recording:
+   - The signature covers the content identity (name, version, content hash),
+     NOT lifecycle state. If status were signed, every quarantine/rollback
+     cycle would force a re-signature, training operators to re-sign casually.
+   - Fields are length-prefixed. Without it the payload
+     `name || u32le(version) || content_hash` collides: name="pack",
+     version=1, hash="sha256:abc" produces identical bytes to name="pack\x01",
+     version=0x73000000, hash="ha256:abc". A signature over the first would
+     verify over the second. That collision is written out concretely in
+     length_prefixing_prevents_a_real_payload_collision.
+   - set_version clears the signature, because a new version is a new content
+     identity and the old attestation no longer applies.
+   - The type no longer claims review status. A signature proves who attested
+     the content, never that a human reviewed it; review lives in the content
+     QA ledger. The stub conflated the two, which would have let possession of
+     a signing key stand in for a review.
+
+Also removed: the domain copies of AnswerProof and QuestionItem, superseded by
+the real implementations in vector_questions::ingestion (EP-007).
+
+The old tests.rs was rewritten. Three of its tests could not fail when the code
+was wrong:
+  - test_req_004_subtests_modeled asserted the length of a vec! it had just
+    built, never touching the Subtest enum.
+  - test_req_023_signed_versioned_packs asserted only signature().is_some().
+    PROVEN VACUOUS: mutating sign() to return an empty string still passed it.
+  - test_req_003_adaptive_plan asserted the drill list was non-empty, which the
+    hardcoded stub satisfied.
+
+The replacement REQ-023 tests are proven non-vacuous by mutation:
+  - sign() returns a constant signature          -> DETECTED (4 tests)
+  - verify() always succeeds                     -> DETECTED (4 tests)
+  - content_hash excluded from the payload       -> DETECTED (1 test)
+  - length prefixes removed                      -> DETECTED (1 test)
+  - sign() ignores the key                       -> DETECTED (3 tests)
+  - domain tag removed                           -> SURVIVED, and recorded as
+    defence in depth: it guards against cross-protocol replay and there is no
+    second message type in this crate to test it against.
+
+Tests: 485 passing across 47 binaries, 0 failures. All gates exit 0, including
+cargo deny licenses with the new dependency.
