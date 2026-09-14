@@ -212,15 +212,47 @@ fn probe_local_llama() -> AdapterHealth {
 }
 
 /// Send one minimal prompt through a healthy lane.
+///
+/// ## Working directory
+///
+/// The provider CLI is pointed at a scratch directory rather than at this
+/// repository. A provider CLI loads its own MCP configuration, so running
+/// `codex exec` inside the checkout let one of the user's configured MCP
+/// servers write a tool directory into the product source tree. Keeping a
+/// provider's side effects outside the repository is the same rule the repair
+/// lane follows, and it is why the working directory is set explicitly here.
 fn run_live_probe(adapter: &ModelTransport) -> LiveOutcome {
     const PROMPT: &str = "Reply with exactly: READY";
 
+    let scratch = match Scratch::new() {
+        Ok(scratch) => scratch,
+        Err(error) => {
+            return LiveOutcome::Failed {
+                reason: format!("cannot create a scratch directory: {error}"),
+            }
+        }
+    };
+    let workdir = scratch.path().to_string_lossy().into_owned();
+
     let (program, args): (&str, Vec<&str>) = match adapter.id.as_str() {
+        // `-C` and `--skip-git-repo-check` are documented flags of `codex exec`
+        // (see `codex exec --help`); together they keep the agent out of this
+        // repository.
         "codex_native" => (
             "codex",
-            vec!["exec", "--sandbox", "read-only", "--ephemeral", PROMPT],
+            vec![
+                "exec",
+                "--sandbox",
+                "read-only",
+                "--ephemeral",
+                "--skip-git-repo-check",
+                "-C",
+                &workdir,
+                PROMPT,
+            ],
         ),
-        "grok_native" => ("grok", vec!["-p", PROMPT]),
+        // `--cwd` is documented in `grok --help`.
+        "grok_native" => ("grok", vec!["-p", PROMPT, "--cwd", &workdir]),
         "claude_native" => ("claude", vec!["-p", PROMPT, "--output-format", "text"]),
         other => {
             return LiveOutcome::Failed {
@@ -387,6 +419,10 @@ impl Scratch {
         let path = self.root.join(name);
         std::fs::create_dir_all(&path)?;
         Ok(path)
+    }
+
+    fn path(&self) -> &std::path::Path {
+        &self.root
     }
 
     /// Create a database migrated by the project's own migrations, holding one

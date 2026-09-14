@@ -28,3 +28,9 @@ release-artifacts/
 *.db-shm
 *.sqlite
 *.sqlite3
+
+# Local configuration written by third-party developer tools (for example a
+# Serena MCP server started by a provider CLI). These are per-machine tool
+# settings, not product source, and committing them would put one developer's
+# editor configuration into every clone.
+.serena/
