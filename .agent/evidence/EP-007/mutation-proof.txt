@@ -1,0 +1,67 @@
+=== EP-007 MUTATION / NEGATIVE PROOF — ingestion, safe mode, privacy ===
+
+--------------------------------------------------------------------------------
+SOURCE INGESTION AND PROVENANCE (REQ-050, REQ-056)
+
+MUT-I1 : controlled/leaked material check removed -> FAILED (2 tests)  DETECTED
+MUT-I2 : license check removed                   -> FAILED (2 tests)  DETECTED
+MUT-I3 : unknown license permitted               -> FAILED (3 tests)  DETECTED
+MUT-I4 : trust floor ignored                     -> FAILED (1 test)   DETECTED
+MUT-I5 : payload size bound removed              -> FAILED (1 test)   DETECTED
+MUT-I6 : media type check removed                -> FAILED (1 test)   DETECTED
+MUT-I7 : active content allowed                  -> FAILED (1 test)   DETECTED
+MUT-I8 : zip-slip traversal check                -> pattern mismatch, retried as below
+MUT-I9 : absolute-entry guard removed            -> PASSED initially, see note
+MUT-I10: provenance completeness not enforced    -> FAILED (1 test)   DETECTED
+MUT-I11: non-independent verifier accepted       -> FAILED (1 test)   DETECTED
+MUT-I12: lifecycle transitions unconstrained     -> FAILED (1 test)   DETECTED
+MUT-I13: any state servable                      -> FAILED (3 tests)  DETECTED
+MUT-I14: containment check removed               -> FAILED (1 test)   DETECTED
+
+MUT-I9 NOTE — a redundant guard, now made load-bearing:
+  Removing the explicit absolute-path guard changed nothing, because the
+  containment fall-through already rejected "/etc/passwd". Analysis in
+  absolute-path-guard-analysis.py showed why: absolute paths normalize to a
+  form outside the root, so containment catches them incidentally.
+  The guard is NOT redundant for the case where an absolute path *starts with*
+  the root text, e.g. "/content/lesson.md". That case is now tested directly
+  (an_absolute_entry_is_refused_even_when_its_root_prefix_matches), and MUT-I9
+  is detected on retry. An absolute entry ignores the extraction root entirely,
+  so accepting it because its text matches would be a real escape.
+
+--------------------------------------------------------------------------------
+SAFE MODE AND CRASH-LOOP RECOVERY (REQ-051)
+
+MUT-S1: destructive step added to the ladder     -> FAILED (2 tests)  DETECTED
+MUT-S2: safe mode keeps optional features        -> FAILED (1 test)   DETECTED
+MUT-S3: recovery restores capability immediately -> FAILED (2 tests)  DETECTED
+MUT-S4: failure streak not reset on success      -> FAILED (1 test)   DETECTED
+MUT-S5: Restricted escalation tier removed       -> FAILED (3 tests)  DETECTED
+  note: first attempt used a multiline pattern that did not match the source
+        exactly and was a no-op; re-run against the exact text.
+
+--------------------------------------------------------------------------------
+TELEMETRY AND SCORE TYPING (REQ-052, REQ-055)
+
+MUT-S6 : telemetry defaults to remote            -> FAILED (1 test)   DETECTED
+MUT-S7 : screening data collectible              -> FAILED (4 tests)  DETECTED
+MUT-S8 : external scores blend into readiness    -> FAILED (1 test)   DETECTED
+MUT-S9 : external score provenance not required  -> FAILED (1 test)   DETECTED
+MUT-S10: score scale bound removed               -> FAILED (1 test)   DETECTED
+MUT-S11: prohibited screening fields permitted   -> FAILED (2 tests)  DETECTED
+
+--------------------------------------------------------------------------------
+REDACTION (REGRESSION AFTER THE PERFORMANCE REFACTOR)
+
+MUT-R1: structural redaction disabled            -> FAILED            DETECTED
+MUT-R2: verification always passes               -> FAILED (4 tests)  DETECTED
+  note: re-run after the OnceLock refactor to confirm the performance change did
+        not weaken the security behaviour.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted : 24
+  detected                       : 24 (MUT-I8 and MUT-I9 after correction)
+  redundant guard made load-bearing : 1 (absolute-path guard, MUT-I9)
+  no-op mutations corrected      : 2 (MUT-I8 pattern, MUT-S5 pattern)
+  workspace tests after restore  : 378 passing across 43 binaries, 0 failures

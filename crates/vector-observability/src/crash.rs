@@ -167,26 +167,59 @@ impl CanaryRegistry {
     }
 }
 
+/// The compiled redaction patterns, built once for the process lifetime.
+///
+/// Compiling on every call was a real performance defect: redacting one crash
+/// capture compiles the whole pattern set once per text field, so a report with
+/// many log lines rebuilt hundreds of regexes. The `regex` crate documents that
+/// construction is expensive relative to matching and intends the compiled form
+/// to be reused; `OnceLock` gives that without adding a dependency.
+static COMPILED_PATTERNS: std::sync::OnceLock<Vec<(regex::Regex, &'static str)>> =
+    std::sync::OnceLock::new();
+
+fn compiled_patterns() -> &'static [(regex::Regex, &'static str)] {
+    COMPILED_PATTERNS.get_or_init(|| {
+        VALUE_PATTERNS
+            .iter()
+            .map(|(pattern, label)| {
+                let re = regex::Regex::new(pattern).unwrap_or_else(|e| {
+                    // A malformed built-in pattern is a programming error, not a
+                    // runtime condition: fail loudly rather than ship unredacted.
+                    panic!("built-in redaction pattern {pattern:?} is invalid: {e}")
+                });
+                (re, *label)
+            })
+            .collect()
+    })
+}
+
 /// Apply scheme-based and key-based redaction to arbitrary text.
 fn scrub_text(text: &str) -> (String, usize) {
     let mut out = text.to_string();
     let mut hits = 0usize;
 
-    for (pattern, _label) in VALUE_PATTERNS {
-        let re = match regex::Regex::new(pattern) {
-            Ok(re) => re,
-            // A malformed built-in pattern is a programming error, not a
-            // runtime condition: fail loudly rather than shipping unredacted.
-            Err(e) => panic!("built-in redaction pattern {pattern:?} is invalid: {e}"),
-        };
-        let found = re.find_iter(&out).count();
-        if found > 0 {
-            hits += found;
-            out = re.replace_all(&out, REDACTED).to_string();
+    for (re, _label) in compiled_patterns() {
+        // `replace_all` returns Borrowed when nothing matched, which lets the
+        // match count come from the replacement itself rather than a second
+        // scan of the field.
+        match re.replace_all(&out, REDACTED) {
+            std::borrow::Cow::Borrowed(_) => {}
+            std::borrow::Cow::Owned(replaced) => {
+                hits += count_occurrences(&replaced);
+                out = replaced;
+            }
         }
     }
 
     (out, hits)
+}
+
+/// Count redaction placeholders introduced by a replacement.
+///
+/// Counting placeholders rather than re-running the pattern avoids a second
+/// pass and cannot disagree with what was actually substituted.
+fn count_occurrences(text: &str) -> usize {
+    text.matches(REDACTED).count()
 }
 
 /// Apply both redaction passes to a crash capture.
@@ -280,6 +313,10 @@ pub struct ResidualSecret {
 ///
 /// This is the release gate. Redaction that "ran" is not the same as redaction
 /// that worked, so the bundle is verified rather than trusted.
+///
+/// The compiled pattern set is reused rather than rebuilt per field: an earlier
+/// version compiled every pattern inline for every field, which made this the
+/// slowest part of the pipeline by three orders of magnitude.
 pub fn verify_no_secrets(
     capture: &CrashCapture,
     canaries: &CanaryRegistry,
@@ -287,14 +324,12 @@ pub fn verify_no_secrets(
     let mut found = Vec::new();
 
     let mut check = |location: &str, text: &str| {
-        for (pattern, label) in VALUE_PATTERNS {
-            if let Ok(re) = regex::Regex::new(pattern) {
-                if re.is_match(text) {
-                    found.push(ResidualSecret {
-                        location: location.to_string(),
-                        label: (*label).to_string(),
-                    });
-                }
+        for (re, label) in compiled_patterns() {
+            if re.is_match(text) {
+                found.push(ResidualSecret {
+                    location: location.to_string(),
+                    label: (*label).to_string(),
+                });
             }
         }
         for canary in canaries.canaries() {

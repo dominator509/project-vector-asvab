@@ -1,0 +1,64 @@
+{
+  "node": "EP-007",
+  "reviewed_at": "2026-09-10",
+  "verdict": "PASS",
+  "requirements_covered": ["REQ-050", "REQ-051", "REQ-052", "REQ-055", "REQ-056"],
+  "requirements_delivered": {
+    "REQ-050": "Source ingestion sandbox enforcing controlled-material refusal, license and trust checks, size/media bounds, active-content stripping, prompt-injection isolation, and zip-slip-safe archive entry validation.",
+    "REQ-051": "Safe mode with a four-level escalation ladder (Normal, Restricted, Safe, Recovery) driven by consecutive failed launches. No automatic step destroys learner data; a corrupt database is quarantined, not deleted. Recovery requires a run of successful launches.",
+    "REQ-052": "Telemetry defaults to off; remote transmission requires explicit opt-in; answer content is never collectible as telemetry; screening data and secrets are refused in every mode, including with consent. Eighteen enlistment-screening field names are recognized and refused at the profile boundary.",
+    "REQ-055": "External scores are typed by origin and carry a distinguishing mandatory label. An external score requires recorded provenance and can never be blended into VECTOR's readiness estimate.",
+    "REQ-056": "Per-item provenance requiring objective, source, answer proof, named reviewer and content hash, plus the QUESTION_FACTORY.md lifecycle. Activation checks both the state machine and provenance completeness; an independent verifier producing identical output to the generator is refused."
+  },
+  "stub_check": {
+    "verdict": "PASS",
+    "note": "No placeholder production behaviour. Every control is a real predicate with typed refusals, and every refusal path is exercised (proven by 24 detected mutations).",
+    "files_reviewed": [
+      "crates/vector-questions/src/ingestion.rs",
+      "crates/vector-questions/src/provenance.rs",
+      "crates/vector-application/src/safe_mode.rs",
+      "crates/vector-application/src/privacy.rs",
+      "crates/vector-observability/src/crash.rs"
+    ]
+  },
+  "thin_test_check": {
+    "verdict": "PASS",
+    "note": "106 tests across five new suites, including property/fuzz runs over generated adversarial input and a performance/recovery harness that asserts outcomes within a bound.",
+    "test_count": 106,
+    "suites": {
+      "ep007_ingestion": 34,
+      "ep007_safe_mode_privacy": 36,
+      "ep007_property_fuzz": 13,
+      "ep007_performance": 10,
+      "existing_observability": 13
+    }
+  },
+  "evidence_sticker_check": {
+    "verdict": "PASS",
+    "note": "Evidence is real command output with exit codes and SHA-256 hashes. The performance harness asserts time bounds rather than reporting timings, so a regression fails the suite."
+  },
+  "test_weakening_check": {
+    "verdict": "PASS",
+    "note": "No assertion was deleted, skipped or loosened. One test (remote_transmission_requires_opt_in) was rewritten because it asserted the wrong contract: LocalOnly legitimately collects usage counts locally, so the original assertion would have forced a behaviour that contradicts the mode's name."
+  },
+  "real_defects_found_and_fixed": [
+    "PERFORMANCE: verify_no_secrets compiled every redaction regex inline for every field it examined. On a capture with a 50-line log ring this took over 40 seconds; the release gate for crash reports was effectively unusable. Fixed by reusing the compiled pattern set: 0.01s, a roughly 4000x improvement, with all redaction tests still passing.",
+    "PERFORMANCE: scrub_text had the same per-call compilation defect, compounding across five fields per capture. Same fix, and the double scan (find_iter().count() followed by replace_all) was reduced to a single replacement pass.",
+    "A redundant security guard was made load-bearing: the explicit absolute-path check in archive validation was unreachable for the cases tested, because containment rejected those entries anyway. It is genuinely needed for an absolute path whose text starts with the extraction root ('/content/lesson.md'), which is now tested and mutation-detected.",
+    "Clippy: a derived-able Default impl, consecutive str::replace calls, and an unnecessary clone-to-slice in a test helper, all fixed in the code rather than silenced."
+  ],
+  "diagnostic_artifacts": [
+    ".agent/evidence/EP-007/absolute-path-guard-analysis.py — why MUT-I9 initially survived",
+    ".agent/evidence/EP-007/diagnose-fuzz-hang.py — ruled out a PRNG fixed point",
+    ".agent/evidence/EP-007/diagnose-redos.py — ruled out catastrophic backtracking",
+    ".agent/evidence/EP-007/diagnose-regex-recompile.py — identified per-call regex compilation",
+    ".agent/evidence/EP-007/diagnose-redaction-hotspot.py — profiled the remaining hot spot"
+  ],
+  "known_limitations": [
+    "The 484-entry verification registry remains entirely PENDING. Test accounting (V-000..V-021) is EP-010 ship-gate work, and those rows cannot be truthfully resolved until the release artifact exists to test against. No accounting claim is made by this node.",
+    "The performance bounds are wall-clock assertions on shared hardware in a debug profile, so they are deliberately generous. They catch order-of-magnitude regressions (which is how the regex defect was found) and are not a substitute for a benchmark harness on fixed hardware.",
+    "The property/fuzz suite uses a deterministic PRNG over a hostile alphabet rather than a coverage-guided fuzzer. It is reproducible and covers the invariant surface, but it does not explore the input space as thoroughly as cargo-fuzz or AFL would.",
+    "Safe mode implements the ladder and durability logic; wiring it to real launch detection in the desktop shell is part of the Tauri integration that remains outstanding.",
+    "REQ-050 prompt-injection isolation is enforced on the ingestion side (active content refused, text treated as data). The model-context isolation itself lives in vector-mcp::capability from EP-004."
+  ]
+}

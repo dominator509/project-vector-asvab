@@ -1,0 +1,54 @@
+EP-007: testing and hardening — node closed
+
+Delivers the test families, property/fuzz work and the performance/recovery
+harness the execplan requires, plus the content-integrity requirements.
+
+REQ-050 (source ingestion sandbox): controlled and leaked official material is
+refused before any other consideration; unknown licenses are treated as
+non-permission; trust floors, size and media bounds apply; active content is
+refused; archive entries are validated zip-slip-safe on normalized components.
+
+REQ-051 (safe mode): four-level escalation (Normal, Restricted, Safe, Recovery)
+driven by consecutive failed launches. Recovery out of an escalated mode needs a
+RUN of successes, because a crash loop often permits an occasional clean start.
+Critically, no automatic ladder step destroys learner data — a corrupt database
+is quarantined, not deleted — and that is asserted across the whole escalation
+range rather than stated.
+
+REQ-052 (privacy): telemetry defaults to off; remote transmission needs opt-in;
+answer content is never collectible as telemetry; screening data and secrets are
+refused in every mode, consent included. Eighteen enlistment-screening field
+names are refused at the profile boundary, including renamed variants.
+
+REQ-055 (score input): external scores are typed by origin with a distinguishing
+mandatory label, require recorded provenance, and can never be blended into
+VECTOR's readiness estimate (ADR-010).
+
+REQ-056 (content provenance): per-item objective, sources, answer proof, named
+reviewer and content hash, enforced by the QUESTION_FACTORY.md lifecycle.
+Activation checks both state and provenance completeness, and a verifier whose
+output is identical to the generator's is refused as non-independent.
+
+TWO REAL PERFORMANCE DEFECTS FOUND AND FIXED:
+- verify_no_secrets compiled every redaction regex inline for every field it
+  examined. On a capture with a 50-line log ring this took over 40 seconds, so
+  the release gate for crash reports was effectively unusable. Reusing the
+  compiled pattern set took it to 0.01s — roughly 4000x — with all redaction
+  tests still passing.
+- scrub_text had the same per-call compilation defect and scanned each field
+  twice. Same fix; single-pass replacement.
+
+The property/fuzz suite is what surfaced both: it drove the real redaction path
+over generated adversarial input, including unterminated private-key markers and
+NUL bytes, and hung rather than passing.
+
+A redundant security guard was made load-bearing: the explicit absolute-path
+check in archive validation was unreachable for the tested cases because
+containment already rejected them. It is genuinely needed for an absolute path
+whose text begins with the extraction root, which is now tested and
+mutation-detected.
+
+Evidence: 378 tests passing across 43 binaries, 0 failures. 24/24 meaningful
+mutations detected. All ten COMMANDS.md gates exit 0 with recorded exit codes
+and SHA-256 hashes. Five diagnostic scripts are preserved under
+.agent/evidence/EP-007/ showing how each performance question was answered.

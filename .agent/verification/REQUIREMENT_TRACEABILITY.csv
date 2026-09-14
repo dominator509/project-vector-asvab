@@ -48,13 +48,13 @@ REQ-046,no behavioral ads/data brokerage,SPEC-005,EP-006,AT-REQ-046-EP006,DONE_E
 REQ-047,signed/datable adapter disable policy,SPEC-003,EP-004/EP-006,AT-REQ-047-EP004,DONE_POLICY_GATE_AND_EGRESS_CONSTRAINT
 REQ-048,"review state, history, rollback, audit",SPEC-002,EP-006,AT-REQ-048-EP006,DONE_CONTENT_QA_LEDGER
 REQ-049,"internal calibration, no official psychometric equivalence claim",SPEC-003,EP-006,AT-REQ-049-EP006,DONE_INTERNAL_CALIBRATION_NO_EQUIVALENCE_CLAIM
-REQ-050,"sandbox parsing, license/trust checks, prompt-injection isolation",SPEC-008,EP-007/EP-009,AT-REQ-050,PENDING
-REQ-051,crash-loop recovery without deleting learner data,SPEC-008,EP-007/EP-009,AT-REQ-051,PENDING
-REQ-052,"telemetry off, no sensitive enlistment-screening data",SPEC-008,EP-007/EP-009,AT-REQ-052,PENDING
+REQ-050,"sandbox parsing, license/trust checks, prompt-injection isolation",SPEC-002,EP-007,AT-REQ-050-EP007,DONE_INGESTION_SANDBOX
+REQ-051,crash-loop recovery without deleting learner data,SPEC-006,EP-007,AT-REQ-051-EP007,DONE_SAFE_MODE_NON_DESTRUCTIVE_LADDER
+REQ-052,"telemetry off, no sensitive enlistment-screening data",SPEC-005,EP-007,AT-REQ-052-EP007,DONE_TELEMETRY_OFF_AND_SCREENING_PROHIBITED
 REQ-053,bind binary+migrations+content+SBOM,SPEC-008,EP-007/EP-009,AT-REQ-053,PENDING
 REQ-054,idempotent attempts and safe DB/background workers,SPEC-002,EP-003/EP-007/EP-009,AT-REQ-054-EP003,PARTIAL_EP003_IDEMPOTENCY_DONE_WORKERS_PENDING
-REQ-055,optional user-entered official scores clearly typed as external,SPEC-008,EP-007/EP-009,AT-REQ-055,PENDING
-REQ-056,every active item has objective/source/proof/review/hash,SPEC-008,EP-007/EP-009,AT-REQ-056,PENDING
+REQ-055,optional user-entered official scores clearly typed as external,SPEC-003,EP-007,AT-REQ-055-EP007,DONE_EXTERNAL_SCORE_TYPING
+REQ-056,every active item has objective/source/proof/review/hash,SPEC-002,EP-007,AT-REQ-056-EP007,DONE_ITEM_PROVENANCE_AND_LIFECYCLE
 REQ-057,prompt egress classification and disclosure,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-057,PENDING
 REQ-058,adapter support fails closed on stale policy evidence,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-058,PENDING
 REQ-059,disabled SyncPort without cloud dependency,SPEC-007/SPEC-008,EP-008/EP-010,AT-REQ-059,PENDING
