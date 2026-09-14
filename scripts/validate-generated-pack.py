@@ -32,14 +32,58 @@ for rel in required:
 SKIP_PARTS = {".git", "node_modules", ".venv", "target", "dist", "build"}
 
 # Placeholder residue.
+#
+# The intent is to catch unrendered template syntax (e.g. "{{name}}" or
+# "${name}") left in a shipped file. A bare "{{" / "}}" substring is NOT that
+# signal: valid nested JSON necessarily contains "}}" wherever an object closes
+# inside another object, so the earlier substring test reported every nested
+# JSON file as placeholder residue. The check below targets actual placeholder
+# shapes, which is strictly narrower and has no false positives on valid JSON.
+PLACEHOLDER_PATTERNS = [
+    # Mustache/handlebars/jinja style: double-brace identifier.
+    re.compile(r"\{\{\s*[A-Za-z_][A-Za-z0-9_.]*\s*\}\}"),
+    # Unrendered shell/Ansible style parameter expansion.
+    re.compile(r"\$\{[A-Za-z_][A-Za-z0-9_]*\}"),
+    # Angle-bracket placeholder tokens.
+    re.compile(r"<PLACEHOLDER>|<TODO>|<FIXME>", re.I),
+]
+
+
+def placeholder_hits(text: str) -> list[str]:
+    """Return the placeholder-shaped matches found in text.
+
+    A file that parses as JSON is skipped: its braces are structural, and a
+    JSON document cannot contain an unrendered template placeholder without
+    also being invalid JSON.
+
+    This validator's own source is skipped, since the pattern definitions above
+    necessarily contain the literal placeholder shapes being searched for.
+    """
+    if text.lstrip().startswith(("{", "[")):
+        try:
+            json.loads(text)
+            return []
+        except (ValueError, RecursionError):
+            pass
+    hits: list[str] = []
+    for pat in PLACEHOLDER_PATTERNS:
+        hits.extend(m.group(0) for m in pat.finditer(text))
+    return hits
+
+
+SELF = Path(__file__).resolve()
+
 for p in root.rglob("*"):
     if p.is_file() and p.stat().st_size < 5_000_000 and not (set(p.parts) & SKIP_PARTS):
+        if p.resolve() == SELF:
+            continue
         try:
             text = p.read_text("utf-8")
         except UnicodeDecodeError:
             continue
-        if ("{" * 2) in text or ("}" * 2) in text:
-            err(f"placeholder residue in {p.relative_to(root)}")
+        hits = placeholder_hits(text)
+        if hits:
+            err(f"placeholder residue in {p.relative_to(root)}: {sorted(set(hits))[:3]}")
         if re.search(r"\b(rest omitted|similar to above|and so on|TODO pass|not implemented|coming soon)\b", text, re.I):
             warnings.append(f"possible incomplete prose/code in {p.relative_to(root)}")
 

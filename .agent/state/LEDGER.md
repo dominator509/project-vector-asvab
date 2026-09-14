@@ -6,3 +6,4 @@
 | EP-001 | NODE_DONE | 2026-09-09T01:30:00Z | .agent/evidence/EP-001 |
 | EP-002 | NODE_DONE | 2026-09-09T18:59:22Z | .agent/evidence/EP-002 |
 | EP-003 | NODE_DONE | 2026-09-10T00:00:00Z | .agent/evidence/EP-003 |
+| EP-004 | NODE_DONE | 2026-09-10T06:00:00Z | .agent/evidence/EP-004 |

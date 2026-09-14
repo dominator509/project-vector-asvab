@@ -5,6 +5,7 @@ pub mod errors;
 pub mod ingestion;
 pub mod mastery;
 pub mod plan;
+pub mod policy;
 pub mod profile;
 pub mod simulator;
 pub use config::AppConfig;

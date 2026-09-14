@@ -1,0 +1,135 @@
+=== EP-004 MUTATION / NEGATIVE PROOF — study engine and offline/retrieval ===
+
+Purpose: prove the acceptance oracles fail when production behavior is broken.
+
+--------------------------------------------------------------------------------
+FSRS SCHEDULING (REQ-043)
+
+MUT-S1: lapse no longer returns the card immediately
+  change : fsrs.rs  lapse interval no longer clamped to MIN_INTERVAL_DAYS
+  result : FAILED (12 passed; 1 failed)          verdict: DETECTED
+
+MUT-S2: forgetting curve replaced with linear decay
+  change : fsrs.rs  (1 + t/(9S))^-1 -> linear decay
+  result : FAILED (11 passed; 2 failed)          verdict: DETECTED
+
+MUT-S3: stability growth removed (the engine stops learning)
+  change : fsrs.rs  (stability * growth) -> stability
+  result : FAILED (10 passed; 3 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+ADAPTIVE PLANNING AND READINESS (REQ-003, REQ-011)
+
+MUT-S4: planner ignores due reviews
+  change : selection.rs  due_component forced to 0.0
+  result : FAILED (11 passed; 1 failed)          verdict: DETECTED
+
+MUT-S5: readiness claims an official score
+  change : selection.rs  official_score_claim -> true
+  result : FAILED (11 passed; 1 failed)          verdict: DETECTED
+
+MUT-S6b: each drill allocated the entire budget
+  change : selection.rs  minutes.clamp(1, remaining) -> available_minutes
+  result : FAILED (9 passed; 3 failed)           verdict: DETECTED
+
+MUT-S7: weakness component ignores the goal
+  change : selection.rs  weakness_component forced to 0.0
+  result : FAILED (10 passed; 2 failed)          verdict: DETECTED
+
+MUT-S8: readiness band collapsed to a point prediction
+  change : selection.rs  half_width forced to 0.0
+  result : FAILED (9 passed; 3 failed)           verdict: DETECTED
+
+INVALID MUTATION (recorded, not hidden):
+  MUT-S6 attempted by substituting a string with itself, so it was a no-op and
+  proved nothing. Replaced by MUT-S6b above.
+
+--------------------------------------------------------------------------------
+OFFLINE CORE GUARANTEE (REQ-042)
+
+MUT-O1: core-violation error collapsed to success
+  change : offline.rs  CoreUnavailableOffline error -> Ok(Available)
+  result : FAILED (12 passed; 1 failed)          verdict: DETECTED
+  note   : this mutation SURVIVED on first attempt. The guard's core-violation
+           branch was unreachable from the public API because no builtin core
+           capability is Unavailable, so no test could exercise it. The
+           classification rule was extracted into classify_offline() and the
+           branch is now directly tested. A guard whose error path is untested
+           is a guard nobody has proven works.
+
+MUT-O2: degraded treated as fully available
+  change : offline.rs  core_functions_all_offline filter disabled
+  result : FAILED (10 passed; 2 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+SOURCE-GROUNDED RETRIEVAL (REQ-008)
+
+MUT-R1: fabricated citations allowed
+  change : retrieval.rs  vault membership check -> never fails
+  result : FAILED (11 passed; 2 failed)          verdict: DETECTED
+
+MUT-R2: relevance floor ignored (filler sources returned)
+  change : retrieval.rs  relevance threshold check removed
+  result : FAILED (11 passed; 2 failed)          verdict: DETECTED
+
+MUT-R3: trust weighting removed
+  change : retrieval.rs  coverage * trust -> coverage
+  result : FAILED (12 passed; 1 failed)          verdict: DETECTED
+
+MUT-R4: stop words counted as content
+  change : retrieval.rs  stop-word filter disabled
+  result : FAILED (12 passed; 1 failed)          verdict: DETECTED
+
+--------------------------------------------------------------------------------
+MCP SECURITY (REQ-025, REQ-026, REQ-027)
+See mcp-mutation-proof.txt: 7/8 detected, 1 provably undetectable (defence in
+depth with no behavioral change), and 2 REAL VULNERABILITIES found by the tests.
+
+--------------------------------------------------------------------------------
+SUMMARY
+  meaningful mutations attempted : 21
+  detected                       : 21
+  undetectable by construction   : 1 (documented separately in the MCP proof)
+  real vulnerabilities found     : 2 (MCP path traversal, MCP section forging)
+  correctness gaps found in own tests : 3 (MUT-S6 no-op, MUT-O1 untested branch,
+                                        MUT-S6b replacement)
+
+--------------------------------------------------------------------------------
+VERSIONED POLICY AND NOTEBOOK EXPORT (REQ-012, REQ-013, REQ-024)
+
+MUT-P1: freshness window ignored (everything current)
+  change : policy.rs  "if age <= window" -> "if true"
+  result : FAILED (14 passed; 6 failed)          verdict: DETECTED
+
+MUT-P2: expired record falls back to an older version
+  change : policy.rs  current() returns the record even when expired
+  result : FAILED (15 passed; 5 failed)          verdict: DETECTED
+
+MUT-P3: tier-D source allowed to justify policy
+  change : policy.rs  may_justify_policy -> always true
+  result : FAILED (18 passed; 2 failed)          verdict: DETECTED
+
+MUT-P4: future retrieval date treated as fresh
+  change : policy.rs  "if age < 0" -> "if false"
+  result : FAILED (19 passed; 1 failed)          verdict: DETECTED
+
+MUT-P5: version monotonicity not enforced
+  change : policy.rs  "if record.version <= existing" -> "if false"
+  result : FAILED (19 passed; 1 failed)          verdict: DETECTED
+
+MUT-N1: active script blocks not stripped from export
+  change : notebook.rs  strip tag list emptied
+  result : FAILED (12 passed; 5 failed)          verdict: DETECTED
+
+MUT-N2: spreadsheet formula injection not neutralized
+  change : notebook.rs  formula escaping disabled
+  result : FAILED (16 passed; 1 failed)          verdict: DETECTED
+
+MUT-N3: export size bound removed
+  change : notebook.rs  "if out.len() > MAX_EXPORT_BYTES" -> "if false"
+  result : FAILED (16 passed; 1 failed)          verdict: DETECTED
+
+REVISED SUMMARY (whole node)
+  meaningful mutations attempted : 29
+  detected                       : 29
+  workspace tests after restore  : 167 passing across 33 binaries, 0 failures
