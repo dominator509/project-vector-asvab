@@ -4,8 +4,9 @@
 //! offline-core guarantee (REQ-042), the egress privacy classifier and no-ads
 //! guarantee (REQ-046), crash-loop safe mode (REQ-051), the telemetry and
 //! prohibited-screening posture (REQ-052), external score typing (REQ-055), the
-//! disabled future-sync seam (REQ-059), and the typed service boundary the
-//! desktop UI invokes (SPEC-003).
+//! disabled future-sync seam (REQ-059), the typed service boundary the desktop
+//! UI invokes (SPEC-003), and the background workers that keep derived state in
+//! step with stored evidence (REQ-054).
 
 pub mod egress;
 pub mod offline;
@@ -13,6 +14,7 @@ pub mod privacy;
 pub mod safe_mode;
 pub mod service;
 pub mod sync_port;
+pub mod workers;
 
 /// Initialize the application core.
 ///

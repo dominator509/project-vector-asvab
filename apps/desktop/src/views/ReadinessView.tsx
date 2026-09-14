@@ -11,6 +11,8 @@
  * supply its own numbers would eventually do so.
  */
 
+import { useCallback, useState } from "react";
+
 import { AsyncBoundary, useAsync, useBackend } from "../ipc/Backend";
 import type { ReadinessDto } from "../ipc/types";
 import { useActiveProfile } from "../state/ProfileContext";
@@ -125,10 +127,17 @@ export function ReadinessView({
  * Attempt totals are read alongside the band so the learner can see how much
  * evidence the estimate rests on, rather than reading a percentage with no
  * indication of whether it comes from three answers or three hundred.
+ *
+ * The recompute control exists because mastery is derived from the attempt
+ * history: without a way to refresh it, a learner who has just practised would
+ * still be shown the estimate from before they did.
  */
 export function ReadinessPanel() {
   const backend = useBackend();
   const { profile, unavailable } = useActiveProfile();
+  const [recomputed, setRecomputed] = useState<number | null>(null);
+  const [recomputeError, setRecomputeError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const request = useAsync(
     async (client) => {
@@ -143,6 +152,24 @@ export function ReadinessPanel() {
     [profile?.id],
     profile !== null && backend.available,
   );
+
+  const { reload } = request;
+  const runRecompute = useCallback(async () => {
+    if (!profile) return;
+    setBusy(true);
+    setRecomputeError(null);
+    try {
+      const rows = await backend.client.recomputeMastery(profile.id);
+      setRecomputed(rows);
+      // Re-read rather than assuming: the estimate on screen must come from the
+      // database, not from the belief that the recompute worked.
+      reload();
+    } catch (error) {
+      setRecomputeError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  }, [backend.client, profile, reload]);
 
   if (!backend.available || unavailable) {
     return (
@@ -174,14 +201,38 @@ export function ReadinessPanel() {
   }
 
   return (
-    <AsyncBoundary state={request.state} reload={request.reload}>
-      {({ band, attempts }) => (
-        <ReadinessView
-          band={band}
-          learnerName={profile.name}
-          attemptCount={attempts}
-        />
-      )}
-    </AsyncBoundary>
+    <>
+      <AsyncBoundary state={request.state} reload={request.reload}>
+        {({ band, attempts }) => (
+          <ReadinessView
+            band={band}
+            learnerName={profile.name}
+            attemptCount={attempts}
+          />
+        )}
+      </AsyncBoundary>
+
+      <section aria-labelledby="recompute-heading" className="diagnostics">
+        <h4 id="recompute-heading">Recompute from your history</h4>
+        <p>
+          Mastery estimates are derived from your recorded attempts. Recompute
+          them after practising so the estimate reflects what you have done.
+        </p>
+        <button type="button" onClick={runRecompute} disabled={busy}>
+          {busy ? "Recomputing…" : "Recompute mastery"}
+        </button>
+        {recomputed !== null && (
+          <p role="status" data-testid="recompute-status">
+            Recomputed {recomputed} subtest estimate
+            {recomputed === 1 ? "" : "s"} from your stored attempts.
+          </p>
+        )}
+        {recomputeError && (
+          <p role="alert" data-testid="recompute-error">
+            The estimates were not recomputed: {recomputeError}
+          </p>
+        )}
+      </section>
+    </>
   );
 }

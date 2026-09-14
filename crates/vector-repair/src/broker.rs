@@ -21,6 +21,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::worktree::{RepairWorktree, WorktreeSpec};
 use vector_observability::events::{ComponentHealth, HealthBasis, HealthReport, HealthState};
 
 /// A coding-agent transporter the learner may choose.
@@ -151,6 +152,8 @@ pub enum RepairError {
     ApprovalRequired,
     /// The scope would expose learner data.
     ScopeViolation(String),
+    /// The isolated worktree could not be created or verified.
+    WorktreeUnavailable(String),
 }
 
 impl std::fmt::Display for RepairError {
@@ -178,6 +181,9 @@ impl std::fmt::Display for RepairError {
             ),
             RepairError::ScopeViolation(p) => {
                 write!(f, "the repair scope would expose {p}")
+            }
+            RepairError::WorktreeUnavailable(message) => {
+                write!(f, "the isolated worktree is unavailable: {message}")
             }
         }
     }
@@ -227,7 +233,13 @@ impl RepairCase {
     }
 
     /// Step 2: verify repository state and create the isolated worktree.
-    pub fn prepare_worktree(&mut self) -> Result<(), RepairError> {
+    ///
+    /// Ordering matters: the preconditions are checked, the worktree is
+    /// *created*, and only then does the stage advance. Advancing first would
+    /// leave the case claiming isolation it does not have, which is exactly the
+    /// gap this closes — the previous version of this method only assigned an
+    /// enum variant.
+    pub fn prepare_worktree(&mut self, spec: &WorktreeSpec) -> Result<RepairWorktree, RepairError> {
         if !self.transporter.selected {
             return Err(RepairError::NoTransporter);
         }
@@ -236,7 +248,19 @@ impl RepairCase {
             // default always forbids the learner database.
             return Err(RepairError::ScopeViolation("vector.db".to_string()));
         }
-        self.advance(RepairStage::WorktreeReady)
+
+        // The scope and the worktree are checked against each other: a scope
+        // that permits the learner database while claiming isolation is a
+        // contradiction, not a configuration.
+        if self.scope.may_read("vector.db") {
+            return Err(RepairError::ScopeViolation("vector.db".to_string()));
+        }
+
+        let worktree = RepairWorktree::create(spec)
+            .map_err(|e| RepairError::WorktreeUnavailable(e.to_string()))?;
+
+        self.advance(RepairStage::WorktreeReady)?;
+        Ok(worktree)
     }
 
     /// Step 3: dispatch the scoped agent.

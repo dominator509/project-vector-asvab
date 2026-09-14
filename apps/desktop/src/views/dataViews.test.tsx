@@ -345,6 +345,61 @@ describe("readiness panel", () => {
     );
     expect(screen.getByTestId("readiness-illegal-claim")).toBeInTheDocument();
   });
+
+  it("recomputes mastery from stored attempts and re-reads the estimate", async () => {
+    const user = userEvent.setup();
+    const h = harness();
+    const profile = await h.fake.client.createProfile("Ada", 60);
+    for (const [index, correct] of [true, false].entries()) {
+      await h.fake.client.recordAttempt({
+        attemptId: `a-${index}`,
+        learnerId: profile.id,
+        subtest: "AR",
+        questionId: `q-${index}`,
+        correct,
+        latencyMs: 1000,
+      });
+    }
+    h.storage.setItem("vector.activeProfileId", profile.id);
+
+    mount(<ReadinessPanel />, h);
+    await screen.findByTestId("readiness-band");
+    expect(h.fake.state.mastery.size).toBe(0);
+
+    await user.click(
+      screen.getByRole("button", { name: /recompute mastery/i }),
+    );
+
+    expect(await screen.findByTestId("recompute-status")).toHaveTextContent(
+      /Recomputed 1 subtest estimate/i,
+    );
+
+    // The durable effect: one derived row, with the Laplace estimate from 1 of 2.
+    const derived = h.fake.state.mastery.get(`${profile.id}:AR`);
+    expect(derived).toBeDefined();
+    expect(derived?.score).toBeCloseTo(0.5, 9);
+    expect(derived?.uncertainty).toBeCloseTo(1 / Math.sqrt(3), 9);
+  });
+
+  it("reports a refused recompute instead of presenting a stale estimate as fresh", async () => {
+    const user = userEvent.setup();
+    const h = harness();
+    const profile = await h.fake.client.createProfile("Ada", 60);
+    h.storage.setItem("vector.activeProfileId", profile.id);
+    h.fake.client.recomputeMastery = async () => {
+      throw new Error("storage error: database is locked");
+    };
+
+    mount(<ReadinessPanel />, h);
+    await screen.findByTestId("readiness-band");
+    await user.click(
+      screen.getByRole("button", { name: /recompute mastery/i }),
+    );
+
+    expect(await screen.findByTestId("recompute-error")).toHaveTextContent(
+      /database is locked/i,
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

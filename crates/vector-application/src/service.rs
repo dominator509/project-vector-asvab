@@ -484,6 +484,59 @@ impl<'a> Services<'a> {
             .collect())
     }
 
+    /// Recompute a learner's mastery estimates from their recorded attempts.
+    ///
+    /// ## Why this exists
+    ///
+    /// Mastery is what the planner reads, so a mastery value that only ever
+    /// changes when something writes it by hand drifts away from the evidence
+    /// behind it. This derives mastery from the attempt history, which makes it
+    /// a statement about what the learner has actually done.
+    ///
+    /// ## The estimate
+    ///
+    /// `score = (correct + 1) / (total + 2)` — a Laplace prior. With no attempts
+    /// it yields 0.5 rather than 0 or 1: "no evidence" is the honest position,
+    /// and 0.5 with maximum uncertainty says that, whereas 0 would read as
+    /// demonstrated failure.
+    ///
+    /// `uncertainty = 1 / sqrt(total + 1)`, clamped to the `[0,1]` range the
+    /// storage layer enforces. It falls as evidence accumulates and never
+    /// reaches zero, because an estimate from a finite sample is never certain.
+    ///
+    /// A subtest with no attempts is left untouched, so an estimate someone set
+    /// deliberately is not overwritten by an absence of data.
+    ///
+    /// This is a study aid, not a psychometric model: it makes no equivalence
+    /// claim about any official score (REQ-049, ADR-010).
+    ///
+    /// Returns the number of mastery rows written.
+    pub fn recompute_mastery(&self, learner_id: &str) -> Result<usize, ServiceError> {
+        self.get_profile(learner_id)?;
+
+        let repo = AttemptRepo::new(self.db);
+        let mastery = MasteryRepo::new(self.db);
+        let mut written = 0usize;
+
+        for subtest in vector_domain::mastery::Subtest::ALL {
+            let code = subtest.code();
+            let stats = repo.analytics(learner_id, code)?;
+            if stats.total == 0 {
+                continue;
+            }
+
+            let total = stats.total as f64;
+            let correct = stats.correct as f64;
+            let score = (correct + 1.0) / (total + 2.0);
+            let uncertainty = (1.0 / (total + 1.0).sqrt()).clamp(0.0, 1.0);
+
+            mastery.upsert(learner_id, code, score, uncertainty)?;
+            written += 1;
+        }
+
+        Ok(written)
+    }
+
     // -----------------------------------------------------------------------
     // Planning and readiness
     // -----------------------------------------------------------------------

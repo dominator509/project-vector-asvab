@@ -36,8 +36,9 @@ use serde::Serialize;
 use crate::commands::{
     analytics_impl, backup_create_impl, backup_list_impl, backup_restore_impl, create_profile_impl,
     evidence_get_impl, evidence_list_impl, evidence_put_impl, get_profile_impl, health_impl,
-    latency_probe_impl, list_profiles_impl, migrations, readiness_impl, record_attempt_impl,
-    reset_local_data_impl, set_mastery_impl, study_plan_impl, AppState,
+    latency_probe_impl, list_profiles_impl, mastery_impl, migrations, readiness_impl,
+    recompute_mastery_impl, record_attempt_impl, reset_local_data_impl, set_mastery_impl,
+    study_plan_impl, AppState,
 };
 use vector_application::service::{BackupDto, LatencyDto, NewEvidenceDto, RestoreDto};
 use vector_persistence::MigrationManager;
@@ -385,6 +386,35 @@ fn execute(dir: &Path, report: &mut Report, checks: &mut Checks) {
         match set_mastery_impl(&guard, learner, "AR", 0.55, 0.2) {
             Ok(()) => checks.record("mastery_write", true, "AR mastery stored".to_string()),
             Err(error) => checks.record("mastery_write", false, error.to_string()),
+        }
+
+        // Mastery recomputed from the attempt history replaces the hand-set
+        // value with one derived from the evidence.
+        match recompute_mastery_impl(&guard, learner) {
+            Ok(rows) => {
+                let derived = mastery_impl(&guard, learner)
+                    .unwrap_or_default()
+                    .into_iter()
+                    .find(|m| m.subtest == "AR");
+                // Two AR attempts, one correct: (1 + 1) / (2 + 2) = 0.5, with
+                // 1 / sqrt(2 + 1) of uncertainty.
+                let expected_score = 0.5_f64;
+                let expected_uncertainty = 1.0 / 3.0_f64.sqrt();
+                let ok = rows == 1
+                    && derived.as_ref().is_some_and(|m| {
+                        (m.score - expected_score).abs() < 1e-9
+                            && (m.uncertainty - expected_uncertainty).abs() < 1e-9
+                    });
+                checks.record(
+                    "recompute_mastery",
+                    ok,
+                    format!(
+                        "{rows} row(s) written; AR is now {:?} (expected score {expected_score}, uncertainty {expected_uncertainty:.6})",
+                        derived.map(|m| (m.score, m.uncertainty))
+                    ),
+                );
+            }
+            Err(error) => checks.record("recompute_mastery", false, error.to_string()),
         }
     }
 

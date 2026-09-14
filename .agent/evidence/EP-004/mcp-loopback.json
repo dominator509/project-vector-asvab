@@ -1,0 +1,85 @@
+{
+  "checks": [
+    {
+      "detail": "protocolVersion=2024-11-05 serverInfo.name=vector",
+      "name": "initialize",
+      "ok": true
+    },
+    {
+      "detail": "refused with -32602: initialize must be called before any other method",
+      "name": "requires_initialize",
+      "ok": true
+    },
+    {
+      "detail": "8 tools, generic-access tool present: false: [\"get_study_plan\", \"list_evidence\", \"get_content_metadata\", \"get_diagnostics\", \"create_draft_artifact\", \"generate_practice_set\", \"export_repair_bundle\", \"invoke_writing_agent\"]",
+      "name": "tools_list",
+      "ok": true
+    },
+    {
+      "detail": "isolated block with correlation mcp-000001, 509 bytes, isError=false",
+      "name": "authorized_read",
+      "ok": true
+    },
+    {
+      "detail": "203 bytes of isolated diagnostics",
+      "name": "resource_read",
+      "ok": true
+    },
+    {
+      "detail": "refused with -32001: missing capability InvokeWritingAgent",
+      "name": "denied_missing_capability",
+      "ok": true
+    },
+    {
+      "detail": "refused with -32001: path is outside the peer's scoped roots",
+      "name": "denied_path_outside_roots",
+      "ok": true
+    },
+    {
+      "detail": "refused with -32001: path is outside the peer's scoped roots",
+      "name": "denied_traversal_out_of_root",
+      "ok": true
+    },
+    {
+      "detail": "in-scope path cleared the scope check and reached the write path",
+      "name": "path_inside_root_passes_scope",
+      "ok": true
+    },
+    {
+      "detail": "refused with -32001: missing capability InvokeWritingAgent",
+      "name": "denied_oversized_arguments",
+      "ok": true
+    },
+    {
+      "detail": "canary stored in the vault is returned with markers defanged: lowercased section marker=true, fences replaced=true",
+      "name": "injection_neutralized",
+      "ok": true
+    },
+    {
+      "detail": "Err(Remote { code: -32601, message: \"unknown method \\\"nonsense/method\\\"\" })",
+      "name": "unknown_method_refused",
+      "ok": true
+    },
+    {
+      "detail": "follow-up call: ok",
+      "name": "session_survives_error",
+      "ok": true
+    },
+    {
+      "detail": "1 allowed, 1 denied",
+      "name": "audit_records_both_outcomes",
+      "ok": true
+    },
+    {
+      "detail": "unprivileged=\"missing capability ReadStudyData\" unconsented=\"user consent has not been granted\" stranger=\"peer is not allowlisted\"",
+      "name": "authorization_is_per_peer",
+      "ok": true
+    },
+    {
+      "detail": "truncated JSON -> Some(-32700), wrong version -> Some(-32600), object id -> Some(-32600), batch -> Some(-32600)",
+      "name": "malformed_input_refused",
+      "ok": true
+    }
+  ],
+  "verdict": "pass"
+}

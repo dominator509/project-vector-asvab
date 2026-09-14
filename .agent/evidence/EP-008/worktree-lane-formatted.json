@@ -1,0 +1,20 @@
+{
+  "base": "HEAD",
+  "durationMs": 3336,
+  "exitCode": 1,
+  "gate": "format-check",
+  "head": "0006bdc278536afd0427d0dab86ef37d444817d6",
+  "learnerStateAbsent": true,
+  "provisioning": {
+    "command": "sh scripts/install.sh",
+    "durationMs": 7079,
+    "exitCode": 0,
+    "stderrTail": ""
+  },
+  "repository": "\\\\?\\C:\\dev\\project-vector-asvab",
+  "script": "scripts/format-check.sh",
+  "stderrTail": "[warn] src/accessibility/settings.test.ts\n[warn] src/accessibility/settings.ts\n[warn] src/App.test.tsx\n[warn] src/App.tsx\n[warn] src/app/views.ts\n[warn] src/data/sample.ts\n[warn] src/ipc/Backend.tsx\n[warn] src/ipc/client.test.ts\n[warn] src/ipc/client.ts\n[warn] src/ipc/errors.ts\n[warn] src/ipc/runtime.ts\n[warn] src/ipc/testing/fakeClient.ts\n[warn] src/ipc/types.ts\n[warn] src/main.tsx\n[warn] src/search/search.test.ts\n[warn] src/search/search.ts\n[warn] src/state/activeProfile.test.ts\n[warn] src/state/activeProfile.ts\n[warn] src/state/ProfileContext.tsx\n[warn] src/test-setup.ts\n[warn] src/views/AccessibleSettings.tsx\n[warn] src/views/dataViews.test.tsx\n[warn] src/views/ExamSimulatorView.tsx\n[warn] src/views/OnboardingView.tsx\n[warn] src/views/PracticeView.tsx\n[warn] src/views/PrivacyView.tsx\n[warn] src/views/ReadinessView.tsx\n[warn] src/views/ReviewQueueView.tsx\n[warn] src/views/SearchView.tsx\n[warn] src/views/SourcesView.tsx\n[warn] src/views/TodayView.tsx\n[warn] src/views/views.test.tsx\n[warn] Code style issues found in 32 files. Run Prettier with --write to fix.",
+  "stdoutTail": "Checking formatting...\nundefined\nC:\\tmp\\vector-lane-format-check-12748-1789408543670998200\\apps\\desktop:\n ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with exit code 1: prettier --check src/**/*.{ts,tsx,json}",
+  "trackedFileCount": 659,
+  "worktree": "C:\\tmp\\vector-lane-format-check-12748-1789408543670998200"
+}

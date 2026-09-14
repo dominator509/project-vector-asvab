@@ -175,6 +175,27 @@ pub fn ui_ready(state: State<'_, AppState>, bundle: String) -> Result<String, St
     with_db(&state, |db| ui_ready_impl(db, &bundle))
 }
 
+// ---------------------------------------------------------------------------
+// Background work (REQ-054)
+// ---------------------------------------------------------------------------
+
+pub fn recompute_mastery_impl(db: &Database, learner_id: &str) -> Result<usize, ServiceError> {
+    Services::new(db).recompute_mastery(learner_id)
+}
+
+/// Recompute a learner's mastery estimates from their stored attempts.
+///
+/// Runs on the command thread rather than in a background pool. The recompute is
+/// a bounded read of one indexed table per subtest, and a learner waiting for it
+/// is waiting for the number it produces; pushing it to a worker would add a
+/// failure mode (a job that never reports) in exchange for latency nobody can
+/// observe. `vector_application::workers` holds the pool for work that is *not*
+/// on a user-visible path.
+#[tauri::command]
+pub fn recompute_mastery(state: State<'_, AppState>, learner_id: String) -> Result<usize, String> {
+    with_db(&state, |db| recompute_mastery_impl(db, &learner_id))
+}
+
 /// Run `body` against the shared database, converting errors to strings.
 fn with_db<T>(
     state: &State<'_, AppState>,

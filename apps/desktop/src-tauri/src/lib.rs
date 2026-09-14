@@ -61,6 +61,7 @@ pub fn run() {
             commands::latency_probe,
             commands::reset_local_data,
             commands::ui_ready,
+            commands::recompute_mastery,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

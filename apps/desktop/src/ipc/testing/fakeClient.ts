@@ -468,6 +468,31 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
       state.uiReadyMarkers.push({ id, bundle });
       return id;
     },
+
+    async recomputeMastery(learnerId): Promise<number> {
+      record("recompute_mastery", { learner_id: learnerId });
+      if (!state.profiles.has(learnerId)) {
+        throw new Error(`not found: profile ${learnerId}`);
+      }
+      // The same Laplace estimate the service layer applies, so a test that
+      // depends on the derived value checks the rule rather than a fixed number.
+      let written = 0;
+      const subtests = new Set(
+        [...state.attempts.values()]
+          .filter((a) => a.learnerId === learnerId)
+          .map((a) => a.subtest),
+      );
+      for (const subtest of subtests) {
+        const row = stats(learnerId, subtest);
+        state.mastery.set(`${learnerId}:${subtest}`, {
+          subtest,
+          score: (row.correct + 1) / (row.total + 2),
+          uncertainty: 1 / Math.sqrt(row.total + 1),
+        });
+        written += 1;
+      }
+      return written;
+    },
   };
 
   return {

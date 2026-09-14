@@ -1,0 +1,36 @@
+# Line-ending policy.
+#
+# Git for Windows defaults to `core.autocrlf=true`, which rewrites every text
+# file to CRLF on checkout. That made the verification gates depend on the state
+# of a developer's working copy rather than on the committed content: on a fresh
+# clone or in a git worktree, `prettier --check` reported *every* frontend file
+# as unformatted, because Prettier expects LF.
+#
+# The defect was invisible in place — the working copy here was written by tools
+# in LF and never re-checked-out — and only appeared when an isolated worktree
+# was checked out from the same commit. `vector-tools repair lane --gate
+# format-check` is what surfaced it.
+#
+# Normalising to LF everywhere makes a checkout reproduce the committed bytes.
+* text=auto eol=lf
+
+# Patch files are applied verbatim; rewriting their line endings breaks them.
+*.patch -text
+*.diff -text
+
+# Binary assets must never be converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.exe binary
+*.dll binary
+*.msi binary
+*.gguf binary
+*.gz binary
+*.zip binary

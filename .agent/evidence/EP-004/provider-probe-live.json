@@ -1,0 +1,103 @@
+{
+  "probe": {
+    "apiKeyVariablesScrubbed": [
+      "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
+      "XAI_API_KEY",
+      "GOOGLE_API_KEY",
+      "GEMINI_API_KEY",
+      "GROK_API_KEY"
+    ],
+    "checkedAt": "2026-09-14T17:31:53.464697600+00:00",
+    "healthy": 1,
+    "lanes": [
+      {
+        "billing": "None",
+        "health": {
+          "reason": "no llama.cpp server at http://127.0.0.1:8080 (connection timed out); set VECTOR_LLAMA_ENDPOINT to a running llama.cpp server to use the local lane",
+          "state": "unavailable"
+        },
+        "id": "local_llama",
+        "live": null,
+        "policyRefusal": null,
+        "transport": "llama.cpp server (documented HTTP interface)"
+      },
+      {
+        "billing": "Subscription",
+        "health": {
+          "reason": "grok is installed but not signed in",
+          "state": "unavailable"
+        },
+        "id": "grok_native",
+        "live": null,
+        "policyRefusal": null,
+        "transport": "official Grok CLI headless/ACP"
+      },
+      {
+        "billing": "Subscription",
+        "health": {
+          "state": "healthy"
+        },
+        "id": "codex_native",
+        "live": {
+          "bytes": 4724,
+          "state": "answered"
+        },
+        "policyRefusal": null,
+        "transport": "official `codex exec`"
+      },
+      {
+        "billing": "Subscription",
+        "health": {
+          "reason": "claude is installed but not signed in (auth method: none)",
+          "state": "unavailable"
+        },
+        "id": "claude_native",
+        "live": null,
+        "policyRefusal": null,
+        "transport": "official Claude Code noninteractive mode"
+      },
+      {
+        "billing": "Subscription",
+        "health": {
+          "state": "not_configured"
+        },
+        "id": "gemini_cli_oauth",
+        "live": null,
+        "policyRefusal": "provider terms prohibit this adapter: ADR-006 / REQ-019: third-party OAuth bridge prohibited by provider terms",
+        "transport": "third-party OAuth bridge"
+      }
+    ],
+    "maxPolicyAgeDays": 90
+  },
+  "routing": {
+    "localOnly": {
+      "refusals": [
+        {
+          "id": "local_llama",
+          "reason": "adapter is not healthy"
+        },
+        {
+          "id": "grok_native",
+          "reason": "adapter is not healthy"
+        },
+        {
+          "id": "codex_native",
+          "reason": "a local-only request cannot use a network provider"
+        },
+        {
+          "id": "claude_native",
+          "reason": "adapter is not healthy"
+        },
+        {
+          "id": "gemini_cli_oauth",
+          "reason": "adapter is disabled"
+        }
+      ],
+      "selected": null
+    },
+    "remoteAllowed": {
+      "selected": "codex_native"
+    }
+  }
+}

@@ -59,6 +59,7 @@ export const COMMAND_NAMES = [
   "latency_probe",
   "reset_local_data",
   "ui_ready",
+  "recompute_mastery",
 ] as const;
 
 export type CommandName = (typeof COMMAND_NAMES)[number];
@@ -366,6 +367,16 @@ function readIdString(command: string, value: unknown): string {
   return value;
 }
 
+function readRowCount(command: string, value: unknown): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new MalformedResponseError(
+      command,
+      `expected a non-negative integer row count, got ${describe(value)}`,
+    );
+  }
+  return value;
+}
+
 // ---------------------------------------------------------------------------
 // The client
 // ---------------------------------------------------------------------------
@@ -414,6 +425,12 @@ export interface VectorClient {
    * answering. Callers must not treat a rejection as harmless.
    */
   uiReady(bundle: string): Promise<string>;
+  /**
+   * Recompute a learner's mastery estimates from their stored attempts.
+   *
+   * Resolves to the number of mastery rows written.
+   */
+  recomputeMastery(learnerId: string): Promise<number>;
 }
 
 /**
@@ -526,5 +543,8 @@ export function createVectorClient(invoke: Invoke): VectorClient {
       call("reset_local_data", { confirmation }, readReset),
 
     uiReady: (bundle) => call("ui_ready", { bundle }, readIdString),
+
+    recomputeMastery: (learnerId) =>
+      call("recompute_mastery", { learner_id: learnerId }, readRowCount),
   };
 }

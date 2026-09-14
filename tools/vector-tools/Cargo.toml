@@ -8,9 +8,13 @@ license.workspace = true
 vector-persistence = { path = "../../crates/vector-persistence" }
 vector-observability = { path = "../../crates/vector-observability" }
 vector-platform = { path = "../../crates/vector-platform" }
+vector-llm = { path = "../../crates/vector-llm" }
+vector-mcp = { path = "../../crates/vector-mcp" }
+vector-repair = { path = "../../crates/vector-repair" }
 clap.workspace = true
 rusqlite.workspace = true
 anyhow.workspace = true
 sha2.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+chrono.workspace = true

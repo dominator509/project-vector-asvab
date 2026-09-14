@@ -4969,6 +4969,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "serde",
+ "serde_json",
  "vector-domain",
 ]
 
@@ -4977,6 +4978,7 @@ name = "vector-mcp"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "serde_json",
  "vector-domain",
 ]
 
@@ -5050,14 +5052,18 @@ name = "vector-tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "rusqlite",
  "serde",
  "serde_json",
  "sha2",
+ "vector-llm",
+ "vector-mcp",
  "vector-observability",
  "vector-persistence",
  "vector-platform",
+ "vector-repair",
 ]
 
 [[package]]

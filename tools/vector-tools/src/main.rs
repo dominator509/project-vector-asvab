@@ -4,6 +4,9 @@ use std::path::PathBuf;
 use vector_persistence::backup::{BackupManager, RestoreOutcome};
 use vector_persistence::{Database, MigrationManager};
 
+mod repair_lane;
+mod transports;
+
 #[derive(Parser)]
 #[command(name = "vector-tools")]
 #[command(about = "VECTOR developer and release tools", long_about = None)]
@@ -17,6 +20,25 @@ enum Commands {
     Db {
         #[command(subcommand)]
         action: DbCommands,
+    },
+    /// Model transports and the MCP server/client (REQ-016..REQ-019, REQ-025,
+    /// REQ-026, REQ-058).
+    ///
+    /// `COMMANDS.md` has documented `provider probe` and `mcp probe-loopback`
+    /// since the control plane was written; both previously failed with
+    /// "unrecognized subcommand", so nothing that depended on them was ever run.
+    Provider {
+        #[command(subcommand)]
+        action: ProviderCommands,
+    },
+    Mcp {
+        #[command(subcommand)]
+        action: McpCommands,
+    },
+    /// Work in an isolated git worktree (REQ-031, AGENTS.md §11).
+    Repair {
+        #[command(subcommand)]
+        action: RepairCommands,
     },
     /// Build or verify the release artifact identity.
     ///
@@ -77,6 +99,72 @@ enum Commands {
 }
 
 #[derive(Subcommand)]
+enum RepairCommands {
+    /// Create an isolated worktree, run one gate inside it, and remove it.
+    ///
+    /// The gate must be one of the lane gates named in COMMANDS.md; the worktree
+    /// is verified to contain no learner state before the gate runs.
+    Lane {
+        /// Gate to run, e.g. `format-check`.
+        #[arg(long)]
+        gate: String,
+        /// Commit-ish to check out.
+        #[arg(long, default_value = "HEAD")]
+        base: String,
+        /// Repository to branch from. Defaults to this checkout.
+        #[arg(long)]
+        repository: Option<PathBuf>,
+        /// Write the JSON report here as well as to stdout.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+}
+
+#[derive(Subcommand)]
+enum ProviderCommands {
+    /// Probe every configured model transport and report its real state.
+    Probe {
+        /// Probe every adapter in the registry, not only the ones that look
+        /// configured. A lane that is installed but signed out is a fact worth
+        /// reporting.
+        #[arg(long)]
+        all_configured: bool,
+        /// Send one minimal prompt through each healthy lane and validate the
+        /// response. This contacts the provider under the user's own login, so
+        /// it is off by default.
+        #[arg(long)]
+        live: bool,
+        /// Write the JSON report here as well as to stdout.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+}
+
+#[derive(Subcommand)]
+enum McpCommands {
+    /// Serve MCP on stdin/stdout.
+    Serve {
+        /// Study database to expose. Without it the server answers "no database
+        /// is attached" rather than inventing content.
+        #[arg(long)]
+        db: Option<PathBuf>,
+        /// Root the connected peer may write drafts into, when it holds the
+        /// capability.
+        #[arg(long)]
+        writable_root: Option<PathBuf>,
+    },
+    /// Start a real MCP server and drive it with the real client.
+    ProbeLoopback {
+        /// Study database the server should expose.
+        #[arg(long)]
+        db: Option<PathBuf>,
+        /// Write the JSON report here as well as to stdout.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+}
+
+#[derive(Subcommand)]
 enum DbCommands {
     Setup {
         #[arg(long, default_value = "vector.db")]
@@ -118,6 +206,114 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Provider { action } => match action {
+            ProviderCommands::Probe {
+                all_configured,
+                live,
+                out,
+            } => {
+                let now = chrono::Utc::now();
+                let reports = transports::provider_probe(live);
+                let report = serde_json::json!({
+                    "probe": transports::provider_report_json(&reports, now),
+                    "routing": transports::routing_report_json(now, &reports),
+                });
+                let text = serde_json::to_string_pretty(&report)?;
+                println!("{text}");
+                if let Some(path) = out {
+                    std::fs::write(&path, format!("{text}\n"))?;
+                    eprintln!("wrote {}", path.display());
+                }
+
+                // An explicit request to probe *every* configured lane should
+                // not fail merely because a provider is unconfigured; the state
+                // is the result. It fails only when the registry itself is
+                // inconsistent, which cannot happen with a derived registry.
+                let healthy = reports
+                    .iter()
+                    .filter(|r| matches!(r.health, vector_llm::transport::AdapterHealth::Healthy))
+                    .count();
+                eprintln!(
+                    "provider probe: {} lane(s) checked, {healthy} healthy{}",
+                    reports.len(),
+                    if all_configured {
+                        " (all configured)"
+                    } else {
+                        ""
+                    }
+                );
+            }
+        },
+        Commands::Mcp { action } => match action {
+            McpCommands::Serve { db, writable_root } => {
+                let root = writable_root
+                    .as_ref()
+                    .map(|path| path.to_string_lossy().into_owned());
+                transports::serve_stdio(db.as_deref(), root.as_deref())?;
+            }
+            McpCommands::ProbeLoopback { db, out } => {
+                let checks = transports::mcp_probe_loopback(db.as_deref())?;
+                let report = transports::probe_report_json(&checks);
+                let text = serde_json::to_string_pretty(&report)?;
+                println!("{text}");
+                if let Some(path) = out {
+                    std::fs::write(&path, format!("{text}\n"))?;
+                    eprintln!("wrote {}", path.display());
+                }
+
+                let failed: Vec<&transports::ProbeCheck> =
+                    checks.iter().filter(|c| !c.ok).collect();
+                for check in &checks {
+                    eprintln!(
+                        "  {} {}: {}",
+                        if check.ok { "PASS" } else { "FAIL" },
+                        check.name,
+                        check.detail
+                    );
+                }
+                if !failed.is_empty() {
+                    anyhow::bail!("{} loopback check(s) failed", failed.len());
+                }
+                eprintln!("mcp probe-loopback: {} checks passed", checks.len());
+            }
+        },
+        Commands::Repair { action } => match action {
+            RepairCommands::Lane {
+                gate,
+                base,
+                repository,
+                out,
+            } => {
+                let root = repository.unwrap_or_else(repair_lane::repository_root);
+                let report = repair_lane::run_lane(&root, &base, &gate)?;
+                let text = serde_json::to_string_pretty(&report)?;
+                println!("{text}");
+                if let Some(path) = out {
+                    std::fs::write(&path, format!("{text}\n"))?;
+                    eprintln!("wrote {}", path.display());
+                }
+
+                let code = report
+                    .get("exitCode")
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(-1);
+                eprintln!(
+                    "repair lane: {} in {} at {} -> exit {code}",
+                    gate,
+                    report
+                        .get("worktree")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("?"),
+                    report
+                        .get("head")
+                        .and_then(serde_json::Value::as_str)
+                        .unwrap_or("?")
+                );
+                if code != 0 {
+                    anyhow::bail!("the {gate} gate failed inside the worktree (exit {code})");
+                }
+            }
+        },
         Commands::Db { action } => match action {
             DbCommands::Setup { db_path } => {
                 println!("Setting up database at {}", db_path);

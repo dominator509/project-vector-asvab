@@ -42,7 +42,9 @@ export RUST_BACKTRACE=1
 | Local DB setup | `sh scripts/db-setup.sh` |
 | Migrate | `sh scripts/migrate.sh` |
 | Provider probe | `sh scripts/provider-probe.sh` |
+| Provider live-fire | `sh scripts/provider-live-fire.sh` |
 | MCP probe | `sh scripts/mcp-probe.sh` |
+| Isolated worktree lane | `cargo run -p vector-tools -- repair lane --gate reality-gate` |
 
 ## Adapter parity
 After changing commands, run `python3 scripts/validate-generated-pack.py .` and ensure every platform adapter points back to AGENTS.md rather than duplicating a conflicting command surface.

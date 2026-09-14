@@ -181,6 +181,7 @@ describe("command names and arguments", () => {
       () => spied.backupList("d"),
       () => spied.resetLocalData("DELETE"),
       () => spied.uiReady("stamp"),
+      () => spied.recomputeMastery("l"),
     ];
     for (const attempt of attempts) {
       await attempt().catch(() => undefined);
@@ -361,6 +362,7 @@ describe("the declared command list", () => {
       "latency_probe",
       "reset_local_data",
       "ui_ready",
+      "recompute_mastery",
     ]);
   });
 
