@@ -11,6 +11,7 @@ pub mod egress;
 pub mod offline;
 pub mod privacy;
 pub mod safe_mode;
+pub mod service;
 pub mod sync_port;
 
 /// Initialize the application core.

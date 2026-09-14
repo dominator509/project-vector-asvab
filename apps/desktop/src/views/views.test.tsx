@@ -264,39 +264,80 @@ describe("exam simulator", () => {
 // REQ-011
 // ---------------------------------------------------------------------------
 
+/**
+ * An explicit input band. The figures are test inputs, not product data: the
+ * view previously supplied its own demonstration band, which meant these tests
+ * passed without ever proving the view could read a real estimate.
+ */
+const READINESS_BAND = {
+  low: 0.48,
+  high: 0.71,
+  confidence: 0.62,
+  official_score_claim: false,
+};
+
 describe("readiness view", () => {
   it("shows a range rather than a point score", () => {
-    render(<ReadinessView />);
+    render(<ReadinessView band={READINESS_BAND} />);
     const band = screen.getByTestId("readiness-band");
     expect(band.textContent).toMatch(/%–\d+%/);
   });
 
   it("states that it is not an official score prediction", () => {
     // ADR-010 forbids a precise predicted score before calibration.
-    render(<ReadinessView />);
+    render(<ReadinessView band={READINESS_BAND} />);
     expect(screen.getByTestId("readiness-disclaimer")).toHaveTextContent(
       /not an official ASVAB or AFQT score prediction/i,
     );
   });
 
   it("shows calibration confidence", () => {
-    render(<ReadinessView />);
+    render(<ReadinessView band={READINESS_BAND} />);
     expect(screen.getByTestId("readiness-confidence")).toHaveTextContent(
       /calibration confidence/i,
     );
   });
 
   it("exposes the band to assistive technology as a meter", () => {
-    render(<ReadinessView />);
+    render(<ReadinessView band={READINESS_BAND} />);
     const meter = screen.getByRole("meter", { name: /readiness range/i });
     expect(meter).toHaveAttribute("aria-valuetext");
   });
 
   it("never renders an official-score claim in the shipped state", () => {
-    render(<ReadinessView />);
+    render(<ReadinessView band={READINESS_BAND} />);
     expect(
       screen.queryByTestId("readiness-illegal-claim"),
     ).not.toBeInTheDocument();
+  });
+
+  it("flags a claim rather than rendering it as a prediction", () => {
+    // The view is the last line of defence: if a claiming band ever reached it,
+    // the claim has to be visible as an error, not shown as a number.
+    render(
+      <ReadinessView
+        band={{ ...READINESS_BAND, official_score_claim: true }}
+      />,
+    );
+    expect(screen.getByTestId("readiness-illegal-claim")).toBeInTheDocument();
+  });
+
+  it("says so when the range is invalid instead of drawing it", () => {
+    render(<ReadinessView band={{ ...READINESS_BAND, low: 0.9, high: 0.2 }} />);
+    expect(screen.getByTestId("readiness-error")).toBeInTheDocument();
+    expect(screen.queryByTestId("readiness-band")).not.toBeInTheDocument();
+  });
+
+  it("explains a wide band rather than leaving it unexplained", () => {
+    render(<ReadinessView band={{ ...READINESS_BAND, low: 0, high: 1 }} />);
+    expect(screen.getByTestId("readiness-wide")).toBeInTheDocument();
+  });
+
+  it("reports how much evidence the estimate rests on", () => {
+    render(<ReadinessView band={READINESS_BAND} attemptCount={0} />);
+    expect(screen.getByTestId("readiness-evidence")).toHaveTextContent(
+      /0 recorded attempts/i,
+    );
   });
 });
 

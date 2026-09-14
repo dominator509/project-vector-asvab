@@ -405,6 +405,36 @@ impl<'a> EvidenceRepo<'a> {
         Ok(row)
     }
 
+    /// Every stored snapshot, newest first.
+    ///
+    /// The source viewer (SPEC-004) has to list what the vault holds, and a
+    /// reader that could only fetch by known id would force the UI to guess
+    /// which ids exist. Ordered by `created_at` then `id` so the order is total
+    /// and stable rather than depending on insertion luck.
+    pub fn list(&self) -> anyhow::Result<Vec<EvidenceRecord>> {
+        let conn = self.db.connection();
+        let mut stmt = conn.prepare(
+            "SELECT id, content_hash, url, title, license, effective_date,
+                    trust, retrieval_status, created_at
+             FROM evidence_records
+             ORDER BY created_at DESC, id ASC",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok(EvidenceRecord {
+                id: row.get(0)?,
+                content_hash: row.get(1)?,
+                url: row.get(2)?,
+                title: row.get(3)?,
+                license: row.get(4)?,
+                effective_date: row.get(5)?,
+                trust: row.get(6)?,
+                retrieval_status: row.get(7)?,
+                created_at: row.get(8)?,
+            })
+        })?;
+        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+    }
+
     /// Attempt to revise a stored trust score.
     ///
     /// This always fails: vault rows are immutable (enforced by a database

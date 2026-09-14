@@ -13,21 +13,47 @@ import {
   a11yStyleVars,
   type A11ySettings,
 } from "./accessibility/settings";
+import { BackendProvider, useBackend } from "./ipc/Backend";
+import { ProfileProvider, useActiveProfile } from "./state/ProfileContext";
 import { AccessibleSettings } from "./views/AccessibleSettings";
+import { OnboardingView } from "./views/OnboardingView";
 import { PracticeView } from "./views/PracticeView";
 import { SearchView } from "./views/SearchView";
 import { ExamSimulatorView } from "./views/ExamSimulatorView";
-import { ReadinessView } from "./views/ReadinessView";
+import { ReadinessPanel } from "./views/ReadinessView";
 import { ReviewQueueView } from "./views/ReviewQueueView";
 import { PrivacyView } from "./views/PrivacyView";
-import { todayPlan, sampleQuestions, reviewCards } from "./data/sample";
+import { SourcesView } from "./views/SourcesView";
+import { TodayView } from "./views/TodayView";
+import { sampleQuestions, reviewCards } from "./data/sample";
 import "./styles.css";
 
 export default function App() {
+  // The backend and the active learner are established above every view,
+  // because each of them depends on both and a view that fetched its own
+  // learner could disagree with the navigation about who is studying.
+  return (
+    <BackendProvider>
+      <ProfileProvider>
+        <Shell />
+      </ProfileProvider>
+    </BackendProvider>
+  );
+}
+
+/**
+ * The application shell.
+ *
+ * Exported so a test can mount it inside an injected backend, which is how the
+ * "the window renders but no command answers" path is exercised. The default
+ * export installs the real providers around it.
+ */
+export function Shell() {
   const [view, setView] = useState<ViewId>(DEFAULT_VIEW);
   const [a11y, setA11y] = useState<A11ySettings>(DEFAULT_A11Y_SETTINGS);
   const [liveMessage, setLiveMessage] = useState("");
   const navRef = useRef<HTMLElement | null>(null);
+  const backend = useBackend();
 
   const orderedViews = useMemo(
     () => [...VIEWS].sort((a, b) => a.order - b.order),
@@ -92,6 +118,23 @@ export default function App() {
         <p className="app-subtitle">ASVAB/AFQT preparation</p>
       </header>
 
+      {/*
+        The interface rendering and the interface reaching the local core are
+        different facts. When the packaged application is running but no command
+        can be answered, the window would otherwise look normal while every
+        number in it was unreadable — so say so plainly.
+      */}
+      {backend.boundaryError && (
+        <p
+          role="alert"
+          className="status-notice status-error"
+          data-testid="ipc-broken"
+        >
+          The interface could not reach the local core, so no study data can be
+          read or saved: {backend.boundaryError}
+        </p>
+      )}
+
       <div className="app-body">
         <nav aria-label="Primary" ref={navRef} data-testid="primary-nav">
           <ul className="nav-list">
@@ -113,12 +156,7 @@ export default function App() {
 
         <main id="main-content" tabIndex={-1} data-testid="main-content">
           <h2 data-testid="view-heading">{viewDefinition(view).label}</h2>
-          <ViewBody
-            view={view}
-            a11y={a11y}
-            onA11yChange={setA11y}
-            onNavigate={navigate}
-          />
+          <ViewBody view={view} a11y={a11y} onA11yChange={setA11y} />
         </main>
       </div>
 
@@ -142,15 +180,23 @@ interface ViewBodyProps {
   view: ViewId;
   a11y: A11ySettings;
   onA11yChange: (settings: A11ySettings) => void;
-  onNavigate: (view: ViewId) => void;
 }
 
-function ViewBody({ view, a11y, onA11yChange, onNavigate }: ViewBodyProps) {
+function ViewBody({ view, a11y, onA11yChange }: ViewBodyProps) {
+  // Attempts are recorded against the learner the application has selected.
+  const { profile } = useActiveProfile();
+
   switch (view) {
+    case "onboarding":
+      return <OnboardingView />;
+    case "today":
+      return <TodayView />;
     case "accessibility":
       return <AccessibleSettings settings={a11y} onChange={onA11yChange} />;
     case "practice":
-      return <PracticeView questions={sampleQuestions} />;
+      return (
+        <PracticeView questions={sampleQuestions} learnerId={profile?.id} />
+      );
     case "search":
       return <SearchView />;
     case "cat":
@@ -158,47 +204,22 @@ function ViewBody({ view, a11y, onA11yChange, onNavigate }: ViewBodyProps) {
     case "paper":
       return <ExamSimulatorView form="paper" />;
     case "readiness":
-      return <ReadinessView />;
+      return <ReadinessPanel />;
     case "review":
       return <ReviewQueueView cards={reviewCards} />;
+    case "evidence":
+      return <SourcesView />;
     case "privacy":
       return <PrivacyView />;
-    case "today":
-      return <TodayPlan onNavigate={onNavigate} />;
     default:
       return <PlaceholderView view={view} />;
   }
 }
 
-function TodayPlan({ onNavigate }: { onNavigate: (v: ViewId) => void }) {
-  return (
-    <section aria-labelledby="today-heading">
-      <h3 id="today-heading">Your plan for today</h3>
-      <ol data-testid="today-drills">
-        {todayPlan.drills.map((drill) => (
-          <li key={drill.subtest}>
-            <strong>{drill.subtest}</strong> — {drill.minutes} minutes{" "}
-            <span className="reason">({drill.reason})</span>
-          </li>
-        ))}
-      </ol>
-      <p>
-        Total: <span data-testid="today-total">{todayPlan.totalMinutes}</span>{" "}
-        minutes
-      </p>
-      <button type="button" onClick={() => onNavigate("practice")}>
-        Start practising
-      </button>
-    </section>
-  );
-}
-
 const PENDING_DESCRIPTIONS: Partial<Record<ViewId, string>> = {
-  onboarding: "Set up a local learner profile. No account required.",
   diagnostic: "Take a cross-domain diagnostic to establish mastery estimates.",
   lesson: "Read lessons with worked solutions and cited sources.",
   explore: "Browse jobs and their current, sourced composite targets.",
-  evidence: "Inspect every source snapshot behind a claim.",
   tutor: "Ask the local model, grounded in your evidence vault.",
   content: "Manage signed content packs and updates.",
   providers: "Configure model transports and review provider terms.",

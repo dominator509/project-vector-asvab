@@ -6,17 +6,20 @@ license.workspace = true
 
 [dependencies]
 vector-domain = { path = "../vector-domain" }
+vector-study = { path = "../vector-study" }
+vector-persistence = { path = "../vector-persistence" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+rusqlite.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
 # The EP-007 property/fuzz and performance suites deliberately cross crate
 # boundaries so the invariants are checked against the real implementations,
 # not local copies.
-vector-study = { path = "../vector-study" }
 vector-observability = { path = "../vector-observability" }
 vector-platform = { path = "../vector-platform" }
 vector-questions = { path = "../vector-questions" }
-vector-persistence = { path = "../vector-persistence" }
-rusqlite.workspace = true

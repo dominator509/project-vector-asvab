@@ -4,15 +4,23 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[lib]
+name = "vector_desktop_lib"
+crate-type = ["lib"]
+
 [build-dependencies]
 tauri-build.workspace = true
 
 [dependencies]
+vector-application = { path = "../../../crates/vector-application" }
 vector-domain = { path = "../../../crates/vector-domain" }
 vector-observability = { path = "../../../crates/vector-observability" }
 vector-persistence = { path = "../../../crates/vector-persistence" }
+rusqlite.workspace = true
 tauri.workspace = true
 tauri-plugin-sql.workspace = true
+chrono.workspace = true
+uuid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true

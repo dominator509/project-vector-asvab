@@ -12,16 +12,20 @@ import { expect, test } from "@playwright/test";
 test.describe("production artifact smoke", () => {
   test("the built bundle serves and renders the shell", async ({ page }) => {
     const response = await page.goto("/");
-    expect(response?.status(), "the artifact must serve its entry document").toBe(
-      200,
-    );
+    expect(
+      response?.status(),
+      "the artifact must serve its entry document",
+    ).toBe(200);
 
     await expect(
       page.getByRole("heading", { level: 1, name: /project vector/i }),
     ).toBeVisible();
   });
 
-  test("the artifact works with the network blocked", async ({ page, context }) => {
+  test("the artifact works with the network blocked", async ({
+    page,
+    context,
+  }) => {
     // Offline is the product's core promise (ADR-003). Blocking every request
     // that is not the local origin proves the shell does not depend on a CDN,
     // a font host, or a telemetry endpoint to render.

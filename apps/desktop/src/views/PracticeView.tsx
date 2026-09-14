@@ -1,9 +1,22 @@
 /**
- * Practice view (REQ-005): custom drills, worked solutions, distractor
- * rationales, confidence capture and the error notebook.
+ * Practice view (REQ-005, REQ-010): custom drills, worked solutions, distractor
+ * rationales, confidence capture, the error notebook, and durable recording.
+ *
+ * When a learner is selected and the local backend is reachable, every answered
+ * question is written to the database through `record_attempt`, and the stored
+ * totals are then read back and shown. The readback is the point: a UI that
+ * displayed only its own in-memory count could not distinguish "saved" from
+ * "the write was rejected", and the whole product claim is that progress is
+ * real and inspectable.
+ *
+ * The session counters stay session-local on purpose. They answer "how did this
+ * sitting go", which is a different question from "what is stored".
  */
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+
+import { useBackend } from "../ipc/Backend";
+import type { AnalyticsDto } from "../ipc/types";
 import type { PracticeQuestion } from "../data/sample";
 
 /** How confident the learner felt, captured per attempt. */
@@ -18,15 +31,28 @@ export interface AttemptRecord {
 
 export interface PracticeViewProps {
   questions: PracticeQuestion[];
+  /** The learner whose attempts are recorded; omitted, nothing is persisted. */
+  learnerId?: string;
 }
 
-export function PracticeView({ questions }: PracticeViewProps) {
+/** What happened when the attempt was written to the database. */
+type StorageState =
+  | { status: "idle" }
+  | { status: "saving" }
+  | { status: "stored"; storedTotal: number }
+  | { status: "duplicate"; storedTotal: number }
+  | { status: "failed"; message: string };
+
+export function PracticeView({ questions, learnerId }: PracticeViewProps) {
+  const backend = useBackend();
   const [index, setIndex] = useState(0);
   const [chosen, setChosen] = useState<number | null>(null);
   const [confidence, setConfidence] = useState<Confidence>("unsure");
   const [revealed, setRevealed] = useState(false);
   const [attempts, setAttempts] = useState<AttemptRecord[]>([]);
   const [notebook, setNotebook] = useState<string[]>([]);
+  const [storage, setStorage] = useState<StorageState>({ status: "idle" });
+  const startedAt = useRef<number>(Date.now());
 
   const question = questions[index];
 
@@ -37,6 +63,51 @@ export function PracticeView({ questions }: PracticeViewProps) {
   const errorEntries = useMemo(
     () => attempts.filter((a) => !a.correct),
     [attempts],
+  );
+
+  /**
+   * Write the attempt and read the stored total back.
+   *
+   * The attempt id is derived from the learner, question and attempt number so
+   * that a retry of the same submission is idempotent rather than producing
+   * duplicate history — the same guarantee the database enforces.
+   */
+  const persist = useCallback(
+    async (
+      questionId: string,
+      subtest: string,
+      correct: boolean,
+      latencyMs: number,
+      ordinal: number,
+    ) => {
+      if (!learnerId || !backend.available || !question) return;
+      setStorage({ status: "saving" });
+      try {
+        const inserted = await backend.client.recordAttempt({
+          attemptId: `${learnerId}:${questionId}:${ordinal}`,
+          learnerId,
+          subtest,
+          questionId,
+          correct,
+          latencyMs: Math.max(0, Math.round(latencyMs)),
+        });
+        const stored: AnalyticsDto = await backend.client.analytics(
+          learnerId,
+          subtest,
+        );
+        setStorage(
+          inserted
+            ? { status: "stored", storedTotal: stored.total }
+            : { status: "duplicate", storedTotal: stored.total },
+        );
+      } catch (error) {
+        setStorage({
+          status: "failed",
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    },
+    [backend.available, backend.client, learnerId, question],
   );
 
   if (!question) {
@@ -50,17 +121,22 @@ export function PracticeView({ questions }: PracticeViewProps) {
   const submit = () => {
     if (chosen === null) return;
     const correct = chosen === question.correctIndex;
+    const latency = Date.now() - startedAt.current;
+    const ordinal = attempts.length + 1;
     setAttempts((prev) => [
       ...prev,
       { questionId: question.id, chosenIndex: chosen, correct, confidence },
     ]);
     setRevealed(true);
+    void persist(question.id, question.subtest, correct, latency, ordinal);
   };
 
   const next = () => {
     setChosen(null);
     setConfidence("unsure");
     setRevealed(false);
+    setStorage({ status: "idle" });
+    startedAt.current = Date.now();
     setIndex((i) => Math.min(i + 1, questions.length - 1));
   };
 
@@ -177,7 +253,46 @@ export function PracticeView({ questions }: PracticeViewProps) {
         <p data-testid="attempt-summary">
           {attempts.length} attempted, {errorEntries.length} incorrect
         </p>
+
+        {/*
+          What the database holds, read back after the write. Absent when no
+          learner is selected, because in that case nothing is being recorded
+          and claiming otherwise would be the lie this line exists to prevent.
+        */}
+        {learnerId && <StorageStatus state={storage} />}
       </section>
     </section>
   );
+}
+
+function StorageStatus({ state }: { state: StorageState }) {
+  switch (state.status) {
+    case "idle":
+      return null;
+    case "saving":
+      return (
+        <p role="status" data-testid="attempt-persistence">
+          Saving this attempt…
+        </p>
+      );
+    case "stored":
+      return (
+        <p role="status" data-testid="attempt-persistence">
+          Saved. Stored attempts for this subtest: {state.storedTotal}.
+        </p>
+      );
+    case "duplicate":
+      return (
+        <p role="status" data-testid="attempt-persistence">
+          Already recorded, so nothing was counted twice. Stored attempts for
+          this subtest: {state.storedTotal}.
+        </p>
+      );
+    case "failed":
+      return (
+        <p role="alert" data-testid="attempt-persistence">
+          This attempt was not saved: {state.message}
+        </p>
+      );
+  }
 }

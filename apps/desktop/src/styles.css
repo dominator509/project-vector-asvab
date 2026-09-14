@@ -295,6 +295,78 @@ button:disabled {
 }
 
 /*
+ * Status surfaces.
+ *
+ * A status message is never carried by colour alone: each one also starts with
+ * a word ("Healthy", "Degraded", the reason text) so it survives a monochrome
+ * display and any form of colour blindness.
+ */
+.status-notice {
+  border-left: 4px solid var(--vector-muted);
+  background: var(--vector-surface);
+  padding: 0.6rem 0.8rem;
+}
+
+.status-error {
+  border-left-color: var(--vector-bad);
+}
+
+.status-hint {
+  color: var(--vector-muted);
+}
+
+.field-help {
+  display: block;
+  color: var(--vector-muted);
+  font-size: 0.9em;
+  margin-top: 0.15rem;
+}
+
+.flag {
+  color: var(--vector-bad);
+  font-weight: 600;
+}
+
+.diagnostics {
+  border-top: 1px solid var(--vector-border);
+  color: var(--vector-muted);
+  margin-top: 1rem;
+  padding-top: 0.6rem;
+}
+
+/*
+ * Tables carry the analytics and evidence surfaces. Borders keep rows legible
+ * at large font scales, where zebra striping alone stops being readable.
+ */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.6rem 0;
+}
+
+caption {
+  text-align: left;
+  color: var(--vector-muted);
+  padding-bottom: 0.4rem;
+}
+
+th,
+td {
+  border: 1px solid var(--vector-border);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+thead th {
+  background: var(--vector-surface);
+}
+
+code {
+  word-break: break-all;
+}
+
+/*
  * Respect the OS-level motion preference in addition to the in-app setting.
  */
 @media (prefers-reduced-motion: reduce) {

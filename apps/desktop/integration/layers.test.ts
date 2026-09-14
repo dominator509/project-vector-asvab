@@ -14,13 +14,14 @@ import { describe, expect, it } from "vitest";
 // cannot drift apart silently.
 
 import { search, type SearchDocument } from "../src/search/search";
-import { sampleQuestions, reviewCards, readinessBand } from "../src/data/sample";
+import { sampleQuestions, reviewCards } from "../src/data/sample";
 import {
   DEFAULT_A11Y_SETTINGS,
   normalizeA11ySettings,
   MAX_FONT_SCALE,
 } from "../src/accessibility/settings";
 import { VIEWS, isViewId, viewDefinition } from "../src/app/views";
+import { createVectorClient } from "../src/ipc/client";
 
 describe("data shape integration", () => {
   it("every sample question has a valid answer index and full distractor coverage", () => {
@@ -50,11 +51,32 @@ describe("data shape integration", () => {
     }
   });
 
-  it("the readiness band never claims an official score", () => {
+  it("the readiness layer refuses an official-score claim before it reaches a view", async () => {
     // ADR-010: no precise predicted score before a calibration cohort exists.
-    expect(readinessBand.officialScoreClaim).toBe(false);
-    expect(readinessBand.low).toBeLessThanOrEqual(readinessBand.high);
-    expect(readinessBand.confidence).toBeLessThan(1);
+    // This used to assert against a hard-coded demonstration constant, which
+    // proved nothing about the pipeline. The real guarantee lives at the IPC
+    // boundary, so that is what is exercised: whatever the backend ever
+    // returns, a claim cannot reach the renderer.
+    const claiming = createVectorClient(async () => ({
+      low: 0.4,
+      high: 0.6,
+      confidence: 0.5,
+      official_score_claim: true,
+    }));
+    await expect(claiming.readiness("learner-1")).rejects.toThrow(
+      /official_score_claim was true/,
+    );
+
+    const honest = createVectorClient(async () => ({
+      low: 0.43,
+      high: 0.68,
+      confidence: 0.57,
+      official_score_claim: false,
+    }));
+    const band = await honest.readiness("learner-1");
+    expect(band.official_score_claim).toBe(false);
+    expect(band.low).toBeLessThanOrEqual(band.high);
+    expect(band.confidence).toBeLessThan(1);
   });
 });
 

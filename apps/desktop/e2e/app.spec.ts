@@ -20,7 +20,9 @@ test.describe("application shell", () => {
 
   test("exposes a primary navigation landmark", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("navigation", { name: /primary/i })).toBeVisible();
+    await expect(
+      page.getByRole("navigation", { name: /primary/i }),
+    ).toBeVisible();
   });
 
   test("has a main landmark", async ({ page }) => {
@@ -51,10 +53,7 @@ test.describe("keyboard-only operation", () => {
     await page.goto("/");
     await page.getByTestId("primary-nav").getByRole("button").first().focus();
     await page.keyboard.press("End");
-    await expect(page.locator(":focus")).toHaveAttribute(
-      "data-view",
-      "search",
-    );
+    await expect(page.locator(":focus")).toHaveAttribute("data-view", "search");
     await page.keyboard.press("Home");
     await expect(page.locator(":focus")).toHaveAttribute(
       "data-view",
@@ -140,7 +139,9 @@ test.describe("exam simulation constraints", () => {
     await expect(page.getByTestId("exam-rule")).toContainText(
       /does not allow returning/i,
     );
-    await expect(page.getByRole("button", { name: /previous/i })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /previous/i })).toHaveCount(
+      0,
+    );
   });
 
   test("a CAT answer is committed and cannot be changed", async ({ page }) => {
@@ -166,7 +167,9 @@ test.describe("exam simulation constraints", () => {
     await expect(page.getByTestId("exam-rule")).toContainText(
       /allows you to review/i,
     );
-    await expect(page.getByRole("button", { name: /previous/i })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: /previous/i })).toHaveCount(
+      1,
+    );
   });
 
   test("test mode hides distracting navigation chrome", async ({ page }) => {
@@ -233,21 +236,78 @@ test.describe("search", () => {
       .getByTestId("primary-nav")
       .getByRole("button", { name: /^search$/i })
       .click();
-    await expect(page.getByTestId("result-count")).toContainText(/type to search/i);
+    await expect(page.getByTestId("result-count")).toContainText(
+      /type to search/i,
+    );
   });
 });
 
 test.describe("readiness", () => {
-  test("shows a band and never an official score claim", async ({ page }) => {
+  test("states that the local backend is unreachable rather than showing a number", async ({
+    page,
+  }) => {
+    // This bundle is served by `vite preview`, so there is no Rust process
+    // behind it. The honest behaviour is to say so. It previously rendered a
+    // hard-coded demonstration band, which meant this suite was asserting
+    // fabricated data — the readiness *estimate* is now verified where it is
+    // real: in `cargo test --workspace`, in the component tests with an
+    // explicit band, and in `vector-desktop --self-check`.
     await page.goto("/");
     await page
       .getByTestId("primary-nav")
       .getByRole("button", { name: /^readiness$/i })
       .click();
 
-    await expect(page.getByTestId("readiness-band")).toContainText(/%/);
-    await expect(page.getByTestId("readiness-disclaimer")).toContainText(
-      /not an official ASVAB or AFQT score prediction/i,
+    await expect(page.getByTestId("backend-unavailable")).toBeVisible();
+    await expect(page.getByTestId("readiness-band")).toHaveCount(0);
+    await expect(page.getByTestId("readiness-illegal-claim")).toHaveCount(0);
+  });
+});
+
+test.describe("the interface never fabricates study data", () => {
+  test("today's plan explains that it needs the local database", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /today's plan/i })
+      .click();
+
+    await expect(page.getByTestId("backend-unavailable")).toBeVisible();
+    await expect(page.getByTestId("today-drills")).toHaveCount(0);
+    await expect(page.getByTestId("today-total")).toHaveCount(0);
+  });
+
+  test("the source viewer says the vault is unavailable rather than empty", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /^sources$/i })
+      .click();
+
+    await expect(page.getByTestId("backend-unavailable")).toBeVisible();
+    // "Empty" and "unreachable" are different claims, and only one is true.
+    await expect(page.getByTestId("vault-empty")).toHaveCount(0);
+  });
+
+  test("deleting local data reports that nothing was deleted", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /privacy and crashes/i })
+      .click();
+
+    await page.getByLabel(/type delete to confirm/i).fill("DELETE");
+    await page.getByRole("button", { name: /delete everything/i }).click();
+
+    // The claim must match the effect: without a backend, nothing was erased.
+    await expect(page.getByTestId("delete-status")).toContainText(
+      /was not deleted/i,
     );
   });
 });
@@ -260,7 +320,9 @@ test.describe("privacy controls", () => {
       .getByRole("button", { name: /privacy and crashes/i })
       .click();
 
-    const deleteButton = page.getByRole("button", { name: /delete everything/i });
+    const deleteButton = page.getByRole("button", {
+      name: /delete everything/i,
+    });
     await expect(deleteButton).toBeDisabled();
 
     await page.getByLabel(/type delete to confirm/i).fill("DELETE");

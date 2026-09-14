@@ -11,7 +11,9 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("live-fire: real artifact, real effects, independent readback", () => {
-  test("the artifact digest is stable across two fetches", async ({ request }) => {
+  test("the artifact digest is stable across two fetches", async ({
+    request,
+  }) => {
     // The entry document must be byte-stable, or an artifact digest would not
     // identify the build.
     const first = await request.get("/");
@@ -38,12 +40,15 @@ test.describe("live-fire: real artifact, real effects, independent readback", ()
     });
 
     await page.goto("/", { waitUntil: "networkidle" });
-    expect(external, `unexpected external requests: ${external.join(", ")}`).toEqual(
-      [],
-    );
+    expect(
+      external,
+      `unexpected external requests: ${external.join(", ")}`,
+    ).toEqual([]);
   });
 
-  test("a full practice cycle produces an observable effect", async ({ page }) => {
+  test("a full practice cycle produces an observable effect", async ({
+    page,
+  }) => {
     await page.goto("/");
     await page
       .getByTestId("primary-nav")

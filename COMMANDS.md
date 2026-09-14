@@ -27,6 +27,7 @@ export RUST_BACKTRACE=1
 | Dependency audit | `sh scripts/dependency-audit.sh` |
 | Smoke exact artifact | `sh scripts/smoke-test.sh` |
 | Live-fire | `sh scripts/live-fire.sh` |
+| Packaged desktop live-fire | `python3 scripts/desktop-live-fire.py --report .agent/evidence/EP-001/desktop-live-fire.json` |
 | Full verification | `sh scripts/verify.sh` |
 | Production readiness | `sh scripts/production-readiness-check.sh` |
 | Generated-pack shape | `python3 scripts/validate-generated-pack.py .` |

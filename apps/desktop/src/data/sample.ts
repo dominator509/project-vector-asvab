@@ -33,12 +33,6 @@ export interface ReviewCard {
   lapses: number;
 }
 
-export interface PlannedDrill {
-  subtest: string;
-  minutes: number;
-  reason: "due review" | "weakness" | "high uncertainty";
-}
-
 export const sampleQuestions: PracticeQuestion[] = [
   {
     id: "q-ar-1",
@@ -120,24 +114,16 @@ export const reviewCards: ReviewCard[] = [
   },
 ];
 
-export const todayPlan: { drills: PlannedDrill[]; totalMinutes: number } = {
-  drills: [
-    { subtest: "AR", minutes: 30, reason: "due review" },
-    { subtest: "WK", minutes: 20, reason: "weakness" },
-  ],
-  totalMinutes: 50,
-};
-
 /**
- * Readiness is reported as a band, never a point score (ADR-010 and
- * SCORING_AND_READINESS.md). `officialScoreClaim` is always false.
+ * The daily plan and the readiness band are no longer declared here.
+ *
+ * Both were previously fixed constants in this file, and the views rendered
+ * them, so the dashboard displayed numbers that came from source code rather
+ * than from the learner's own history — a fabricated plan and a fabricated
+ * readiness estimate. They now come from the real service layer over the Tauri
+ * boundary (`TodayView`, `ReadinessPanel`), and nothing in the product reads a
+ * demonstration plan.
  */
-export const readinessBand = {
-  low: 0.48,
-  high: 0.71,
-  confidence: 0.62,
-  officialScoreClaim: false as const,
-};
 
 export const searchCorpus: SearchDocument[] = [
   {

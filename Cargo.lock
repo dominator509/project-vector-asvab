@@ -4907,10 +4907,13 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 name = "vector-application"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "chrono",
  "rusqlite",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+ "uuid",
  "vector-domain",
  "vector-observability",
  "vector-persistence",
@@ -4932,12 +4935,16 @@ dependencies = [
 name = "vector-desktop"
 version = "0.1.0"
 dependencies = [
+ "chrono",
+ "rusqlite",
  "serde",
  "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-sql",
  "tracing",
+ "uuid",
+ "vector-application",
  "vector-domain",
  "vector-observability",
  "vector-persistence",

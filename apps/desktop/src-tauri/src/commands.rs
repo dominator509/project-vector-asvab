@@ -1,0 +1,518 @@
+//! Tauri command boundary.
+//!
+//! SPEC-003: "The desktop UI invokes commands through a narrow Tauri boundary."
+//! This module is that boundary, and it is deliberately thin.
+//!
+//! ## Structure
+//!
+//! Every command has two halves. `<name>_impl` is an ordinary function taking
+//! `&Database` and the request arguments; `<name>` is the `#[tauri::command]`
+//! wrapper that unwraps the shared state, calls the impl, and flattens the error
+//! into the string Tauri can serialize.
+//!
+//! The split exists because [`State`] cannot be constructed outside a running
+//! Tauri application. Without it, the boundary would be reachable only by
+//! launching the packaged window — untestable in CI, and untestable code is
+//! where stubs survive. With it, `tests/command_boundary.rs` drives the same
+//! functions against a real database file, so what is tested is what ships and
+//! the remaining wrapper is mechanical.
+//!
+//! ## Migrations are embedded
+//!
+//! The schema is compiled into the binary rather than read from disk at
+//! runtime. A packaged application has no repository around it, so a relative
+//! path would work in development and fail after installation.
+
+use std::sync::{Mutex, MutexGuard};
+
+use tauri::State;
+use vector_application::service::{
+    AnalyticsDto, BackupDto, BackupEntryDto, EvidenceDto, HealthDto, LatencyDto, MasteryDto,
+    PlanDto, ProfileDto, ReadinessDto, ResetDto, RestoreDto, ServiceError, Services,
+};
+use vector_persistence::{Database, Migration, MigrationManager};
+
+/// The schema, compiled into the binary.
+///
+/// Version numbers match the filenames in `migrations/`, and the list must stay
+/// in ascending order because migrations are applied monotonically.
+const EMBEDDED_MIGRATIONS: &[(i64, &str)] = &[
+    (1, include_str!("../../../../migrations/001_initial.sql")),
+    (
+        2,
+        include_str!("../../../../migrations/002_ep003_persistence.sql"),
+    ),
+];
+
+/// The migration set the application ships with.
+pub fn migrations() -> Vec<Migration> {
+    EMBEDDED_MIGRATIONS
+        .iter()
+        .map(|(version, sql)| (*version, (*sql).to_string()))
+        .collect()
+}
+
+/// Application state shared across commands.
+///
+/// `rusqlite::Connection` is not `Sync`, so the handle is guarded by a mutex.
+/// Commands therefore serialize on database access, which is correct for a
+/// single-user local application and avoids the WAL writer contention that
+/// concurrent writes would otherwise cause.
+pub struct AppState {
+    db: Mutex<Database>,
+    data_dir: std::path::PathBuf,
+    db_path: std::path::PathBuf,
+}
+
+/// Where the application keeps its files, as the UI sees it.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct AppPathsDto {
+    pub data_dir: String,
+    pub db_path: String,
+    /// Where verified backups are written and read from.
+    pub backup_dir: String,
+}
+
+impl AppState {
+    /// Open (or create) the database at `path` and migrate it.
+    pub fn open(path: &std::path::Path) -> Result<Self, String> {
+        let mut db = Database::open(path).map_err(|e| format!("cannot open database: {e}"))?;
+        MigrationManager::apply(&mut db, &migrations())
+            .map_err(|e| format!("cannot migrate database: {e}"))?;
+
+        // Derived from the database path rather than passed in, so there is one
+        // source of truth for where this installation's files live.
+        let data_dir = path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| std::path::PathBuf::from("."));
+
+        Ok(Self {
+            db: Mutex::new(db),
+            data_dir,
+            db_path: path.to_path_buf(),
+        })
+    }
+
+    /// Borrow the database.
+    ///
+    /// A poisoned mutex means another command panicked while holding the lock.
+    /// That is reported rather than ignored, because continuing with a database
+    /// in an unknown state would be worse than failing the one request.
+    pub fn db(&self) -> Result<MutexGuard<'_, Database>, String> {
+        self.db
+            .lock()
+            .map_err(|_| "database lock poisoned by an earlier failure".to_string())
+    }
+
+    /// The directory this installation keeps its files in.
+    pub fn paths(&self) -> AppPathsDto {
+        AppPathsDto {
+            data_dir: self.data_dir.to_string_lossy().into_owned(),
+            db_path: self.db_path.to_string_lossy().into_owned(),
+            backup_dir: self.data_dir.join("backups").to_string_lossy().into_owned(),
+        }
+    }
+}
+
+/// Report where this installation keeps its files.
+#[tauri::command]
+pub fn app_paths(state: State<'_, AppState>) -> AppPathsDto {
+    state.paths()
+}
+
+/// Record that the webview reached the Rust command layer.
+///
+/// This exists so the webview-to-Rust hop can be *verified* rather than
+/// assumed. Rendering the interface and answering a command are different
+/// facts, and `AGENTS.md` §9 does not accept the first as proof of the second:
+/// a bundle can render while every `invoke` fails, which is exactly what a
+/// misconfigured Content-Security-Policy or a missing handler registration
+/// would produce.
+///
+/// The frontend calls this once when it mounts, and the row it writes is the
+/// evidence. It carries the frontend build stamp, so the record identifies
+/// which bundle made the call.
+pub fn ui_ready_impl(db: &Database, bundle: &str) -> Result<String, ServiceError> {
+    let stamp = chrono::Utc::now().to_rfc3339();
+    let id = format!("ui-ready-{}", uuid::Uuid::new_v4());
+    let details = serde_json::json!({
+        "bundle": bundle.trim(),
+        "recorded_at": stamp,
+    })
+    .to_string();
+
+    db.connection()
+        .execute(
+            "INSERT INTO health_diagnostics (id, component, status, details_json)
+             VALUES (?1, 'webview', 'ready', ?2)",
+            rusqlite::params![id, details],
+        )
+        .map_err(|e| ServiceError::Storage(e.to_string()))?;
+
+    // Read the row back before reporting success: an insert that was accepted
+    // but not persisted must not be reported as a working boundary.
+    let readback: String = db
+        .connection()
+        .query_row(
+            "SELECT status FROM health_diagnostics WHERE id = ?1",
+            [&id],
+            |row| row.get(0),
+        )
+        .map_err(|e| ServiceError::Storage(format!("cannot read back the marker: {e}")))?;
+
+    if readback != "ready" {
+        return Err(ServiceError::Storage(
+            "the readiness marker did not persist correctly".into(),
+        ));
+    }
+
+    Ok(id)
+}
+
+#[tauri::command]
+pub fn ui_ready(state: State<'_, AppState>, bundle: String) -> Result<String, String> {
+    with_db(&state, |db| ui_ready_impl(db, &bundle))
+}
+
+/// Run `body` against the shared database, converting errors to strings.
+fn with_db<T>(
+    state: &State<'_, AppState>,
+    body: impl FnOnce(&Database) -> Result<T, ServiceError>,
+) -> Result<T, String> {
+    let guard = state.db()?;
+    body(&guard).map_err(|e| e.to_string())
+}
+
+/// Run `body` with exclusive access to the shared database.
+///
+/// Restore replaces the connection, so it needs `&mut Database` rather than the
+/// shared reference `with_db` provides.
+fn with_db_mut<T>(
+    state: &State<'_, AppState>,
+    body: impl FnOnce(&mut Database) -> Result<T, ServiceError>,
+) -> Result<T, String> {
+    let mut guard = state.db()?;
+    body(&mut guard).map_err(|e| e.to_string())
+}
+
+// ---------------------------------------------------------------------------
+// Health
+// ---------------------------------------------------------------------------
+
+/// Report the application's health. See [`Services::health`].
+pub fn health_impl(db: &Database) -> Result<HealthDto, ServiceError> {
+    Services::new(db).health()
+}
+
+#[tauri::command]
+pub fn health(state: State<'_, AppState>) -> Result<HealthDto, String> {
+    with_db(&state, health_impl)
+}
+
+// ---------------------------------------------------------------------------
+// Profiles
+// ---------------------------------------------------------------------------
+
+pub fn create_profile_impl(
+    db: &Database,
+    name: &str,
+    target_score: u32,
+) -> Result<ProfileDto, ServiceError> {
+    Services::new(db).create_profile(name, target_score)
+}
+
+#[tauri::command]
+pub fn create_profile(
+    state: State<'_, AppState>,
+    name: String,
+    target_score: u32,
+) -> Result<ProfileDto, String> {
+    with_db(&state, |db| create_profile_impl(db, &name, target_score))
+}
+
+pub fn get_profile_impl(db: &Database, id: &str) -> Result<ProfileDto, ServiceError> {
+    Services::new(db).get_profile(id)
+}
+
+#[tauri::command]
+pub fn get_profile(state: State<'_, AppState>, id: String) -> Result<ProfileDto, String> {
+    with_db(&state, |db| get_profile_impl(db, &id))
+}
+
+pub fn list_profiles_impl(db: &Database) -> Result<Vec<ProfileDto>, ServiceError> {
+    Services::new(db).list_profiles()
+}
+
+#[tauri::command]
+pub fn list_profiles(state: State<'_, AppState>) -> Result<Vec<ProfileDto>, String> {
+    with_db(&state, list_profiles_impl)
+}
+
+// ---------------------------------------------------------------------------
+// Attempts and analytics
+// ---------------------------------------------------------------------------
+
+#[allow(clippy::too_many_arguments)]
+pub fn record_attempt_impl(
+    db: &Database,
+    attempt_id: &str,
+    learner_id: &str,
+    subtest: &str,
+    question_id: &str,
+    correct: bool,
+    latency_ms: i64,
+) -> Result<bool, ServiceError> {
+    Services::new(db).record_attempt(
+        attempt_id,
+        learner_id,
+        subtest,
+        question_id,
+        correct,
+        latency_ms,
+    )
+}
+
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub fn record_attempt(
+    state: State<'_, AppState>,
+    attempt_id: String,
+    learner_id: String,
+    subtest: String,
+    question_id: String,
+    correct: bool,
+    latency_ms: i64,
+) -> Result<bool, String> {
+    with_db(&state, |db| {
+        record_attempt_impl(
+            db,
+            &attempt_id,
+            &learner_id,
+            &subtest,
+            &question_id,
+            correct,
+            latency_ms,
+        )
+    })
+}
+
+pub fn analytics_impl(
+    db: &Database,
+    learner_id: &str,
+    subtest: &str,
+) -> Result<AnalyticsDto, ServiceError> {
+    Services::new(db).analytics(learner_id, subtest)
+}
+
+#[tauri::command]
+pub fn analytics(
+    state: State<'_, AppState>,
+    learner_id: String,
+    subtest: String,
+) -> Result<AnalyticsDto, String> {
+    with_db(&state, |db| analytics_impl(db, &learner_id, &subtest))
+}
+
+pub fn analytics_all_impl(
+    db: &Database,
+    learner_id: &str,
+) -> Result<Vec<(String, AnalyticsDto)>, ServiceError> {
+    Services::new(db).analytics_all(learner_id)
+}
+
+#[tauri::command]
+pub fn analytics_all(
+    state: State<'_, AppState>,
+    learner_id: String,
+) -> Result<Vec<(String, AnalyticsDto)>, String> {
+    with_db(&state, |db| analytics_all_impl(db, &learner_id))
+}
+
+// ---------------------------------------------------------------------------
+// Mastery
+// ---------------------------------------------------------------------------
+
+pub fn set_mastery_impl(
+    db: &Database,
+    learner_id: &str,
+    subtest: &str,
+    score: f64,
+    uncertainty: f64,
+) -> Result<(), ServiceError> {
+    Services::new(db).set_mastery(learner_id, subtest, score, uncertainty)
+}
+
+#[tauri::command]
+pub fn set_mastery(
+    state: State<'_, AppState>,
+    learner_id: String,
+    subtest: String,
+    score: f64,
+    uncertainty: f64,
+) -> Result<(), String> {
+    with_db(&state, |db| {
+        set_mastery_impl(db, &learner_id, &subtest, score, uncertainty)
+    })
+}
+
+pub fn mastery_impl(db: &Database, learner_id: &str) -> Result<Vec<MasteryDto>, ServiceError> {
+    Services::new(db).mastery(learner_id)
+}
+
+#[tauri::command]
+pub fn mastery(state: State<'_, AppState>, learner_id: String) -> Result<Vec<MasteryDto>, String> {
+    with_db(&state, |db| mastery_impl(db, &learner_id))
+}
+
+// ---------------------------------------------------------------------------
+// Planning and readiness
+// ---------------------------------------------------------------------------
+
+pub fn study_plan_impl(
+    db: &Database,
+    learner_id: &str,
+    target_score: u32,
+    available_minutes: u32,
+) -> Result<PlanDto, ServiceError> {
+    Services::new(db).study_plan(learner_id, target_score, available_minutes)
+}
+
+#[tauri::command]
+pub fn study_plan(
+    state: State<'_, AppState>,
+    learner_id: String,
+    target_score: u32,
+    available_minutes: u32,
+) -> Result<PlanDto, String> {
+    with_db(&state, |db| {
+        study_plan_impl(db, &learner_id, target_score, available_minutes)
+    })
+}
+
+pub fn readiness_impl(db: &Database, learner_id: &str) -> Result<ReadinessDto, ServiceError> {
+    Services::new(db).readiness(learner_id)
+}
+
+#[tauri::command]
+pub fn readiness(state: State<'_, AppState>, learner_id: String) -> Result<ReadinessDto, String> {
+    with_db(&state, |db| readiness_impl(db, &learner_id))
+}
+
+// ---------------------------------------------------------------------------
+// Evidence vault (REQ-020)
+// ---------------------------------------------------------------------------
+
+pub fn evidence_list_impl(db: &Database) -> Result<Vec<EvidenceDto>, ServiceError> {
+    Services::new(db).evidence_list()
+}
+
+#[tauri::command]
+pub fn evidence_list(state: State<'_, AppState>) -> Result<Vec<EvidenceDto>, String> {
+    with_db(&state, evidence_list_impl)
+}
+
+pub fn evidence_get_impl(db: &Database, id: &str) -> Result<EvidenceDto, ServiceError> {
+    Services::new(db).evidence_get(id)
+}
+
+#[tauri::command]
+pub fn evidence_get(state: State<'_, AppState>, id: String) -> Result<EvidenceDto, String> {
+    with_db(&state, |db| evidence_get_impl(db, &id))
+}
+
+pub fn evidence_put_impl(
+    db: &Database,
+    input: &vector_application::service::NewEvidenceDto,
+) -> Result<String, ServiceError> {
+    Services::new(db).evidence_put(input)
+}
+
+#[tauri::command]
+pub fn evidence_put(
+    state: State<'_, AppState>,
+    input: vector_application::service::NewEvidenceDto,
+) -> Result<String, String> {
+    with_db(&state, |db| evidence_put_impl(db, &input))
+}
+
+// ---------------------------------------------------------------------------
+// Backup and restore (REQ-033, REQ-034)
+// ---------------------------------------------------------------------------
+
+pub fn backup_create_impl(db: &Database, dest_dir: &str) -> Result<BackupDto, ServiceError> {
+    Services::new(db).backup_create(std::path::Path::new(dest_dir))
+}
+
+#[tauri::command]
+pub fn backup_create(state: State<'_, AppState>, dest_dir: String) -> Result<BackupDto, String> {
+    with_db(&state, |db| backup_create_impl(db, &dest_dir))
+}
+
+/// Restore live state from a backup.
+///
+/// `expected_checksum` is required rather than optional. A restore that does
+/// not verify the archive against the digest recorded when it was taken can
+/// load silently corrupted data, and making the argument mandatory means the UI
+/// cannot accidentally offer an unverified restore path.
+pub fn backup_restore_impl(
+    db: &mut Database,
+    source: &str,
+    expected_checksum: &str,
+) -> Result<RestoreDto, ServiceError> {
+    Services::backup_restore(db, std::path::Path::new(source), Some(expected_checksum))
+}
+
+#[tauri::command]
+pub fn backup_restore(
+    state: State<'_, AppState>,
+    source: String,
+    expected_checksum: String,
+) -> Result<RestoreDto, String> {
+    with_db_mut(&state, |db| {
+        backup_restore_impl(db, &source, &expected_checksum)
+    })
+}
+
+// ---------------------------------------------------------------------------
+// SLO probe (REQ-039)
+// ---------------------------------------------------------------------------
+
+pub fn latency_probe_impl(db: &Database, iterations: u32) -> Result<LatencyDto, ServiceError> {
+    Services::new(db).latency_probe(iterations)
+}
+
+#[tauri::command]
+pub fn latency_probe(state: State<'_, AppState>, iterations: u32) -> Result<LatencyDto, String> {
+    with_db(&state, |db| latency_probe_impl(db, iterations))
+}
+
+// ---------------------------------------------------------------------------
+// Existing backups and local erasure (REQ-030, REQ-034, REQ-035)
+// ---------------------------------------------------------------------------
+
+pub fn backup_list_impl(db: &Database, dir: &str) -> Result<Vec<BackupEntryDto>, ServiceError> {
+    Services::new(db).backup_list(std::path::Path::new(dir))
+}
+
+#[tauri::command]
+pub fn backup_list(state: State<'_, AppState>, dir: String) -> Result<Vec<BackupEntryDto>, String> {
+    with_db(&state, |db| backup_list_impl(db, &dir))
+}
+
+pub fn reset_local_data_impl(db: &Database, confirmation: &str) -> Result<ResetDto, ServiceError> {
+    Services::new(db).reset_local_data(confirmation)
+}
+
+/// Erase every learner record on this device.
+///
+/// The confirmation phrase is checked in the service layer as well as in the
+/// view. A destructive operation must not depend on the caller having rendered
+/// a particular input field.
+#[tauri::command]
+pub fn reset_local_data(
+    state: State<'_, AppState>,
+    confirmation: String,
+) -> Result<ResetDto, String> {
+    with_db(&state, |db| reset_local_data_impl(db, &confirmation))
+}
