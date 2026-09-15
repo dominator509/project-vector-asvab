@@ -409,7 +409,13 @@ fn concurrent_writers_lose_nothing_and_duplicate_nothing() {
 #[test]
 fn a_reader_can_work_while_a_writer_holds_the_database() {
     // WAL plus the busy timeout is what makes this true; without it the reader
-    // would fail with `database is locked` rather than waiting.
+    // would fail with `database is locked` rather than reading the last
+    // committed state.
+    //
+    // The interleaving is forced rather than raced — the writer holds an open
+    // transaction and waits for the reader to confirm it has read — so this
+    // proves the property on every run instead of whenever the scheduler
+    // happens to cooperate.
     let tmp = TempDb::new("reader-during-write");
     let db = tmp.open();
     let profile = Services::new(&db)
@@ -419,47 +425,92 @@ fn a_reader_can_work_while_a_writer_holds_the_database() {
     drop(db);
 
     let path = tmp.path();
+    const ROUNDS: usize = 20;
+
     let writer_path = path.clone();
     let writer_learner = learner.clone();
+    let (writer_ready_tx, writer_ready_rx) = std::sync::mpsc::channel::<()>();
+    let (reader_done_tx, reader_done_rx) = std::sync::mpsc::channel::<()>();
+    let (committed_tx, committed_rx) = std::sync::mpsc::channel::<i64>();
+
     let writer = std::thread::spawn(move || {
         let db = Database::open(&writer_path).expect("writer connection");
-        let services = Services::new(&db);
-        for index in 0..200 {
-            services
-                .record_attempt(
-                    &format!("w{index}"),
-                    &writer_learner,
-                    "AR",
-                    &format!("q{index}"),
-                    true,
-                    100,
-                )
-                .expect("record");
+        let conn = db.connection();
+        let mut committed = 0i64;
+        for round in 0..ROUNDS {
+            // An open write transaction: the write lock is held and nothing has
+            // been committed yet.
+            let tx = conn.unchecked_transaction().expect("begin");
+            tx.execute(
+                "INSERT INTO attempts
+                     (id, learner_id, subtest, question_id, correct, latency_ms, created_at)
+                 VALUES (?1, ?2, 'AR', ?3, 1, 100, ?4)",
+                rusqlite::params![
+                    format!("w{round}"),
+                    writer_learner,
+                    format!("q{round}"),
+                    chrono::Utc::now().to_rfc3339()
+                ],
+            )
+            .expect("insert inside the transaction");
+
+            // Hand over to the reader while the lock is still held.
+            writer_ready_tx.send(()).expect("signal reader");
+            reader_done_rx.recv().expect("reader finished");
+
+            tx.commit().expect("commit");
+            committed += 1;
         }
+        committed_tx.send(committed).expect("report");
     });
 
     let reader_path = path.clone();
+    let reader_learner = learner.clone();
     let reader = std::thread::spawn(move || {
         let db = Database::open(&reader_path).expect("reader connection");
         let services = Services::new(&db);
         let mut observed = 0i64;
-        for _ in 0..100 {
+        let mut reads = 0usize;
+
+        for _ in 0..ROUNDS {
+            writer_ready_rx.recv().expect("writer signalled");
+            // This read happens while the writer's transaction is open. It must
+            // succeed and must see committed state only — never a partial write.
             let stats = services
-                .analytics(&learner, "AR")
-                .expect("read during writes");
-            // Attempts only accumulate, so a later read can never see fewer.
+                .analytics(&reader_learner, "AR")
+                .expect("read while a writer holds the database");
             assert!(
                 stats.total >= observed,
-                "a concurrent read went backwards: {} then {}",
-                observed,
+                "a concurrent read went backwards: {observed} then {}",
                 stats.total
             );
             observed = stats.total;
+            reads += 1;
+            reader_done_tx.send(()).expect("release writer");
         }
-        observed
+
+        (reads, observed)
     });
 
-    writer.join().expect("writer");
-    let observed = reader.join().expect("reader");
-    assert!(observed > 0, "the reader never saw any of the writes");
+    writer.join().expect("writer thread");
+    let committed = committed_rx.recv().expect("committed count");
+    let (reads, observed) = reader.join().expect("reader thread");
+
+    assert_eq!(reads, ROUNDS, "every interleaved read must have succeeded");
+    // The reader's last read happens before the final commit, so it may lag by
+    // exactly one row; it must never have run ahead of committed state.
+    assert!(
+        observed >= committed - 1,
+        "the reader saw {observed} rows but {committed} were committed"
+    );
+
+    // And afterwards a fresh connection sees all of them.
+    let db = Database::open(&path).expect("verify connection");
+    assert_eq!(
+        Services::new(&db)
+            .analytics(&learner, "AR")
+            .expect("analytics")
+            .total,
+        committed
+    );
 }

@@ -102,6 +102,34 @@ impl std::fmt::Display for Sha256Digest {
     }
 }
 
+/// Collect every file under `dir`, with paths relative to `root`.
+///
+/// Sorted by the caller rather than here, so the digest does not depend on the
+/// order the filesystem happens to return entries in.
+fn collect_files(
+    root: &std::path::Path,
+    dir: &std::path::Path,
+    out: &mut Vec<(String, std::path::PathBuf)>,
+    total: &mut u64,
+) -> std::io::Result<()> {
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_files(root, &path, out, total)?;
+            continue;
+        }
+        let relative = path
+            .strip_prefix(root)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .replace('\\', "/");
+        *total += entry.metadata().map(|m| m.len()).unwrap_or(0);
+        out.push((relative, path));
+    }
+    Ok(())
+}
+
 /// A measured component.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MeasuredComponent {
@@ -232,6 +260,58 @@ impl ArtifactIdentity {
         })
     }
 
+    /// Measure a file, or every file under a directory.
+    ///
+    /// A component like `Migrations` is a set of files, and binding one
+    /// representative file would mean adding a migration did not change the
+    /// artifact identity — which defeats the point of binding it. The EP-009
+    /// anti-gaming review named this as the correct eventual form.
+    ///
+    /// A directory is digested as a sorted list of `relative/path\0contents\0`
+    /// entries with line endings normalized, so the digest depends on the set of
+    /// files, their names and their contents, and not on enumeration order or on
+    /// which platform produced them.
+    pub fn measure_path(
+        component: ArtifactComponent,
+        path: &std::path::Path,
+    ) -> Result<MeasuredComponent, IdentityError> {
+        if !path.is_dir() {
+            return Self::measure_file(component, path);
+        }
+
+        let mut files: Vec<(String, std::path::PathBuf)> = Vec::new();
+        let mut total: u64 = 0;
+        collect_files(path, path, &mut files, &mut total)
+            .map_err(|_| IdentityError::ArtifactMissing(path.display().to_string()))?;
+
+        if files.is_empty() {
+            // An empty directory is not a measured component; reporting a digest
+            // of nothing would let an absent component look present.
+            return Err(IdentityError::ArtifactMissing(format!(
+                "{} contains no files",
+                path.display()
+            )));
+        }
+
+        files.sort_by(|a, b| a.0.cmp(&b.0));
+        let mut hasher = Sha256::new();
+        for (relative, full) in &files {
+            let bytes = std::fs::read(full)
+                .map_err(|_| IdentityError::ArtifactMissing(full.display().to_string()))?;
+            let text = String::from_utf8_lossy(&bytes).replace("\r\n", "\n");
+            hasher.update(relative.as_bytes());
+            hasher.update([0u8]);
+            hasher.update(text.as_bytes());
+            hasher.update([0u8]);
+        }
+
+        Ok(MeasuredComponent {
+            component,
+            digest: Sha256Digest(format!("{:x}", hasher.finalize())),
+            bytes: Some(total),
+        })
+    }
+
     /// Verify a recorded identity against the files currently on disk.
     ///
     /// Re-derives every digest rather than trusting the recorded values, then
@@ -247,7 +327,9 @@ impl ArtifactIdentity {
                 .iter()
                 .find(|c| c.component == *component)
                 .ok_or(IdentityError::MissingComponent(*component))?;
-            let actual = Self::measure_file(*component, path)?;
+            // `measure_path` so a component that is a directory verifies the
+            // same way it was measured.
+            let actual = Self::measure_path(*component, path)?;
             if actual.digest != recorded.digest {
                 return Err(IdentityError::DigestMismatch {
                     component: *component,

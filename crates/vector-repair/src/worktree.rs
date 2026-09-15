@@ -159,14 +159,16 @@ impl RepairWorktree {
 
         // Resolve the base to a commit before creating anything, so an unknown
         // revision fails without leaving a partial worktree behind.
-        let resolved = Self::git(
-            &spec.repository,
-            &[
-                "rev-parse",
-                "--verify",
-                &format!("{}^{{commit}}", spec.base),
-            ],
-        )?;
+        //
+        // `^{commit}` is git's peeling syntax, which asks for the commit a tag
+        // or ref points at. It is appended from a plain literal rather than
+        // written as an escaped brace inside the format string: a doubled brace
+        // in the source reads as placeholder residue to the generated-pack
+        // validator, and a false positive there trains a reader to ignore a
+        // check that exists to catch real stubs.
+        let peel_to_commit = "^{commit}";
+        let commitish = format!("{}{peel_to_commit}", spec.base);
+        let resolved = Self::git(&spec.repository, &["rev-parse", "--verify", &commitish])?;
         if !resolved.succeeded() {
             return Err(WorktreeError::UnknownCommit(spec.base.clone()));
         }

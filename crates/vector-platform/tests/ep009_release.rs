@@ -385,3 +385,187 @@ fn spdx_rendering_is_stable_under_entry_reordering() {
         "the SBOM digest must not depend on input order"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Directory components (REQ-053)
+//
+// Migrations and content packs are sets of files. Binding one representative
+// file would mean adding a migration did not change the artifact identity, so
+// these tests pin the properties a directory digest must have.
+// ---------------------------------------------------------------------------
+
+/// A disposable directory tree.
+struct Scratch {
+    root: PathBuf,
+}
+
+impl Scratch {
+    fn new(tag: &str) -> Self {
+        let mut root = std::env::temp_dir();
+        root.push(format!(
+            "vector-identity-{tag}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("clock")
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).expect("create scratch");
+        Self { root }
+    }
+
+    fn write(&self, relative: &str, contents: &str) {
+        let path = self.root.join(relative);
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).expect("create parent");
+        }
+        std::fs::write(path, contents).expect("write");
+    }
+
+    fn path(&self) -> &std::path::Path {
+        &self.root
+    }
+}
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.root);
+    }
+}
+
+#[test]
+fn a_directory_digest_covers_every_file_in_it() {
+    let scratch = Scratch::new("covers");
+    scratch.write("001_initial.sql", "CREATE TABLE a (id TEXT);\n");
+    scratch.write("002_more.sql", "CREATE TABLE b (id TEXT);\n");
+
+    let before = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, scratch.path())
+        .expect("measure directory");
+    assert_eq!(before.bytes, Some(52), "both files are counted");
+
+    // Adding a file must change the digest; this is the whole reason a
+    // directory is measured rather than one representative file.
+    scratch.write("003_more.sql", "CREATE TABLE c (id TEXT);\n");
+    let after = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, scratch.path())
+        .expect("measure again");
+    assert_ne!(before.digest, after.digest);
+}
+
+#[test]
+fn a_directory_digest_does_not_depend_on_enumeration_order() {
+    let first = Scratch::new("order-a");
+    let second = Scratch::new("order-b");
+    for scratch in [&first, &second] {
+        scratch.write("b/second.sql", "SELECT 2;\n");
+        scratch.write("a/first.sql", "SELECT 1;\n");
+        scratch.write("top.sql", "SELECT 0;\n");
+    }
+
+    let a = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, first.path())
+        .expect("measure a");
+    let b = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, second.path())
+        .expect("measure b");
+    assert_eq!(
+        a.digest, b.digest,
+        "the digest must depend on the set of files, not on read order"
+    );
+}
+
+#[test]
+fn a_directory_digest_ignores_line_ending_differences() {
+    // The same rule the text digest follows: an artifact built on Windows must
+    // verify on a machine that checks the same content out with LF.
+    let lf = Scratch::new("lf");
+    let crlf = Scratch::new("crlf");
+    lf.write("001.sql", "CREATE TABLE a (id TEXT);\nSELECT 1;\n");
+    crlf.write("001.sql", "CREATE TABLE a (id TEXT);\r\nSELECT 1;\r\n");
+
+    let a = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, lf.path()).expect("lf");
+    let b =
+        ArtifactIdentity::measure_path(ArtifactComponent::Migrations, crlf.path()).expect("crlf");
+    assert_eq!(a.digest, b.digest);
+}
+
+#[test]
+fn a_renamed_file_changes_the_digest() {
+    // The relative path is part of the digest, so renaming a migration is a
+    // change rather than a no-op.
+    let scratch = Scratch::new("rename");
+    scratch.write("001_initial.sql", "SELECT 1;\n");
+    let before = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, scratch.path())
+        .expect("before");
+
+    std::fs::rename(
+        scratch.path().join("001_initial.sql"),
+        scratch.path().join("001_renamed.sql"),
+    )
+    .expect("rename");
+
+    let after = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, scratch.path())
+        .expect("after");
+    assert_ne!(before.digest, after.digest);
+}
+
+#[test]
+fn an_empty_directory_is_refused_rather_than_measured() {
+    // A digest of nothing would let an absent component look present.
+    let scratch = Scratch::new("empty");
+    let error = ArtifactIdentity::measure_path(ArtifactComponent::Migrations, scratch.path())
+        .expect_err("an empty directory must not measure");
+    assert!(
+        matches!(error, IdentityError::ArtifactMissing(_)),
+        "got {error:?}"
+    );
+}
+
+#[test]
+fn a_file_still_measures_through_the_same_entry_point() {
+    let scratch = Scratch::new("file");
+    scratch.write("single.sql", "SELECT 1;\n");
+    let measured = ArtifactIdentity::measure_path(
+        ArtifactComponent::Migrations,
+        &scratch.path().join("single.sql"),
+    )
+    .expect("measure a file");
+    assert!(measured.digest.to_string().len() == 64);
+    assert_eq!(measured.bytes, Some(10));
+}
+
+#[test]
+fn verification_re_derives_a_directory_component_from_disk() {
+    let scratch = Scratch::new("verify-dir");
+    scratch.write("001.sql", "SELECT 1;\n");
+    scratch.write("002.sql", "SELECT 2;\n");
+
+    let identity = ArtifactIdentity::build(
+        "0.1.0",
+        vec![
+            ArtifactIdentity::measure_path(ArtifactComponent::Migrations, scratch.path())
+                .expect("measure"),
+            component(ArtifactComponent::Binary, "binary"),
+            component(ArtifactComponent::Content, "content"),
+            component(ArtifactComponent::Sbom, "sbom"),
+            component(ArtifactComponent::Licenses, "licenses"),
+            MeasuredComponent {
+                component: ArtifactComponent::GitSha,
+                digest: Sha256Digest::of_text("deadbeef"),
+                bytes: None,
+            },
+        ],
+    )
+    .expect("build");
+
+    identity
+        .verify_against(&[(ArtifactComponent::Migrations, scratch.path().to_path_buf())])
+        .expect("an unchanged directory verifies");
+
+    // Changing one file inside the directory must break verification.
+    scratch.write("002.sql", "SELECT 3;\n");
+    let error = identity
+        .verify_against(&[(ArtifactComponent::Migrations, scratch.path().to_path_buf())])
+        .expect_err("a changed file must be detected");
+    assert!(
+        matches!(error, IdentityError::DigestMismatch { .. }),
+        "got {error:?}"
+    );
+}

@@ -39,6 +39,21 @@ hashes; those commits are on the unmerged branch
 
 Both nodes are remediated and re-verified in the commits that follow.
 
+## Work completed after the node closures
+
+The eleven nodes were closed before the desktop command boundary existed end to
+end. The following was found and fixed afterwards; it is listed here because a
+`NODE_DONE` row that predates the work is not evidence about it.
+
+| Area | What was wrong | Where the work is |
+|---|---|---|
+| Desktop command boundary | `main.rs` registered no handler at all, so the packaged window could not answer a single command. | `apps/desktop/src-tauri/src/{lib,commands}.rs`, `tests/command_boundary.rs` |
+| Fabricated study data | The daily plan, the readiness band and the "delete everything" result were hard-coded in `data/sample.ts` and component state; the delete announced success without deleting anything. | `src/views/{TodayView,ReadinessView,PrivacyView}.tsx`, `src/ipc/*` |
+| Webview-to-Rust hop | Never proven. It is now recorded by the frontend through a real command and read back from the database by a separate process. | `scripts/desktop-live-fire.py`, `.agent/evidence/EP-001/desktop-live-fire.json` |
+| Provider and MCP probes | `COMMANDS.md` advertised `provider probe` and `mcp probe-loopback`; neither subcommand existed, so both scripts failed and nothing depending on them had run. | `tools/vector-tools/src/{transports,repair_lane}.rs`, `crates/vector-mcp/src/{protocol,server,client}.rs` |
+| Line endings | `.gitattributes` was absent, so `core.autocrlf` made a fresh checkout CRLF and `prettier --check` failed on every frontend file in any clean clone. Found by the new worktree lane. | `.gitattributes` |
+| Secrets scan | `secret-scan.py` resolved its repository root to `C:\` and scanned nothing while reporting PASS. | `scripts/secret-scan.py` |
+| Graph truncation | `.agent/GRAPH.md` had been cut from 11 nodes to 4; restored and recorded. | `DECISIONS.md` ADR-012 |
 
 ## External gates (not blockers of the node)
 
@@ -47,7 +62,14 @@ They are recorded here so a release verdict does not silently treat them as met.
 
 | Requirement | Gate | Why it cannot be satisfied here |
 |---|---|---|
-| REQ-036 | Windows code signing certificate | Signing requires a private key held by the release owner. An unsigned binary was built and executed; signing is a release-authority action. |
+| REQ-036 | Windows code signing certificate | Signing requires a private key held by the release owner. A binary, an MSI and an NSIS installer were all built and the binary was launched and observed; signing is a release-authority action. |
+| REQ-037 | Release signature | The digest and tamper-detection halves are proven, including a refused restore of a byte-flipped archive. A signature needs the same key as REQ-036. |
 | REQ-038 | Manual screen-reader validation (Narrator/NVDA) | Requires a human using assistive technology. Automated checks exist; they do not substitute. PREFLIGHT PF-017. |
 | REQ-060 | Trademark / name clearance | A legal judgement with no in-repo evidence. Must be resolved before GA. |
+| REQ-032 | Opening a pull request | Needs GitHub credentials. The record, the approval gate and the absence of any auto-merge path are enforced and tested. |
+| REQ-014 | A running llama.cpp server and a GGUF model | An environment provisioning decision, not code. The adapter, its health probe and its fail-closed routing are implemented and tested. |
+| REQ-016, REQ-018 | A signed-in grok and claude session | Both CLIs are installed and probed; both report that they are not signed in. Signing in is an account action that cannot be fabricated. |
+
+The full account of the post-closure work, including the defects it uncovered, is
+in `.agent/evidence/EP-010/PARTIAL_CLOSURE_REPORT.md`.
 

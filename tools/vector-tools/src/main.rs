@@ -369,16 +369,19 @@ fn main() -> Result<()> {
 
             // Every component REQ-053 binds. A missing one is an error rather
             // than a placeholder, so an identity can never overstate what it
-            // covers.
+            // covers. `measure_path` accepts a file or a directory, because the
+            // migration and content components are sets of files: binding one
+            // representative file would mean an added migration did not change
+            // the identity.
             let mut components = vec![
-                ArtifactIdentity::measure_file(ArtifactComponent::Binary, &binary)?,
-                ArtifactIdentity::measure_file(ArtifactComponent::Migrations, &migrations)?,
-                ArtifactIdentity::measure_file(ArtifactComponent::Content, &content)?,
-                ArtifactIdentity::measure_file(ArtifactComponent::Sbom, &sbom)?,
+                ArtifactIdentity::measure_path(ArtifactComponent::Binary, &binary)?,
+                ArtifactIdentity::measure_path(ArtifactComponent::Migrations, &migrations)?,
+                ArtifactIdentity::measure_path(ArtifactComponent::Content, &content)?,
+                ArtifactIdentity::measure_path(ArtifactComponent::Sbom, &sbom)?,
             ];
 
             match &licenses {
-                Some(path) => components.push(ArtifactIdentity::measure_file(
+                Some(path) => components.push(ArtifactIdentity::measure_path(
                     ArtifactComponent::Licenses,
                     path,
                 )?),
@@ -408,12 +411,16 @@ fn main() -> Result<()> {
                 // recorded digests.
                 let recorded: ArtifactIdentity =
                     serde_json::from_str(&std::fs::read_to_string(&recorded_path)?)?;
-                recorded.verify_against(&[
+                let mut paths = vec![
                     (ArtifactComponent::Binary, binary.clone()),
                     (ArtifactComponent::Migrations, migrations.clone()),
                     (ArtifactComponent::Content, content.clone()),
                     (ArtifactComponent::Sbom, sbom.clone()),
-                ])?;
+                ];
+                if let Some(path) = &licenses {
+                    paths.push((ArtifactComponent::Licenses, path.clone()));
+                }
+                recorded.verify_against(&paths)?;
                 println!("identity verified against {}", recorded_path.display());
             }
 

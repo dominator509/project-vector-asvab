@@ -2,18 +2,18 @@
   "components": [
     {
       "component": "Binary",
-      "digest": "f40c8bb1bd8274b1606e91704d5d1b8a362ea4f3d77e33d0dbcf18244d26ee93",
-      "bytes": 11728384
+      "digest": "35b9f8c16346f04dd669e845f23e1dbf5322e5911abf4b72887b70bc38c33df9",
+      "bytes": 12246528
     },
     {
       "component": "Migrations",
-      "digest": "be59b1317bc984a2e5b13aeea51eb0a41943caff81783018bca97881233de1c3",
-      "bytes": 4384
+      "digest": "86e4abe8bbf0d5b2bbd0c360f42b67475687f28dbc89d88585326a2e38b693f4",
+      "bytes": 5270
     },
     {
       "component": "Content",
-      "digest": "2d38d74671d1db4d571638ddb7cfeac5f78df817951df04b8f79896eb9247c53",
-      "bytes": 411
+      "digest": "65b92f28f9f5db766d9c4a0d5ac95b1b1a674820cd016bec798c1a337bbb7b38",
+      "bytes": 199342
     },
     {
       "component": "Sbom",
@@ -27,10 +27,10 @@
     },
     {
       "component": "GitSha",
-      "digest": "3ca57643dfc7a12fc530234de02ca27dc46f64ebdbcf00e8a2f00e77090da4e2",
+      "digest": "5701ec7816ac5f0a3fe2380c2ed9d687989d32b3b02f1e603e1ffa33a0aabf55",
       "bytes": null
     }
   ],
-  "identity_digest": "35df37e5a55810a4ed6e1b01d1b98eb2adfda39dae8b15727ec1aec01b7d7182",
+  "identity_digest": "6b0f7c0503e60dfc1d8942a9674d64c86f859fe491263b3462809d91dcbad4b1",
   "version": "0.1.0"
 }
