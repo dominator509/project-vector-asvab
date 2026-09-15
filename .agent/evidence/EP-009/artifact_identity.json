@@ -27,10 +27,10 @@
     },
     {
       "component": "GitSha",
-      "digest": "5701ec7816ac5f0a3fe2380c2ed9d687989d32b3b02f1e603e1ffa33a0aabf55",
+      "digest": "6b0aab823cf2c6aef1316a7eb8912df2d09ba02d0f0c94d9386a61f52a262d5c",
       "bytes": null
     }
   ],
-  "identity_digest": "6b0f7c0503e60dfc1d8942a9674d64c86f859fe491263b3462809d91dcbad4b1",
+  "identity_digest": "3bf8c35eb0e29494ecb7fbb5ce9de76c8909815bbcba70a49388dccec5bfc905",
   "version": "0.1.0"
 }

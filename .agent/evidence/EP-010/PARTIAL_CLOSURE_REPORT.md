@@ -215,3 +215,9 @@ than racing for it, so it cannot pass by luck.
   are installed but signed out, and that is reported rather than worked around.
 * It does not claim signing, the manual screen-reader pass, or name clearance.
   Those need the release key, a human, and a lawyer respectively.
+* It does not claim the `GitSha` component of the artifact identity is stable.
+  That component names the commit the identity was derived at, so any later
+  commit changes it — including a commit that only edits this file. The
+  components that identify the shipped bytes (`Binary`, `Migrations`,
+  `Content`, `Sbom`, `Licenses`) do not move, and `sh scripts/artifact-identity.sh`
+  re-derives and verifies all of them on every run.
