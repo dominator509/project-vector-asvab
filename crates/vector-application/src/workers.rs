@@ -273,6 +273,34 @@ impl WorkerPool {
         self.outcomes.lock().map(|o| o.clone()).unwrap_or_default()
     }
 
+    /// Wait until at least `total` outcomes have been recorded, then return them.
+    ///
+    /// `run_to_completion` submits its own jobs and waits for *those*. A caller
+    /// that also submitted jobs earlier — as the concurrency tests do, to keep
+    /// workers busy while writers run — needs to know those have finished before
+    /// it treats any later write as the final one. Without this, a job submitted
+    /// earlier can still be in flight and land afterwards, which is exactly how
+    /// a stale recompute overwrote a fresh one in the concurrency test.
+    pub fn wait_for_outcomes(&self, total: usize) -> Result<Vec<JobOutcome>, ServiceError> {
+        let deadline = Instant::now() + Duration::from_secs(60);
+        loop {
+            {
+                let recorded = self.outcomes.lock().map(|o| o.len()).unwrap_or(0);
+                if recorded >= total {
+                    break;
+                }
+            }
+            if Instant::now() >= deadline {
+                let recorded = self.outcomes.lock().map(|o| o.len()).unwrap_or(0);
+                return Err(ServiceError::Storage(format!(
+                    "only {recorded} of {total} jobs finished within the deadline"
+                )));
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        Ok(self.outcomes())
+    }
+
     /// Number of worker threads.
     pub fn worker_count(&self) -> usize {
         self.handles.len()

@@ -510,6 +510,21 @@ impl<'a> Services<'a> {
     /// This is a study aid, not a psychometric model: it makes no equivalence
     /// claim about any official score (REQ-049, ADR-010).
     ///
+    /// ## Concurrency
+    ///
+    /// The write is last-writer-wins. Two overlapping recomputes can finish out
+    /// of order, in which case the value derived from the earlier snapshot is
+    /// the one left stored. Each stored value is internally consistent — it
+    /// matches the attempt history as of the read that produced it — but the row
+    /// is not guaranteed to reflect the newest history.
+    ///
+    /// The desktop command path is not exposed to this: it runs behind the
+    /// single database mutex, so a learner pressing recompute twice is
+    /// serialized. It is reachable through `workers::WorkerPool`, where each
+    /// worker holds its own connection. Callers that need the stored value to
+    /// reflect the newest history should run one recompute after their writes
+    /// have stopped rather than several concurrently.
+    ///
     /// Returns the number of mastery rows written.
     pub fn recompute_mastery(&self, learner_id: &str) -> Result<usize, ServiceError> {
         self.get_profile(learner_id)?;

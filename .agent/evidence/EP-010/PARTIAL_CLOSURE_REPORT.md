@@ -53,14 +53,34 @@ command, and reads that row back from
 `%APPDATA%\com.vector.app\vector.db` **in a separate process**.
 
 ```
-artifact_sha256           a15393d82f79b1754defa54563937ed336707c72c70f2d853f399b2b2eadee78
+artifact_sha256           f17d3bc031778bd669ffd5dd5350ad817310e5da7d03a125d35443b7f7bc4f9e
 artifact_bytes            12246528
+identity_digest           ddeab99bede8c2c1e5d4276b00c1911de47dc70c19f0095c55a4ce082326839c
+frontend bundle stamp     0.1.0+8b5552fe9701
 webview_reached_command_layer  true
 database_created          true
-launch_seconds            1.73
-bundles                   MSI 4,464,640 bytes; NSIS 3,111,145 bytes
+launch_seconds            5.59
+bundles                   MSI 4,472,832 bytes; NSIS 3,112,602 bytes
 verdict                   pass
 ```
+
+The digest above is the one value that describes this build: the binary on disk,
+the `Binary` component of `.agent/evidence/EP-009/artifact_identity.json`, and
+`artifact_sha256` in `.agent/evidence/EP-001/desktop-live-fire.json` were read
+back and compared, and all three agree. The same digest is in the
+`artifact_digest` column of every row of
+`.agent/verification/FUNCTIONAL_PROOF_MATRIX.csv`.
+
+**The Windows build is not bit-reproducible.** Two builds of identical source
+produce different bytes, because Tauri patches the executable with bundle-type
+metadata and the PE headers carry build time. Three different digests for one
+source revision reached this report before that was understood. The control that
+prevents a repeat is placement, not determinism: `scripts/verify.sh` now derives
+and verifies the artifact identity immediately after `scripts/build.sh`, so a
+green sweep leaves an identity describing the artifact that sweep produced, and
+the smoke and live-fire steps run against the build that was hashed. There is
+deliberately only one derivation site; `production-readiness-check.sh` no longer
+re-derives it.
 
 This is the webview-to-Rust hop that no test in this repository could
 previously demonstrate. It also exercises the Content-Security-Policy added to

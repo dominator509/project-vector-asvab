@@ -369,10 +369,29 @@ fn concurrent_writers_lose_nothing_and_duplicate_nothing() {
         handle.join().expect("writer thread");
     }
 
+    // Wait for every job submitted so far, not just the final one.
+    //
+    // Mastery is a derived value and the write is last-writer-wins: a recompute
+    // that read a snapshot early can land after a later one and leave the older
+    // value in place. This test previously waited only for the final recompute,
+    // so a job submitted before it could still be in flight and overwrite the
+    // result — which is how it failed with a mastery of 2/3 (a snapshot from the
+    // first attempt) instead of the value the full history implies.
+    let drained = pool.wait_for_outcomes(WRITERS).expect("drain the writes");
+    assert_eq!(drained.len(), WRITERS);
+
     let outcomes = pool
         .run_to_completion(vec![Job::RecomputeAllMastery])
         .expect("final recompute");
     assert!(matches!(outcomes[0].status, JobStatus::Completed { .. }));
+
+    // Nothing is writing and nothing is queued, so the value read below is the
+    // one this final recompute produced.
+    assert_eq!(
+        pool.outcomes().len(),
+        WRITERS + 1,
+        "no job may still be outstanding when the result is asserted"
+    );
 
     // Read back from a fresh connection, so nothing is taken from a cache.
     let db = Database::open(&path).expect("verify connection");
