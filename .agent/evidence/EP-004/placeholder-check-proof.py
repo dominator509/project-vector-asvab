@@ -29,6 +29,9 @@ LT, GT = "<", ">"
 
 MUSTACHE = f"{OB}{OB}learner_name{CB}{CB}"
 SHELL_PARAM = f"{DOLLAR}{OB}target_env{CB}"
+# GitHub Actions expression syntax: a double brace preceded by a dollar sign,
+# which executes inside a workflow file.
+ACTIONS_EXPR = f"{DOLLAR}{OB}{OB} github.ref {CB}{CB}"
 
 # Each case is (name, relative filename, file contents, must_fail).
 CASES = [
@@ -80,6 +83,34 @@ CASES = [
         "Use set notation {1, 2, 3} and close with }",
         False,
     ),
+    # The third false positive removed from the check: `${{ ... }}` in a GitHub
+    # workflow is executable Actions syntax, and the workflow file is the only
+    # place it can run. The two cases below it are what keep the exemption from
+    # becoming a hole.
+    (
+        "GitHub Actions expression in a workflow must PASS (real syntax)",
+        ".github/workflows/ok_workflow.yml",
+        f"name: verify\nconcurrency:\n  group: verify-{ACTIONS_EXPR}\n",
+        False,
+    ),
+    (
+        "mustache residue inside a workflow must still FAIL",
+        ".github/workflows/bad_workflow.yml",
+        f"name: {MUSTACHE}\n",
+        True,
+    ),
+    (
+        "a dollar-prefixed brace in a NON-workflow YAML must still FAIL",
+        "bad_other.yml",
+        f"value: {ACTIONS_EXPR}\n",
+        True,
+    ),
+    (
+        "mustache residue in a non-workflow YAML must still FAIL",
+        "bad_plain.yml",
+        f"value: {MUSTACHE}\n",
+        True,
+    ),
 ]
 
 
@@ -118,7 +149,11 @@ def main() -> int:
                 else:
                     target.write_text("", encoding="utf-8")
 
-            (root / filename).write_text(contents, encoding="utf-8")
+            fixture = root / filename
+            # Cases may live in nested directories (a workflow fixture has to be
+            # under .github/workflows for the check to see it as one).
+            fixture.parent.mkdir(parents=True, exist_ok=True)
+            fixture.write_text(contents, encoding="utf-8")
 
             code, out = run_validator(root)
             flagged = "placeholder residue" in out

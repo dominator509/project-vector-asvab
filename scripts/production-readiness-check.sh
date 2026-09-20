@@ -5,9 +5,10 @@ sh scripts/_require_impl.sh
 
 # The full release gate.
 #
-# `verify.sh` includes the artifact-identity step immediately after the build, so
-# the identity it leaves behind describes the artifact this run produced. It is
-# deliberately not repeated here: re-deriving it would only re-measure the same
-# files, and a second derivation site is a second place for the ordering to drift.
+# `verify.sh` records every gate's exit code, derives the artifact identity from
+# the build it produced, stamps the proof matrix, and regenerates the
+# release-layer state — verdict, run manifest, DoD status, evidence index and
+# reports — from what it recorded. None of that is duplicated here: a second
+# derivation site is a second place for the ordering to drift.
 sh scripts/verify.sh
 sh scripts/dod-gate.sh

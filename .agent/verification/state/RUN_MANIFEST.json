@@ -2,8 +2,119 @@
   "status": "VERIFIED",
   "schema_version": 1,
   "project": "Project VECTOR",
-  "artifact_digest": "f40c8bb1bd8274b1606e91704d5d1b8a362ea4f3d77e33d0dbcf18244d26ee93",
-  "candidate_epoch": 1,
+  "version": "0.1.0",
+  "artifact_digest": "6a7ea3e1f1ae48269a646ce63c60742a074a1d7bfb4355a92b33f407305769ec",
+  "identity_digest": "8ac388262885e48b644e74439445f705a59275decc87e0e69e3f8dfb95f4ab08",
+  "identity_components": [
+    {
+      "component": "Binary",
+      "digest": "6a7ea3e1f1ae48269a646ce63c60742a074a1d7bfb4355a92b33f407305769ec",
+      "bytes": 12246528
+    },
+    {
+      "component": "Migrations",
+      "digest": "86e4abe8bbf0d5b2bbd0c360f42b67475687f28dbc89d88585326a2e38b693f4",
+      "bytes": 5270
+    },
+    {
+      "component": "Content",
+      "digest": "65b92f28f9f5db766d9c4a0d5ac95b1b1a674820cd016bec798c1a337bbb7b38",
+      "bytes": 199342
+    },
+    {
+      "component": "Sbom",
+      "digest": "dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42",
+      "bytes": 19132
+    },
+    {
+      "component": "Licenses",
+      "digest": "538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8",
+      "bytes": 4222
+    },
+    {
+      "component": "GitSha",
+      "digest": "899aef806defa45fc002dcf5c9fa924c60bcb60504d2a043872e00679fce71ba",
+      "bytes": null
+    }
+  ],
+  "candidate_epoch": 4,
+  "git_sha": "05c31d4b1bd248b1c3e2e111d4b514c1d046a39f",
+  "git_branch": "main",
   "registry_count": 484,
-  "dod_count": 42
+  "dod_count": 42,
+  "gates": [
+    {
+      "gate": "generated-pack",
+      "exit": 0
+    },
+    {
+      "gate": "anti-gaming-scan",
+      "exit": 0
+    },
+    {
+      "gate": "format-check",
+      "exit": 0
+    },
+    {
+      "gate": "lint",
+      "exit": 0
+    },
+    {
+      "gate": "typecheck",
+      "exit": 0
+    },
+    {
+      "gate": "test-unit",
+      "exit": 0
+    },
+    {
+      "gate": "test-collection-guard",
+      "exit": 0
+    },
+    {
+      "gate": "test-integration",
+      "exit": 0
+    },
+    {
+      "gate": "test-e2e",
+      "exit": 0
+    },
+    {
+      "gate": "security-check",
+      "exit": 0
+    },
+    {
+      "gate": "dependency-audit",
+      "exit": 0
+    },
+    {
+      "gate": "mcp-probe",
+      "exit": 0
+    },
+    {
+      "gate": "provider-probe",
+      "exit": 0
+    },
+    {
+      "gate": "build",
+      "exit": 0
+    },
+    {
+      "gate": "artifact-identity",
+      "exit": 0
+    },
+    {
+      "gate": "proof-matrix-stamp",
+      "exit": 0
+    },
+    {
+      "gate": "smoke-test",
+      "exit": 0
+    },
+    {
+      "gate": "live-fire",
+      "exit": 0
+    }
+  ],
+  "generated_at": "2026-09-20T21:10:19.471377+00:00"
 }

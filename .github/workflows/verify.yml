@@ -1,0 +1,183 @@
+# Continuous integration: the release gate, on every push and pull request.
+#
+# ## What this runs
+#
+# `sh scripts/production-readiness-check.sh` — the same command a human runs
+# locally. It records every gate's raw exit code, derives the artifact identity
+# from the build it produces, stamps the functional proof matrix, regenerates the
+# release-layer state (verdict, run manifest, DoD status, evidence index,
+# reports) and then validates the Definition of Done.
+#
+# ## What it deliberately does not run
+#
+# `sh scripts/provider-live-fire.sh`. It sends a prompt through the provider CLIs
+# under the maintainer's own subscription and needs a signed-in codex session, so
+# it cannot run on a shared runner and must not: a CI job that spends someone's
+# personal quota is a defect. It stays a deliberate, manual command.
+#
+# ## No third-party actions
+#
+# Every step is a first-party action or a shell command. A GitHub Action is an
+# unpinned dependency that runs with repository credentials, and SECURITY.md
+# treats dependency and update compromise as a primary threat; the Rust toolchain
+# is therefore installed by `rustup` reading `rust-toolchain.toml` rather than by
+# a convenience action. If a third-party action is ever added, pin it to a commit
+# SHA and record the review.
+#
+# ## The one step that may not work on a hosted runner
+#
+# `scripts/desktop-live-fire.py` launches the packaged desktop application and
+# waits for its webview to answer a command. It needs a real Windows session with
+# WebView2 and a desktop. Hosted `windows-latest` runners do provide an
+# interactive session, so it is expected to work — but if it does not, the fix is
+# to provision the runner or record the limitation honestly, never to delete the
+# check. It is the only evidence in this repository that the webview can reach the
+# Rust command layer at all.
+
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A superseded run on the same ref tells nobody anything; cancel it rather than
+# pay for it.
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: "1"
+  NO_COLOR: "1"
+  PAGER: cat
+  GIT_PAGER: cat
+  CARGO_TERM_COLOR: never
+  RUST_BACKTRACE: "1"
+
+jobs:
+  release-gate:
+    name: release gate (windows)
+    runs-on: windows-latest
+    # A cold Rust release build with Tauri bundling is the long pole. The bound
+    # exists so a hung gate cannot burn an hour of quota unnoticed.
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          # The run manifest records the commit the artifact was built from, so
+          # the full SHA has to be reachable.
+          fetch-depth: 1
+
+      - name: Install the pinned Rust toolchain
+        shell: bash
+        # `rustup show` installs the toolchain `rust-toolchain.toml` declares
+        # (1.97.1) and fails if it cannot, which is the point: a floating
+        # toolchain would make a green run unreproducible.
+        run: |
+          rustup show
+          rustc --version
+          cargo --version
+
+      - name: Install the pinned Node toolchain
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Cache the cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          # The lockfile is the cache key: a changed dependency set must not
+          # reuse the previous one.
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: Report the toolchain actually in use
+        shell: bash
+        # Recorded rather than assumed: these versions are what the run's
+        # evidence is tied to (DOD-025).
+        run: |
+          echo "node    $(node --version)"
+          echo "pnpm    $(corepack pnpm --version)"
+          echo "python  $(python3 --version)"
+          echo "git     $(git --version)"
+          echo "sh      $(command -v sh)"
+
+      - name: Install dependencies
+        shell: bash
+        # The repository's own install command, not a copy of it.
+        run: sh scripts/install.sh
+
+      - name: Install the Playwright browser
+        shell: bash
+        # Chromium only: the suite runs a single browser, and the E2E gate fails
+        # rather than skips when it is absent.
+        run: corepack pnpm --filter desktop exec playwright install chromium
+
+      - name: Run the release gate
+        shell: bash
+        run: sh scripts/production-readiness-check.sh
+
+      - name: Summarise the release state
+        if: always()
+        shell: bash
+        # Printed even on failure, because the reason a gate went red is the
+        # thing a reader needs and the uploaded artifacts are one click away.
+        run: |
+          for f in \
+            .agent/verification/reports/RELEASE_GATE.json \
+            .agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md \
+            .agent/verification/state/gate-results.jsonl
+          do
+            if [ -f "$f" ]; then
+              echo "::group::$f"
+              cat "$f"
+              echo "::endgroup::"
+            fi
+          done
+
+      - name: Upload the release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence
+          # The verdict, the manifest, the DoD status, the evidence index, the
+          # per-gate exit codes and the human-readable reports. This is the
+          # record of the run; the artifact digests in it identify the build.
+          path: |
+            .agent/verification/reports/
+            .agent/verification/state/RUN_MANIFEST.json
+            .agent/verification/state/DOD_STATUS.jsonl
+            .agent/verification/state/EVIDENCE_INDEX.json
+            .agent/verification/state/NEXT_ACTION.md
+            .agent/verification/state/gate-results.jsonl
+            .agent/evidence/EP-001/desktop-live-fire.json
+            .agent/evidence/EP-004/mcp-loopback.json
+            .agent/evidence/EP-004/provider-probe.json
+            .agent/evidence/EP-009/artifact_identity.json
+          retention-days: 90
+
+      - name: Upload the installers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers
+          # Unsigned. REQ-036 records signing as an external gate; these are the
+          # bytes the digest in the evidence refers to.
+          path: |
+            target/release/vector-desktop.exe
+            target/release/bundle/msi/*.msi
+            target/release/bundle/nsis/*.exe
+          if-no-files-found: warn
+          retention-days: 90

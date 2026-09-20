@@ -20,6 +20,7 @@ export RUST_BACKTRACE=1
 | Lint | `sh scripts/lint.sh` |
 | Typecheck | `sh scripts/typecheck.sh` |
 | Unit tests | `sh scripts/test-unit.sh` |
+| Test collection guard | `sh scripts/test-collection-guard.sh` |
 | Integration tests | `sh scripts/test-integration.sh` |
 | E2E tests | `sh scripts/test-e2e.sh` |
 | Build production artifact | `sh scripts/build.sh` |
@@ -34,6 +35,7 @@ export RUST_BACKTRACE=1
 | Anti-gaming scan | `python3 scripts/anti-gaming-scan.py .` |
 | Ledger integrity | `python3 scripts/validate-hash-ledger.py .` |
 | DoD gate | `sh scripts/dod-gate.sh` |
+| Release state | `python3 scripts/release-state.py` |
 | Graph next node | `sh scripts/graph-next.sh` |
 | Harness next stage | `sh scripts/harness-next.sh` |
 | Harness accounting | `sh scripts/harness-accounting.sh` |

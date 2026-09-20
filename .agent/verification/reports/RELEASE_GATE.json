@@ -1,4 +1,45 @@
 {
-  "verdict": "NO_GO_UNVERIFIED",
-  "reason": "Blueprint generated; implementation and verification have not run."
+  "verdict": "CONDITIONAL_EXTERNAL_GATES",
+  "reason": "6 requirement(s) cannot be satisfied inside this repository; the build and its gates pass",
+  "blockers": [
+    {
+      "kind": "requirement",
+      "id": "REQ-014",
+      "status": "PARTIAL_TRANSPORT_REGISTERED_MODEL_NOT_LAUNCHED",
+      "detail": "llama.cpp GGUF with optional user-selected unfiltered model"
+    },
+    {
+      "kind": "requirement",
+      "id": "REQ-032",
+      "status": "PARTIAL_EP003_RECORD_DONE_GH_LANE_PENDING",
+      "detail": "official gh; explicit approval; no auto-merge"
+    },
+    {
+      "kind": "requirement",
+      "id": "REQ-036",
+      "status": "PARTIAL_MSI_AND_NSIS_BUILT_SIGNING_EXTERNAL_GATE",
+      "detail": "signed Windows artifact + clean install/upgrade/uninstall"
+    },
+    {
+      "kind": "requirement",
+      "id": "REQ-037",
+      "status": "PARTIAL_DIGEST_VERIFY_AND_TAMPER_DETECTION_DONE_SIGNATURE_PENDING",
+      "detail": "signature/hash/atomic stage/rollback"
+    },
+    {
+      "kind": "requirement",
+      "id": "REQ-038",
+      "status": "PARTIAL_AUTOMATED_A11Y_DONE_MANUAL_SCREEN_READER_EXTERNAL_GATE",
+      "detail": "WCAG 2.2 AA + keyboard/Narrator/NVDA"
+    },
+    {
+      "kind": "requirement",
+      "id": "REQ-060",
+      "status": "BLOCKED_EXTERNAL_LEGAL_CLEARANCE_REQUIRED",
+      "detail": "working title requires trademark/name clearance before GA"
+    }
+  ],
+  "external_dod_clauses": [
+    "DOD-039"
+  ]
 }

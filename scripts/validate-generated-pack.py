@@ -59,6 +59,11 @@ else:
 #  2. "${name}" is legitimate, executable TypeScript/JavaScript template-literal
 #     syntax. It is only placeholder-like in file types that cannot execute it
 #     (Markdown, YAML, plain text), so that pattern is scoped by suffix below.
+#  3. "${{ github.ref }}" is GitHub Actions expression syntax, which executes in
+#     a workflow file. The workflow is the only place it can run, so the pattern
+#     is scoped to `.github/workflows/*.yml|yaml` rather than to a suffix: a
+#     `{{ identifier }}` in any other YAML is still residue, and so is one in a
+#     workflow that is not preceded by `$`.
 #
 # The rule set is narrower than the original, never broader, and
 # .agent/evidence/EP-004/placeholder-check-proof.py proves genuine residue of
@@ -82,7 +87,18 @@ CODE_SUFFIXES = {
 }
 
 
-def placeholder_hits(text: str, suffix: str = "") -> list[str]:
+def is_github_workflow(path: Path) -> bool:
+    """Whether `path` is a GitHub Actions workflow, where `${{ }}` executes."""
+    parts = path.parts
+    return (
+        len(parts) >= 2
+        and parts[-2] == "workflows"
+        and ".github" in parts
+        and path.suffix.lower() in {".yml", ".yaml"}
+    )
+
+
+def placeholder_hits(text: str, suffix: str = "", workflow: bool = False) -> list[str]:
     """Return the placeholder-shaped matches found in text.
 
     A file that parses as JSON is skipped: its braces are structural, and a
@@ -101,7 +117,12 @@ def placeholder_hits(text: str, suffix: str = "") -> list[str]:
 
     hits: list[str] = []
     for pat in PLACEHOLDER_PATTERNS:
-        hits.extend(m.group(0) for m in pat.finditer(text))
+        for m in pat.finditer(text):
+            # A double brace preceded by `$` inside a workflow file is an
+            # executable Actions expression, not unrendered template syntax.
+            if workflow and m.start() > 0 and text[m.start() - 1] == "$":
+                continue
+            hits.append(m.group(0))
 
     # Only treat "${...}" as residue where it cannot be executable code.
     if suffix in SHELL_STYLE_SUFFIXES and suffix not in CODE_SUFFIXES:
@@ -120,7 +141,7 @@ for p in root.rglob("*"):
             text = p.read_text("utf-8")
         except UnicodeDecodeError:
             continue
-        hits = placeholder_hits(text, p.suffix.lower())
+        hits = placeholder_hits(text, p.suffix.lower(), is_github_workflow(p))
         if hits:
             err(f"placeholder residue in {p.relative_to(root)}: {sorted(set(hits))[:3]}")
         if re.search(r"\b(rest omitted|similar to above|and so on|TODO pass|not implemented|coming soon)\b", text, re.I):

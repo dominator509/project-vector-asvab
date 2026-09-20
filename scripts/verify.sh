@@ -2,23 +2,58 @@
 set -eu
 export CI=1 NO_COLOR=1 PAGER=cat GIT_PAGER=cat CARGO_TERM_COLOR=never
 
-python3 scripts/validate-generated-pack.py .
-python3 scripts/anti-gaming-scan.py .
-sh scripts/format-check.sh
-sh scripts/lint.sh
-sh scripts/typecheck.sh
-sh scripts/test-unit.sh
-sh scripts/test-integration.sh
-sh scripts/test-e2e.sh
-sh scripts/security-check.sh
-sh scripts/dependency-audit.sh
+# The full verification sweep.
+#
+# Every gate runs through `gate`, which records its raw exit code to
+# `.agent/verification/state/gate-results.jsonl` and aborts the sweep on the
+# first failure. That file is what `scripts/release-state.py` reads to decide the
+# release verdict, so the verdict rests on recorded exits rather than on a
+# human's memory of the run. DOD-024 prohibits hiding a failure; a bare list of
+# commands leaves nothing to audit and no way to prove one was not skipped.
+
+STATE_DIR=.agent/verification/state
+GATE_RESULTS="$STATE_DIR/gate-results.jsonl"
+mkdir -p "$STATE_DIR"
+: > "$GATE_RESULTS"
+
+gate() {
+  name=$1
+  shift
+  if "$@"; then
+    code=0
+  else
+    code=$?
+  fi
+  printf '{"gate":"%s","exit":%s}\n' "$name" "$code" >> "$GATE_RESULTS"
+  if [ "$code" -ne 0 ]; then
+    echo "verify: gate '$name' failed with exit $code" >&2
+    exit "$code"
+  fi
+}
+
+gate generated-pack python3 scripts/validate-generated-pack.py .
+gate anti-gaming-scan python3 scripts/anti-gaming-scan.py .
+gate format-check sh scripts/format-check.sh
+gate lint sh scripts/lint.sh
+gate typecheck sh scripts/typecheck.sh
+gate test-unit sh scripts/test-unit.sh
+
+# Fails when a suite collects nothing, which many runners report as success.
+gate test-collection-guard sh scripts/test-collection-guard.sh
+
+gate test-integration sh scripts/test-integration.sh
+gate test-e2e sh scripts/test-e2e.sh
+gate security-check sh scripts/security-check.sh
+gate dependency-audit sh scripts/dependency-audit.sh
+
 # Local, deterministic, and exercises a real process boundary: an MCP server is
 # started over a pipe and driven by the real client. The provider probe is not
 # here because it inspects the machine's provider CLIs, and its --live form
 # contacts a provider under the user's own subscription.
-sh scripts/mcp-probe.sh
-sh scripts/provider-probe.sh
-sh scripts/build.sh
+gate mcp-probe sh scripts/mcp-probe.sh
+gate provider-probe sh scripts/provider-probe.sh
+
+gate build sh scripts/build.sh
 
 # Derive the artifact identity from the artifact this run just built.
 #
@@ -30,7 +65,7 @@ sh scripts/build.sh
 # artifact_identity.json` describing the artifact the sweep just produced, and
 # the smoke and live-fire steps below run against the build that was hashed —
 # which is what AGENTS.md §16 asks for.
-sh scripts/artifact-identity.sh
+gate artifact-identity sh scripts/artifact-identity.sh
 
 # Stamp that same digest into the functional proof matrix.
 #
@@ -40,7 +75,7 @@ sh scripts/artifact-identity.sh
 # rebuild: the identity would be regenerated while the matrix kept naming the
 # previous build. Stamping it here removes the duplicated value rather than
 # asking a human to keep two copies of one digest in step.
-python3 - <<'PY2'
+gate proof-matrix-stamp python3 - <<'PY2'
 import csv, json, pathlib
 
 identity = json.loads(
@@ -72,5 +107,13 @@ if stale:
     print(f'  corrected stale digest on: {", ".join(stale)}')
 PY2
 
-sh scripts/smoke-test.sh
-sh scripts/live-fire.sh
+gate smoke-test sh scripts/smoke-test.sh
+gate live-fire sh scripts/live-fire.sh
+
+# Regenerate the release-layer state from what this sweep recorded.
+#
+# These files are required evidence — DOD-042 names RELEASE_GATE.json and
+# DOD-029 names the run manifest — and nothing generated them, so they were
+# written by hand and drifted into contradicting each other. Generated here, at
+# the end of a green sweep, they describe the run that just happened.
+gate release-state python3 scripts/release-state.py
