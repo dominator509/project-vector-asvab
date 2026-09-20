@@ -1,0 +1,36 @@
+Project VECTOR — Proprietary Software Licence
+Copyright (c) 2026 dominator509. All rights reserved.
+
+This repository and everything in it — source code, tests, documentation,
+schemas, database migrations, evidence records and compiled output — is
+proprietary and confidential. It is made available only for the purposes the
+copyright holder has expressly authorised in writing.
+
+No licence, express or implied, is granted. In particular, and without
+limitation, you may not:
+
+  - copy, reproduce, redistribute or republish the software or any part of it;
+  - modify, adapt, translate or create derivative works from it;
+  - sublicense, rent, lease, sell or otherwise make it available to any third
+    party;
+  - host, operate or offer the software, or any derivative of it, as a service
+    to any third party; or
+  - use it to train, fine-tune or evaluate any machine-learning model.
+
+All rights not expressly granted are reserved. No patent licence, trademark
+licence or other intellectual-property licence is granted by implication,
+estoppel or otherwise.
+
+Reading this material does not transfer ownership or grant any licence. If it
+was disclosed to you in error, or you are not a person the copyright holder
+intends to receive it, delete it and notify the copyright holder.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+Third-party components that this software depends on or bundles remain under
+their own licences. See OPEN_SOURCE_LICENSES.md and
+.agent/evidence/EP-009/THIRD_PARTY_NOTICES.md.

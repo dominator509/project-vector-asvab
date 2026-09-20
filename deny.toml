@@ -43,6 +43,14 @@ ignore = [
 # Permissive licenses permitted for commercial distribution.
 # A copyleft license that would impose obligations on VECTOR's own source is
 # deliberately absent; adding one is a decision requiring an explicit review.
+#
+# This list governs THIRD-PARTY dependencies. VECTOR's own crates are
+# proprietary and unpublished (`license = "LicenseRef-Proprietary"`,
+# `publish = false`), and `LicenseRef-` is by definition not on the SPDX list,
+# so they are excluded here rather than added to `allow`: listing a licence
+# the project does not grant to anyone would be a false statement in the
+# release policy. Every dependency is still checked in full.
+private = { ignore = true }
 allow = [
     "MIT",
     "Apache-2.0",

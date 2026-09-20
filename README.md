@@ -7,3 +7,18 @@ Start with `HOW_TO_USE.md`, then `PROJECT_BRIEF.md`, `ARCHITECTURE.md`, `AI_TRAN
 ## GraphLock execution pack
 
 Start with `HOW_TO_USE.md`, `AGENTS.md`, `COMMANDS.md`, and `.agent/GRAPH.md`. This delivery is a blueprint, not a fabricated completed application: all execution evidence starts PENDING and release state is `NO_GO_UNVERIFIED` until an implementation agent builds and proves the product.
+
+## Licence
+
+**Proprietary and confidential. All rights reserved.** No licence, express or
+implied, is granted to this repository or anything in it — not to read it, copy
+it, modify it, redistribute it, or offer it, or anything derived from it, as a
+service. The terms are in `LICENSE`.
+
+Third-party components remain under their own licences; see
+`OPEN_SOURCE_LICENSES.md` and `.agent/evidence/EP-009/THIRD_PARTY_NOTICES.md`.
+Nothing in those documents grants any right in VECTOR's own code.
+
+Contributions are accepted only under a copyright assignment or an equivalent
+grant; see `CONTRIBUTING.md`.
+

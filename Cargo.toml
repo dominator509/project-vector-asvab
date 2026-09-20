@@ -20,7 +20,14 @@ members = [
 version = "0.1.0"
 edition = "2021"
 authors = ["VECTOR Team"]
-license = "MIT OR Apache-2.0"
+# Proprietary. `LicenseRef-` is SPDX's escape hatch for a licence that is not on
+# the SPDX list, which is exactly the case here: the terms are in ./LICENSE and
+# grant nothing. This replaced `MIT OR Apache-2.0`, which offered the code to
+# anyone who looked while the repository was public.
+license = "LicenseRef-Proprietary"
+# Refuse `cargo publish`. A proprietary crate must not be publishable by
+# accident, and crates.io would make it public permanently.
+publish = false
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }

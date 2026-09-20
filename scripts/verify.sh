@@ -32,5 +32,45 @@ sh scripts/build.sh
 # which is what AGENTS.md §16 asks for.
 sh scripts/artifact-identity.sh
 
+# Stamp that same digest into the functional proof matrix.
+#
+# The matrix is a live claim — "these outcomes are verified against this
+# artifact" — so its `artifact_digest` column has to name the artifact this
+# sweep verified. It was hand-maintained, which meant it drifted on every
+# rebuild: the identity would be regenerated while the matrix kept naming the
+# previous build. Stamping it here removes the duplicated value rather than
+# asking a human to keep two copies of one digest in step.
+python3 - <<'PY2'
+import csv, json, pathlib
+
+identity = json.loads(
+    pathlib.Path('.agent/evidence/EP-009/artifact_identity.json').read_text(encoding='utf-8')
+)
+digest = next(
+    c['digest'] for c in identity['components'] if c['component'] == 'Binary'
+)
+
+path = pathlib.Path('.agent/verification/FUNCTIONAL_PROOF_MATRIX.csv')
+with path.open(encoding='utf-8', newline='') as handle:
+    rows = list(csv.DictReader(handle))
+    fields = list(rows[0].keys())
+
+if not rows:
+    raise SystemExit('the functional proof matrix is empty')
+
+stale = [r['requirement_id'] for r in rows if r['artifact_digest'] != digest]
+for row in rows:
+    row['artifact_digest'] = digest
+
+with path.open('w', encoding='utf-8', newline='\n') as handle:
+    writer = csv.DictWriter(handle, fieldnames=fields, lineterminator='\n')
+    writer.writeheader()
+    writer.writerows(rows)
+
+print(f'proof matrix: {len(rows)} row(s) stamped with {digest}')
+if stale:
+    print(f'  corrected stale digest on: {", ".join(stale)}')
+PY2
+
 sh scripts/smoke-test.sh
 sh scripts/live-fire.sh

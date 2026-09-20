@@ -1,5 +1,10 @@
 # Commercial dependency strategy
 
+This document covers **third-party** components and the terms under which
+VECTOR may use them. VECTOR itself is not open source: it is proprietary and
+confidential, and no licence is granted to it — see `LICENSE`. Nothing here is
+a grant of any right in VECTOR's own code.
+
 | Component | Role | Research posture | Release rule |
 |---|---|---|---|
 | Tauri | desktop shell | MIT/Apache-2.0 code | exact pin; do not reuse restricted logo assets |
