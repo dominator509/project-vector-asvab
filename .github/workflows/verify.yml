@@ -90,7 +90,36 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: pnpm
+          # `cache: pnpm` is deliberately absent. That option runs
+          # `pnpm store path` to locate the store, and it does so before
+          # anything has provided pnpm: this repository declares pnpm through
+          # `packageManager` and provides it with corepack, not by installing it
+          # globally. The first CI run failed here with "Unable to locate
+          # executable file: pnpm". The store is cached explicitly below, after
+          # corepack has made pnpm real.
+
+      - name: Enable corepack and pin the pnpm store
+        shell: bash
+        # `package.json` declares `packageManager: pnpm@10.34.5`, which is what
+        # corepack reads. `corepack enable` puts pnpm on PATH, which the gate
+        # scripts require: they call bare `pnpm`, and on a developer machine
+        # that only works because pnpm happens to be installed globally. That is
+        # undeclared state, and this is where it gets declared.
+        run: |
+          corepack enable
+          echo "pnpm $(corepack pnpm --version)"
+          # A fixed store directory so the cache step below has a stable path on
+          # every runner.
+          corepack pnpm config set store-dir "$HOME/.pnpm-store"
+
+      - name: Cache the pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          # Keyed on the lockfile: a changed dependency set must not restore the
+          # previous store.
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
 
       - name: Cache the cargo registry
         uses: actions/cache@v4
@@ -113,6 +142,7 @@ jobs:
           echo "python  $(python3 --version)"
           echo "git     $(git --version)"
           echo "sh      $(command -v sh)"
+          echo "store   $(corepack pnpm store path)"
 
       - name: Install dependencies
         shell: bash
