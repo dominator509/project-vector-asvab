@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-21T02:26:57.121896+00:00",
+  "generated_at": "2026-09-21T02:48:49.291512+00:00",
   "root": ".agent/evidence",
-  "count": 518,
+  "count": 519,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -210,8 +210,8 @@
     },
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
-      "bytes": 1245,
-      "sha256": "948ba09fbc3c3683ba852bb9ff24fabc2288ed630b982e8b42e810ecd1b96448"
+      "bytes": 1248,
+      "sha256": "2c73cb040f50acd7a31483b8f3cd603fb919fdcbb56fa9606d95a5a96592a934"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -621,7 +621,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "5ae078e48d717bc3653a0700f5977530985451b977dfdefb8e613f1855525488"
+      "sha256": "a53ea517984c31e348ba82f0bbe3274eee3677575baf2dfea47e9483035dd37a"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -1386,7 +1386,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1024,
-      "sha256": "91d94991ce27d7a17ac1bcd4b8780f36312224051c1cbe93ce370eb56530c6f5"
+      "sha256": "195d82687ba4b791cab3427ebd1e3041567db3e058149af5231837226186977c"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",
@@ -2385,13 +2385,18 @@
     },
     {
       "path": ".agent/evidence/EP-010/production-readiness-perf.log",
-      "bytes": 662760,
-      "sha256": "1b3ee35fd4f734ac21646fd3a63dfc906799e3ab3efdb0eaaf45a129c4f42e09"
+      "bytes": 665856,
+      "sha256": "5304d4f7b1a370d454d7a416fd48b5279f9d2b492548fb803ae35a39c2bc65e2"
     },
     {
       "path": ".agent/evidence/EP-010/production-readiness-prelint.log",
       "bytes": 666053,
       "sha256": "689a117e0fc4a616bbce7f562df4d93964290cc85eed741e2a1795896e21a096"
+    },
+    {
+      "path": ".agent/evidence/EP-010/production-readiness-tools.log",
+      "bytes": 661747,
+      "sha256": "c2d62a48e85016bd403828663815adb3487bf04a845fabc18d42ad2dd9f62b75"
     },
     {
       "path": ".agent/evidence/EP-010/production-readiness.exitcode",

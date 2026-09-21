@@ -121,15 +121,18 @@ jobs:
           key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: pnpm-${{ runner.os }}-
 
-      - name: Cache the cargo registry
+      - name: Cache the cargo registry and the installed tools
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          # The lockfile is the cache key: a changed dependency set must not
-          # reuse the previous one.
-          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+            ~/.cargo/bin
+          # `scripts/install.sh` builds the pinned `cargo-audit` and `cargo-deny`
+          # from source, so `~/.cargo/bin` is cached too and its contents are part
+          # of the key: bumping a pinned tool version must not restore the old
+          # binary. `Cargo.lock` covers the dependency set.
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock', 'scripts/install.sh') }}
           restore-keys: cargo-${{ runner.os }}-
 
       - name: Report the toolchain actually in use
@@ -143,6 +146,11 @@ jobs:
           echo "git     $(git --version)"
           echo "sh      $(command -v sh)"
           echo "store   $(corepack pnpm store path)"
+          # The security scanners are cargo subcommands provisioned by
+          # scripts/install.sh; recording their versions ties the advisory
+          # results to the tool that produced them (DOD-025).
+          echo "audit   $(cargo audit --version)"
+          echo "deny    $(cargo deny --version)"
 
       - name: Install dependencies
         shell: bash

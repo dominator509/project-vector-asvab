@@ -2,7 +2,7 @@
   "components": [
     {
       "component": "Binary",
-      "digest": "decb643435f5243e9c08e2dac39c0def560e677a8d06934a2afb3bdd3cfe2c6c",
+      "digest": "89c94bb48e1492115d3f8ca3c31bd992de7409c03fa9586b8d817abd20e60a0f",
       "bytes": 12246528
     },
     {
@@ -27,10 +27,10 @@
     },
     {
       "component": "GitSha",
-      "digest": "9a01efcb39383918b666218b1f855a68c2640fe764947c7b1893de785b06d5df",
+      "digest": "44ac4e0c7c6c7096188546e677b3bce2ce8d56bc2a6b51b8b623175888b72c13",
       "bytes": null
     }
   ],
-  "identity_digest": "aace4fce7c3c268a78b3b45fdd5b2d68b2a1964d32d5101173d7690da7252f44",
+  "identity_digest": "97c746da55d2f3b464f7acdfe1c4e55ec4fa34fe2229dc0aac4a9011dda7741f",
   "version": "0.1.0"
 }
