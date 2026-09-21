@@ -70,7 +70,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # The run manifest records the commit the artifact was built from, so
           # the full SHA has to be reachable.
