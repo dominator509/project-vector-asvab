@@ -1,0 +1,83 @@
+# Dependabot configuration.
+#
+# The repository already fails CI on a vulnerable or non-permitted dependency
+# (`scripts/security-check.sh` runs `cargo audit` and `cargo deny check`;
+# `scripts/dependency-audit.sh` generates the SBOM). What was missing is
+# something that *offers the upgrade*: Dependabot security updates react to an
+# advisory, but without this file there are no scheduled version updates, so a
+# dependency only moves when someone remembers to move it.
+#
+# Every pull request Dependabot opens runs the full release gate
+# (`.github/workflows/verify.yml`), so a bump that breaks a licence rule, an
+# advisory disposition or a test cannot be merged green. On a public repository
+# those runs are free; after this repository is made private they are metered,
+# which is worth knowing before turning the schedule up.
+version: 2
+
+updates:
+  # Rust workspace: 13 crates sharing one lockfile at the repository root.
+  - package-ecosystem: cargo
+    directory: "/"
+    target-branch: main
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(rust)"
+    labels:
+      - dependencies
+      - rust
+    groups:
+      # Minor and patch bumps are batched: they are routine, and one pull
+      # request per crate per week would bury the ones that matter.
+      rust-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    # Major updates are deliberately NOT grouped. Each one changes an API and is
+    # a decision rather than maintenance, so it arrives alone with its own gate
+    # run and its own review.
+
+  # Node workspace: `pnpm-workspace.yaml` declares `apps/*`, and the single
+  # `pnpm-lock.yaml` lives at the root, so the directory is the root rather than
+  # each package.
+  - package-ecosystem: npm
+    directory: "/"
+    target-branch: main
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(node)"
+    labels:
+      - dependencies
+      - node
+    groups:
+      node-minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # The workflows themselves are dependencies: `actions/checkout@v4` is mutable
+  # code that runs with this repository's token. Keeping them current is how the
+  # Node 20 runtime deprecation on those actions gets resolved.
+  - package-ecosystem: github-actions
+    directory: "/"
+    target-branch: main
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(actions)"
+    labels:
+      - dependencies
+      - github-actions

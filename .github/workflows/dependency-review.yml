@@ -1,0 +1,56 @@
+name: dependency review
+
+# Reviews the dependencies a pull request *introduces*.
+#
+# The existing gates check what is already in the repository: `cargo audit` and
+# `cargo deny check` in `scripts/security-check.sh` read the committed lockfiles,
+# so a vulnerable crate added by a pull request is caught only after it is
+# merged and the gate next runs. This evaluates the diff instead, which is the
+# one place a new dependency can be stopped before it lands.
+#
+# ## Why it does not restate the licence policy
+#
+# `deny.toml` and `PERMITTED_LICENSES` in `crates/vector-platform/src/release.rs`
+# are the licence authority, and `dependency-audit.sh` enforces them over the
+# real dependency graph. Repeating that list as `allow-licenses` or
+# `deny-licenses` here would create a second copy to drift out of step, which
+# AGENTS.md §6 exists to prevent. This workflow therefore fails on vulnerability
+# severity only, and licence outcomes stay with the gate that already owns them.
+#
+# ## Availability
+#
+# Dependency review is free on public repositories. On a **private** repository
+# it requires GitHub Advanced Security, so if this repository is made private
+# without that licence this workflow will fail rather than review anything —
+# delete it or buy the licence at that point, but do not leave it red and
+# ignored.
+#
+# ## Version pinning
+#
+# `actions/dependency-review-action` publishes full version tags but no floating
+# `v4`/`v5` major tag — verified against the repository's tag list — so a
+# conventional `@v4` reference would not resolve. It is pinned to a full tag, and
+# staying on the v4 line rather than jumping to the newest major is deliberate:
+# a major bump is a supply-chain decision, not a tidy-up.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  # The action reads the pull request's changed files and dependency diff.
+  pull-requests: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Review the dependencies this pull request introduces
+        uses: actions/dependency-review-action@v4.9.0
+        with:
+          # Block on high and critical only. Lower severities are reported in the
+          # job summary; failing every advisory regardless of severity is how a
+          # check becomes something people learn to ignore.
+          fail-on-severity: high
