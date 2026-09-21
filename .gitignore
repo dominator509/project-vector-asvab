@@ -9,6 +9,12 @@ coverage/
 playwright-report/
 test-results/
 *.log
+
+# Gate logs are ignored because they are large, machine-specific, and rewritten
+# on every run. They are not discarded, though: each closed epoch keeps an
+# immutable `.agent/evidence/EP-XXX/logs.tar.gz`, so the committed `.log.sha256`
+# digests stay re-derivable from a clean clone. Prove it with
+# `python3 scripts/verify-evidence-archive.py`.
 *.dmp
 *.crash
 *.tmp

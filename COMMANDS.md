@@ -36,6 +36,7 @@ export RUST_BACKTRACE=1
 | Ledger integrity | `python3 scripts/validate-hash-ledger.py .` |
 | DoD gate | `sh scripts/dod-gate.sh` |
 | Release state | `python3 scripts/release-state.py` |
+| Evidence archive verify | `python3 scripts/verify-evidence-archive.py` |
 | Graph next node | `sh scripts/graph-next.sh` |
 | Harness next stage | `sh scripts/harness-next.sh` |
 | Harness accounting | `sh scripts/harness-accounting.sh` |
