@@ -113,7 +113,7 @@ jobs:
           corepack pnpm config set store-dir "$HOME/.pnpm-store"
 
       - name: Cache the pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.pnpm-store
           # Keyed on the lockfile: a changed dependency set must not restore the
@@ -122,7 +122,7 @@ jobs:
           restore-keys: pnpm-${{ runner.os }}-
 
       - name: Cache the cargo registry and the installed tools
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
