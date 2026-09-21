@@ -60,11 +60,14 @@ sh scripts/verify.sh                           # the full sweep, 19 gates
 python3 scripts/verify-evidence-archive.py     # re-derive the committed evidence digests
 ```
 
-`install.sh` must run before `preflight.sh`: the preflight reports the toolchain it
-finds, and on a clean clone the dependencies it inspects have not been installed
-yet. The last command is what proves the evidence record survived the copy — it
-extracts each `.agent/evidence/EP-XXX/logs.tar.gz` and checks the restored logs
-against the `.log.sha256` digests committed alongside them.
+`install.sh` must run before `verify.sh`: it provisions the dependency trees, the
+cargo registry cache, and the pinned `cargo-audit` and `cargo-deny` subcommands
+that the security gates invoke — none of which the Rust toolchain supplies on its
+own. `preflight.sh` deliberately depends on none of that: it reports which
+machine-level tools are present and is honest on a bare clone, so it is safe to run
+before the install. The last command is what proves the evidence record survived
+the copy — it extracts each `.agent/evidence/EP-XXX/logs.tar.gz` and checks the
+restored logs against the `.log.sha256` digests committed alongside them.
 
 Driving the broker's pull-request lane additionally needs `gh auth login` with the
 `workflow` scope. Nothing else in the build does.
