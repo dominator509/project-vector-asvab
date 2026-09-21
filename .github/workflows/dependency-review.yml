@@ -48,7 +48,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Review the dependencies this pull request introduces
-        uses: actions/dependency-review-action@v4.9.0
+        uses: actions/dependency-review-action@v5.0.0
         with:
           # Block on high and critical only. Lower severities are reported in the
           # job summary; failing every advisory regardless of severity is how a
