@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-20T21:10:20.387599+00:00",
+  "generated_at": "2026-09-21T01:52:57.288589+00:00",
   "root": ".agent/evidence",
-  "count": 516,
+  "count": 517,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -210,8 +210,8 @@
     },
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
-      "bytes": 1247,
-      "sha256": "384cc00e7fc53447f9d0a76aacc07a3f02bfc79415365d6daac7d96f1593f39c"
+      "bytes": 1248,
+      "sha256": "e92baa831f1fd5433ebe923998b0c3268144985a06c61554a0e2b998e40601c4"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -621,7 +621,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "59add655e8ec3ee6179461ce572ad0d95a907e1f8ad0d1f31e0a08158a3ee5db"
+      "sha256": "a5dd4a487fa9d16bfffef7eec6b47b6719b9c26d132699ce4df2bf0d7bf4822f"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -1386,7 +1386,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1024,
-      "sha256": "10f14ef5d9a0a36b2b6a58cbeb752b754509a15eaee04609b48516de15338465"
+      "sha256": "d89a38a7a091c0cc2e75fed8ffaa101615b030ce572f0eaf98fabfc4db4c8c38"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",
@@ -2370,8 +2370,8 @@
     },
     {
       "path": ".agent/evidence/EP-010/production-readiness-final.log",
-      "bytes": 661926,
-      "sha256": "899ab603cce1f80496a0b0729de0bcec76a204d7a9239902cb43bb5b91938467"
+      "bytes": 665022,
+      "sha256": "db6964e6d2b662251a0c03e50ccbec00d4b4016b480dd891fb107a8a5591080f"
     },
     {
       "path": ".agent/evidence/EP-010/production-readiness-generated.log",
@@ -2382,6 +2382,11 @@
       "path": ".agent/evidence/EP-010/production-readiness-license.log",
       "bytes": 658785,
       "sha256": "e16f81be87c6bc5814b02d3344249b192184df4a7ca10f1888c9c8776ed87a72"
+    },
+    {
+      "path": ".agent/evidence/EP-010/production-readiness-prelint.log",
+      "bytes": 662957,
+      "sha256": "185183e50de673e87588167bafcf786f9c2fa8c84c11671b193c896a5033032f"
     },
     {
       "path": ".agent/evidence/EP-010/production-readiness.exitcode",

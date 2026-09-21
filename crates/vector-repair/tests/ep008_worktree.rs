@@ -395,7 +395,7 @@ fn removal_deletes_the_checkout_and_gits_record_of_it() {
     let expected = comparable(&path);
     let listed = listed_worktrees(&scratch.repository);
     assert!(
-        listed.iter().any(|entry| *entry == expected),
+        listed.contains(&expected),
         "git must record a worktree at {expected:?}, but lists {listed:?}"
     );
 
@@ -409,7 +409,7 @@ fn removal_deletes_the_checkout_and_gits_record_of_it() {
         "only the main checkout may remain, got {after:?}"
     );
     assert!(
-        !after.iter().any(|entry| *entry == expected),
+        !after.contains(&expected),
         "the removed worktree must no longer be recorded: {after:?}"
     );
 }
