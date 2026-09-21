@@ -234,8 +234,13 @@ fn many_persisted_attempts_stay_within_budget() {
     // A constant-time insert stays flat across the two samples. A per-insert
     // scan over 2,000 rows grows by roughly 20x between them, so five leaves
     // room for scheduler noise on a shared runner while still failing on the
-    // defect class. The observed numbers are printed either way, so the
-    // measurement is in the log rather than inferred from a pass.
+    // defect class.
+    //
+    // Both samples and the ratio are in the assertion message, so a failure
+    // carries the measurement. On a passing run libtest captures test stdout,
+    // and this line appears only when the suite is run with `--nocapture`; the
+    // numbers are not in the CI log of a green run, and this comment says so
+    // rather than implying otherwise.
     const MAX_GROWTH: f64 = 5.0;
 
     let mut first_sample = Duration::ZERO;
