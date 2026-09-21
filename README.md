@@ -35,6 +35,53 @@ Start with `HOW_TO_USE.md`, then `PROJECT_BRIEF.md`, `ARCHITECTURE.md`,
 
 Start with `HOW_TO_USE.md`, `AGENTS.md`, `COMMANDS.md`, and `.agent/GRAPH.md`.
 
+## Restoring a working copy
+
+A clone contains everything needed to rebuild the project: the source, both
+lockfiles, the pinned toolchains (`rust-toolchain.toml`, `.nvmrc` and
+`packageManager`), the icons, the migrations, and the evidence record. Nothing
+required to build exists only on one machine.
+
+Prerequisites a clone cannot supply, because they belong to the machine:
+
+| Prerequisite | Why |
+|---|---|
+| `git`, Python 3, `rustup`, Node 24 | `scripts/preflight.sh` prints `ABSENT` for any that are missing |
+| pnpm, via `corepack enable` | pinned by `packageManager` in `package.json` |
+| MSVC build tools and the WebView2 runtime (Windows) | Tauri links against both |
+
+Then, from the repository root, in this order:
+
+```sh
+sh scripts/install.sh                          # pinned helpers, then pnpm install --frozen-lockfile
+sh scripts/preflight.sh                        # toolchain and prerequisite report
+python3 scripts/validate-generated-pack.py .   # generated-pack shape
+sh scripts/verify.sh                           # the full sweep, 19 gates
+python3 scripts/verify-evidence-archive.py     # re-derive the committed evidence digests
+```
+
+`install.sh` must run before `preflight.sh`: the preflight reports the toolchain it
+finds, and on a clean clone the dependencies it inspects have not been installed
+yet. The last command is what proves the evidence record survived the copy — it
+extracts each `.agent/evidence/EP-XXX/logs.tar.gz` and checks the restored logs
+against the `.log.sha256` digests committed alongside them.
+
+Driving the broker's pull-request lane additionally needs `gh auth login` with the
+`workflow` scope. Nothing else in the build does.
+
+### What is deliberately not in the repository
+
+These are excluded by the rules in `.gitignore`. None is needed to rebuild, and
+none is a loss:
+
+| Excluded | Why, and how it comes back |
+|---|---|
+| Gate logs (`*.log`) | Large, machine-specific, rewritten on every run. Each closed epoch's logs are preserved in `.agent/evidence/EP-XXX/logs.tar.gz`, which is what keeps the committed `.log.sha256` digests re-derivable. |
+| `target/`, `node_modules/`, `apps/desktop/dist/` | Build output and dependency trees. `scripts/install.sh` and the build recreate them. |
+| Installers (`*.msi`, `*.exe`) | Rebuilt from source. A Windows build is not bit-reproducible, so a rebuild matches in behaviour rather than byte for byte; CI keeps the bytes it built as a 90-day Actions artifact. |
+| `vector.db` | The runtime learner store, not source. Carrying one learner's history into every clone is exactly why it is excluded. |
+| `.env`, provider credentials | Never committed. Provider sign-in lives in the provider CLIs' own configuration directories, so this repository neither holds nor needs those secrets. |
+
 ## Licence
 
 **Proprietary and confidential. All rights reserved.** No licence, express or
