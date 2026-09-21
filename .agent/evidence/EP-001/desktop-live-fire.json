@@ -1,32 +1,32 @@
 {
   "artifact": "target\\release\\vector-desktop.exe",
   "artifact_bytes": 12246528,
-  "artifact_sha256": "b0cb5a0335709045351039014cbc283a5a03b50e8b17e3954b32393f9a962854",
+  "artifact_sha256": "decb643435f5243e9c08e2dac39c0def560e677a8d06934a2afb3bdd3cfe2c6c",
   "bundles": [
     {
       "path": "target\\release\\bundle\\msi\\Project VECTOR_0.1.0_x64_en-US.msi",
       "bytes": 4472832,
-      "sha256": "f47f21fb938b4b7d6ce6f7c504e813c567d350344e845a4b385155776085ee10"
+      "sha256": "389ca0a0c6d086e56e25e9f6e6253735b0aa37a30c83d1260e69f563bedc7ad4"
     },
     {
       "path": "target\\release\\bundle\\nsis\\Project VECTOR_0.1.0_x64-setup.exe",
-      "bytes": 3113884,
-      "sha256": "ed20b7bf449c5dad4ab228441f59bf61409c50fb896c89f4421584a922683bc3"
+      "bytes": 3114378,
+      "sha256": "5207b902d1f892c1528973734e26935c16592000ed0efd232397d3c97ce9dcf8"
     }
   ],
   "app_data_dir": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app",
   "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
-  "markers_before": 10,
+  "markers_before": 11,
   "exited_early": false,
-  "launch_seconds": 5.27,
+  "launch_seconds": 4.39,
   "window_title": "Project VECTOR",
-  "markers_after": 11,
+  "markers_after": 12,
   "marker": {
-    "id": "ui-ready-3a11933e-2ba3-424d-be23-76bd4f6e27cf",
-    "created_at": "2026-09-21 01:52:32",
+    "id": "ui-ready-09ffd8b2-543b-4c92-a1b9-b0bea71d86b9",
+    "created_at": "2026-09-21 02:26:40",
     "details": {
       "bundle": "0.1.0+8b5552fe9701",
-      "recorded_at": "2026-09-21T01:52:32.330231500+00:00"
+      "recorded_at": "2026-09-21T02:26:40.304957+00:00"
     }
   },
   "webview_reached_command_layer": true,

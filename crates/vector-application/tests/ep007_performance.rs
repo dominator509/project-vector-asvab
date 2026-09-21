@@ -4,11 +4,21 @@
 //! assert *outcomes within a bound* rather than reporting timings, so a
 //! regression that makes a hot path pathologically slow fails the suite.
 //!
-//! Bounds are deliberately generous (orders of magnitude above observed cost)
-//! because these run on shared CI hardware in a debug profile. A generous bound
-//! still catches the class of defect that matters: an accidental O(n^2) scan or
-//! a per-iteration resource construction, which is exactly what this suite
-//! found in the redaction path.
+//! Two kinds of bound appear here, and the difference is deliberate:
+//!
+//! * **CPU-bound work** (redaction, planning, scheduling, screening, archive
+//!   parsing) uses a generous absolute wall-clock bound. That work is dominated
+//!   by this process, so a bound set orders of magnitude above the observed cost
+//!   still catches an accidental O(n^2) scan or a per-iteration resource
+//!   construction — the class of defect this suite found in the redaction path.
+//!
+//! * **Durable writes** are dominated by the disk's fsync latency, because the
+//!   database runs `PRAGMA synchronous = FULL` and every insert commits. An
+//!   absolute bound there measures the host rather than the code: with identical
+//!   source, one such test took seconds locally and 22.96 s on a shared CI
+//!   runner. It asserts *scaling* instead — that per-insert cost does not grow
+//!   as the table does — which is a property of the code and holds on any disk,
+//!   and which is what an O(n) insert defect actually looks like.
 
 use std::time::{Duration, Instant};
 
@@ -201,12 +211,71 @@ fn many_persisted_attempts_stay_within_budget() {
 
     let repo = AttemptRepo::new(&db);
 
-    within("writing 2,000 attempts", Duration::from_secs(20), || {
-        for i in 0..2_000 {
-            repo.record("L", "AR", &format!("q{i}"), i % 2 == 0, 1000 + i as i64)
-                .expect("record");
+    // What this test can and cannot measure.
+    //
+    // A durable insert here costs one fsync: the database runs
+    // `PRAGMA synchronous = FULL`, and every `record` commits. An absolute
+    // wall-clock bound for that workload therefore measures the *host disk*.
+    // With identical code this test passed locally in seconds and failed on a
+    // shared CI runner at 22.96 s for 2,000 inserts. DOD-022 requires a
+    // threshold to be set against a defined environment, and no environment is
+    // declared for this suite, so an absolute budget calibrated on one machine
+    // cannot be a product criterion — it distinguishes disks, not code.
+    //
+    // The defect the suite exists to catch is a per-insert scan that makes
+    // writing O(n): an accidental full-table lookup, a missing index, a
+    // resource built per iteration. That shows up as per-insert cost *growing*
+    // as the table grows, which is measurable without knowing how fast the disk
+    // is, by comparing two samples from the same run on the same hardware.
+    const TOTAL: usize = 2_000;
+    // Larger than it needs to be for the signal, because each sample is a
+    // timing sum on a shared machine and a bigger sample is a steadier one.
+    const SAMPLE: usize = 250;
+    // A constant-time insert stays flat across the two samples. A per-insert
+    // scan over 2,000 rows grows by roughly 20x between them, so five leaves
+    // room for scheduler noise on a shared runner while still failing on the
+    // defect class. The observed numbers are printed either way, so the
+    // measurement is in the log rather than inferred from a pass.
+    const MAX_GROWTH: f64 = 5.0;
+
+    let mut first_sample = Duration::ZERO;
+    let mut last_sample = Duration::ZERO;
+    let started = Instant::now();
+
+    for i in 0..TOTAL {
+        let insert_started = Instant::now();
+        repo.record("L", "AR", &format!("q{i}"), i % 2 == 0, 1000 + i as i64)
+            .expect("record");
+        let insert_elapsed = insert_started.elapsed();
+        if i < SAMPLE {
+            first_sample += insert_elapsed;
         }
-    });
+        if i >= TOTAL - SAMPLE {
+            last_sample += insert_elapsed;
+        }
+    }
+
+    let total = started.elapsed();
+    let growth = last_sample.as_secs_f64() / first_sample.as_secs_f64().max(1e-9);
+    eprintln!(
+        "persistence throughput: {TOTAL} durable inserts in {total:?}; \
+         first {SAMPLE} {first_sample:?}, last {SAMPLE} {last_sample:?}, growth {growth:.2}x"
+    );
+
+    // A hang guard, not a performance criterion: loose enough to hold on the
+    // slowest supported disk, tight enough that a stall fails instead of
+    // running until the job timeout.
+    assert!(
+        total <= Duration::from_secs(300),
+        "writing {TOTAL} attempts took {total:?}; this bound exists only to fail a hang"
+    );
+
+    assert!(
+        growth <= MAX_GROWTH,
+        "per-insert cost grew {growth:.2}x between the first and last {SAMPLE} inserts \
+         (first {first_sample:?}, last {last_sample:?}); writing an attempt must not get \
+         slower as the table grows"
+    );
 
     let stats = repo.analytics("L", "AR").expect("analytics");
     assert_eq!(stats.total, 2_000, "every attempt must persist");

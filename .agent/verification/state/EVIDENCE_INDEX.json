@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-21T01:52:57.288589+00:00",
+  "generated_at": "2026-09-21T02:26:57.121896+00:00",
   "root": ".agent/evidence",
-  "count": 517,
+  "count": 518,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -210,8 +210,8 @@
     },
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
-      "bytes": 1248,
-      "sha256": "e92baa831f1fd5433ebe923998b0c3268144985a06c61554a0e2b998e40601c4"
+      "bytes": 1245,
+      "sha256": "948ba09fbc3c3683ba852bb9ff24fabc2288ed630b982e8b42e810ecd1b96448"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -621,7 +621,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "a5dd4a487fa9d16bfffef7eec6b47b6719b9c26d132699ce4df2bf0d7bf4822f"
+      "sha256": "5ae078e48d717bc3653a0700f5977530985451b977dfdefb8e613f1855525488"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -1386,7 +1386,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1024,
-      "sha256": "d89a38a7a091c0cc2e75fed8ffaa101615b030ce572f0eaf98fabfc4db4c8c38"
+      "sha256": "91d94991ce27d7a17ac1bcd4b8780f36312224051c1cbe93ce370eb56530c6f5"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",
@@ -2384,9 +2384,14 @@
       "sha256": "e16f81be87c6bc5814b02d3344249b192184df4a7ca10f1888c9c8776ed87a72"
     },
     {
+      "path": ".agent/evidence/EP-010/production-readiness-perf.log",
+      "bytes": 662760,
+      "sha256": "1b3ee35fd4f734ac21646fd3a63dfc906799e3ab3efdb0eaaf45a129c4f42e09"
+    },
+    {
       "path": ".agent/evidence/EP-010/production-readiness-prelint.log",
-      "bytes": 662957,
-      "sha256": "185183e50de673e87588167bafcf786f9c2fa8c84c11671b193c896a5033032f"
+      "bytes": 666053,
+      "sha256": "689a117e0fc4a616bbce7f562df4d93964290cc85eed741e2a1795896e21a096"
     },
     {
       "path": ".agent/evidence/EP-010/production-readiness.exitcode",
