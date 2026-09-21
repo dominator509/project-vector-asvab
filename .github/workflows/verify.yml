@@ -187,7 +187,7 @@ jobs:
 
       - name: Upload the release evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-evidence
           # The verdict, the manifest, the DoD status, the evidence index, the
@@ -208,7 +208,7 @@ jobs:
 
       - name: Upload the installers
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installers
           # Unsigned. REQ-036 records signing as an external gate; these are the
