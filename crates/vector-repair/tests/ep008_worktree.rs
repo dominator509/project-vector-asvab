@@ -345,6 +345,46 @@ fn commands_run_inside_the_worktree_without_a_shell() {
 // Removal
 // ---------------------------------------------------------------------------
 
+/// Paths git lists as worktrees of `repo`, normalized for comparison.
+///
+/// Parsed from `git worktree list --porcelain` rather than from the
+/// human-readable listing. The porcelain format is a documented contract — one
+/// `worktree <path>` line per entry — whereas the readable listing aligns its
+/// columns and formats paths for display, which is not something to match
+/// substrings against. An earlier version of this file did exactly that and had
+/// to be fixed once already for that reason.
+///
+/// Paths are canonicalized so a verbatim (`\\?\`) prefix, a short (8.3) name or
+/// a different separator does not make two spellings of one directory compare
+/// unequal. Canonicalization is not assumed to succeed: if it fails the
+/// normalized string is used, because a comparison that silently collapses to
+/// "equal" would defeat the point.
+fn listed_worktrees(repo: &Path) -> Vec<String> {
+    let text = git(repo, &["worktree", "list", "--porcelain"]);
+    text.lines()
+        .filter_map(|line| line.strip_prefix("worktree "))
+        .map(|raw| {
+            let path = PathBuf::from(raw.trim());
+            std::fs::canonicalize(&path)
+                .unwrap_or(path)
+                .to_string_lossy()
+                .replace('\\', "/")
+                .trim_end_matches('/')
+                .to_string()
+        })
+        .collect()
+}
+
+/// The same normalization for a path we hold ourselves.
+fn comparable(path: &Path) -> String {
+    std::fs::canonicalize(path)
+        .unwrap_or_else(|_| path.to_path_buf())
+        .to_string_lossy()
+        .replace('\\', "/")
+        .trim_end_matches('/')
+        .to_string()
+}
+
 #[test]
 fn removal_deletes_the_checkout_and_gits_record_of_it() {
     let scratch = Scratch::new("remove");
@@ -352,27 +392,25 @@ fn removal_deletes_the_checkout_and_gits_record_of_it() {
     let worktree = RepairWorktree::create(&spec).expect("create");
     let path = worktree.path().to_path_buf();
 
-    let listed = git(&scratch.repository, &["worktree", "list"]);
+    let expected = comparable(&path);
+    let listed = listed_worktrees(&scratch.repository);
     assert!(
-        listed.contains(&path.to_string_lossy().replace('\\', "/"))
-            || listed.contains(&path.to_string_lossy().to_string()),
-        "git must know about the worktree: {listed}"
+        listed.iter().any(|entry| *entry == expected),
+        "git must record a worktree at {expected:?}, but lists {listed:?}"
     );
 
     worktree.remove().expect("remove");
 
     assert!(!path.exists(), "the checkout directory must be gone");
-    // Counted rather than substring-matched: the scratch repository's own path
-    // contains the tag, so a substring check would match the main worktree.
-    let after = git(&scratch.repository, &["worktree", "list"]);
-    let entries = after.lines().filter(|l| !l.trim().is_empty()).count();
+    let after = listed_worktrees(&scratch.repository);
     assert_eq!(
-        entries, 1,
-        "only the main checkout may remain, got:\n{after}"
+        after.len(),
+        1,
+        "only the main checkout may remain, got {after:?}"
     );
     assert!(
-        !after.contains(&path.to_string_lossy().replace('\\', "/")),
-        "the removed worktree must not be listed: {after}"
+        !after.iter().any(|entry| *entry == expected),
+        "the removed worktree must no longer be recorded: {after:?}"
     );
 }
 
