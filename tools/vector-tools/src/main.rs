@@ -371,9 +371,12 @@ enum ContentCommands {
         /// Database to write into.
         #[arg(long)]
         db: PathBuf,
-        /// The subtest the items serve: `SI` for the shop manuals.
+        /// The subtest the items serve: `SI` for the shop manuals, `AI` for the automotive ones.
         #[arg(long, default_value = "SI")]
         subtest: String,
+        /// Which half of each description to ask about: `tools` or `functions`.
+        #[arg(long, default_value = "tools")]
+        ask: String,
         /// Webster's Unabridged 1913 text, used only for the OCR check.
         #[arg(long)]
         dictionary: PathBuf,
@@ -668,6 +671,7 @@ fn main() -> Result<()> {
             ContentCommands::Tools {
                 db,
                 subtest,
+                ask,
                 dictionary,
                 works,
                 count,
@@ -680,14 +684,22 @@ fn main() -> Result<()> {
                     .iter()
                     .map(|work| content::parse_archive_work(work))
                     .collect::<Result<Vec<_>>>()?;
+                let kind = match ask.as_str() {
+                    "functions" => vector_questions::purposes::ItemKind::Function,
+                    "tools" => vector_questions::purposes::ItemKind::Tool,
+                    other => anyhow::bail!("--ask must be tools or functions, not {other:?}"),
+                };
                 let outcome = content::ingest_tools(
                     &db,
-                    &subtest,
                     &parsed,
-                    count,
-                    seed,
-                    &dictionary,
-                    &reviewer,
+                    &content::ToolIngestOptions {
+                        subtest: &subtest,
+                        kind,
+                        count,
+                        seed,
+                        dictionary_path: &dictionary,
+                        reviewer: &reviewer,
+                    },
                 )?;
 
                 let report = serde_json::json!({

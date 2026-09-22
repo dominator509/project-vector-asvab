@@ -12,12 +12,12 @@
 
 use std::path::Path;
 
-use vector_application::content::{ContentPipeline, PurposeIngestRequest};
+use vector_application::content::{has_joined_words, ContentPipeline, PurposeIngestRequest};
 use vector_persistence::content::ContentItemRepo;
 use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::{Database, Migration, MigrationManager};
 use vector_questions::dictionary::{parse_webster, Dictionary};
-use vector_questions::purposes::{parse_purposes, verify, PurposeItem, Purposes};
+use vector_questions::purposes::{parse_purposes, verify, ItemKind, PurposeItem, Purposes};
 
 mod tempdir {
     use std::path::{Path, PathBuf};
@@ -85,6 +85,27 @@ WRENCHES
 Open-end wrenches are used to turn nuts and bolts in places where a socket will not fit.
 ";
 
+/// A manual whose scan lost spaces, which is the damage the real ones have.
+///
+/// The first sentence is *Tools and Their Uses* almost verbatim: the Internet Archive scan
+/// reads `without damagingthe surrounding material`, and that text reached a stored prompt.
+const JOINED_MANUAL: &str = "\
+SCREW AND TAP EXTRACTORS
+Screw extractors are used to remove broken screws without damagingthe surrounding material.
+
+MICROMETERS
+Micrometers are used to measure distances to the nearest one thousandth of an inch.
+
+VISES AND CLAMPS
+Vises are used for holding work when it is being planed, sawed, or drilled.
+
+WRENCHES
+Open-end wrenches are used to turn nuts and bolts in places where a socket will not fit.
+
+PLIERS
+Long-nose pliers are used for gripping, reaching places not readily accessible to the hand.
+";
+
 /// A miniature Webster's holding the words the fixture manual's tool names are built from.
 ///
 /// It has to be this complete because the shop path checks every word of an option: a
@@ -140,6 +161,26 @@ Nose, n. The prominent part of the face.
 Hand
 
 Hand, n. The extremity of the arm.
+
+Damage
+
+Damage, v. To injure, hurt, or impair.
+
+The
+
+The, a. The definite article.
+
+To
+
+To, prep. In the direction of.
+
+Drive
+
+Drive, v. To urge or force on.
+
+Ammeter
+
+Ammeter, n. An instrument for measuring current.
 ";
 
 fn migrations() -> Vec<Migration> {
@@ -175,6 +216,7 @@ fn fixture() -> Purposes {
 fn request<'a>(source: &'a str, dictionary: &'a Dictionary) -> PurposeIngestRequest<'a> {
     PurposeIngestRequest {
         subtest: "SI",
+        kind: ItemKind::Tool,
         label: "A Test Manual",
         source_id: source,
         count: 8,
@@ -293,6 +335,152 @@ fn an_option_containing_a_misreading_is_refused() {
             );
         }
     }
+}
+
+/// The scanner's other failure: two words with no space between them.
+#[test]
+fn a_lost_space_is_seen_in_the_prose_a_learner_reads() {
+    let dictionary = dictionary();
+    // The two shapes the corpus has: a lost space between words, and a lost space after a
+    // comma. Both are tokens the dictionary does not carry that come apart into two it does.
+    assert_eq!(
+        has_joined_words(
+            &dictionary,
+            "remove broken screws without damagingthe surrounding"
+        ),
+        Some("damagingthe".to_string())
+    );
+    assert_eq!(
+        has_joined_words(&dictionary, "when soldering,or brazing metals together"),
+        Some("soldering,or".to_string())
+    );
+    // The negative controls: prose with no damage, a hyphenated name, and a figure.
+    assert_eq!(
+        has_joined_words(&dictionary, "measure distances to the nearest thousandth"),
+        None
+    );
+    assert_eq!(has_joined_words(&dictionary, "the Long-nose pliers"), None);
+    assert_eq!(
+        has_joined_words(&dictionary, "a T-bevel and a 1-57 gage"),
+        None
+    );
+    // A hyphenated compound that lost a space inside one of its parts: TM 9-8000 reads
+    // `allowing for engine-todrive train clearance`.
+    assert_eq!(
+        has_joined_words(&dictionary, "allowing for engine-todrive train clearance"),
+        Some("engine-todrive".to_string())
+    );
+    // The negative control: a hyphen the manual meant, whose parts are words of their own.
+    assert_eq!(
+        has_joined_words(&dictionary, "the screw-extractor and the long-nose pliers"),
+        None
+    );
+}
+
+#[test]
+fn a_purpose_with_a_lost_space_is_refused() {
+    let (_dir, db, source) = database("joined");
+    let pipeline = ContentPipeline::new(&db);
+    let dictionary = dictionary();
+
+    // The damaged sentence still parses -- `damagingthe` is not enough to stop the miner --
+    // so keeping it out of a prompt is this path's job, not the builder's.
+    let manual = parse_purposes(JOINED_MANUAL, "A Test Manual");
+    assert!(
+        manual
+            .entries()
+            .iter()
+            .any(|entry| entry.purpose.contains("damagingthe")),
+        "the fixture should describe the damaged purpose: {:?}",
+        manual.entries()
+    );
+
+    let report = pipeline
+        .ingest_purposes(&manual, &request(&source, &dictionary))
+        .expect("ingest");
+    assert!(
+        report.activated >= 4,
+        "the undamaged descriptions still build: {report:?}"
+    );
+    let repo = ContentItemRepo::new(&db);
+    for item in repo.servable("SI").expect("servable") {
+        assert!(
+            !item.stem.contains("damagingthe"),
+            "{}: a lost space reached a prompt: {}",
+            item.id,
+            item.stem
+        );
+    }
+}
+
+/// Two editions of one manual: the same question in both, worded as each edition words it.
+///
+/// The content hash covers the prompt *and* the source sentence, so two editions that state
+/// the same thing in the same words are already one item. What the hash cannot see is the
+/// same question built from a differently-worded sentence -- `The ammeter is used to ...`
+/// against `An ammeter is used to ...` -- and both editions are in this corpus, so the
+/// question has to be compared rather than the sentence.
+#[test]
+fn two_editions_of_one_manual_do_not_ask_the_same_question_twice() {
+    let (_dir, db, source) = database("two-editions");
+    let pipeline = ContentPipeline::new(&db);
+    let dictionary = dictionary();
+
+    let first = parse_purposes(
+        "AMMETERS\n\
+         The ammeter is used to indicate the amount of current flowing to and from the battery.\n\
+         Vises are used for holding work when it is being planed, sawed, or drilled.\n\
+         Open-end wrenches are used to turn nuts and bolts in places where a socket will not fit.\n\
+         Long-nose pliers are used for gripping, reaching places not readily accessible to the hand.\n",
+        "A Test Manual",
+    );
+    let second = parse_purposes(
+        "AMMETERS\n\
+         An ammeter is used to indicate the amount of current flowing to and from the battery.\n\
+         Screw extractors are used to remove broken screws without damaging the surrounding material.\n\
+         Inside micrometers are used for measuring inside dimensions of a bored hole.\n\
+         Vises are used for holding work when it is being planed, sawed, or drilled.\n",
+        "A Test Manual",
+    );
+    // The two sentences differ, and the question they build is the same one.
+    let question = |source: &Purposes| {
+        source
+            .entries()
+            .iter()
+            .find(|entry| entry.tool.eq_ignore_ascii_case("ammeter"))
+            .map(|entry| entry.purpose.clone())
+            .expect("both editions describe the ammeter")
+    };
+    assert_eq!(question(&first), question(&second));
+
+    pipeline
+        .ingest_purposes(&first, &request(&source, &dictionary))
+        .expect("first edition");
+    let report = pipeline
+        .ingest_purposes(&second, &request(&source, &dictionary))
+        .expect("second edition");
+
+    let repo = ContentItemRepo::new(&db);
+    let stems: Vec<String> = repo
+        .servable("SI")
+        .expect("servable")
+        .into_iter()
+        .map(|item| item.stem)
+        .collect();
+    let mut seen = std::collections::HashSet::new();
+    for stem in &stems {
+        assert!(seen.insert(stem.clone()), "asked twice: {stem}");
+    }
+    assert!(
+        stems
+            .iter()
+            .any(|stem| stem.contains("amount of current flowing")),
+        "the ammeter question should be asked once: {stems:?}"
+    );
+    assert!(
+        report.already_present > 0,
+        "the repeat should be counted, not stored: {report:?}"
+    );
 }
 
 #[test]

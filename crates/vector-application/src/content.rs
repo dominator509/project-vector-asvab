@@ -209,24 +209,27 @@ impl<'a> ContentPipeline<'a> {
             generator_hash: Some(generator_hash.as_str()),
         })?;
 
-        repo.cite(&id, request.source_id)?;
+        let outcome: anyhow::Result<()> = (|| {
+            repo.cite(&id, request.source_id)?;
 
-        // Record the verifier's hash before activation. The schema refuses an
-        // active item whose verifier and generator hashes agree, so this is the
-        // step that makes "independently verified" mean something.
-        self.db.connection().execute(
-            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
-            rusqlite::params![id, verifier_hash.as_str()],
-        )?;
+            // Record the verifier's hash before activation. The schema refuses an
+            // active item whose verifier and generator hashes agree, so this is the
+            // step that makes "independently verified" mean something.
+            self.db.connection().execute(
+                "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+                rusqlite::params![id, verifier_hash.as_str()],
+            )?;
 
-        repo.walk_to_content_reviewed(&id, request.generator)?;
-        repo.activate(
-            &id,
-            request.reviewer,
-            "machine-verified original item, deterministic proof checked",
-        )?;
+            repo.walk_to_content_reviewed(&id, request.generator)?;
+            repo.activate(
+                &id,
+                request.reviewer,
+                "machine-verified original item, deterministic proof checked",
+            )?;
 
-        Ok(id)
+            Ok(())
+        })();
+        self.finish_item(&repo, &id, outcome).map(|_| id)
     }
 
     /// Ingest Word Knowledge items from two recorded sources.
@@ -269,6 +272,15 @@ impl<'a> ContentPipeline<'a> {
         for item in items {
             let content_hash = item.content_hash();
             if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            if self.question_is_stored(
+                "WK",
+                &item.prompt,
+                &item.options[item.correct_index],
+                None,
+            )? {
                 report.already_present += 1;
                 continue;
             }
@@ -375,22 +387,25 @@ impl<'a> ContentPipeline<'a> {
         // Both sources are cited: the thesaurus is the item's evidence, and the
         // dictionary is what corroborates it. A citation the vault has not seen
         // is refused by migration 004, so both must be recorded first.
-        repo.cite(&id, request.thesaurus_source)?;
-        repo.cite(&id, request.dictionary_source)?;
+        let outcome: anyhow::Result<()> = (|| {
+            repo.cite(&id, request.thesaurus_source)?;
+            repo.cite(&id, request.dictionary_source)?;
 
-        self.db.connection().execute(
-            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
-            rusqlite::params![id, verifier_hash.as_str()],
-        )?;
+            self.db.connection().execute(
+                "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+                rusqlite::params![id, verifier_hash.as_str()],
+            )?;
 
-        repo.walk_to_content_reviewed(&id, request.generator)?;
-        repo.activate(
-            &id,
-            request.reviewer,
-            "ingested from public-domain sources; synonym pair corroborated by both",
-        )?;
+            repo.walk_to_content_reviewed(&id, request.generator)?;
+            repo.activate(
+                &id,
+                request.reviewer,
+                "ingested from public-domain sources; synonym pair corroborated by both",
+            )?;
 
-        Ok(id)
+            Ok(())
+        })();
+        self.finish_item(&repo, &id, outcome).map(|_| id)
     }
 
     /// Ingest Electronics Information items from one NEETS module glossary.
@@ -433,6 +448,15 @@ impl<'a> ContentPipeline<'a> {
         for item in items {
             let content_hash = item.content_hash();
             if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            if self.question_is_stored(
+                "EI",
+                &item.prompt,
+                &item.options[item.correct_index],
+                None,
+            )? {
                 report.already_present += 1;
                 continue;
             }
@@ -532,21 +556,24 @@ impl<'a> ContentPipeline<'a> {
             generator_hash: Some(generator_hash.as_str()),
         })?;
 
-        repo.cite(&id, request.source_id)?;
+        let outcome: anyhow::Result<()> = (|| {
+            repo.cite(&id, request.source_id)?;
 
-        self.db.connection().execute(
-            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
-            rusqlite::params![id, verifier_hash.as_str()],
-        )?;
+            self.db.connection().execute(
+                "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+                rusqlite::params![id, verifier_hash.as_str()],
+            )?;
 
-        repo.walk_to_content_reviewed(&id, request.generator)?;
-        repo.activate(
-            &id,
-            request.reviewer,
-            "ingested from a public-domain Navy training module; definition quoted verbatim",
-        )?;
+            repo.walk_to_content_reviewed(&id, request.generator)?;
+            repo.activate(
+                &id,
+                request.reviewer,
+                "ingested from a public-domain Navy training module; definition quoted verbatim",
+            )?;
 
-        Ok(id)
+            Ok(())
+        })();
+        self.finish_item(&repo, &id, outcome).map(|_| id)
     }
 
     /// Ingest Paragraph Comprehension items from one public-domain text.
@@ -600,6 +627,15 @@ impl<'a> ContentPipeline<'a> {
         for item in items {
             let content_hash = item.content_hash();
             if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            if self.question_is_stored(
+                "PC",
+                &item.prompt,
+                &item.options[item.correct_index],
+                Some(&item.passage),
+            )? {
                 report.already_present += 1;
                 continue;
             }
@@ -712,21 +748,24 @@ impl<'a> ContentPipeline<'a> {
             generator_hash: Some(generator_hash.as_str()),
         })?;
 
-        repo.cite(&id, request.source_id)?;
+        let outcome: anyhow::Result<()> = (|| {
+            repo.cite(&id, request.source_id)?;
 
-        self.db.connection().execute(
-            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
-            rusqlite::params![id, verifier_hash.as_str()],
-        )?;
+            self.db.connection().execute(
+                "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+                rusqlite::params![id, verifier_hash.as_str()],
+            )?;
 
-        repo.walk_to_content_reviewed(&id, request.generator)?;
-        repo.activate(
-            &id,
-            request.reviewer,
-            "ingested from public-domain prose; passage occurs verbatim in the source",
-        )?;
+            repo.walk_to_content_reviewed(&id, request.generator)?;
+            repo.activate(
+                &id,
+                request.reviewer,
+                "ingested from public-domain prose; passage occurs verbatim in the source",
+            )?;
 
-        Ok(id)
+            Ok(())
+        })();
+        self.finish_item(&repo, &id, outcome).map(|_| id)
     }
 
     /// Ingest factual (General Science and shop-knowledge) items from one
@@ -783,6 +822,15 @@ impl<'a> ContentPipeline<'a> {
         for item in items {
             let content_hash = item.content_hash();
             if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            if self.question_is_stored(
+                request.subtest,
+                &item.prompt,
+                &item.options[item.correct_index],
+                None,
+            )? {
                 report.already_present += 1;
                 continue;
             }
@@ -880,21 +928,24 @@ impl<'a> ContentPipeline<'a> {
             generator_hash: Some(generator_hash.as_str()),
         })?;
 
-        repo.cite(&id, request.source_id)?;
+        let outcome: anyhow::Result<()> = (|| {
+            repo.cite(&id, request.source_id)?;
 
-        self.db.connection().execute(
-            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
-            rusqlite::params![id, verifier_hash.as_str()],
-        )?;
+            self.db.connection().execute(
+                "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+                rusqlite::params![id, verifier_hash.as_str()],
+            )?;
 
-        repo.walk_to_content_reviewed(&id, request.generator)?;
-        repo.activate(
-            &id,
-            request.reviewer,
-            "ingested from a public-domain work; question and answer quoted verbatim",
-        )?;
+            repo.walk_to_content_reviewed(&id, request.generator)?;
+            repo.activate(
+                &id,
+                request.reviewer,
+                "ingested from a public-domain work; question and answer quoted verbatim",
+            )?;
 
-        Ok(id)
+            Ok(())
+        })();
+        self.finish_item(&repo, &id, outcome).map(|_| id)
     }
 
     /// Ingest Shop Information items from one public-domain tool manual.
@@ -911,14 +962,42 @@ impl<'a> ContentPipeline<'a> {
         source: &Purposes,
         request: &PurposeIngestRequest<'_>,
     ) -> anyhow::Result<PurposeIngestReport> {
-        // The options are checked, the prompt is not: a tool's name is one to three common
-        // nouns, so a word the dictionary does not carry is suspect, while the prompt
-        // quotes the manual's own prose and would trip a vocabulary rule.
-        let items = source.build_items(request.subtest, request.count, request.seed, |item| {
-            item.options
-                .iter()
-                .all(|option| option_words_are_known(request.dictionary, option))
-        });
+        // The options are checked against the dictionary, the prompt is not: a tool's name is
+        // one to three common nouns, so a word the dictionary does not carry is suspect,
+        // while the prompt quotes the manual's own prose and would trip a vocabulary rule.
+        // An Auto Information option is a clause rather than a name, so the same rule would
+        // refuse `to prevent entrance of water around the shield` for words the dictionary
+        // does carry anyway -- the rule is applied only where it was measured.
+        //
+        // Whichever kind of item it is, the prose is checked for the scanner's lost spaces,
+        // which is a different question from whether the words are ordinary English: the
+        // prompt of `Which tool is used to remove broken screws without damagingthe
+        // surrounding material?` is made of words the dictionary carries and one it does not,
+        // and the learner cannot tell which.
+        let check = |item: &PurposeItem| match request.kind {
+            purposes::ItemKind::Tool => {
+                has_joined_words(request.dictionary, &item.prompt).is_none()
+                    && item
+                        .options
+                        .iter()
+                        .all(|option| option_words_are_known(request.dictionary, option))
+            }
+            purposes::ItemKind::Function => {
+                has_joined_words(request.dictionary, &item.prompt).is_none()
+                    && item
+                        .options
+                        .iter()
+                        .all(|option| has_joined_words(request.dictionary, option).is_none())
+            }
+        };
+        let items = match request.kind {
+            purposes::ItemKind::Tool => {
+                source.build_items(request.subtest, request.count, request.seed, check)
+            }
+            purposes::ItemKind::Function => {
+                source.build_function_items(request.subtest, request.count, request.seed, check)
+            }
+        };
 
         let mut report = PurposeIngestReport {
             label: request.label.to_string(),
@@ -943,6 +1022,20 @@ impl<'a> ContentPipeline<'a> {
         for item in items {
             let content_hash = item.content_hash();
             if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            // Two editions of one manual ask the same question in the same words: TM 9-8000
+            // and TM 9-2700 both say `The ammeter is used to indicate the amount of current
+            // flowing to and from the battery`. The item is not stored twice, because the
+            // content hash cannot see it -- the two items differ in the one thing that is
+            // not the question, which distractors were drawn.
+            if self.question_is_stored(
+                request.subtest,
+                &item.prompt,
+                &item.options[item.correct_index],
+                None,
+            )? {
                 report.already_present += 1;
                 continue;
             }
@@ -1029,21 +1122,69 @@ impl<'a> ContentPipeline<'a> {
             generator_hash: Some(generator_hash.as_str()),
         })?;
 
-        repo.cite(&id, request.source_id)?;
+        let outcome: anyhow::Result<()> = (|| {
+            repo.cite(&id, request.source_id)?;
 
-        self.db.connection().execute(
-            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
-            rusqlite::params![id, verifier_hash.as_str()],
-        )?;
+            self.db.connection().execute(
+                "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+                rusqlite::params![id, verifier_hash.as_str()],
+            )?;
 
-        repo.walk_to_content_reviewed(&id, request.generator)?;
-        repo.activate(
-            &id,
-            request.reviewer,
-            "ingested from a public-domain tool manual; description quoted verbatim",
-        )?;
+            repo.walk_to_content_reviewed(&id, request.generator)?;
+            repo.activate(
+                &id,
+                request.reviewer,
+                "ingested from a public-domain tool manual; description quoted verbatim",
+            )?;
 
-        Ok(id)
+            Ok(())
+        })();
+        self.finish_item(&repo, &id, outcome).map(|_| id)
+    }
+
+    /// Finish storing one item, leaving nothing behind if a step fails.
+    ///
+    /// Storing is a sequence -- insert the draft, cite the source, record the verifier's hash,
+    /// walk the item to content-reviewed, activate it -- and the row exists from the first
+    /// step. A failure after that used to leave a draft in the store, and because a draft *is*
+    /// a row, the question check read it as a question the store already held: an ingestion
+    /// naming a source the vault had not recorded reported six items already present and
+    /// activated none, while the run's own rejection list showed every item refused.
+    ///
+    /// A rejected item leaves no row.
+    fn finish_item(
+        &self,
+        repo: &ContentItemRepo<'_>,
+        id: &str,
+        outcome: anyhow::Result<()>,
+    ) -> anyhow::Result<String> {
+        match outcome {
+            Ok(()) => Ok(id.to_string()),
+            Err(error) => {
+                if let Err(cleanup) = repo.discard_draft(id) {
+                    return Err(error.context(format!(
+                        "and the draft it left behind could not be discarded: {cleanup}"
+                    )));
+                }
+                Err(error)
+            }
+        }
+    }
+
+    /// Whether the store already asks this question, whoever asked it first.
+    ///
+    /// The identity is the one a learner experiences -- stem, correct answer, and the passage
+    /// if the item has one -- rather than the text a source happened to use. See
+    /// `ContentItemRepo::question_exists` for the two ways a duplicate got past the content
+    /// hash and reached the corpus.
+    fn question_is_stored(
+        &self,
+        subtest: &str,
+        stem: &str,
+        correct: &str,
+        passage: Option<&str>,
+    ) -> anyhow::Result<bool> {
+        ContentItemRepo::new(self.db).question_exists(subtest, stem, correct, passage)
     }
 
     fn content_hash_exists(&self, content_hash: &str) -> anyhow::Result<bool> {
@@ -1488,8 +1629,14 @@ impl FactIngestReport {
 /// What one tool-manual ingestion run needs.
 #[derive(Debug, Clone)]
 pub struct PurposeIngestRequest<'a> {
-    /// The subtest the items serve: `SI` for the shop manuals.
+    /// The subtest the items serve: `SI` for the shop manuals, `AI` for the automotive ones.
     pub subtest: &'a str,
+    /// Which half of each description the item asks about.
+    ///
+    /// A tool manual and an automotive manual write the same sentence, `X is used to Y`. Shop
+    /// Information asks which tool does Y; Auto Information asks what X is for. The kind is
+    /// the subtest's question, so the caller states it rather than the pipeline guessing.
+    pub kind: purposes::ItemKind,
     /// The manual's own title, recorded on every item's rubric.
     pub label: &'a str,
     /// The vault id of this manual's text.
@@ -1555,6 +1702,73 @@ fn option_words_are_known(dictionary: &Dictionary, text: &str) -> bool {
     text.split(|c: char| !c.is_alphabetic())
         .filter(|word| word.len() >= 4)
         .all(|word| covers_word(dictionary, word))
+}
+
+/// The token in a learner-facing run of prose that the scanner ran two words together in.
+///
+/// A lost space is the failure this corpus actually has, and a vocabulary check on the
+/// options does not see it. `damaging the` reached an item's prompt as `damagingthe`,
+/// `in a vise` as `ina vise`, and `riveted, or` as `riveted,or`. None of those is one edit
+/// from a dictionary word -- `looks_like_misreading` compares edit distance and a joined
+/// pair is not a substitution -- but each is a token the dictionary does not carry that
+/// comes apart into two tokens it does. The rule is applied to the prose a learner reads:
+/// the purpose a shop prompt asks about, and the clauses an Auto Information item offers as
+/// options. It is never applied to a manual's whole text, where an unknown token is usually
+/// technical vocabulary rather than damage.
+///
+/// Returns the offending token so a refusal can name what it refused.
+pub fn has_joined_words(dictionary: &Dictionary, text: &str) -> Option<String> {
+    for token in text.split_whitespace() {
+        // Punctuation that has a word on both sides of it, with no space, is the same
+        // damage: `soldering,or brazing` offers a learner a word that does not exist.
+        let trimmed = token.trim_matches(|c: char| !c.is_alphanumeric());
+        let joined_by_punctuation = trimmed.char_indices().any(|(index, character)| {
+            matches!(character, ',' | ';')
+                && index > 0
+                && index + character.len_utf8() < trimmed.len()
+        });
+        if joined_by_punctuation {
+            return Some(token.to_string());
+        }
+        // Only a word of letters can be two words run together; `T-bevel` and `1-57` are
+        // hyphenated names and figures, not lost spaces. A hyphenated compound can lose the
+        // same space between its parts -- TM 9-8000 reads `allowing for engine-todrive train
+        // clearance`, where `todrive` is `to drive` -- so each part is examined on its own.
+        if trimmed.len() < 5 || !trimmed.chars().all(char::is_alphabetic) {
+            for part in trimmed.split('-') {
+                if part.len() >= 5 && comes_apart_into_two_words(dictionary, part) {
+                    return Some(token.to_string());
+                }
+            }
+            continue;
+        }
+        let lower = trimmed.to_lowercase();
+        if comes_apart_into_two_words(dictionary, &lower) {
+            return Some(token.to_string());
+        }
+    }
+    None
+}
+
+/// Whether a word the dictionary does not carry comes apart into two words it does.
+///
+/// Every split is tried and both halves have to be two letters or more: `damagingthe` is
+/// `damaging` and `the`, and `todrive` is `to` and `drive`.
+fn comes_apart_into_two_words(dictionary: &Dictionary, word: &str) -> bool {
+    if covers_word(dictionary, word) {
+        return false;
+    }
+    let lower = word.to_lowercase();
+    for index in 2..lower.len().saturating_sub(1) {
+        if !lower.is_char_boundary(index) {
+            continue;
+        }
+        let (left, right) = lower.split_at(index);
+        if covers_word(dictionary, left) && covers_word(dictionary, right) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Whether the dictionary carries a word, allowing for the inflections Webster's omits.

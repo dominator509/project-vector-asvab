@@ -184,3 +184,43 @@ Rust tests across 70 binaries, 210 frontend, 36 E2E.
 Still open: Auto Information has no items; Shop Information is thin at 31; the Word Knowledge
 distractor gap is unchanged; the pack schema still lacks the curriculum graph and calibration
 metadata.
+
+### Round 18
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| Auto Information | `purposes.rs` reads the other half of a description: `Screw extractors are used to remove broken screws` now also forms "What are the screw extractors used for?", with the manual's other components' functions as the wrong answers. Two Army manuals supply it (*TM 9-8000*, *TM 9-2700*), recorded in the vault with their own URL and digest. **59 items.** | `.agent/evidence/EP-007/content-corpus/ROUND-18-REPORT.md`, `ingest-tools-ai.json` |
+| More of the relation | The reader knew only `is used to` and `is used for`. `scripts/probes/description-shapes.py` counted the shapes it could not read -- in TM 9-8000, `is designed to` 66 times and `serves to` 23 times beside 134 `is used to` sentences -- and reading `is designed to`, `is intended to` and `serves to` took the two automotive manuals from 46 descriptions to 78. `serves as` is deliberately not read: its complement is a noun. | `description-shapes.py`, `ROUND-18-REPORT.md` |
+| Nine reading rules | Each written against a sentence that reached a learner: a purpose opens with a verb these manuals use (`Which tool is used to heavy, for medium, and for light duty only?`); punctuation is not part of the word it follows (`used to gripping`); a purpose holds no full stop (a quoted sentence ran on); Latin letters only (`Oй filters`, `fluid pressure юг`); a class is not a tool (`the more permanent type`); a possessive names a document; scan damage is refused rather than repaired (`be- tween`, `EVAPORATOR CORE CAPILLARY TUBE`, `of to candlepower`); a name is not ended by its own first word (`Inside micrometers`); Auto Information options are parallel infinitives. All 16 mutations caught. | `ROUND-18-REPORT.md`, `mutation-round18.py` |
+| One question, asked once | `ContentItemRepo::question_exists` identifies a question by the stem, the correct answer and the passage, and all five ingest paths ask it before storing. It found that **3,305 of the corpus's 7,111 items were questions it had already asked** -- 3,254 in Electronics Information, whose bank was 89% the same definition with its options shuffled. The corpus is 3,809 distinct questions. | `count-items.log`, `check-corpus.log`, `ingest-ei.json` |
+| Two defects behind it | A refused item left a draft row (the row is written before the citation is checked), which the question check then read as a question already held: an ingestion naming an unrecorded source reported six items already present and activated none. And ten Paragraph Comprehension items cited Project Gutenberg #2009 for a file that is #1228 -- the provenance check passed because it re-downloads the manifest, and the manifest had been corrected while the vault record had not. | `ROUND-18-REPORT.md`, `gutenberg-provenance.log` |
+
+Corpus as stored after round 18: 1,949 WK, 414 EI, 1,050 PC, 301 GS, 36 SI, 59 AI = **3,809
+active items**, 33 evidence records, 5,758 citations, 15,236 review rows, every provenance
+invariant a zero -- including the four added this round: the Auto Information stem and option
+shapes, the one-question-per-stem rule, and scan damage read back by an implementation written
+independently of the Rust rules it checks.
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; 1,700 Rust tests across
+109 binaries, 210 frontend tests, 36 E2E, packaged live-fire passed against artifact
+`50d6a5a4216458c88fba7ae59f316a49990b33d185e5bfb4f1bd3bc070714ae1`. Verdict unchanged:
+`CONDITIONAL_EXTERNAL_GATES` (27 PASS, 11 PARTIAL, 2 PENDING, 1 EXTERNAL_REQUIRED, 1
+DEFERRED_LONG_RUNNING, 0 FAIL).
+
+**The number that matters is 3,809, not the 7,111 that preceded it.** A smaller corpus that asks
+3,809 different questions is worth more to a learner than a larger one that asks 414 questions
+repeatedly, and the round's own counts were the thing that had to be corrected before any of the
+new content could be trusted.
+
+Two work products are the measurement rather than the code: `scripts/rebuild-corpus.py` rebuilds
+every subtest from its sources in one run (and prunes the vault record that is not evidence),
+and `scripts/probes/purpose-verbs.py` is how the verb list was written from the sources instead
+of guessed. Seven NAVEDTRA manuals were downloaded, measured and refused for scan quality
+(`Special equipment`, `Relatively large amounts`, `reiatively`, `ordir.aty`), with the refusals
+recorded rather than shipped to make a count look better.
+
+Still open: the bank sizes (414 EI, 1,949 WK, 36 SI, 59 AI against subtests that ask sixteen
+questions in a sitting, with no better source found than the ones measured); a noun-head check
+for the six residual generic names, which needs Webster's part-of-speech markers exposed through
+`Dictionary`; the Word Knowledge rare-distractor gap; the curriculum graph and calibration
+metadata the pack schema still lacks.

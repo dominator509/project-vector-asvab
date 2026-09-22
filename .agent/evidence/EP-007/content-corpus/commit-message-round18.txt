@@ -1,0 +1,126 @@
+content: read the manuals' other half, and ask each question once (REQ-022, REQ-023, REQ-056)
+
+Auto Information exists, the reader knows four more ways a manual states what a thing is
+for, and the corpus turns out to be smaller than it was reported -- because 3,305 of its
+items were questions it had already asked.
+
+## What it adds
+
+`crates/vector-questions/src/purposes.rs` reads the other side of a description. Round 17
+formed "Which tool is used to remove broken screws?" from `Screw extractors are used to
+remove broken screws`; the same sentence now also forms "What are the screw extractors used
+for?", with the functions of the manual's other components as the wrong answers. Two Army
+manuals supply the Auto Information bank: TM 9-8000 (1985) and TM 9-2700, both Internet
+Archive scans recorded in the vault with their own URL and digest.
+
+The relation is stated in more than one set of words, and each shape the reader could not
+see was content already in the corpus: `scripts/probes/description-shapes.py` counted them
+before any rule was written -- in TM 9-8000 alone, `is designed to` 66 times and `serves to`
+23 times beside 134 sentences written `is used to`. Reading `is designed to`, `is intended
+to` and `serves to` took the two automotive manuals from 46 descriptions to 78. `serves as`
+is deliberately not read: its complement is a noun, and these frames take a purpose clause.
+
+## The rules, and the defects they were written for
+
+Every rule below was written against a sentence that reached a learner, and every one is
+mutation-proved: `scripts/probes/mutation-round18.py` disables one rule at a time in the
+source and requires the test that should catch it to fail. All 16 mutations are caught. A
+rule enforced in two places is disabled in both.
+
+* **A purpose opens with a verb these manuals use.** The previous rule refused only what was
+  obviously not a verb, which accepted `used for heavy, for medium, and for light duty only`
+  and built "Which tool is used to heavy, ...?" -- an item with no answer. The list is not
+  guessed: `scripts/probes/purpose-verbs.py` prints every distinct word a purpose opens with
+  across the sources, and the 205 entries are that output. The price is measured: 115
+  descriptions under the permissive rule, 103 under the list.
+* **Punctuation is not part of the word it follows.** `used for gripping, reaching places`
+  reached the corpus as `used to gripping`.
+* **A purpose is a clause and holds no full stop** -- `cut this fuzz from the wood.
+  "Sandpaper" consists of small particles of flint` was one answer, because the opening quote
+  after the stop kept the sentence splitter from ending the sentence.
+* **Latin letters only.** An archived TM 9-8000 offers `Oй filters`, `Tһe bulkhead
+  receptacle` and `fluid pressure юг the lubrication system`; the letters that are
+  shape-identical to Latin ones are normalised, and the rest are refused rather than guessed.
+* **A class is not a tool.** `the more permanent type`, `Whatever method`, `Both hands` and
+  `catch trough then` all describe something; none of them is a thing a shop stocks.
+* **A possessive names a document**, not an object: `automotive manufacturers' requirements`.
+* **Scan damage is refused, not repaired**: `be- tween`, `EVAPORATOR CORE CAPILLARY TUBE`,
+  `of to candlepower`, `at least gallons liters) per minute` -- a broken word, a drawing's
+  label read into a sentence, and a number the scan dropped.
+* **A name is not ended by its own first word**: `Inside micrometers` and `Outside calipers`
+  are tools, and the preposition list was truncating them to nothing.
+* **An Auto Information option is an infinitive.** The manuals state functions both ways, and
+  framing a gerund produced `to joining the towing vehicle and the trailer with safety
+  chains`. The manual's words are not conjugated into a form it did not write: those
+  descriptions are asked as Shop Information questions instead.
+* **A lost space is refused**: `damagingthe`, `ina vise`, `riveted,or`, and `engine-todrive
+  train clearance`.
+
+## One question, asked once
+
+`ContentItemRepo::question_exists` identifies a question by what a learner answers -- the
+stem, the correct answer, and the passage if there is one -- and all five ingest paths ask it
+before storing. The identity is deliberately that coarse and no coarser: `Choose the word
+that most nearly means the same as irenic` has more than one true answer, and the 59 Word
+Knowledge stems with a different correct answer are 59 questions, not duplicates.
+
+Two things were hiding behind the missing check.
+
+**A refused item left a draft behind.** Storing is a sequence -- insert a draft, cite the
+source, record the verifier's hash, walk it to content-reviewed, activate it -- and the row
+exists from the first step, so a failure in the middle left it in the store for good. An
+ingestion naming a source the vault had not recorded produced six drafts, and because a draft
+is a row the new check read them as questions already asked: the run reported six items
+already present and activated none while its own rejection list showed every item refused.
+Fixed with `ContentItemRepo::discard_draft` (guarded to `state = 'draft'`) and
+`ContentPipeline::finish_item`, which wraps the tail of all six store paths.
+
+**The Electronics Information bank was 89% the same question.** It was reported as 3,668
+items; ingesting it again produced 3,668 items of which 3,259 were already asked -- the same
+NEETS definition, the same correct term, the same four options in a different order. The bank
+is 414 questions, which is the whole of what those glossaries state in a shape an item can be
+built from: asked for 3,000 items per module the builder produces about 10,000 candidates and
+414 questions, and a rebuild from an empty store reproduces all 414.
+
+**A citation could not be re-checked.** Ten Paragraph Comprehension items cited
+`https://www.gutenberg.org/ebooks/2009` for the text of `darwin-origin.txt`, which is Project
+Gutenberg #1228. The provenance check passed because it re-downloads the works named in the
+manifest, and the manifest had been corrected while the vault record and the items citing it
+had not. The stale record is gone and the work is re-ingested from the manifest.
+
+## Corpus
+
+| Subtest | Was | Now | Source |
+|---|---|---|---|
+| WK | 2,000 | 1,949 | Moby Thesaurus corroborated by Webster's 1913 |
+| EI | 3,668 | 414 | NEETS module glossaries |
+| PC | 1,047 | 1,050 | 17 public-domain works, passage quoted |
+| GS | 301 | 301 | *The book of wonders* |
+| SI | 31 | 36 | *Tools and Their Uses*, *TM 11-453 Shop Work* |
+| AI | 0 | 59 | *TM 9-8000*, *TM 9-2700* |
+| **Total** | **7,047** | **3,809** | |
+
+The total went down by 3,238 and that is the round's most important number: 3,305 of the
+items the corpus held were questions it had already asked, and three were added where the
+corrected citation produced items the wrong one had refused. Every stored item is now a
+distinct question.
+
+## Tooling
+
+`scripts/rebuild-corpus.py` rebuilds every subtest from its sources in one run, prunes the
+vault record that is not evidence, and writes the round's reports; `--dry-run` reports first.
+`scripts/probes/fetch-archive-text.py` downloads an Internet Archive `_djvu.txt`;
+`purpose-verbs.py`, `description-shapes.py`, `foreign-letters.py` and `mutation-round18.py`
+measure what the rules were written against. `check-corpus.py` gained four invariants,
+including an independent Python implementation of the scan-damage test -- which first
+reported 3,681 damaged items, 3,670 of them `THERMOCOUPLE`-style Electronics Information
+options that are the NEETS glossary's own typography. The capitals rule is scoped to the
+subtests a program framed from a manual's sentence.
+
+Seven Internet Archive NAVEDTRA manuals were downloaded, measured and refused
+(*Construction Mechanic 3 & 2*, *Aviation Machinist's Mate R 1 & C*, *Fluid Power*, *Aviation
+Structural Mechanic E 3 & 2*, *Machinery Repairman 3 & 2*, *Patternmaker 3 and 2*,
+*Construction Electrician 3 & 2*): their microfiche scans write `reiatively`, `chu-k` and
+`ordir.aty`, their sentences run into one another, and what survives the rules is a name that
+names nothing (`Special equipment`, `Relatively large amounts`, `Single-acting cylinders
+similar`).

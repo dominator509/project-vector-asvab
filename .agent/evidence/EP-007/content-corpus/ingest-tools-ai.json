@@ -1,0 +1,47 @@
+{
+  "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+  "dictionary": {
+    "entries": 93308,
+    "path": "sources/webster-1913/pg29765.txt",
+    "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
+  },
+  "elapsed_ms": 10233,
+  "manuals": [
+    {
+      "activated": 51,
+      "already_present": 0,
+      "archive_id": "TM9-8000",
+      "built": 51,
+      "path": "sources/federal/tm9-8000.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:f40812ed1d1b9110c312b410455b3754d3b7f2864e2dfa12dc7ebfd992119d60",
+      "skipped": null,
+      "statements": 64,
+      "title": "TM 9-8000 Principles of Automotive Vehicles (US Army, 1985)"
+    },
+    {
+      "activated": 8,
+      "already_present": 2,
+      "archive_id": "TM9-2700",
+      "built": 10,
+      "path": "sources/federal/tm9-2700.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:24c06aeea83f99fec63c5975f4a608a473327da5c0595e43ffc538906a57c3c6",
+      "skipped": null,
+      "statements": 15,
+      "title": "TM 9-2700 Principles of Automotive Vehicles (US Army)"
+    }
+  ],
+  "requested_per_manual": 300,
+  "seed": 20260922,
+  "subtest": "AI",
+  "totals": {
+    "activated": 59,
+    "already_present": 2,
+    "built": 61,
+    "rejected": 0,
+    "statements": 79
+  }
+}

@@ -919,19 +919,38 @@ fn record_archive_work(
         .with_context(|| format!("cannot record {} in the evidence vault", path.display()))
 }
 
+/// What one Shop or Auto Information ingestion run is asked for.
+///
+/// These are one value rather than seven parameters because they travel together and mean
+/// nothing apart: the subtest and the kind are one decision (Shop Information asks which tool
+/// performs a purpose, Auto Information which purpose a component serves), and the seed is how
+/// a caller reconciles two runs of the same manual.
+pub struct ToolIngestOptions<'a> {
+    pub subtest: &'a str,
+    pub kind: vector_questions::purposes::ItemKind,
+    pub count: usize,
+    pub seed: u64,
+    pub dictionary_path: &'a Path,
+    pub reviewer: &'a str,
+}
+
 /// Ingest Shop Information items from public-domain tool manuals.
 ///
 /// One manual per vault row and one run per manual, so a manual that parses badly cannot
 /// take the rest down with it and an item's citation names the manual it came from.
 pub fn ingest_tools(
     db_path: &Path,
-    subtest: &str,
     works: &[(String, String, PathBuf)],
-    count: usize,
-    seed: u64,
-    dictionary_path: &Path,
-    reviewer: &str,
+    options: &ToolIngestOptions<'_>,
 ) -> Result<ToolOutcome> {
+    let ToolIngestOptions {
+        subtest,
+        kind,
+        count,
+        seed,
+        dictionary_path,
+        reviewer,
+    } = *options;
     if let Some(parent) = db_path.parent() {
         if !parent.as_os_str().is_empty() {
             std::fs::create_dir_all(parent)
@@ -967,6 +986,7 @@ pub fn ingest_tools(
 
         let request = PurposeIngestRequest {
             subtest,
+            kind,
             label: title,
             source_id: &source_id,
             count,

@@ -164,6 +164,26 @@ impl<'a> ContentItemRepo<'a> {
         Ok(())
     }
 
+    /// Remove a draft row that never became an item.
+    ///
+    /// Storing an item is a sequence of statements -- insert a draft, cite its source, record
+    /// the verifier's hash, walk it to content-reviewed, activate it -- and the row exists
+    /// from the first of them. A failure in the middle therefore used to leave a draft behind,
+    /// and an ingestion naming a source the vault had not recorded produced six of them: rows
+    /// no learner could be served and no reviewer could verify, which the store then counted
+    /// as questions it already held.
+    ///
+    /// The guard is `state = 'draft'` on purpose. An active, quarantined or superseded item is
+    /// a record a learner, a reviewer or a pack may depend on, and this method exists only for
+    /// the window in which nothing outside the row itself refers to it.
+    pub fn discard_draft(&self, item_id: &str) -> anyhow::Result<()> {
+        self.db.connection().execute(
+            "DELETE FROM content_items WHERE id = ?1 AND state = 'draft'",
+            params![item_id],
+        )?;
+        Ok(())
+    }
+
     /// Move an item to `to`, recording who did it and why.
     ///
     /// Legality is the schema's decision: the `content_items_transition_guard`
@@ -297,6 +317,50 @@ impl<'a> ContentItemRepo<'a> {
              FROM content_items ORDER BY subtest, id",
             [],
         )
+    }
+
+    /// Whether this subtest already asks this question, whoever asked it first.
+    ///
+    /// The content hash covers the prompt *and* the sentence it was built from, so it catches
+    /// a re-ingestion of the same source text and nothing else. Two things get past it, and
+    /// both reached the corpus:
+    ///
+    /// * two editions of one manual state the same thing in different words -- TM 9-8000 and
+    ///   TM 9-2700 are two editions of *Principles of Automotive Vehicles*, and one says `The
+    ///   ammeter is used to indicate ...` where the other says `An ammeter is used to ...`;
+    /// * a builder draws different wrong answers for the same question, which is how the
+    ///   Electronics Information bank came to ask one glossary definition up to seven times
+    ///   with the same four options in a different order.
+    ///
+    /// So the question is identified by what a learner answers: the stem, the correct answer,
+    /// and the passage if there is one. The correct answer is part of the key on purpose --
+    /// `Choose the word that most nearly means the same as irenic` has more than one true
+    /// answer, and each of them is a question worth asking. The passage is part of it for the
+    /// same reason: a Paragraph Comprehension stem can be generic ("According to the
+    /// passage, which of the following is stated?") and only the passage makes it a question.
+    ///
+    /// The comparison ignores case and surrounding space, because `What are the Clamps used
+    /// for?` and `What are the clamps used for?` are one question.
+    pub fn question_exists(
+        &self,
+        subtest: &str,
+        stem: &str,
+        correct: &str,
+        passage: Option<&str>,
+    ) -> anyhow::Result<bool> {
+        let conn = self.db.connection();
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM content_items
+             WHERE subtest = ?1 AND state IN ('active', 'draft')
+               AND LOWER(TRIM(stem)) = LOWER(TRIM(?2))
+               AND LOWER(TRIM(COALESCE(
+                     json_extract(options_json, '$[' || correct_index || ']'), '')))
+                   = LOWER(TRIM(?3))
+               AND LOWER(TRIM(COALESCE(passage, ''))) = LOWER(TRIM(COALESCE(?4, '')))",
+            params![subtest, stem, correct, passage],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
     }
 
     /// Item counts per lifecycle state, for the content manager surface.

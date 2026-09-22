@@ -8,7 +8,7 @@
 
 use std::path::PathBuf;
 
-use vector_questions::purposes::{parse_purposes, verify, PurposeItem, Purposes};
+use vector_questions::purposes::{parse_purposes, verify, ItemKind, PurposeItem, Purposes};
 
 fn digest(text: &str) -> String {
     use sha2::{Digest, Sha256};
@@ -20,18 +20,32 @@ fn digest(text: &str) -> String {
 fn main() {
     let mut sources: Vec<(String, PathBuf)> = Vec::new();
     let mut count = 200usize;
+    let mut kind = ItemKind::Tool;
+    let mut list_names = false;
     for argument in std::env::args().skip(1) {
-        match argument.split_once('=') {
-            Some((label, path)) => sources.push((label.to_string(), PathBuf::from(path))),
-            None => count = argument.parse().unwrap_or(200),
+        match argument.as_str() {
+            "functions" => kind = ItemKind::Function,
+            "tools" => kind = ItemKind::Tool,
+            // The manuals' own vocabulary decides what counts as a tool, so the survey
+            // needs every name the miner accepted rather than four samples of it.
+            "names" => list_names = true,
+            other => match other.split_once('=') {
+                Some((label, path)) => sources.push((label.to_string(), PathBuf::from(path))),
+                None => count = other.parse().unwrap_or(200),
+            },
         }
     }
+    let subtest = match kind {
+        ItemKind::Tool => "SI",
+        ItemKind::Function => "AI",
+    };
     if sources.is_empty() {
         eprintln!("usage: ingest_tools <label>=<path> [...] [count]");
         std::process::exit(2);
     }
 
     let mut samples: Vec<PurposeItem> = Vec::new();
+    let mut names: Vec<(String, String, String)> = Vec::new();
     let mut total_statements = 0usize;
     let mut total_built = 0usize;
     let mut total_verified = 0usize;
@@ -42,7 +56,10 @@ fn main() {
         let text = std::fs::read_to_string(path)
             .unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
         let source: Purposes = parse_purposes(&text, label);
-        let items = source.build_items("SI", count, 20_260_922, |_| true);
+        let items = match kind {
+            ItemKind::Tool => source.build_items(subtest, count, 20_260_922, |_| true),
+            ItemKind::Function => source.build_function_items(subtest, count, 20_260_922, |_| true),
+        };
 
         let mut verified = 0usize;
         let mut failed = 0usize;
@@ -76,6 +93,11 @@ fn main() {
         if samples.len() < 4 {
             samples.extend(items.into_iter().take(4 - samples.len()));
         }
+        if list_names {
+            for entry in source.entries() {
+                names.push((label.clone(), entry.tool.clone(), entry.purpose.clone()));
+            }
+        }
     }
 
     println!();
@@ -83,6 +105,13 @@ fn main() {
     println!("items built         : {total_built}");
     println!("items verified      : {total_verified}");
     println!("items failed        : {total_failed}");
+
+    if list_names {
+        println!("\n--- every accepted description ---");
+        for (label, tool, purpose) in &names {
+            println!("{label:<22} {tool:<34} -> {purpose}");
+        }
+    }
 
     println!("\n--- sample items ---");
     for item in &samples {

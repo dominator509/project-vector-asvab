@@ -1,6 +1,6 @@
 {
-  "activated": 2000,
-  "already_present": 0,
+  "activated": 1949,
+  "already_present": 51,
   "built": 2000,
   "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
   "dictionary": {
@@ -8,8 +8,8 @@
     "path": "sources/webster-1913/pg29765.txt",
     "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
   },
-  "distinct_items": 2000,
-  "elapsed_ms": 127239,
+  "distinct_items": 1949,
+  "elapsed_ms": 112900,
   "rejected": 0,
   "requested": 2000,
   "seed": 20260922,

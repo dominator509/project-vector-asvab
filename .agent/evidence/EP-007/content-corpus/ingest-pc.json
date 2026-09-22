@@ -1,6 +1,6 @@
 {
   "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
-  "elapsed_ms": 175992,
+  "elapsed_ms": 215877,
   "requested_per_work": 400,
   "seed": 20260922,
   "totals": {
@@ -28,7 +28,7 @@
       "activated": 13,
       "already_present": 0,
       "built": 13,
-      "ebook": "2009",
+      "ebook": "1228",
       "paragraphs": 795,
       "path": "sources/gutenberg/darwin-origin.txt",
       "rejected": 0,

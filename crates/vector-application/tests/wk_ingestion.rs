@@ -164,12 +164,30 @@ fn ingestion_activates_servable_items_carrying_both_citations() {
         .expect("ingest");
 
     assert!(report.built > 0, "the fixture should yield items");
-    assert_eq!(report.activated, report.built, "{:?}", report.rejected);
+    // The fixture holds fewer headwords than the builder is asked for, so one question is
+    // built more than once with different wrong answers. The store asks each question once.
+    assert_eq!(
+        report.activated + report.already_present,
+        report.built,
+        "{:?}",
+        report.rejected
+    );
     assert!(report.is_clean(), "rejections: {:?}", report.rejected);
 
     let repo = ContentItemRepo::new(&db);
     let servable = repo.servable("WK").expect("servable");
     assert_eq!(servable.len(), report.activated);
+    // A word with more than one synonym is more than one question, so the correct answer is
+    // part of what identifies it: `irenic` asked against `pacific` and against `peaceful` are
+    // two items, and the same pair asked twice is one.
+    let mut asked: std::collections::HashSet<(String, String)> = std::collections::HashSet::new();
+    for item in &servable {
+        let question = (
+            item.stem.trim().to_lowercase(),
+            item.options[item.correct_index].trim().to_lowercase(),
+        );
+        assert!(asked.insert(question), "asked twice: {}", item.stem);
+    }
 
     for item in &servable {
         assert_eq!(item.state, "active");
@@ -313,7 +331,7 @@ fn repeating_an_ingestion_adds_nothing() {
         .expect("second");
 
     assert_eq!(second.activated, 0, "nothing new on a repeat: {second:?}");
-    assert_eq!(second.already_present, first.activated);
+    assert_eq!(second.already_present, first.built, "{second:?}");
     assert_eq!(
         pipeline.stats().expect("stats").total as usize,
         first.activated

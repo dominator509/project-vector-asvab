@@ -6,11 +6,58 @@ anything cannot hide behind its own report.
 """
 
 import json
+import re
 import sqlite3
 import sys
+import unicodedata
 
 db = sys.argv[1]
 c = sqlite3.connect(db)
+
+# Letters a Paragraph Comprehension passage legitimately quotes: Latin-1 and the œ ligature.
+PROSE_EXCEPTIONS = set(
+    "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØŒÙÚÛÜÝß"
+    "àáâãäåæçèéêëìíîïñòóôõöøœùúûüýÿ"
+    "‘’“”–—…°"
+)
+
+
+def scan_damage(subtest: str, stem: str, options_json: str) -> int:
+    """Whether a learner-facing field carries damage the scan left in it.
+
+    Written independently of the Rust rules that refuse this text at ingestion, so the check
+    is a readback rather than a restatement: if the two disagree, one of them is wrong.
+
+    The capitals rule applies to the subtests whose sentences a program framed from a manual's
+    prose. In Electronics Information the capitals *are* the source's typography -- a NEETS
+    glossary prints its terms as `THERMOCOUPLE` -- and in the quoted subtests the capitals
+    belong to the work being quoted.
+    """
+    text = (stem or "") + " " + " ".join(json.loads(options_json or "[]"))
+    if "\ufffd" in text:
+        return 1
+    for character in text:
+        if (
+            character.isalpha()
+            and not character.isascii()
+            and character not in PROSE_EXCEPTIONS
+        ):
+            return 1
+    if subtest not in ("SI", "AI"):
+        return 0
+    # A word the scan broke: a letter, a hyphen, a space, a lower-case letter.
+    if re.search(r"[A-Za-z]- [a-z]", text):
+        return 1
+    # A run of capitals, which is a label from a drawing rather than a sentence.
+    if re.search(r"\b[A-Z]{3,}\s+[A-Z]{3,}\b", text):
+        return 1
+    # A bracket opened and never closed, which is text the scan dropped.
+    if text.count("(") != text.count(")") or text.count("[") != text.count("]"):
+        return 1
+    return 0
+
+
+c.create_function("scan_damage", 3, scan_damage)
 
 print("=== corpus ===")
 for subtest, state, count in c.execute(
@@ -29,7 +76,7 @@ print("=== provenance invariants over the whole corpus ===")
 # Comprehension item on a single public-domain work whose passage it quotes, so
 # both cite one. Asserting a flat "2" here reported 4,000 EI items as broken when
 # the corpus was correct -- the probe was wrong, not the data.
-EXPECTED_SOURCES = {"WK": 2, "EI": 1, "PC": 1, "GS": 1, "SI": 1}
+EXPECTED_SOURCES = {"WK": 2, "EI": 1, "PC": 1, "GS": 1, "SI": 1, "AI": 1}
 
 bad_citations = 0
 for subtest, expected in EXPECTED_SOURCES.items():
@@ -118,6 +165,58 @@ checks = [
              select 1 from json_each(content_items.options_json)
              where length(trim(value)) - length(replace(trim(value), ' ', '')) + 1 > 4
            )""",
+    ),
+    # An Auto Information item is the other way round: the stem names a component and the
+    # options are functions, so every option is written as the infinitive the manuals use
+    # (`to prevent leakage ...`) and no option is a bare noun phrase.
+    (
+        "AI items whose stem is not a component-function question",
+        """select count(*) from content_items where subtest='AI'
+           and (stem not like 'What %' or stem not like '% used for?')""",
+    ),
+    (
+        "AI items with an option that is not an infinitive",
+        """select count(*) from content_items where subtest='AI' and exists (
+             select 1 from json_each(content_items.options_json)
+             where value not like 'to %'
+           )""",
+    ),
+    (
+        "AI items with an option shorter than 4 words",
+        """select count(*) from content_items where subtest='AI' and exists (
+             select 1 from json_each(content_items.options_json)
+             where length(trim(value)) - length(replace(trim(value), ' ', '')) + 1 < 4
+           )""",
+    ),
+    # Two editions of one manual state the same thing in different words, and a builder that
+    # draws different wrong answers for the same question asks it again. The store identifies a
+    # question by the stem, the correct answer and the passage, so a word with two synonyms is
+    # two questions (`irenic` asked against `pacific` and against `peaceful`) and a Paragraph
+    # Comprehension stem that is generic is made a question by its passage.
+    (
+        "questions asked twice within one subtest",
+        """select count(*) from (
+             select subtest,
+                    lower(trim(stem)),
+                    lower(trim(coalesce(json_extract(options_json,
+                          '$[' || correct_index || ']'), ''))),
+                    lower(trim(coalesce(passage, '')))
+             from content_items where state='active'
+             group by 1, 2, 3, 4 having count(*) > 1
+           )""",
+    ),
+    # Damage these scans leave in a learner-facing sentence: a broken word (`be- tween`), a
+    # drawing's label read in (`EVAPORATOR CORE CAPILLARY TUBE`), a bracket never closed, a
+    # letter from another alphabet, and a letter that could not be decoded at all.
+    #
+    # The capitals rule is scoped to the items a *program* framed from a manual's sentence. A
+    # NEETS glossary prints its terms in capitals (`THERMOCOUPLE`), so an unscoped rule reported
+    # 3,670 perfectly good Electronics Information options as damaged -- the probe was wrong,
+    # not the corpus.
+    (
+        "items carrying scan damage in stem or options",
+        """select count(*) from content_items
+           where scan_damage(subtest, stem, options_json) = 1""",
     ),
 ]
 for label, sql in checks:

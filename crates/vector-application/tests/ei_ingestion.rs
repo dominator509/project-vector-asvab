@@ -162,13 +162,32 @@ fn ingestion_activates_servable_items_citing_the_module() {
         .expect("ingest");
 
     assert!(report.built > 0, "the fixture should yield items");
-    assert_eq!(report.activated, report.built, "{:?}", report.rejected);
+    // The fixture defines fewer terms than the builder is asked for, so one question is built
+    // more than once with different wrong answers. The store asks each question once, so a
+    // built item is either stored or recognised as one the store already asks -- and nothing
+    // is refused.
+    assert_eq!(
+        report.activated + report.already_present,
+        report.built,
+        "{:?}",
+        report.rejected
+    );
     assert!(report.is_clean(), "rejections: {:?}", report.rejected);
     assert_eq!(report.module, "NEETS MOD 1");
 
     let repo = ContentItemRepo::new(&db);
     let servable = repo.servable("EI").expect("servable");
     assert_eq!(servable.len(), report.activated);
+    // And no two of them ask the same question: the stem and the correct answer are what a
+    // learner answers, and a shuffled set of wrong answers is not a new question.
+    let mut asked: std::collections::HashSet<(String, String)> = std::collections::HashSet::new();
+    for item in &servable {
+        let question = (
+            item.stem.trim().to_lowercase(),
+            item.options[item.correct_index].trim().to_lowercase(),
+        );
+        assert!(asked.insert(question), "asked twice: {}", item.stem);
+    }
 
     for item in &servable {
         assert_eq!(item.state, "active");
@@ -314,7 +333,14 @@ fn repeating_an_ingestion_adds_nothing() {
         .expect("second");
 
     assert_eq!(second.activated, 0, "nothing new on a repeat: {second:?}");
-    assert_eq!(second.already_present, first.activated);
+    // Every item the first run built is now recognised, whether the store holds it by content
+    // hash or by the question it asks.
+    assert_eq!(second.already_present, first.built, "{second:?}");
+    assert_eq!(
+        second.already_present + second.activated,
+        second.built,
+        "{second:?}"
+    );
 }
 
 #[test]
@@ -332,6 +358,11 @@ fn ingestion_refuses_a_module_the_vault_has_not_recorded() {
         error.to_string().contains("vault") || error.to_string().contains("source"),
         "the refusal should name the problem: {error}"
     );
+    // Nothing is left behind, and that includes the drafts: the row is written before the
+    // citation is checked, so a refused item used to stay in the store as a draft -- invisible
+    // to a learner, counted by the content manager, and read by the question check as a
+    // question the store already asks.
+    assert_eq!(ContentItemRepo::new(&db).all().expect("all").len(), 0);
     assert_eq!(
         ContentItemRepo::new(&db)
             .servable("EI")
