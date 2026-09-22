@@ -14,3 +14,6 @@ tracing.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 sha2.workspace = true
+# The content item store keeps options and distractor rationales as JSON columns,
+# which the schema validates with json_valid and json_array_length.
+serde_json.workspace = true

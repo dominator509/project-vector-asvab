@@ -9,6 +9,11 @@ publish.workspace = true
 vector-domain = { path = "../vector-domain" }
 vector-study = { path = "../vector-study" }
 vector-persistence = { path = "../vector-persistence" }
+# Promoted from dev-dependencies: the application layer now orchestrates content
+# generation, and it is the one place allowed to know both the pure question
+# factory and the persistence layer. ARCHITECTURE.md puts use-case orchestration
+# here and forbids pure layers from importing persistence.
+vector-questions = { path = "../vector-questions" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
@@ -23,4 +28,3 @@ uuid.workspace = true
 # not local copies.
 vector-observability = { path = "../vector-observability" }
 vector-platform = { path = "../vector-platform" }
-vector-questions = { path = "../vector-questions" }

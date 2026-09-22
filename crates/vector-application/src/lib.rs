@@ -8,6 +8,7 @@
 //! UI invokes (SPEC-003), and the background workers that keep derived state in
 //! step with stored evidence (REQ-054).
 
+pub mod content;
 pub mod egress;
 pub mod offline;
 pub mod privacy;

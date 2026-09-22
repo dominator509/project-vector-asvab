@@ -5,9 +5,11 @@
 //! atomic integrity-checked backup/restore.
 
 pub mod backup;
+pub mod content;
 pub mod db;
 pub mod repo;
 
+pub use content::{ContentItemRepo, NewContentItem, ReviewEntry, StoredItem};
 pub use db::{Database, Migration, MigrationManager};
 
 #[cfg(test)]

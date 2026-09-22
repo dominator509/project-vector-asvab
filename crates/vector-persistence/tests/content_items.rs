@@ -145,7 +145,25 @@ fn walk_to_content_reviewed(db: &Database, id: &str) {
         .expect("stamp objective and reviewer");
 }
 
+/// Record a source in the evidence vault so it may be cited.
+///
+/// Migration 004 requires every citation to resolve, so a test that cites a
+/// source without recording it is now refused -- which is the point.
+fn put_source(db: &Database, source_id: &str) {
+    db.connection()
+        .execute(
+            "INSERT OR IGNORE INTO evidence_records
+                 (id, content_hash, url, title, license, effective_date, trust,
+                  retrieval_status, created_at)
+             VALUES (?1, ?2, 'https://www.officialasvab.com/', 'ASVAB subtest constructs',
+                     'US-Government-Work', '2026-09-22', 0.9, 'retrieved', ?3)",
+            params![source_id, format!("sha256:{source_id}"), NOW],
+        )
+        .expect("record source in the vault");
+}
+
 fn cite_source(db: &Database, item_id: &str, source_id: &str) {
+    put_source(db, source_id);
     db.connection()
         .execute(
             "INSERT INTO content_item_sources (item_id, source_id) VALUES (?1, ?2)",
@@ -482,4 +500,88 @@ fn sources_are_recorded_per_item_and_cascade_with_it() {
         )
         .expect("count after delete");
     assert_eq!(remaining, 0, "citations cascade with the item");
+}
+
+// ---------------------------------------------------------------------------
+// Migration 004: a citation must resolve, in both directions
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_citation_must_name_a_source_the_vault_has_recorded() {
+    let dir = tempdir::TempDir::new("vec-items");
+    let db = migrated(&dir);
+    insert(&db, &NewItem::ar("q-ar-1", "sha256:aaa")).expect("insert");
+    let unrecorded = db.connection().execute(
+        "INSERT INTO content_item_sources (item_id, source_id)
+         VALUES ('q-ar-1', 'SRC-NEVER-RECORDED')",
+        [],
+    );
+    assert!(
+        unrecorded.is_err(),
+        "REQ-056: naming a source the vault has never seen is not provenance"
+    );
+}
+
+#[test]
+fn a_citation_cannot_be_rewritten_to_an_unrecorded_source() {
+    let dir = tempdir::TempDir::new("vec-items");
+    let db = migrated(&dir);
+    insert(&db, &NewItem::ar("q-ar-1", "sha256:aaa")).expect("insert");
+    cite_source(&db, "q-ar-1", "SRC-A");
+
+    // Inserting a valid pair and then rewriting the key would side-step an
+    // insert-only rule, so the update path is guarded too.
+    let rewritten = db.connection().execute(
+        "UPDATE content_item_sources SET source_id = 'SRC-NEVER-RECORDED'
+         WHERE item_id = 'q-ar-1'",
+        [],
+    );
+    assert!(rewritten.is_err(), "the citation key must stay resolvable");
+}
+
+#[test]
+fn a_recorded_source_cannot_be_deleted_while_an_item_cites_it() {
+    let dir = tempdir::TempDir::new("vec-items");
+    let db = migrated(&dir);
+    insert(&db, &NewItem::ar("q-ar-1", "sha256:aaa")).expect("insert");
+    cite_source(&db, "q-ar-1", "SRC-A");
+
+    let deleted = db
+        .connection()
+        .execute("DELETE FROM evidence_records WHERE id = 'SRC-A'", []);
+    assert!(
+        deleted.is_err(),
+        "deleting a cited source would leave dangling provenance"
+    );
+
+    // Once nothing cites it, the vault row is free to go.
+    db.connection()
+        .execute(
+            "DELETE FROM content_item_sources WHERE item_id = 'q-ar-1'",
+            [],
+        )
+        .expect("remove citation");
+    assert_eq!(
+        db.connection()
+            .execute("DELETE FROM evidence_records WHERE id = 'SRC-A'", [])
+            .expect("delete uncited source"),
+        1
+    );
+}
+
+#[test]
+fn recording_the_same_source_twice_is_a_no_op() {
+    let dir = tempdir::TempDir::new("vec-items");
+    let db = migrated(&dir);
+    put_source(&db, "SRC-UNUSED");
+    put_source(&db, "SRC-UNUSED");
+    let count: i64 = db
+        .connection()
+        .query_row(
+            "SELECT COUNT(*) FROM evidence_records WHERE id = 'SRC-UNUSED'",
+            [],
+            |r| r.get(0),
+        )
+        .expect("count");
+    assert_eq!(count, 1, "the vault is hash-addressed and deduplicates");
 }
