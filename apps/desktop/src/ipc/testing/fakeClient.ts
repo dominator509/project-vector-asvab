@@ -29,6 +29,8 @@ import type {
   AppPathsDto,
   BackupDto,
   BackupEntryDto,
+  ContentItemSummaryDto,
+  ContentManagerDto,
   ContentStatsDto,
   EvidenceDto,
   GenerationReportDto,
@@ -42,6 +44,7 @@ import type {
   ReadinessDto,
   ResetDto,
   RestoreDto,
+  ReviewEntryDto,
 } from "../types";
 export interface FakeCall {
   command: string;
@@ -57,6 +60,10 @@ export interface FakeState {
   mastery: Map<string, MasteryDto>;
   /** Generated practice items, keyed by id. */
   items: Map<string, ItemDto>;
+  /** Ids withdrawn from service. */
+  quarantined: Set<string>;
+  /** Review entries appended by quarantine and reinstatement. */
+  reviews: ReviewEntryDto[];
   evidence: Map<string, EvidenceDto>;
   backups: Array<{
     path: string;
@@ -120,6 +127,8 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
     attempts: new Map(),
     mastery: new Map(),
     items: new Map(),
+    quarantined: new Set(),
+    reviews: [],
     evidence: new Map(),
     backups: [],
     uiReadyMarkers: [],
@@ -567,15 +576,102 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
       );
     },
 
+    async contentManager(limit: number): Promise<ContentManagerDto> {
+      record("content_manager", { limit });
+      const stats = await this.contentStats();
+      const items: ContentItemSummaryDto[] = [...state.items.values()]
+        .slice(0, limit)
+        .map((item) => ({
+          id: item.id,
+          subtest: item.subtest,
+          state: state.quarantined.has(item.id) ? "quarantined" : "active",
+          objective_id: item.objective_id,
+          preview: item.stem.slice(0, 120),
+          correct_answer: item.options[item.correct_index] ?? "",
+          reviewer: "content-reviewer",
+          content_hash: `sha256:${item.id}`,
+          sources: ["ev-test-source"],
+        }));
+      return {
+        stats,
+        sources:
+          state.items.size === 0
+            ? []
+            : [
+                {
+                  id: "ev-test-source",
+                  title: "Test source",
+                  url: "https://example.invalid/source",
+                  licence: "Public domain in the USA",
+                  trust: 0.9,
+                  item_count: state.items.size,
+                },
+              ],
+        items,
+      };
+    },
+
+    async contentQuarantine(itemId, actor, reason): Promise<void> {
+      record("content_quarantine", { item_id: itemId, actor, reason });
+      if (!state.items.has(itemId)) {
+        throw new Error(`not found: content item ${itemId}`);
+      }
+      if (state.quarantined.has(itemId)) {
+        throw new Error(`${itemId} is already quarantined`);
+      }
+      state.quarantined.add(itemId);
+      state.reviews.push({
+        from_state: "active",
+        to_state: "quarantined",
+        actor,
+        rationale: reason,
+        created_at: "2026-09-22T00:00:00Z",
+      });
+    },
+
+    async contentReinstate(itemId, actor, reason): Promise<void> {
+      record("content_reinstate", { item_id: itemId, actor, reason });
+      if (!state.quarantined.has(itemId)) {
+        throw new Error(`${itemId} is not quarantined`);
+      }
+      state.quarantined.delete(itemId);
+      state.reviews.push({
+        from_state: "quarantined",
+        to_state: "active",
+        actor,
+        rationale: reason,
+        created_at: "2026-09-22T00:00:01Z",
+      });
+    },
+
+    async contentHistory(itemId: string): Promise<ReviewEntryDto[]> {
+      record("content_history", { item_id: itemId });
+      return [...state.reviews];
+    },
+
     async contentStats(): Promise<ContentStatsDto> {
       record("content_stats");
       const items = [...state.items.values()];
+      // Mirror the backend, which counts `state = 'active'`. A fake that reported
+      // every stored item as servable would let a view pass its tests while
+      // showing a withdrawn question as available.
+      const quarantined = [...state.quarantined].filter((id) =>
+        state.items.has(id),
+      ).length;
+      const active = items.length - quarantined;
       const byState =
-        items.length === 0 ? [] : [{ state: "active", count: items.length }];
+        items.length === 0
+          ? []
+          : [
+              { state: "active", count: active },
+              ...(quarantined > 0
+                ? [{ state: "quarantined", count: quarantined }]
+                : []),
+            ];
       const subtests = [...new Set(items.map((item) => item.subtest))].sort();
       return {
         total: items.length,
-        servable: items.length,
+        servable: active,
         sources: items.length === 0 ? 0 : 1,
         by_state: byState,
         by_subtest: subtests.map((subtest) => ({

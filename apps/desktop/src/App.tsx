@@ -17,6 +17,7 @@ import { BackendProvider, useBackend } from "./ipc/Backend";
 import { ProfileProvider, useActiveProfile } from "./state/ProfileContext";
 import { AccessibleSettings } from "./views/AccessibleSettings";
 import { OnboardingView } from "./views/OnboardingView";
+import { ContentManagerView } from "./views/ContentManagerView";
 import { PracticeContentView } from "./views/PracticeContentView";
 import { SearchView } from "./views/SearchView";
 import { ExamSimulatorView } from "./views/ExamSimulatorView";
@@ -193,6 +194,8 @@ function ViewBody({ view, a11y, onA11yChange }: ViewBodyProps) {
       return <TodayView />;
     case "accessibility":
       return <AccessibleSettings settings={a11y} onChange={onA11yChange} />;
+    case "content":
+      return <ContentManagerView />;
     case "practice":
       // Real generated items, loaded from the command boundary. This used to
       // pass `sampleQuestions`, which is how the app appeared to have content.

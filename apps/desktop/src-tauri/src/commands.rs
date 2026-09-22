@@ -27,7 +27,8 @@ use std::sync::{Mutex, MutexGuard};
 
 use tauri::State;
 use vector_application::content::{
-    ContentPipeline, ContentStatsDto, GenerateRequest, GenerationReportDto, ItemDto,
+    ContentManagerDto, ContentPipeline, ContentStatsDto, GenerateRequest, GenerationReportDto,
+    ItemDto, ReviewEntryDto,
 };
 use vector_application::service::{
     AnalyticsDto, BackupDto, BackupEntryDto, EvidenceDto, HealthDto, LatencyDto, MasteryDto,
@@ -653,4 +654,88 @@ pub fn content_stats_impl(db: &Database) -> Result<ContentStatsDto, ServiceError
 #[tauri::command]
 pub fn content_stats(state: State<'_, AppState>) -> Result<ContentStatsDto, String> {
     with_db(&state, content_stats_impl)
+}
+
+/// Everything the content manager shows, in one call.
+///
+/// One command rather than three because the view draws all of it at once, and
+/// three round trips could render statistics and a listing that disagree.
+pub fn content_manager_impl(db: &Database, limit: u32) -> Result<ContentManagerDto, ServiceError> {
+    ContentPipeline::new(db)
+        .manager_view(limit as usize)
+        .map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_manager(
+    state: State<'_, AppState>,
+    limit: u32,
+) -> Result<ContentManagerDto, String> {
+    with_db(&state, |db| content_manager_impl(db, limit))
+}
+
+/// Withdraw an item from service, recording who did it and why.
+pub fn content_quarantine_impl(
+    db: &Database,
+    item_id: &str,
+    actor: &str,
+    reason: &str,
+) -> Result<(), ServiceError> {
+    ContentPipeline::new(db)
+        .quarantine_item(item_id, actor, reason)
+        .map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_quarantine(
+    state: State<'_, AppState>,
+    item_id: String,
+    actor: String,
+    reason: String,
+) -> Result<(), String> {
+    with_db(&state, |db| {
+        content_quarantine_impl(db, &item_id, &actor, &reason)
+    })
+}
+
+/// Return a quarantined item to service along the documented pipeline.
+pub fn content_reinstate_impl(
+    db: &Database,
+    item_id: &str,
+    actor: &str,
+    reason: &str,
+) -> Result<(), ServiceError> {
+    ContentPipeline::new(db)
+        .reinstate_item(item_id, actor, reason)
+        .map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_reinstate(
+    state: State<'_, AppState>,
+    item_id: String,
+    actor: String,
+    reason: String,
+) -> Result<(), String> {
+    with_db(&state, |db| {
+        content_reinstate_impl(db, &item_id, &actor, &reason)
+    })
+}
+
+/// One item's audit trail.
+pub fn content_history_impl(
+    db: &Database,
+    item_id: &str,
+) -> Result<Vec<ReviewEntryDto>, ServiceError> {
+    ContentPipeline::new(db)
+        .item_history(item_id)
+        .map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_history(
+    state: State<'_, AppState>,
+    item_id: String,
+) -> Result<Vec<ReviewEntryDto>, String> {
+    with_db(&state, |db| content_history_impl(db, &item_id))
 }

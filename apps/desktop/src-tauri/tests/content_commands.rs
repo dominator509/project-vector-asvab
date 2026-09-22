@@ -13,7 +13,8 @@
 //! these tests fail if a migration the commands depend on stops being registered.
 
 use vector_desktop_lib::commands::{
-    content_generate_impl, content_next_impl, content_stats_impl, migrations,
+    content_generate_impl, content_history_impl, content_manager_impl, content_next_impl,
+    content_quarantine_impl, content_reinstate_impl, content_stats_impl, migrations,
 };
 use vector_persistence::{Database, MigrationManager};
 
@@ -293,4 +294,194 @@ fn an_untouched_installation_reports_an_empty_corpus() {
         stats.by_state.is_empty() && stats.by_subtest.is_empty(),
         "a fresh install has no content rows: {stats:?}"
     );
+}
+
+// ---------------------------------------------------------------------------
+// The content manager surface
+// ---------------------------------------------------------------------------
+
+#[test]
+fn the_manager_reports_the_corpus_its_sources_and_its_items() {
+    let (_dir, db) = database("manager");
+    content_generate_impl(&db, "AR", 15, 7).expect("generate");
+
+    let view = content_manager_impl(&db, 50).expect("manager view");
+    assert_eq!(view.stats.total, 15);
+    assert_eq!(view.stats.servable, 15);
+    assert!(
+        !view.sources.is_empty(),
+        "the manager must show what the corpus rests on"
+    );
+    // Every source needs a licence and a URL: a provenance record without them is
+    // not something a reviewer can act on.
+    for source in &view.sources {
+        assert!(!source.licence.trim().is_empty(), "{source:?}");
+        assert!(!source.url.trim().is_empty(), "{source:?}");
+        assert!(!source.title.trim().is_empty(), "{source:?}");
+    }
+    assert_eq!(view.items.len(), 15);
+    for item in &view.items {
+        assert_eq!(item.state, "active");
+        assert_eq!(item.subtest, "AR");
+        assert!(!item.preview.trim().is_empty());
+        assert!(!item.correct_answer.trim().is_empty());
+        assert!(!item.content_hash.trim().is_empty());
+        assert!(!item.sources.is_empty(), "{} cites nothing", item.id);
+    }
+}
+
+#[test]
+fn the_manager_is_empty_on_an_untouched_installation() {
+    let (_dir, db) = database("manager-empty");
+    let view = content_manager_impl(&db, 50).expect("manager view");
+    assert_eq!(view.stats.total, 0);
+    assert!(view.items.is_empty());
+    assert!(view.sources.is_empty());
+}
+
+#[test]
+fn quarantining_an_item_removes_it_from_service_and_records_who_did_it() {
+    let (_dir, db) = database("quarantine");
+    content_generate_impl(&db, "AR", 5, 3).expect("generate");
+    let target = content_manager_impl(&db, 50).expect("view").items[0]
+        .id
+        .clone();
+
+    content_quarantine_impl(&db, &target, "local-reviewer", "answer key looks wrong")
+        .expect("quarantine");
+
+    let view = content_manager_impl(&db, 50).expect("view");
+    assert_eq!(
+        view.stats.servable, 4,
+        "a quarantined item must not be servable"
+    );
+    let item = view
+        .items
+        .iter()
+        .find(|item| item.id == target)
+        .expect("still listed");
+    assert_eq!(item.state, "quarantined");
+
+    // The audit trail is the point of a quarantine: an item that vanishes with no
+    // record is indistinguishable from one that was never there.
+    let history = content_history_impl(&db, &target).expect("history");
+    let last = history.last().expect("a transition");
+    assert_eq!(last.to_state, "quarantined");
+    assert_eq!(last.actor, "local-reviewer");
+    assert_eq!(last.rationale, "answer key looks wrong");
+}
+
+#[test]
+fn a_quarantined_item_is_never_served() {
+    let (_dir, db) = database("quarantine-serving");
+    content_generate_impl(&db, "AR", 5, 3).expect("generate");
+    let target = content_manager_impl(&db, 50).expect("view").items[0]
+        .id
+        .clone();
+    content_quarantine_impl(&db, &target, "local-reviewer", "suspect").expect("quarantine");
+
+    // Read the serving path directly rather than trusting the count.
+    for _ in 0..10 {
+        if let Some(item) = content_next_impl(&db, "AR", &[]).expect("next") {
+            assert_ne!(item.id, target, "a quarantined item was served");
+        }
+    }
+}
+
+#[test]
+fn reinstating_returns_an_item_to_service_through_the_pipeline() {
+    let (_dir, db) = database("reinstate");
+    content_generate_impl(&db, "AR", 5, 3).expect("generate");
+    let target = content_manager_impl(&db, 50).expect("view").items[0]
+        .id
+        .clone();
+
+    content_quarantine_impl(&db, &target, "local-reviewer", "suspect").expect("quarantine");
+    content_reinstate_impl(&db, &target, "local-reviewer", "checked, it was correct")
+        .expect("reinstate");
+
+    let view = content_manager_impl(&db, 50).expect("view");
+    assert_eq!(view.stats.servable, 5, "the item should be servable again");
+
+    // Reinstatement walks the pipeline rather than jumping to active, so the trail
+    // shows the item was re-verified instead of merely un-flagged.
+    let history = content_history_impl(&db, &target).expect("history");
+    let states: Vec<&str> = history
+        .iter()
+        .map(|entry| entry.to_state.as_str())
+        .collect();
+    assert_eq!(
+        states,
+        vec![
+            "machine_validated",
+            "independent_verified",
+            "content_reviewed",
+            "active",
+            "quarantined",
+            "draft",
+            "machine_validated",
+            "independent_verified",
+            "content_reviewed",
+            "active",
+        ],
+        "{states:?}"
+    );
+}
+
+#[test]
+fn quarantining_twice_is_refused_rather_than_recorded_as_two_events() {
+    let (_dir, db) = database("double-quarantine");
+    content_generate_impl(&db, "AR", 3, 3).expect("generate");
+    let target = content_manager_impl(&db, 50).expect("view").items[0]
+        .id
+        .clone();
+
+    content_quarantine_impl(&db, &target, "a", "first").expect("first");
+    let second = content_quarantine_impl(&db, &target, "a", "second");
+    assert!(
+        second.is_err(),
+        "a second quarantine is a no-op, not an event"
+    );
+
+    let history = content_history_impl(&db, &target).expect("history");
+    assert_eq!(
+        history
+            .iter()
+            .filter(|e| e.to_state == "quarantined")
+            .count(),
+        1
+    );
+}
+
+#[test]
+fn reinstating_an_item_that_is_not_quarantined_is_refused() {
+    let (_dir, db) = database("reinstate-active");
+    content_generate_impl(&db, "AR", 3, 3).expect("generate");
+    let target = content_manager_impl(&db, 50).expect("view").items[0]
+        .id
+        .clone();
+    let result = content_reinstate_impl(&db, &target, "a", "no reason");
+    assert!(
+        result.is_err(),
+        "an active item has nothing to be reinstated from"
+    );
+}
+
+#[test]
+fn the_manager_surface_refuses_an_unknown_item() {
+    let (_dir, db) = database("unknown-item");
+    assert!(content_quarantine_impl(&db, "q-nope", "a", "r").is_err());
+    assert!(content_reinstate_impl(&db, "q-nope", "a", "r").is_err());
+    assert!(content_history_impl(&db, "q-nope")
+        .expect("history")
+        .is_empty());
+}
+
+#[test]
+fn the_manager_limit_bounds_the_listing() {
+    let (_dir, db) = database("limit");
+    content_generate_impl(&db, "AR", 20, 3).expect("generate");
+    let view = content_manager_impl(&db, 5).expect("view");
+    assert_eq!(view.items.len(), 5, "the limit must bound the listing");
+    assert_eq!(view.stats.total, 20, "but not the statistics");
 }

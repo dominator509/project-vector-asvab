@@ -187,3 +187,47 @@ export interface GenerationReportDto {
   /** One line per refused item; empty on a clean run. */
   rejected: string[];
 }
+
+/** A source the corpus rests on. */
+export interface SourceDto {
+  id: string;
+  title: string;
+  url: string;
+  /**
+   * The terms the source may be used on. Shown because it is the question a
+   * reviewer actually has: not "which file" but "on what terms may this be here".
+   */
+  licence: string;
+  trust: number;
+  /** How many items cite this source, active or not. */
+  item_count: number;
+}
+
+/** An item as the content manager lists it. */
+export interface ContentItemSummaryDto {
+  id: string;
+  subtest: string;
+  state: string;
+  objective_id: string;
+  preview: string;
+  correct_answer: string;
+  reviewer: string;
+  content_hash: string;
+  sources: string[];
+}
+
+/** One entry in an item's audit trail. */
+export interface ReviewEntryDto {
+  from_state: string;
+  to_state: string;
+  actor: string;
+  rationale: string;
+  created_at: string;
+}
+
+/** Everything the content manager draws, in one payload. */
+export interface ContentManagerDto {
+  stats: ContentStatsDto;
+  sources: SourceDto[];
+  items: ContentItemSummaryDto[];
+}

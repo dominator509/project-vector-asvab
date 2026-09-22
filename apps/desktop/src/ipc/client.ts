@@ -23,6 +23,8 @@ import type {
   AppPathsDto,
   BackupDto,
   BackupEntryDto,
+  ContentItemSummaryDto,
+  ContentManagerDto,
   ContentStatsDto,
   EvidenceDto,
   GenerationReportDto,
@@ -37,6 +39,8 @@ import type {
   ReadinessDto,
   ResetDto,
   RestoreDto,
+  ReviewEntryDto,
+  SourceDto,
 } from "./types";
 
 /** Every command this client will call. Kept explicit so a typo is a test failure. */
@@ -66,6 +70,10 @@ export const COMMAND_NAMES = [
   "content_generate",
   "content_next",
   "content_stats",
+  "content_manager",
+  "content_quarantine",
+  "content_reinstate",
+  "content_history",
 ] as const;
 
 export type CommandName = (typeof COMMAND_NAMES)[number];
@@ -531,6 +539,126 @@ function readGenerationReport(
 }
 
 // ---------------------------------------------------------------------------
+// Content manager
+// ---------------------------------------------------------------------------
+
+/**
+ * A command that reports success by resolving and carries no payload.
+ *
+ * The Rust side returns `Result<(), String>`, which serialises to `null`. Anything
+ * else means the command answered with something this client does not understand,
+ * and accepting it silently would let a changed response go unnoticed.
+ */
+function readVoid(command: string, value: unknown): void {
+  if (value !== null && value !== undefined) {
+    throw new MalformedResponseError(
+      command,
+      `expected no payload, got ${describe(value)}`,
+    );
+  }
+}
+
+function readSource(command: string, value: unknown): SourceDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const licence = r.string(o, "licence");
+  // A source with no licence recorded is not something a reviewer can act on, and
+  // the backend deliberately records licence strings rather than inferring them.
+  // An empty one means the provenance record is incomplete, not that the source is
+  // unencumbered.
+  if (licence.trim() === "") {
+    throw new MalformedResponseError(
+      command,
+      "a corpus source has no licence recorded, so its terms are unknown",
+    );
+  }
+  return {
+    id: r.string(o, "id"),
+    title: r.string(o, "title"),
+    url: r.string(o, "url"),
+    licence,
+    trust: r.number(o, "trust"),
+    item_count: r.number(o, "item_count"),
+  };
+}
+
+function readContentItemSummary(
+  command: string,
+  value: unknown,
+): ContentItemSummaryDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const sources = new Reader(command, o.sources).array().map((entry) => {
+    if (typeof entry !== "string") {
+      throw new MalformedResponseError(
+        command,
+        `a cited source must be a string, got ${describe(entry)}`,
+      );
+    }
+    return entry;
+  });
+  return {
+    id: r.string(o, "id"),
+    subtest: r.string(o, "subtest"),
+    state: r.string(o, "state"),
+    objective_id: r.string(o, "objective_id"),
+    preview: r.string(o, "preview"),
+    correct_answer: r.string(o, "correct_answer"),
+    reviewer: r.string(o, "reviewer"),
+    content_hash: r.string(o, "content_hash"),
+    sources,
+  };
+}
+
+function readContentManager(
+  command: string,
+  value: unknown,
+): ContentManagerDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const items = new Reader(command, o.items)
+    .array()
+    .map((entry) => readContentItemSummary(command, entry));
+  const sources = new Reader(command, o.sources)
+    .array()
+    .map((entry) => readSource(command, entry));
+
+  // Every listed item must cite a source the payload also carries: an item whose
+  // citation is not in the source list is provenance the manager cannot show, and
+  // the view would render an empty cell that looks like a layout bug.
+  const known = new Set(sources.map((source) => source.id));
+  for (const item of items) {
+    for (const cited of item.sources) {
+      if (!known.has(cited)) {
+        throw new MalformedResponseError(
+          command,
+          `item ${item.id} cites ${cited}, which is not among the listed sources`,
+        );
+      }
+    }
+  }
+
+  return {
+    stats: readContentStats(command, o.stats),
+    sources,
+    items,
+  };
+}
+
+function readReviewHistory(command: string, value: unknown): ReviewEntryDto[] {
+  return new Reader(command, value).array().map((entry) => {
+    const r = new Reader(command, entry);
+    const o = r.object();
+    return {
+      from_state: r.string(o, "from_state"),
+      to_state: r.string(o, "to_state"),
+      actor: r.string(o, "actor"),
+      rationale: r.string(o, "rationale"),
+      created_at: r.string(o, "created_at"),
+    };
+  });
+}
+// ---------------------------------------------------------------------------
 // The client
 // ---------------------------------------------------------------------------
 
@@ -599,6 +727,22 @@ export interface VectorClient {
   contentNext(subtest: string, seen: string[]): Promise<ItemDto | null>;
   /** How much content this installation holds. */
   contentStats(): Promise<ContentStatsDto>;
+  /** Everything the content manager draws, in one payload. */
+  contentManager(limit: number): Promise<ContentManagerDto>;
+  /** Withdraw an item from service, recording who did it and why. */
+  contentQuarantine(
+    itemId: string,
+    actor: string,
+    reason: string,
+  ): Promise<void>;
+  /** Return a quarantined item to service along the documented pipeline. */
+  contentReinstate(
+    itemId: string,
+    actor: string,
+    reason: string,
+  ): Promise<void>;
+  /** One item's audit trail. */
+  contentHistory(itemId: string): Promise<ReviewEntryDto[]>;
 }
 
 /**
@@ -722,5 +866,17 @@ export function createVectorClient(invoke: Invoke): VectorClient {
       call("content_next", { subtest, seen }, readOptionalItem),
 
     contentStats: () => call("content_stats", undefined, readContentStats),
+
+    contentManager: (limit) =>
+      call("content_manager", { limit }, readContentManager),
+
+    contentQuarantine: (itemId, actor, reason) =>
+      call("content_quarantine", { item_id: itemId, actor, reason }, readVoid),
+
+    contentReinstate: (itemId, actor, reason) =>
+      call("content_reinstate", { item_id: itemId, actor, reason }, readVoid),
+
+    contentHistory: (itemId) =>
+      call("content_history", { item_id: itemId }, readReviewHistory),
   };
 }

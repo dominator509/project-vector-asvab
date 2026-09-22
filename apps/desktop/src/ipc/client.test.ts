@@ -185,6 +185,10 @@ describe("command names and arguments", () => {
       () => spied.contentGenerate("AR", 5, 0),
       () => spied.contentNext("AR", []),
       () => spied.contentStats(),
+      () => spied.contentManager(10),
+      () => spied.contentQuarantine("q", "a", "r"),
+      () => spied.contentReinstate("q", "a", "r"),
+      () => spied.contentHistory("q"),
     ];
     for (const attempt of attempts) {
       await attempt().catch(() => undefined);
@@ -369,6 +373,10 @@ describe("the declared command list", () => {
       "content_generate",
       "content_next",
       "content_stats",
+      "content_manager",
+      "content_quarantine",
+      "content_reinstate",
+      "content_history",
     ]);
   });
 

@@ -622,6 +622,153 @@ impl<'a> ContentPipeline<'a> {
     /// worse than no record: it is the first thing an audit would find. No
     /// question text from any source is used, which is why each item is provable
     /// from its own arithmetic rather than from a citation.
+    /// The sources the corpus rests on, with how much of it each one carries.
+    ///
+    /// The manager shows licences because that is the question a reviewer actually
+    /// has: not "which file" but "on what terms may this be here". An item count of
+    /// zero is meaningful too -- it marks a source recorded and never used.
+    pub fn sources(&self) -> anyhow::Result<Vec<SourceDto>> {
+        let conn = self.db.connection();
+        let mut statement = conn.prepare(
+            "SELECT e.id, e.title, e.url, e.license, e.trust,
+                    (SELECT COUNT(*) FROM content_item_sources s WHERE s.source_id = e.id)
+             FROM evidence_records e
+             ORDER BY e.created_at, e.id",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(SourceDto {
+                id: row.get(0)?,
+                title: row.get(1)?,
+                url: row.get(2)?,
+                licence: row.get(3)?,
+                trust: row.get(4)?,
+                item_count: row.get(5)?,
+            })
+        })?;
+        let mut out = Vec::new();
+        for row in rows {
+            out.push(row?);
+        }
+        Ok(out)
+    }
+
+    /// Items for the manager to list, newest state included.
+    ///
+    /// `subtest` and `state` are optional filters; `limit` is required because an
+    /// unbounded listing of a five-thousand-item corpus is not a view, it is a
+    /// stall.
+    pub fn items(
+        &self,
+        subtest: Option<&str>,
+        state: Option<&str>,
+        limit: usize,
+    ) -> anyhow::Result<Vec<ContentItemSummaryDto>> {
+        let repo = ContentItemRepo::new(self.db);
+        let items = repo.all()?;
+        let mut out = Vec::with_capacity(limit.min(items.len()));
+        for item in items {
+            if let Some(wanted) = subtest {
+                if item.subtest != wanted {
+                    continue;
+                }
+            }
+            if let Some(wanted) = state {
+                if item.state != wanted {
+                    continue;
+                }
+            }
+            if out.len() >= limit {
+                break;
+            }
+            out.push(ContentItemSummaryDto {
+                id: item.id.clone(),
+                subtest: item.subtest.clone(),
+                state: item.state.clone(),
+                objective_id: item.objective_id.clone(),
+                preview: truncate(&item.stem, 120),
+                correct_answer: item
+                    .options
+                    .get(item.correct_index)
+                    .cloned()
+                    .unwrap_or_default(),
+                reviewer: item.reviewer.clone(),
+                content_hash: item.content_hash.clone(),
+                sources: repo.sources(&item.id)?,
+            });
+        }
+        Ok(out)
+    }
+
+    /// Withdraw an item from service, recording who did it and why.
+    ///
+    /// Quarantine is reachable from any state, which is what the schema's
+    /// transition guard allows and what a review workflow needs: a bad item must be
+    /// withdrawable whether it was active, under review, or already quarantined and
+    /// being re-examined.
+    pub fn quarantine_item(&self, item_id: &str, actor: &str, reason: &str) -> anyhow::Result<()> {
+        let repo = ContentItemRepo::new(self.db);
+        let item = repo
+            .get(item_id)?
+            .ok_or_else(|| anyhow::anyhow!("no such content item: {item_id}"))?;
+        if item.state == "quarantined" {
+            anyhow::bail!("{item_id} is already quarantined");
+        }
+        repo.advance(item_id, "quarantined", actor, reason)
+    }
+
+    /// Return a quarantined item to service.
+    ///
+    /// Walks the documented pipeline again rather than jumping to `active`, so the
+    /// audit trail shows the item was re-verified rather than merely un-flagged.
+    /// The original reviewer is kept: reinstatement returns the item to the state
+    /// it was approved in, and it would be dishonest to record a new approval that
+    /// nobody gave.
+    pub fn reinstate_item(&self, item_id: &str, actor: &str, reason: &str) -> anyhow::Result<()> {
+        let repo = ContentItemRepo::new(self.db);
+        let item = repo
+            .get(item_id)?
+            .ok_or_else(|| anyhow::anyhow!("no such content item: {item_id}"))?;
+        if item.state != "quarantined" {
+            anyhow::bail!(
+                "{item_id} is {} and not quarantined, so there is nothing to reinstate",
+                item.state
+            );
+        }
+        if item.reviewer.trim().is_empty() {
+            anyhow::bail!(
+                "{item_id} has no reviewer recorded, so it cannot be returned to service"
+            );
+        }
+        repo.advance(item_id, "draft", actor, reason)?;
+        repo.walk_to_content_reviewed(item_id, actor)?;
+        repo.activate(item_id, &item.reviewer, reason)
+    }
+
+    /// One item's audit trail.
+    pub fn item_history(&self, item_id: &str) -> anyhow::Result<Vec<ReviewEntryDto>> {
+        let repo = ContentItemRepo::new(self.db);
+        Ok(repo
+            .history(item_id)?
+            .into_iter()
+            .map(|entry| ReviewEntryDto {
+                from_state: entry.from_state,
+                to_state: entry.to_state,
+                actor: entry.actor,
+                rationale: entry.rationale,
+                created_at: entry.created_at,
+            })
+            .collect())
+    }
+
+    /// Everything the content manager shows, in one call.
+    pub fn manager_view(&self, limit: usize) -> anyhow::Result<ContentManagerDto> {
+        Ok(ContentManagerDto {
+            stats: self.stats()?,
+            sources: self.sources()?,
+            items: self.items(None, None, limit)?,
+        })
+    }
+
     pub fn ensure_construct_source(&self) -> anyhow::Result<String> {
         EvidenceRepo::new(self.db).put(&NewEvidence::new(
             GENERATOR_SOURCE_URL,
@@ -773,6 +920,68 @@ pub fn entry_is_legible(
         .all(|token| glossary.defines(token) || !looks_like_misreading(dictionary, token));
 
     term_is_clean && definition_is_clean
+}
+
+/// Shorten text for a listing without cutting mid-word where avoidable.
+fn truncate(text: &str, limit: usize) -> String {
+    let cleaned = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    if cleaned.chars().count() <= limit {
+        return cleaned;
+    }
+    let cut: String = cleaned.chars().take(limit).collect();
+    match cut.rsplit_once(' ') {
+        Some((head, _)) => format!("{head}…"),
+        None => format!("{cut}…"),
+    }
+}
+/// A source the corpus rests on, as the content manager lists it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SourceDto {
+    pub id: String,
+    pub title: String,
+    pub url: String,
+    pub licence: String,
+    pub trust: f64,
+    /// How many items cite this source, active or not.
+    pub item_count: i64,
+}
+
+/// An item as the content manager lists it.
+///
+/// A preview rather than the whole item: the manager shows enough to recognise a
+/// question and decide about it, and the full stem with all four options is what
+/// the practice view is for.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ContentItemSummaryDto {
+    pub id: String,
+    pub subtest: String,
+    pub state: String,
+    pub objective_id: String,
+    pub preview: String,
+    /// The option marked correct, so a reviewer can judge the item without
+    /// opening it.
+    pub correct_answer: String,
+    pub reviewer: String,
+    pub content_hash: String,
+    pub sources: Vec<String>,
+}
+
+/// One entry in an item's audit trail.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ReviewEntryDto {
+    pub from_state: String,
+    pub to_state: String,
+    pub actor: String,
+    pub rationale: String,
+    pub created_at: String,
+}
+
+/// What the content manager shows about the corpus.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ContentManagerDto {
+    pub stats: ContentStatsDto,
+    pub sources: Vec<SourceDto>,
+    pub items: Vec<ContentItemSummaryDto>,
 }
 
 /// An item as the interface sees it.
