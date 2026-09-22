@@ -1,0 +1,53 @@
+Mechanical Comprehension and General Science: 301 sourced items and eight proofs
+
+REQ-020, REQ-022, REQ-023, REQ-048, REQ-056.
+
+Mechanical Comprehension, generated rather than quoted
+- Eight templates in `crates/vector-questions/src/factory.rs`: lever effort, gear
+  ratio, block and tackle, wheel and axle, piston pressure, hydraulic jack,
+  inclined plane, and mechanical advantage. Each answer is arithmetic over the
+  machine's own geometry, so each carries an executable proof of the same kind an
+  Arithmetic Reasoning item carries, and `verify` recomputes it.
+- Every generation property in `tests/factory.rs` now runs over MC as well as AR
+  and MK: positive integer options, four distinct options, a named misconception per
+  distractor, reproduction from a seed, and all declared templates exercised.
+- The practice surface offers the subtest, because the factory can serve it.
+
+General Science from a question-and-answer work
+- `crates/vector-questions/src/facts.rs` reads a public-domain science book's own
+  questions and answers. The question is the stem, the answer's first sentence is
+  the correct option quoted verbatim, and the distractors are the same book's
+  answers to other questions -- each a true statement about something else, which is
+  what makes the item turn on knowledge rather than on recognising an answer's shape.
+- `verify` re-derives every fact: the source must give this answer to this question,
+  and every distractor must answer a different question in the same work.
+- The OCR check the other ingested paths use is applied to the question and every
+  option, because the corpus mixes modern reprints with scanned manuals.
+- Markup and headings are refused as answers. `~WHERE RUBBER COMES FROM~ The first
+  class, or wild rubbers ...` and an `[Illustration: ...]` caption both reached items
+  as options before that filter existed.
+
+Corpus: 2,000 WK + 3,668 EI + 1,047 PC + 301 GS = 7,016 active items, 29 evidence
+records, 9,016 citations, 28,064 review rows, every provenance invariant
+zero-offender. The ingestion report is `ingest-facts-gs.json`: 450 questions, 301
+built, 0 refused.
+
+Honest gaps, with the reconnaissance recorded so it is not repeated
+- Shop Information: `Tools and Their Uses` (NAVEDTRA, 1971) holds ~30 sentences of
+  the form `X is used to <purpose>`; not yet mined.
+- Auto Information: the Navy automotive manual's review questions refer to figures
+  and are unusable without them, and the Project Gutenberg automotive texts are
+  essayistic (0-2 structured statements per work). No source found yet.
+- ERIC vocational curricula were deliberately not used: their copyright status is
+  not clearly federal, and the corpus admits only works whose terms are established.
+- Definition mining was measured and abandoned: a sentence-initial `<term> is a
+  <class> that ...` rule yields 2-5 usable definitions per manual, and corroborating
+  against Webster's entry rejected good pairs while accepting bad ones. The probes
+  that measured this are committed.
+- The 1910s science book is a period source, and nothing in the pipeline can
+  establish that a 1913 explanation is current. Stated in the module documentation.
+
+Gates: format-check, lint, typecheck, unit, integration, e2e (34) and anti-gaming all
+exit 0; 843 Rust tests across 68 binaries, 205 frontend tests; packaged build and
+live-fire pass. Evidence:
+`.agent/evidence/EP-007/content-corpus/ROUND-14-REPORT.md`.

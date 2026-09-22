@@ -29,7 +29,7 @@ print("=== provenance invariants over the whole corpus ===")
 # Comprehension item on a single public-domain work whose passage it quotes, so
 # both cite one. Asserting a flat "2" here reported 4,000 EI items as broken when
 # the corpus was correct -- the probe was wrong, not the data.
-EXPECTED_SOURCES = {"WK": 2, "EI": 1, "PC": 1}
+EXPECTED_SOURCES = {"WK": 2, "EI": 1, "PC": 1, "GS": 1}
 
 bad_citations = 0
 for subtest, expected in EXPECTED_SOURCES.items():
@@ -84,6 +84,26 @@ checks = [
         """select count(*) from content_items where subtest='PC'
            and instr(lower(passage),
                      lower(json_extract(options_json, '$[' || correct_index || ']'))) = 0""",
+    ),
+    # A factual item's stem is the source's question, and it has no passage: the
+    # question is self-contained, and a passage would claim it needs one to read.
+    (
+        "GS items whose stem is not a question",
+        """select count(*) from content_items where subtest='GS'
+           and substr(trim(stem), -1) <> '?'""",
+    ),
+    (
+        "GS items carrying a passage they do not need",
+        "select count(*) from content_items where subtest='GS' and passage is not null",
+    ),
+    # Every option of a factual item is an answer the source gives, so all four are
+    # substantive statements rather than filler.
+    (
+        "GS items with an option shorter than 5 words",
+        """select count(*) from content_items where subtest='GS' and exists (
+             select 1 from json_each(content_items.options_json)
+             where length(trim(value)) - length(replace(trim(value), ' ', '')) + 1 < 5
+           )""",
     ),
 ]
 for label, sql in checks:

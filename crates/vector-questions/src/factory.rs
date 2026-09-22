@@ -613,6 +613,276 @@ fn mk_fraction_of(rng: &mut Rng) -> Option<Candidate> {
     })
 }
 
+// ---------------------------------------------------------------------------
+// Mechanical Comprehension
+// ---------------------------------------------------------------------------
+//
+// Mechanical Comprehension asks what a machine does with the force put into it:
+// what effort balances a load on a lever, how many turns a gear train gives back,
+// what pressure a piston sees. Every one of those is arithmetic over the machine's
+// own geometry, so the answers are computable and the proof is executable in the
+// same sense an Arithmetic Reasoning proof is -- which is what lets these items be
+// generated rather than quoted, and what the schema requires of an `AR` or `MK`
+// item but not, on its own, of an `MC` one.
+//
+// The figures are chosen so every answer is a whole number and every distractor is
+// a whole number: a learner should be wrong because they inverted a ratio, not
+// because of a rounding convention.
+
+/// The effort that balances a load on a lever.
+///
+/// `load * load_arm = effort * effort_arm`, so the effort is the load scaled by the
+/// ratio of the arms.
+fn mc_lever_effort(rng: &mut Rng) -> Option<Candidate> {
+    let load_arm = rng.range(1, 6);
+    let effort_arm = load_arm * rng.range(2, 5);
+    let load = rng.range(2, 25) * effort_arm;
+    let correct = load * load_arm / effort_arm;
+    let short_arm = load_arm + 1;
+    Some(Candidate {
+        stem: format!(
+            "A lever is used to lift a load of {load} pounds. The load is {load_arm} \
+             feet from the fulcrum and the effort is applied {effort_arm} feet from \
+             it. How many pounds of effort are needed to balance the load?"
+        ),
+        expression: format!("({load} * {load_arm}) / {effort_arm}"),
+        correct,
+        distractors: vec![
+            misconception(
+                load * effort_arm / load_arm,
+                "Multiplied by the effort arm instead of dividing by it.",
+            ),
+            misconception(
+                load,
+                "Ignored the arms and assumed the effort equals the load.",
+            ),
+            misconception(
+                load * load_arm / short_arm,
+                "Used the wrong arm on one side of the balance.",
+            ),
+        ],
+        difficulty: -0.2,
+    })
+}
+
+/// How many turns a driven gear makes for a given number of turns of the driver.
+///
+/// A gear with more teeth turns fewer times, in the ratio of the tooth counts.
+fn mc_gear_ratio(rng: &mut Rng) -> Option<Candidate> {
+    let driving_teeth = rng.range(2, 12);
+    let driven_teeth = driving_teeth * rng.range(2, 4);
+    let turns = rng.range(2, 9) * driven_teeth;
+    let correct = driving_teeth * turns / driven_teeth;
+    Some(Candidate {
+        stem: format!(
+            "A gear with {driving_teeth} teeth drives a gear with {driven_teeth} \
+             teeth. If the driving gear makes {turns} turns, how many turns does \
+             the driven gear make?"
+        ),
+        expression: format!("({driving_teeth} * {turns}) / {driven_teeth}"),
+        correct,
+        distractors: vec![
+            misconception(
+                driven_teeth * turns / driving_teeth,
+                "Inverted the gear ratio.",
+            ),
+            misconception(turns, "Assumed both gears turn at the same speed."),
+            misconception(
+                driving_teeth + turns,
+                "Added the tooth count instead of using the ratio.",
+            ),
+        ],
+        difficulty: -0.1,
+    })
+}
+
+/// The effort a block and tackle needs.
+///
+/// Each supporting strand carries an equal share of the load, so the effort is the
+/// load divided by the number of strands.
+fn mc_pulley_effort(rng: &mut Rng) -> Option<Candidate> {
+    let strands = rng.range(2, 6);
+    let load = rng.range(2, 30) * strands;
+    let correct = load / strands;
+    Some(Candidate {
+        stem: format!(
+            "A block and tackle has {strands} supporting strands. Ignoring friction \
+             and the weight of the blocks, how many pounds of effort are needed to \
+             lift a load of {load} pounds?"
+        ),
+        expression: format!("{load} / {strands}"),
+        correct,
+        distractors: vec![
+            misconception(
+                load * strands,
+                "Multiplied by the number of strands instead of dividing.",
+            ),
+            misconception(
+                load - strands,
+                "Subtracted the number of strands from the load.",
+            ),
+            misconception(load / (strands - 1), "Counted one strand too few."),
+        ],
+        difficulty: -0.4,
+    })
+}
+
+/// The effort at the rim of a wheel that balances a load on its axle.
+fn mc_wheel_and_axle(rng: &mut Rng) -> Option<Candidate> {
+    let axle_radius = rng.range(1, 4);
+    let wheel_radius = axle_radius * rng.range(3, 6);
+    let load = rng.range(2, 20) * wheel_radius;
+    let correct = load * axle_radius / wheel_radius;
+    Some(Candidate {
+        stem: format!(
+            "A wheel with a radius of {wheel_radius} inches is fastened to an axle \
+             with a radius of {axle_radius} inches. How many pounds of effort at the \
+             rim of the wheel will balance a load of {load} pounds on the axle?"
+        ),
+        expression: format!("({load} * {axle_radius}) / {wheel_radius}"),
+        correct,
+        distractors: vec![
+            misconception(
+                load * wheel_radius / axle_radius,
+                "Inverted the ratio of the radii.",
+            ),
+            misconception(
+                load,
+                "Assumed the effort equals the load whatever the radii are.",
+            ),
+            misconception(
+                load / (wheel_radius - axle_radius),
+                "Used the difference of the radii as a ratio.",
+            ),
+        ],
+        difficulty: -0.3,
+    })
+}
+
+/// The pressure a force produces on a piston.
+fn mc_pressure(rng: &mut Rng) -> Option<Candidate> {
+    let area = rng.range(2, 12);
+    let pressure = rng.range(3, 40);
+    let force = area * pressure;
+    let correct = force / area;
+    Some(Candidate {
+        stem: format!(
+            "A force of {force} pounds acts on a piston with an area of {area} square \
+             inches. How many pounds per square inch of pressure does the piston \
+             exert?"
+        ),
+        expression: format!("{force} / {area}"),
+        correct,
+        distractors: vec![
+            misconception(
+                force * area,
+                "Multiplied by the area instead of dividing by it.",
+            ),
+            misconception(area, "Reported the area rather than the pressure."),
+            misconception(force - area, "Subtracted the area from the force."),
+        ],
+        difficulty: -0.3,
+    })
+}
+
+/// The load a hydraulic jack can lift: pressure is the same throughout the fluid.
+fn mc_hydraulic_lift(rng: &mut Rng) -> Option<Candidate> {
+    let small_area = rng.range(1, 5);
+    let large_area = small_area * rng.range(3, 8);
+    let effort = rng.range(2, 20) * large_area / small_area;
+    let correct = effort * large_area / small_area;
+    Some(Candidate {
+        stem: format!(
+            "In a hydraulic jack, {effort} pounds of effort is applied to a piston \
+             with an area of {small_area} square inches. The fluid acts on a second \
+             piston with an area of {large_area} square inches. How many pounds can \
+             the second piston lift?"
+        ),
+        expression: format!("({effort} * {large_area}) / {small_area}"),
+        correct,
+        distractors: vec![
+            misconception(
+                effort * small_area / large_area,
+                "Inverted the ratio of the piston areas.",
+            ),
+            misconception(effort, "Assumed the fluid transmits the force unchanged."),
+            misconception(
+                effort + large_area,
+                "Added the area instead of using the ratio.",
+            ),
+        ],
+        difficulty: -0.1,
+    })
+}
+
+/// The effort needed to push a load up a frictionless ramp.
+fn mc_inclined_plane(rng: &mut Rng) -> Option<Candidate> {
+    let height = rng.range(1, 5);
+    let length = height * rng.range(2, 6);
+    let weight = rng.range(2, 25) * length;
+    let correct = weight * height / length;
+    // `1 feet` reads as a program talking rather than a person asking.
+    let rise = if height == 1 {
+        "1 foot".to_string()
+    } else {
+        format!("{height} feet")
+    };
+    Some(Candidate {
+        stem: format!(
+            "A ramp {length} feet long rises {rise}. Ignoring friction, how \
+             many pounds of effort are needed to push a {weight}-pound crate up the \
+             ramp?"
+        ),
+        expression: format!("({weight} * {height}) / {length}"),
+        correct,
+        distractors: vec![
+            misconception(
+                weight * length / height,
+                "Inverted the ratio of the ramp's rise to its length.",
+            ),
+            misconception(
+                weight,
+                "Assumed the effort equals the weight whatever the slope is.",
+            ),
+            misconception(
+                weight / (length - height),
+                "Used the difference between the length and the rise as a ratio.",
+            ),
+        ],
+        difficulty: -0.2,
+    })
+}
+
+/// The mechanical advantage of a lever, as a pure ratio.
+fn mc_mechanical_advantage(rng: &mut Rng) -> Option<Candidate> {
+    let load_arm = rng.range(1, 8);
+    let advantage = rng.range(2, 9);
+    let effort_arm = load_arm * advantage;
+    Some(Candidate {
+        stem: format!(
+            "The effort arm of a lever is {effort_arm} feet and its load arm is \
+             {load_arm} feet. What is the mechanical advantage of the lever?"
+        ),
+        expression: format!("{effort_arm} / {load_arm}"),
+        correct: advantage,
+        distractors: vec![
+            misconception(
+                load_arm,
+                "Reported the load arm instead of the ratio of the arms.",
+            ),
+            misconception(
+                effort_arm + load_arm,
+                "Added the arms instead of dividing them.",
+            ),
+            misconception(
+                advantage + 1,
+                "Counted one extra multiplication of the effort.",
+            ),
+        ],
+        difficulty: -0.5,
+    })
+}
+
 const TEMPLATES: &[Template] = &[
     Template {
         id: "ar.rate_pages",
@@ -697,6 +967,56 @@ const TEMPLATES: &[Template] = &[
         subtest: "MK",
         objective_id: "OBJ-MK-FRACTION-01",
         build: mk_fraction_of,
+    },
+    // Mechanical Comprehension. Computable from the machine's own geometry, so
+    // every one of these carries an executable proof.
+    Template {
+        id: "mc.lever_effort",
+        subtest: "MC",
+        objective_id: "OBJ-MC-LEVER-01",
+        build: mc_lever_effort,
+    },
+    Template {
+        id: "mc.gear_ratio",
+        subtest: "MC",
+        objective_id: "OBJ-MC-GEARS-01",
+        build: mc_gear_ratio,
+    },
+    Template {
+        id: "mc.pulley_effort",
+        subtest: "MC",
+        objective_id: "OBJ-MC-PULLEY-01",
+        build: mc_pulley_effort,
+    },
+    Template {
+        id: "mc.wheel_and_axle",
+        subtest: "MC",
+        objective_id: "OBJ-MC-WHEEL-01",
+        build: mc_wheel_and_axle,
+    },
+    Template {
+        id: "mc.pressure",
+        subtest: "MC",
+        objective_id: "OBJ-MC-FLUID-01",
+        build: mc_pressure,
+    },
+    Template {
+        id: "mc.hydraulic_lift",
+        subtest: "MC",
+        objective_id: "OBJ-MC-FLUID-02",
+        build: mc_hydraulic_lift,
+    },
+    Template {
+        id: "mc.inclined_plane",
+        subtest: "MC",
+        objective_id: "OBJ-MC-PLANE-01",
+        build: mc_inclined_plane,
+    },
+    Template {
+        id: "mc.mechanical_advantage",
+        subtest: "MC",
+        objective_id: "OBJ-MC-ADVANTAGE-01",
+        build: mc_mechanical_advantage,
     },
 ];
 

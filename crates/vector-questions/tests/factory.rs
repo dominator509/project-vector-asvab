@@ -31,8 +31,8 @@ fn all_items(subtest: &str) -> Vec<GeneratedItem> {
 // ---------------------------------------------------------------------------
 
 #[test]
-fn both_quantitative_subtests_generate_items() {
-    for subtest in ["AR", "MK"] {
+fn every_quantitative_subtest_generates_items() {
+    for subtest in ["AR", "MK", "MC"] {
         let items = all_items(subtest);
         assert!(
             items.len() >= (SEEDS as usize) / 2,
@@ -48,7 +48,7 @@ fn both_quantitative_subtests_generate_items() {
 
 #[test]
 fn every_template_is_exercised_and_named_consistently() {
-    for subtest in ["AR", "MK"] {
+    for subtest in ["AR", "MK", "MC"] {
         let items = all_items(subtest);
         let used: std::collections::HashSet<&str> = items.iter().map(|i| i.template_id).collect();
         let declared = factory::templates_for(subtest);
@@ -70,7 +70,7 @@ fn every_template_is_exercised_and_named_consistently() {
 
 #[test]
 fn every_generated_item_passes_independent_verification() {
-    for subtest in ["AR", "MK"] {
+    for subtest in ["AR", "MK", "MC"] {
         for item in all_items(subtest) {
             if let Err(failure) = factory::verify(&item) {
                 panic!(
@@ -84,7 +84,7 @@ fn every_generated_item_passes_independent_verification() {
 
 #[test]
 fn items_have_four_distinct_options_and_named_misconceptions() {
-    for subtest in ["AR", "MK"] {
+    for subtest in ["AR", "MK", "MC"] {
         for item in all_items(subtest) {
             assert_eq!(item.options.len(), 4, "{} options", item.options.len());
             let unique: std::collections::HashSet<&String> = item.options.iter().collect();
@@ -113,7 +113,7 @@ fn every_option_is_a_positive_integer() {
     // Truncating integer division is the failure mode that produced distractors
     // whose value did not match the misconception they claimed to represent: the
     // first symptom is usually a zero or a negative appearing among the options.
-    for subtest in ["AR", "MK"] {
+    for subtest in ["AR", "MK", "MC"] {
         for item in all_items(subtest) {
             for (index, option) in item.options.iter().enumerate() {
                 let value: i128 = option.parse().unwrap_or_else(|_| {
@@ -145,7 +145,7 @@ fn every_option_is_a_positive_integer() {
 
 #[test]
 fn the_same_seed_reproduces_an_identical_item() {
-    for subtest in ["AR", "MK"] {
+    for subtest in ["AR", "MK", "MC"] {
         for seed in [1_u64, 42, 999, 123_456] {
             let first = factory::generate_one(subtest, seed).expect("first");
             let second = factory::generate_one(subtest, seed).expect("second");
@@ -172,7 +172,7 @@ fn distinct_seeds_produce_distinct_questions() {
 
 #[test]
 fn option_order_varies_so_the_answer_is_not_always_in_one_position() {
-    for subtest in ["AR", "MK"] {
+    for subtest in ["AR", "MK", "MC"] {
         let items = all_items(subtest);
         let positions: std::collections::HashSet<usize> =
             items.iter().map(|i| i.correct_index).collect();

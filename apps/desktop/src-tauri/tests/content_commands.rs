@@ -490,6 +490,35 @@ fn the_manager_limit_bounds_the_listing() {
 // Ingested content through the command boundary
 // ---------------------------------------------------------------------------
 
+/// Mechanical Comprehension is computable, so the factory serves it like the other
+/// two quantitative subtests, and the command boundary must not treat it as one of
+/// the subtests that has no templates.
+#[test]
+fn mechanical_comprehension_generates_and_is_served() {
+    let (_dir, db) = database("mc");
+    let report = content_generate_impl(&db, "MC", 20, 20_260_922).expect("generate MC");
+    assert_eq!(report.subtest, "MC");
+    assert_eq!(report.activated, 20, "report: {report:?}");
+    assert!(
+        report.rejected.is_empty(),
+        "a clean run rejects nothing: {:?}",
+        report.rejected
+    );
+
+    let item = content_next_impl(&db, "MC", &[])
+        .expect("next")
+        .expect("an MC item must be servable after generation");
+    assert_eq!(item.subtest, "MC");
+    // Every option is a whole number: a mechanical item's answer is arithmetic.
+    for option in &item.options {
+        assert!(
+            option.parse::<i64>().is_ok(),
+            "MC options are numbers, got {option:?}"
+        );
+    }
+    // A mechanical item is not a comprehension item and needs no passage.
+    assert_eq!(item.passage, None);
+}
 /// A miniature Project Gutenberg work, in the corpus's own shape.
 const WORK: &str = "\
 The Project Gutenberg eBook of A Test Work

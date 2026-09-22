@@ -6,6 +6,7 @@
 
 pub mod dictionary;
 pub mod factory;
+pub mod facts;
 pub mod ingestion;
 pub mod neets;
 pub mod passages;

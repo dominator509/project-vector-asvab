@@ -23,11 +23,12 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use vector_application::content::{
-    ContentPipeline, EiIngestRequest, PcIngestRequest, WkIngestRequest,
+    ContentPipeline, EiIngestRequest, FactIngestRequest, PcIngestRequest, WkIngestRequest,
 };
 use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::{Database, MigrationManager};
 use vector_questions::dictionary::parse_webster;
+use vector_questions::facts::parse_faq;
 use vector_questions::neets::parse_neets_glossary;
 use vector_questions::passages::{gutenberg_title, parse_gutenberg};
 use vector_questions::thesaurus::parse_moby;
@@ -532,6 +533,148 @@ pub fn ingest_pc(
         total_activated: outcomes.iter().map(|w| w.activated).sum(),
         total_already_present: outcomes.iter().map(|w| w.already_present).sum(),
         total_rejected: outcomes.iter().map(|w| w.rejected).sum(),
+        works: outcomes,
+    })
+}
+
+/// What one work yielded for a factual subtest.
+pub struct FactWorkOutcome {
+    pub ebook_id: String,
+    pub title: String,
+    pub path: String,
+    pub sha256: String,
+    pub questions: usize,
+    pub built: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    pub rejected: usize,
+    pub rejection_reasons: Vec<String>,
+    pub skipped: Option<String>,
+}
+
+/// What a factual ingestion run produced.
+pub struct FactOutcome {
+    pub subtest: String,
+    pub works: Vec<FactWorkOutcome>,
+    pub dictionary_entries: usize,
+    pub dictionary_hash: String,
+    pub total_questions: usize,
+    pub total_built: usize,
+    pub total_activated: usize,
+    pub total_already_present: usize,
+    pub total_rejected: usize,
+}
+
+/// Ingest factual items (General Science, Shop Information, Auto Information) from
+/// public-domain question-and-answer works.
+///
+/// One work per vault row and one run per work, so a work that parses badly cannot
+/// take the rest down with it and an item's citation names the book it quotes.
+pub fn ingest_facts(
+    db_path: &Path,
+    subtest: &str,
+    works: &[PcWork],
+    count: usize,
+    seed: u64,
+    dictionary_path: &Path,
+    reviewer: &str,
+) -> Result<FactOutcome> {
+    if let Some(parent) = db_path.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)
+                .with_context(|| format!("cannot create {}", parent.display()))?;
+        }
+    }
+    let mut db = Database::open(db_path)
+        .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
+    let migrations = MigrationManager::load_from_dir(
+        &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../migrations"),
+    )?;
+    MigrationManager::apply(&mut db, &migrations)?;
+
+    // Webster's is loaded for the OCR check, exactly as the EI path does: these
+    // works are scans, and an option containing a misreading teaches the misreading.
+    let dictionary_bytes = read_source(dictionary_path, "the dictionary")?;
+    let dictionary_hash = digest(&dictionary_bytes);
+    let dictionary_text = String::from_utf8(dictionary_bytes)
+        .context("the dictionary is not valid UTF-8, so it cannot be parsed as ASCII")?;
+    let dictionary = parse_webster(&dictionary_text);
+    if dictionary.is_empty() {
+        anyhow::bail!(
+            "{} parsed to no entries, so the OCR check cannot run",
+            dictionary_path.display()
+        );
+    }
+
+    let pipeline = ContentPipeline::new(&db);
+    let mut outcomes = Vec::new();
+    for (index, work) in works.iter().enumerate() {
+        let text = std::fs::read_to_string(&work.path)
+            .with_context(|| format!("cannot read {} as UTF-8", work.path.display()))?;
+        let title = gutenberg_title(&text).with_context(|| {
+            format!(
+                "{} has no Project Gutenberg title header, so it cannot be recorded as a \
+                 public-domain work",
+                work.path.display()
+            )
+        })?;
+
+        let faq = parse_faq(&text, &title);
+        let source_id = record_work(&db, &work.ebook_id, &work.path, &title, &text)?;
+
+        let request = FactIngestRequest {
+            subtest,
+            label: &title,
+            source_id: &source_id,
+            count,
+            seed: seed.wrapping_add(index as u64),
+            dictionary: &dictionary,
+            reviewer,
+            generator: "fact-ingester",
+        };
+        let report = pipeline.ingest_facts(&faq, &request)?;
+
+        outcomes.push(FactWorkOutcome {
+            ebook_id: work.ebook_id.clone(),
+            title: title.clone(),
+            path: work.path.display().to_string(),
+            sha256: digest(text.as_bytes()),
+            questions: report.questions,
+            built: report.built,
+            activated: report.activated,
+            already_present: report.already_present,
+            rejected: report.rejected.len(),
+            rejection_reasons: report
+                .rejected
+                .iter()
+                .take(5)
+                .map(|rejection| rejection.reason.clone())
+                .collect(),
+            skipped: report.skipped,
+        });
+        if let Some(reason) = outcomes.last().and_then(|work| work.skipped.as_deref()) {
+            eprintln!("content ingest-facts: {title:?} contributed nothing: {reason}");
+        }
+    }
+
+    let activated: usize = outcomes.iter().map(|work| work.activated).sum();
+    let already_present: usize = outcomes.iter().map(|work| work.already_present).sum();
+    if activated == 0 && already_present == 0 {
+        anyhow::bail!(
+            "no work in this run produced an item: {} work(s) were skipped or refused",
+            outcomes.len()
+        );
+    }
+
+    Ok(FactOutcome {
+        subtest: subtest.to_string(),
+        total_questions: outcomes.iter().map(|work| work.questions).sum(),
+        total_built: outcomes.iter().map(|work| work.built).sum(),
+        total_activated: activated,
+        total_already_present: already_present,
+        total_rejected: outcomes.iter().map(|work| work.rejected).sum(),
+        dictionary_entries: dictionary.len(),
+        dictionary_hash,
         works: outcomes,
     })
 }

@@ -27,12 +27,14 @@ export const STARTER_BATCH = 40;
 /**
  * The subtests the item factory can generate for.
  *
- * Arithmetic Reasoning and Mathematics Knowledge are computable, so their items
- * carry deterministic proofs. Every other subtest's items are ingested from a
- * public-domain source instead, which is why asking the factory for one is not a
- * slow path but an impossible one.
+ * Arithmetic Reasoning, Mathematics Knowledge and Mechanical Comprehension are
+ * computable: a lever's effort, a gear train's turns and a piston's pressure are
+ * arithmetic over the machine's own geometry, so those items carry deterministic
+ * proofs. Every other subtest's items are ingested from a public-domain source
+ * instead, which is why asking the factory for one is not a slow path but an
+ * impossible one.
  */
-export const GENERATABLE_SUBTESTS = ["AR", "MK"] as const;
+export const GENERATABLE_SUBTESTS = ["AR", "MK", "MC"] as const;
 
 /**
  * The ten subtests in the order the ASVAB presents them.

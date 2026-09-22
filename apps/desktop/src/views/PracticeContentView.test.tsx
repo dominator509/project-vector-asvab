@@ -112,6 +112,8 @@ describe("PracticeContentView", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "AR" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "MK" })).toBeInTheDocument();
+    // Mechanical Comprehension is computable, so the factory serves it.
+    expect(screen.getByRole("button", { name: "MC" })).toBeInTheDocument();
   });
 
   it("offers an ingested subtest once the device holds items for it", async () => {

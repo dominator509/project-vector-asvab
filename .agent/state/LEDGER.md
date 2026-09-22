@@ -110,3 +110,20 @@ Corpus as stored in the application's own database after round 13: 2,000 WK,
 3,668 EI, 1,047 PC = 6,715 active items, 29 evidence records, 8,715 citations,
 26,860 review rows, database SHA-256
 `9beaf1c2731936617eca25f70e5790808b294d6665d353a139f3b02b75801376`.
+
+### Round 14
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| Mechanical Comprehension | Eight computable templates (lever, gear ratio, block and tackle, wheel and axle, piston pressure, hydraulic jack, inclined plane, mechanical advantage). Each answer is arithmetic over the machine's geometry with an executable proof; the interface now offers the subtest. | `crates/vector-questions/src/factory.rs`, `mc_probe` example, factory tests extended to MC |
+| General Science | `crates/vector-questions/src/facts.rs` reads a public-domain question-and-answer work: the book's question is the stem, its answer is the correct option quoted, and the distractors are its answers to other questions. `content ingest-facts` wires it through the pipeline and the vault. 301 active items from 450 questions, 0 refused. | `.agent/evidence/EP-007/content-corpus/ROUND-14-REPORT.md` |
+
+Corpus as stored after round 14: 2,000 WK, 3,668 EI, 1,047 PC, 301 GS = 7,016 active
+items, 29 evidence records, 9,016 citations, 28,064 review rows. AR, MK and MC are
+generated on demand by the application. Database SHA-256
+`745803ba30c331345c78920614e81573e063bdde890a7ccb4e13db0cabddbb73`.
+
+Still open after round 14, with the reconnaissance recorded rather than repeated:
+Shop Information has a source whose 30 purpose sentences have not been mined yet, and
+Auto Information has no public-domain source with usable structure. Content packs
+remain unpopulated: quarantine is exercised, install is not.

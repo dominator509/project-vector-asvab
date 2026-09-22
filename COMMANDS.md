@@ -51,7 +51,12 @@ export RUST_BACKTRACE=1
 | Content ingestion (Word Knowledge) | `cargo run -p vector-tools -- content ingest-wk --db <db> --thesaurus <moby words.txt> --dictionary <webster pg29765.txt>` |
 | Content ingestion (Electronics Information) | `cargo run -p vector-tools -- content ingest-ei --db <db> --dictionary <webster pg29765.txt> --module <neets module.txt> [--module ...]` |
 | Content ingestion (Paragraph Comprehension) | `cargo run -p vector-tools -- content ingest-pc --db <db> --work <gutenberg ebook number>=<text file> [--work ...]` |
+| Content ingestion (factual: GS, SI, AI) | `cargo run -p vector-tools -- content ingest-facts --db <db> --subtest <GS\|SI\|AI> --dictionary <webster pg29765.txt> --work <gutenberg ebook number>=<text file> [--work ...]` |
 | Paragraph Comprehension corpus probe | `cargo run -p vector-questions --example ingest_pc -- <label>=<text file> [<label>=<text file> ...] [count]` |
+| Factual corpus probe | `cargo run -p vector-questions --example ingest_facts -- <label>=<text file> [...] [count]` |
+| Generated item sampler | `cargo run -p vector-questions --example mc_probe` |
+| Factual ingestion report | `python3 scripts/probes/facts-report.py <ingest-facts report.json>` |
+| Definition / purpose mining probes | `python3 scripts/probes/purpose-probe.py <work.txt>` (also `definition-rule-probe.py`, `class-noun-probe.py`, `corroboration-probe.py`, `mine-definitions.py`) |
 | Corpus readback | `python3 scripts/probes/check-corpus.py <db>` |
 | Corpus counts per subtest | `python3 scripts/probes/count-items.py <db>` |
 | Ingestion report rendered | `python3 scripts/probes/pc-report.py <ingest report.json>` |

@@ -26,6 +26,7 @@ use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::Database;
 use vector_questions::dictionary::{looks_like_misreading, Dictionary};
 use vector_questions::factory;
+use vector_questions::facts::{self, FactItem, Faq};
 use vector_questions::ingestion::AnswerProof;
 use vector_questions::neets::{self, EiItem, Glossary};
 use vector_questions::passages::{self, PcItem, Text};
@@ -718,6 +719,177 @@ impl<'a> ContentPipeline<'a> {
         Ok(id)
     }
 
+    /// Ingest factual (General Science and shop-knowledge) items from one
+    /// question-and-answer text.
+    ///
+    /// One work per call for the same reason as PC: an item's evidence is an answer
+    /// in a named book, and the citation has to name that book.
+    ///
+    /// The OCR check is the caller's, passed as `accept`, because the corpus mixes
+    /// modern reprints with scanned manuals and only the caller knows which source
+    /// it is handing over.
+    pub fn ingest_facts(
+        &self,
+        faq: &Faq,
+        request: &FactIngestRequest<'_>,
+    ) -> anyhow::Result<FactIngestReport> {
+        let subtest = request.subtest;
+        let items = faq.build_items(
+            subtest,
+            request.count,
+            request.seed,
+            facts::MIN_OPTION_WORDS,
+            facts::MAX_OPTION_WORDS,
+            |item| {
+                // The dictionary check runs on what a learner will read: the
+                // question, the correct answer, and every option.
+                item.options
+                    .iter()
+                    .all(|option| !looks_like_misreading(request.dictionary, option))
+                    && !looks_like_misreading(request.dictionary, &item.prompt)
+            },
+        );
+
+        let mut report = FactIngestReport {
+            label: request.label.to_string(),
+            questions: faq.entry_count(),
+            built: items.len(),
+            ..Default::default()
+        };
+        if faq.is_empty() {
+            anyhow::bail!(
+                "text {:?} parsed to no questions at all; the file's markers or its \
+                 question style may have changed",
+                request.label
+            );
+        }
+        if items.is_empty() {
+            report.skipped = Some(format!(
+                "no question has an answer of {}-{} words that the dictionary reads as \
+                 clean prose",
+                facts::MIN_OPTION_WORDS,
+                facts::MAX_OPTION_WORDS
+            ));
+            return Ok(report);
+        }
+
+        for item in items {
+            let content_hash = item.content_hash();
+            if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            match self.store_fact_verified(faq, request, &item) {
+                Ok(id) => {
+                    report.verified += 1;
+                    report.activated += 1;
+                    report.item_ids.push(id);
+                }
+                Err(error) => report.rejected.push(Rejection {
+                    template_id: Some(item.prompt.clone()),
+                    reason: error.to_string(),
+                }),
+            }
+        }
+
+        if report.activated == 0 && report.already_present == 0 {
+            let first = report
+                .rejected
+                .first()
+                .map(|rejection| rejection.reason.as_str())
+                .unwrap_or("no reason recorded");
+            anyhow::bail!(
+                "text {:?} stored nothing: all {} item(s) were refused; first reason: {first}",
+                request.label,
+                report.rejected.len()
+            );
+        }
+
+        Ok(report)
+    }
+
+    /// Verify one factual item against its source and, only if it proves out, store it.
+    ///
+    /// Public for the same reason the other paths' store functions are: the builder's
+    /// own output always verifies, so the refusal path needs a directly callable
+    /// entry point or deleting the check would break no test.
+    pub fn store_fact_verified(
+        &self,
+        faq: &Faq,
+        request: &FactIngestRequest<'_>,
+        item: &FactItem,
+    ) -> anyhow::Result<String> {
+        facts::verify(item, faq)
+            .map_err(|failure| anyhow::anyhow!("item failed source verification: {failure}"))?;
+
+        let repo = ContentItemRepo::new(self.db);
+        let id = format!("q-{}", uuid::Uuid::new_v4());
+        let content_hash = item.content_hash();
+
+        // The rubric records what was checked, so a reviewer can re-check it without
+        // re-running the ingester.
+        let rubric = format!(
+            "{} asks this question and gives this answer; every other option is an \
+             answer the same work gives to a different question, so the work itself \
+             rules each one out.",
+            request.label
+        );
+        let proof = AnswerProof::SourceBacked {
+            source_id: request.source_id.to_string(),
+            rubric,
+        };
+        let proof_json = serde_json::to_string(&proof)?;
+
+        // What the builder produced, and what the verifier re-derived from the
+        // source. Different inputs, so they cannot coincide, which the schema
+        // requires before activation.
+        let generator_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}{}",
+            item.prompt,
+            item.options.join("\u{2}"),
+            item.correct_index
+        ));
+        let verifier_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}from_source={}",
+            item.supporting_answer,
+            item.prompt,
+            faq.says(&item.prompt, &item.supporting_answer)
+        ));
+
+        repo.insert_draft(&NewContentItem {
+            id: &id,
+            subtest: request.subtest,
+            objective_id: &item.objective_id,
+            stem: &item.prompt,
+            passage: None,
+            options: &item.options,
+            correct_index: item.correct_index,
+            explanation: &item.explanation(),
+            distractor_rationales: &item.distractor_rationales,
+            difficulty: item.difficulty,
+            proof_kind: "source_backed",
+            proof_json: &proof_json,
+            content_hash: &content_hash,
+            generator_hash: Some(generator_hash.as_str()),
+        })?;
+
+        repo.cite(&id, request.source_id)?;
+
+        self.db.connection().execute(
+            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+            rusqlite::params![id, verifier_hash.as_str()],
+        )?;
+
+        repo.walk_to_content_reviewed(&id, request.generator)?;
+        repo.activate(
+            &id,
+            request.reviewer,
+            "ingested from a public-domain work; question and answer quoted verbatim",
+        )?;
+
+        Ok(id)
+    }
+
     fn content_hash_exists(&self, content_hash: &str) -> anyhow::Result<bool> {
         let count: i64 = self.db.connection().query_row(
             "SELECT COUNT(*) FROM content_items WHERE content_hash = ?1",
@@ -1104,6 +1276,56 @@ impl PcIngestReport {
     }
 
     /// Whether the work was usable at all.
+    pub fn is_productive(&self) -> bool {
+        self.built > 0
+    }
+}
+
+/// What one factual ingestion run needs.
+///
+/// The dictionary is passed in rather than read here for the same reason the other
+/// paths take it: it is 29 MB, and the pipeline is not the layer that reads sources.
+#[derive(Debug, Clone)]
+pub struct FactIngestRequest<'a> {
+    /// The subtest the items serve: `GS` for the science works, `SI`/`AI` for the
+    /// shop and automotive manuals.
+    pub subtest: &'a str,
+    /// The work's own title, recorded on every item's rubric.
+    pub label: &'a str,
+    /// The vault id of this work's text.
+    pub source_id: &'a str,
+    pub count: usize,
+    pub seed: u64,
+    /// Used only to refuse an answer containing an OCR misreading.
+    pub dictionary: &'a Dictionary,
+    /// Named reviewer recorded on activation (REQ-056).
+    pub reviewer: &'a str,
+    /// Actor recorded in the audit trail for the machine steps.
+    pub generator: &'a str,
+}
+
+/// What one work's factual ingestion run did.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct FactIngestReport {
+    pub label: String,
+    /// Questions the work asks, before any were filtered.
+    pub questions: usize,
+    pub built: usize,
+    pub verified: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    pub rejected: Vec<Rejection>,
+    pub item_ids: Vec<String>,
+    /// Why this work contributed nothing, when that is a property of its prose
+    /// rather than a failure. `None` on a work that built items.
+    pub skipped: Option<String>,
+}
+
+impl FactIngestReport {
+    pub fn is_clean(&self) -> bool {
+        self.rejected.is_empty()
+    }
+
     pub fn is_productive(&self) -> bool {
         self.built > 0
     }

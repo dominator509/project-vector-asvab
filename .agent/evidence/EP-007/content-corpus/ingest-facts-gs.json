@@ -1,0 +1,34 @@
+{
+  "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+  "dictionary": {
+    "entries": 93308,
+    "path": "sources/webster-1913/pg29765.txt",
+    "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
+  },
+  "elapsed_ms": 311127,
+  "requested_per_work": 500,
+  "seed": 20260922,
+  "subtest": "GS",
+  "totals": {
+    "activated": 301,
+    "already_present": 0,
+    "built": 301,
+    "questions": 450,
+    "rejected": 0
+  },
+  "works": [
+    {
+      "activated": 301,
+      "already_present": 0,
+      "built": 301,
+      "ebook": "75948",
+      "path": "sources/gutenberg/book-of-wonders.txt",
+      "questions": 450,
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:7706458b733a223a04a2eb2e4d5ff780f73d50339af9b6fc11a6541664252ae9",
+      "skipped": null,
+      "title": "The book of wonders"
+    }
+  ]
+}
