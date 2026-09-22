@@ -24,9 +24,11 @@ use serde::{Deserialize, Serialize};
 use vector_persistence::content::{ContentItemRepo, NewContentItem, StoredItem};
 use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::Database;
+use vector_questions::dictionary::Dictionary;
 use vector_questions::factory;
 use vector_questions::ingestion::AnswerProof;
 use vector_questions::provenance::ContentHash;
+use vector_questions::thesaurus::{self, Thesaurus, WkItem};
 
 /// What to generate.
 #[derive(Debug, Clone)]
@@ -213,6 +215,169 @@ impl<'a> ContentPipeline<'a> {
         Ok(id)
     }
 
+    /// Ingest Word Knowledge items from two recorded sources.
+    ///
+    /// The thesaurus supplies the synonym relationship and the dictionary
+    /// corroborates it, so an item's evidence is a citation rather than a
+    /// computation -- which is exactly what `source_backed` means in the schema,
+    /// and why the schema refuses `source_backed` for AR and MK but permits it
+    /// for WK.
+    ///
+    /// The source texts are passed in rather than read here: reading them is the
+    /// caller's business, and both are tens of megabytes that must never live in
+    /// this crate.
+    pub fn ingest_wk(
+        &self,
+        thesaurus: &Thesaurus,
+        dictionary: &Dictionary,
+        request: &WkIngestRequest<'_>,
+    ) -> anyhow::Result<WkIngestReport> {
+        let items = thesaurus.build_items_configured(
+            request.count,
+            request.seed,
+            request.min_distractor_lines,
+            // The dictionary is the quality bar: a pair the dictionary does not
+            // link is one Moby associated but never defined as synonymous.
+            |head, candidate| dictionary.are_linked(head, candidate),
+        );
+
+        let mut report = WkIngestReport {
+            built: items.len(),
+            ..Default::default()
+        };
+        if items.is_empty() {
+            anyhow::bail!(
+                "no Word Knowledge items survived the dictionary filter; either the \
+                 sources are wrong or the filter is rejecting everything"
+            );
+        }
+
+        for item in items {
+            let content_hash = item.content_hash();
+            if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            match self.store_wk_verified(thesaurus, dictionary, request, &item) {
+                Ok(id) => {
+                    report.verified += 1;
+                    report.activated += 1;
+                    report.item_ids.push(id);
+                }
+                Err(error) => report.rejected.push(Rejection {
+                    template_id: Some(item.headword.clone()),
+                    reason: error.to_string(),
+                }),
+            }
+        }
+
+        // A run that stored nothing, because every item was refused for what is
+        // almost certainly the same systemic reason, is a failure rather than a
+        // corpus of zero. Reporting it as a successful report of N rejections
+        // invites a caller to count the rejections as content.
+        if report.activated == 0 && report.already_present == 0 {
+            let first = report
+                .rejected
+                .first()
+                .map(|rejection| rejection.reason.as_str())
+                .unwrap_or("no reason recorded");
+            anyhow::bail!(
+                "ingestion stored nothing: all {} item(s) were refused; first reason: {first}",
+                report.rejected.len()
+            );
+        }
+
+        Ok(report)
+    }
+
+    /// Verify one Word Knowledge item and, only if it proves out, store it.
+    ///
+    /// Public for the same reason `store_verified` is: the builder's own output
+    /// always verifies, so the refusal path needs a directly callable entry point
+    /// or deleting the check would break no test.
+    pub fn store_wk_verified(
+        &self,
+        thesaurus: &Thesaurus,
+        dictionary: &Dictionary,
+        request: &WkIngestRequest<'_>,
+        item: &WkItem,
+    ) -> anyhow::Result<String> {
+        thesaurus::verify(item, thesaurus)
+            .map_err(|failure| anyhow::anyhow!("item failed source verification: {failure}"))?;
+
+        let repo = ContentItemRepo::new(self.db);
+        let id = format!("q-{}", uuid::Uuid::new_v4());
+        let content_hash = item.content_hash();
+        let correct = &item.options[item.correct_index];
+
+        // The rubric records what was checked, so a reviewer can re-check it
+        // without re-running the ingester.
+        let rubric = format!(
+            "The thesaurus lists \"{correct}\" with \"{headword}\" on the same line, and \
+             Webster's Unabridged defines one of the two using the other, so the pair is \
+             corroborated by both sources rather than asserted by this program.",
+            correct = correct,
+            headword = item.headword
+        );
+        let proof = AnswerProof::SourceBacked {
+            source_id: request.thesaurus_source.to_string(),
+            rubric,
+        };
+        let proof_json = serde_json::to_string(&proof)?;
+
+        // What the builder produced, and what the verifier re-derived from the
+        // sources. Different inputs, so they cannot coincide -- which the schema
+        // requires before activation.
+        let generator_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}{}",
+            item.headword,
+            item.options.join("\u{2}"),
+            correct
+        ));
+        let verifier_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}linked={}",
+            item.supporting_line,
+            correct,
+            dictionary.are_linked(&item.headword, correct)
+        ));
+
+        repo.insert_draft(&NewContentItem {
+            id: &id,
+            subtest: "WK",
+            objective_id: &item.objective_id,
+            stem: &item.prompt,
+            options: &item.options,
+            correct_index: item.correct_index,
+            explanation: &item.explanation(),
+            distractor_rationales: &item.distractor_rationales,
+            difficulty: item.difficulty,
+            proof_kind: "source_backed",
+            proof_json: &proof_json,
+            content_hash: &content_hash,
+            generator_hash: Some(generator_hash.as_str()),
+        })?;
+
+        // Both sources are cited: the thesaurus is the item's evidence, and the
+        // dictionary is what corroborates it. A citation the vault has not seen
+        // is refused by migration 004, so both must be recorded first.
+        repo.cite(&id, request.thesaurus_source)?;
+        repo.cite(&id, request.dictionary_source)?;
+
+        self.db.connection().execute(
+            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+            rusqlite::params![id, verifier_hash.as_str()],
+        )?;
+
+        repo.walk_to_content_reviewed(&id, request.generator)?;
+        repo.activate(
+            &id,
+            request.reviewer,
+            "ingested from public-domain sources; synonym pair corroborated by both",
+        )?;
+
+        Ok(id)
+    }
+
     fn content_hash_exists(&self, content_hash: &str) -> anyhow::Result<bool> {
         let count: i64 = self.db.connection().query_row(
             "SELECT COUNT(*) FROM content_items WHERE content_hash = ?1",
@@ -322,6 +487,50 @@ const GENERATOR_SOURCE_TITLE: &str = "ASVAB subtest construct definitions (facts
 const GENERATOR_SOURCE_HASH: &str = "sha256:asvab-subtest-constructs-2026-09-22";
 /// Deliberately not "US-Government-Work": the page asserts all rights reserved.
 const GENERATOR_SOURCE_LICENSE: &str = "Facts-only; item text is original work";
+
+/// A request to ingest Word Knowledge items from recorded sources.
+///
+/// Both source ids must already exist in the evidence vault: migration 004
+/// refuses a citation the vault has not seen, so an ingester cannot invent
+/// provenance for itself.
+#[derive(Debug, Clone)]
+pub struct WkIngestRequest<'a> {
+    /// The thesaurus the synonym relationship comes from.
+    pub thesaurus_source: &'a str,
+    /// The dictionary that corroborates it.
+    pub dictionary_source: &'a str,
+    /// How many items to attempt.
+    pub count: usize,
+    pub seed: u64,
+    /// Bar for a distractor to be offered, in source lines.
+    ///
+    /// A policy rather than a property of the source, so the caller sets it: the
+    /// default is calibrated for a 30,000-root-word thesaurus, and no small or
+    /// synthetic source can meet it.
+    pub min_distractor_lines: usize,
+    /// Named reviewer recorded on activation (REQ-056).
+    pub reviewer: &'a str,
+    /// Actor recorded in the audit trail for the machine steps.
+    pub generator: &'a str,
+}
+
+/// What a Word Knowledge ingestion run did.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct WkIngestReport {
+    /// Items the builder produced after the dictionary filter.
+    pub built: usize,
+    pub verified: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    pub rejected: Vec<Rejection>,
+    pub item_ids: Vec<String>,
+}
+
+impl WkIngestReport {
+    pub fn is_clean(&self) -> bool {
+        self.rejected.is_empty()
+    }
+}
 
 /// An item as the interface sees it.
 ///

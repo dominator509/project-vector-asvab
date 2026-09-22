@@ -81,6 +81,42 @@ fn same(a: &str, b: &str) -> bool {
     a.trim().eq_ignore_ascii_case(b.trim())
 }
 
+/// How many source lines a distractor must appear on to be offered.
+///
+/// ## What this achieves, and what it does not
+///
+/// Measured against the real corpus. At 1, distractors included `mammiform`,
+/// `naif`, `nympha` and `untremulous`; at 6 those are gone, so this removes the
+/// extreme outliers.
+///
+/// It does **not** make the distractors plausible, and the reason is a property
+/// of the source rather than of the number: a word's line count measures how many
+/// *senses* Moby associates it with, which is polysemy, not commonness. It does
+/// not separate `merely` from `unendowed`.
+///
+/// A second hypothesis was tested and disproven, recorded so nobody repeats it:
+/// requiring the dictionary to define a distractor does not help either. 21% of
+/// distractors are undefined, but so are some *correct* answers (`pep`), and the
+/// defined ones include `whelk` and `becharm`. Webster's attests a word; it does
+/// not say the word is ordinary.
+///
+/// The real fix is a word-frequency source, which neither of these supplies. See
+/// the module documentation.
+/// The default for [`Thesaurus::build_items_filtered`].
+///
+/// Public because it is a policy the caller may need to override: it is
+/// calibrated for a 30,000-root-word source, and a small or synthetic source
+/// cannot supply distractors at this bar at all.
+pub const MIN_DISTRACTOR_LINES: usize = 6;
+
+/// How much longer or shorter than the answer a distractor may be.
+///
+/// An option conspicuously longer than the others is the one a learner
+/// eliminates first, so this closes the cheapest way to answer without knowing
+/// any of the words. Like the line count it removes outliers rather than
+/// establishing plausibility.
+const MAX_DISTRACTOR_LENGTH_GAP: usize = 4;
+
 /// A Word Knowledge item.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WkItem {
@@ -335,6 +371,24 @@ impl Thesaurus {
         })
     }
 
+    /// Whether the source treats `word` as a root word with a line of its own.
+    pub fn is_root_word(&self, word: &str) -> bool {
+        self.entry_index.contains_key(&key(word))
+    }
+
+    /// How many source lines mention `word`.
+    ///
+    /// A crude centrality measure, and the only one these sources offer. Common
+    /// English words appear in many of Moby's association lines; obscure ones
+    /// appear in one or two. It is what makes a distractor plausible rather than
+    /// obviously wrong.
+    pub fn frequency(&self, word: &str) -> usize {
+        self.lines_by_word
+            .get(&key(word))
+            .map(|lines| lines.len())
+            .unwrap_or(0)
+    }
+
     /// Whether the source lists each word on the other's line.
     ///
     /// ## Why this filter exists, and what it is not
@@ -375,10 +429,36 @@ impl Thesaurus {
     /// `FnMut` rather than `Fn` so a caller can accumulate statistics while
     /// filtering, which is what makes a filter's decisions assertable in a test
     /// instead of merely observable through which items appear.
-    pub fn build_items_filtered<F>(&self, count: usize, seed: u64, mut accept: F) -> Vec<WkItem>
+    pub fn build_items_filtered<F>(&self, count: usize, seed: u64, accept: F) -> Vec<WkItem>
     where
         F: FnMut(&str, &str) -> bool,
     {
+        self.build_items_configured(count, seed, MIN_DISTRACTOR_LINES, accept)
+    }
+
+    /// As [`Self::build_items_filtered`], with the distractor bar set explicitly.
+    ///
+    /// The threshold is a policy rather than a property of the source, so it is a
+    /// parameter: a fixture with a dozen words cannot supply distractors that
+    /// appear on six lines, and hard-coding the real corpus's calibration made
+    /// every small-source test produce nothing.
+    pub fn build_items_configured<F>(
+        &self,
+        count: usize,
+        seed: u64,
+        min_distractor_lines: usize,
+        mut accept: F,
+    ) -> Vec<WkItem>
+    where
+        F: FnMut(&str, &str) -> bool,
+    {
+        // An empty source is not an error here, but it must not reach the random
+        // draw: `Rng::range(0, len - 1)` on zero entries is `range(0, -1)`, which
+        // panics. Returning nothing lets the caller decide whether an empty
+        // corpus is a refusal or a legitimate no-op.
+        if self.entries.is_empty() {
+            return Vec::new();
+        }
         let mut rng = Rng::new(seed);
         let mut items: Vec<WkItem> = Vec::new();
         let mut seen_hashes: std::collections::HashSet<String> = std::collections::HashSet::new();
@@ -389,7 +469,8 @@ impl Thesaurus {
             if items.len() >= count {
                 break;
             }
-            let Some(item) = self.build_one(&mut rng, seed, &mut accept) else {
+            let Some(item) = self.build_one(&mut rng, seed, min_distractor_lines, &mut accept)
+            else {
                 continue;
             };
             if seen_hashes.insert(item.content_hash()) {
@@ -399,7 +480,13 @@ impl Thesaurus {
         items
     }
 
-    fn build_one<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<WkItem>
+    fn build_one<F>(
+        &self,
+        rng: &mut Rng,
+        seed: u64,
+        min_distractor_lines: usize,
+        accept: &mut F,
+    ) -> Option<WkItem>
     where
         F: FnMut(&str, &str) -> bool,
     {
@@ -432,6 +519,13 @@ impl Thesaurus {
 
         // Distractors must not be associated with the headword anywhere in the
         // source, or the item may have more than one defensible answer.
+        //
+        // They must also be *plausible*. Drawing uniformly from the vocabulary
+        // produced options like `unaustereness` and `mammiform` beside `calm`, and
+        // an item whose wrong answers are obviously wrong can be answered without
+        // knowing the word at all -- which defeats the point of a vocabulary
+        // question. A root word with a line of its own, mentioned on several
+        // lines, is a word the source treats as ordinary English.
         let mut options: Vec<(String, bool)> = vec![(correct.clone(), true)];
         let probes = 400;
         for _ in 0..probes {
@@ -449,6 +543,17 @@ impl Thesaurus {
                 continue;
             }
             if self.co_occurs(&entry.headword, &candidate) {
+                continue;
+            }
+            if !self.is_root_word(&candidate) {
+                continue;
+            }
+            if self.frequency(&candidate) < min_distractor_lines {
+                continue;
+            }
+            // A length outlier is the option a learner eliminates first.
+            let gap = candidate.len().abs_diff(correct.len());
+            if gap > MAX_DISTRACTOR_LENGTH_GAP {
                 continue;
             }
             options.push((candidate, false));

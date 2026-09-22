@@ -48,6 +48,8 @@ export RUST_BACKTRACE=1
 | Provider live-fire | `sh scripts/provider-live-fire.sh` |
 | MCP probe | `sh scripts/mcp-probe.sh` |
 | Isolated worktree lane | `cargo run -p vector-tools -- repair lane --gate reality-gate` |
+| Content ingestion (Word Knowledge) | `cargo run -p vector-tools -- content ingest-wk --db <db> --thesaurus <moby words.txt> --dictionary <webster pg29765.txt>` |
+| Corpus readback | `python3 scripts/probes/check-corpus.py <db>` |
 
 ## Adapter parity
 After changing commands, run `python3 scripts/validate-generated-pack.py .` and ensure every platform adapter points back to AGENTS.md rather than duplicating a conflicting command surface.

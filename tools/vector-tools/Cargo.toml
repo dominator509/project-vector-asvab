@@ -7,6 +7,10 @@ publish.workspace = true
 
 [dependencies]
 vector-persistence = { path = "../../crates/vector-persistence" }
+# Corpus ingestion needs the pure content layer and the orchestration layer that
+# joins it to persistence. Both are used only by `content ingest-wk`.
+vector-questions = { path = "../../crates/vector-questions" }
+vector-application = { path = "../../crates/vector-application" }
 vector-observability = { path = "../../crates/vector-observability" }
 vector-platform = { path = "../../crates/vector-platform" }
 vector-llm = { path = "../../crates/vector-llm" }

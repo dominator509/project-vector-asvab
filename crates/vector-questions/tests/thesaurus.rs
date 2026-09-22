@@ -99,7 +99,7 @@ fn co_occurrence_is_per_line_and_symmetric() {
 #[test]
 fn builds_items_whose_options_are_plain_words() {
     let t = fixture();
-    let items = t.build_items(6, 1);
+    let items = t.build_items_configured(6, 1, 1, |_, _| true);
     assert!(!items.is_empty(), "the fixture should yield items");
     for item in &items {
         assert_eq!(item.options.len(), 4);
@@ -118,7 +118,7 @@ fn builds_items_whose_options_are_plain_words() {
 fn never_uses_a_phrase_or_proper_noun_as_a_headword() {
     let t = fixture();
     for _ in 0..12 {
-        for item in t.build_items(8, 7) {
+        for item in t.build_items_configured(8, 7, 1, |_, _| true) {
             assert_ne!(item.headword.to_lowercase(), "zigzag");
             assert_ne!(item.headword.to_lowercase(), "zulu");
         }
@@ -129,7 +129,7 @@ fn never_uses_a_phrase_or_proper_noun_as_a_headword() {
 fn every_built_item_passes_independent_verification() {
     let t = fixture();
     for seed in 0..40 {
-        for item in t.build_items(5, seed) {
+        for item in t.build_items_configured(5, seed, 1, |_, _| true) {
             if let Err(failure) = verify(&item, &t) {
                 panic!(
                     "seed {seed}: {} failed verification: {failure}",
@@ -143,8 +143,8 @@ fn every_built_item_passes_independent_verification() {
 #[test]
 fn the_same_seed_reproduces_the_same_items() {
     let t = fixture();
-    let first = t.build_items(5, 4242);
-    let second = t.build_items(5, 4242);
+    let first = t.build_items_configured(5, 4242, 1, |_, _| true);
+    let second = t.build_items_configured(5, 4242, 1, |_, _| true);
     assert_eq!(first, second, "ingestion must be reproducible");
     assert_eq!(
         first.iter().map(WkItem::content_hash).collect::<Vec<_>>(),
@@ -155,7 +155,7 @@ fn the_same_seed_reproduces_the_same_items() {
 #[test]
 fn a_batch_contains_no_duplicate_questions() {
     let t = fixture();
-    let items = t.build_items(6, 99);
+    let items = t.build_items_configured(6, 99, 1, |_, _| true);
     let hashes: std::collections::HashSet<String> =
         items.iter().map(WkItem::content_hash).collect();
     assert_eq!(hashes.len(), items.len(), "no repeated headword");
@@ -166,7 +166,7 @@ fn a_root_word_with_too_few_terms_is_not_used() {
     let t = fixture();
     // `sparse` has three related terms, so four options cannot be filled from a
     // well-formed item; it must never appear as a headword.
-    for item in t.build_items(20, 3) {
+    for item in t.build_items_configured(20, 3, 1, |_, _| true) {
         assert_ne!(item.headword.to_lowercase(), "sparse");
     }
 }
@@ -174,7 +174,7 @@ fn a_root_word_with_too_few_terms_is_not_used() {
 #[test]
 fn the_explanation_shows_the_source_list_rather_than_inventing_one() {
     let t = fixture();
-    let items = t.build_items(4, 5);
+    let items = t.build_items_configured(4, 5, 1, |_, _| true);
     let item = items.first().expect("an item");
     let explanation = item.explanation();
     assert!(explanation.contains(&item.headword));
@@ -192,7 +192,7 @@ fn the_explanation_shows_the_source_list_rather_than_inventing_one() {
 #[test]
 fn verification_refuses_an_option_marked_correct_that_the_source_does_not_list() {
     let t = fixture();
-    let mut item = t.build_items(3, 11).remove(0);
+    let mut item = t.build_items_configured(3, 11, 1, |_, _| true).remove(0);
     // Point correct_index at a distractor, which by construction is not listed
     // with the headword.
     item.correct_index = (item.correct_index + 1) % item.options.len();
@@ -205,7 +205,7 @@ fn verification_refuses_an_option_marked_correct_that_the_source_does_not_list()
 #[test]
 fn verification_refuses_an_ambiguous_distractor() {
     let t = fixture();
-    let mut item = t.build_items(3, 12).remove(0);
+    let mut item = t.build_items_configured(3, 12, 1, |_, _| true).remove(0);
     // Substitute a word the source *does* list with the headword. The item then
     // has two defensible answers, which is the failure this check exists for.
     let related = t.related_to(&item.headword).expect("known headword");
@@ -224,7 +224,7 @@ fn verification_refuses_an_ambiguous_distractor() {
 #[test]
 fn verification_refuses_an_unknown_headword() {
     let t = fixture();
-    let mut item = t.build_items(3, 13).remove(0);
+    let mut item = t.build_items_configured(3, 13, 1, |_, _| true).remove(0);
     item.headword = "notinthesource".to_string();
     match verify(&item, &t) {
         Err(WkVerificationFailure::UnknownHeadword(_)) => {}
@@ -235,7 +235,7 @@ fn verification_refuses_an_unknown_headword() {
 #[test]
 fn verification_refuses_duplicate_options() {
     let t = fixture();
-    let mut item = t.build_items(3, 14).remove(0);
+    let mut item = t.build_items_configured(3, 14, 1, |_, _| true).remove(0);
     let wrongs: Vec<usize> = (0..item.options.len())
         .filter(|i| *i != item.correct_index)
         .collect();
@@ -249,7 +249,7 @@ fn verification_refuses_duplicate_options() {
 #[test]
 fn verification_refuses_incomplete_rationale_coverage() {
     let t = fixture();
-    let mut item = t.build_items(3, 15).remove(0);
+    let mut item = t.build_items_configured(3, 15, 1, |_, _| true).remove(0);
     let victim = *item
         .distractor_rationales
         .keys()
@@ -267,7 +267,7 @@ fn verification_refuses_incomplete_rationale_coverage() {
 #[test]
 fn verification_refuses_an_out_of_range_correct_index() {
     let t = fixture();
-    let mut item = t.build_items(3, 16).remove(0);
+    let mut item = t.build_items_configured(3, 16, 1, |_, _| true).remove(0);
     item.correct_index = item.options.len();
     match verify(&item, &t) {
         Err(WkVerificationFailure::CorrectIndexOutOfRange { .. }) => {}
@@ -282,7 +282,7 @@ fn verification_refuses_an_out_of_range_correct_index() {
 #[test]
 fn a_filter_that_accepts_nothing_yields_no_items() {
     let t = fixture();
-    let items = t.build_items_filtered(5, 1, |_, _| false);
+    let items = t.build_items_configured(5, 1, 1, |_, _| false);
     assert!(
         items.is_empty(),
         "a rejecting filter must produce an empty corpus rather than falling \
@@ -295,7 +295,7 @@ fn a_filter_that_accepts_nothing_yields_no_items() {
 fn the_filter_is_consulted_with_the_headword_and_the_candidate() {
     let t = fixture();
     let mut seen: Vec<(String, String)> = Vec::new();
-    let items = t.build_items_filtered(4, 2, |headword, candidate| {
+    let items = t.build_items_configured(4, 2, 1, |headword, candidate| {
         seen.push((headword.to_string(), candidate.to_string()));
         true
     });
@@ -315,7 +315,7 @@ fn the_filter_is_consulted_with_the_headword_and_the_candidate() {
 #[test]
 fn a_selective_filter_changes_which_pairs_are_used() {
     let t = fixture();
-    let items = t.build_items_filtered(6, 3, |_, candidate| {
+    let items = t.build_items_configured(6, 3, 1, |_, candidate| {
         candidate.to_lowercase().starts_with('b')
     });
     assert!(
@@ -335,7 +335,7 @@ fn a_selective_filter_changes_which_pairs_are_used() {
 #[test]
 fn filtered_items_still_verify_against_the_source() {
     let t = fixture();
-    let items = t.build_items_filtered(5, 4, |_, candidate| {
+    let items = t.build_items_configured(5, 4, 1, |_, candidate| {
         candidate.to_lowercase().starts_with('b')
     });
     for item in &items {

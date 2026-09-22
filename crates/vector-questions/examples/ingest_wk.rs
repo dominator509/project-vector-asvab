@@ -183,12 +183,42 @@ fn main() {
             } else {
                 ""
             };
-            println!("  {}. {option}{marker}", (b'A' + index as u8) as char);
+            // Whether Webster's defines the word at all. A distractor the
+            // dictionary has never heard of is one the source does not treat as
+            // ordinary English, which is what makes an option eliminable.
+            let defined = if dictionary.covers(option) {
+                "defined"
+            } else {
+                "NOT DEFINED"
+            };
+            println!(
+                "  {}. {option:<18} [{defined}]{marker}",
+                (b'A' + index as u8) as char
+            );
         }
-        if let Some(definition) = dictionary.define(&item.options[item.correct_index]) {
-            let preview: String = definition.chars().take(110).collect();
-            println!("  the source defines it: {preview}…");
+    }
+
+    // The measurement behind the distractor filter: how often an offered
+    // distractor is a word the dictionary does not carry.
+    let mut distractors = 0usize;
+    let mut undefined = 0usize;
+    for item in &filtered {
+        for (index, option) in item.options.iter().enumerate() {
+            if index == item.correct_index {
+                continue;
+            }
+            distractors += 1;
+            if !dictionary.covers(option) {
+                undefined += 1;
+            }
         }
+    }
+    if distractors > 0 {
+        println!(
+            "\ndistractors: {distractors}, of which {undefined} ({:.0}%) are words \
+             Webster's does not define",
+            100.0 * undefined as f64 / distractors as f64
+        );
     }
 
     if dirty > 0 {

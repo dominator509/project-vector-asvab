@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use vector_persistence::backup::{BackupManager, RestoreOutcome};
 use vector_persistence::{Database, MigrationManager};
 
+mod content;
 mod repair_lane;
 mod transports;
 
@@ -39,6 +40,15 @@ enum Commands {
     Repair {
         #[command(subcommand)]
         action: RepairCommands,
+    },
+    /// Build the study corpus from public-domain sources (REQ-022, REQ-056).
+    ///
+    /// Ingestion lives here rather than in the application because the sources
+    /// are tens of megabytes and cannot ship inside a desktop install; see
+    /// `content.rs`.
+    Content {
+        #[command(subcommand)]
+        action: ContentCommands,
     },
     /// Build or verify the release artifact identity.
     ///
@@ -196,6 +206,39 @@ fn migrations_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../migrations")
 }
 
+#[derive(Subcommand)]
+enum ContentCommands {
+    /// Ingest Word Knowledge items from public-domain sources.
+    ///
+    /// Both sources are required. The thesaurus supplies the synonym
+    /// relationship and Webster's corroborates it, so a pair is kept only when
+    /// the dictionary links the two words. Running with the thesaurus alone
+    /// produced a corpus the dictionary endorses 8% of the time; see the commit
+    /// that added this filter.
+    IngestWk {
+        /// Database to write into. The application's own database is at
+        /// `%APPDATA%\com.vector.app\vector.db`.
+        #[arg(long)]
+        db: PathBuf,
+        /// Moby Thesaurus `words.txt` (public domain, Gutenberg #3202).
+        #[arg(long)]
+        thesaurus: PathBuf,
+        /// Webster's Unabridged 1913 text (public domain, Gutenberg #29765).
+        #[arg(long)]
+        dictionary: PathBuf,
+        #[arg(long, default_value_t = 2000)]
+        count: usize,
+        /// Fixed so a pack can be regenerated and its hashes re-derived.
+        #[arg(long, default_value_t = 20_260_922)]
+        seed: u64,
+        #[arg(long, default_value = "content-reviewer")]
+        reviewer: String,
+        /// Write a JSON report here as well as printing it.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
+}
+
 fn migrate(db_path: &str) -> Result<usize> {
     let mut db = Database::open(db_path)?;
     let migrations = MigrationManager::load_from_dir(&migrations_dir())?;
@@ -206,6 +249,61 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Content { action } => match action {
+            ContentCommands::IngestWk {
+                db,
+                thesaurus,
+                dictionary,
+                count,
+                seed,
+                reviewer,
+                out,
+            } => {
+                let started = std::time::Instant::now();
+                let outcome =
+                    content::ingest_wk(&db, &thesaurus, &dictionary, count, seed, &reviewer)?;
+                let elapsed = started.elapsed();
+
+                let report = serde_json::json!({
+                    "database": db.display().to_string(),
+                    "thesaurus": {
+                        "path": thesaurus.display().to_string(),
+                        "sha256": outcome.thesaurus_hash,
+                        "root_words": outcome.thesaurus_roots,
+                    },
+                    "dictionary": {
+                        "path": dictionary.display().to_string(),
+                        "sha256": outcome.dictionary_hash,
+                        "entries": outcome.dictionary_entries,
+                    },
+                    "requested": count,
+                    "seed": seed,
+                    "built": outcome.built,
+                    "activated": outcome.activated,
+                    "already_present": outcome.already_present,
+                    "rejected": outcome.rejected,
+                    "distinct_items": outcome.item_ids.len(),
+                    "elapsed_ms": elapsed.as_millis(),
+                });
+                let text = serde_json::to_string_pretty(&report)?;
+                println!("{text}");
+                if let Some(path) = out {
+                    if let Some(parent) = path.parent() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                    std::fs::write(&path, format!("{text}\n"))?;
+                }
+                if outcome.activated == 0 {
+                    // The pipeline already refuses a run that stored nothing, so
+                    // reaching here means everything was already present. Saying
+                    // so plainly beats reporting a zero that looks like failure.
+                    eprintln!(
+                        "content ingest-wk: nothing new; {} item(s) already present",
+                        outcome.already_present
+                    );
+                }
+            }
+        },
         Commands::Provider { action } => match action {
             ProviderCommands::Probe {
                 all_configured,

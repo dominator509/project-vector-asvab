@@ -5059,11 +5059,13 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "vector-application",
  "vector-llm",
  "vector-mcp",
  "vector-observability",
  "vector-persistence",
  "vector-platform",
+ "vector-questions",
  "vector-repair",
 ]
 
