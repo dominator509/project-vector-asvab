@@ -4914,7 +4914,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "thiserror 1.0.69",
+ "thiserror 2.0.20",
  "uuid",
  "vector-domain",
  "vector-observability",
@@ -4962,7 +4962,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "thiserror 1.0.69",
+ "thiserror 2.0.20",
  "uuid",
 ]
 
@@ -5006,7 +5006,7 @@ dependencies = [
  "rusqlite",
  "serde_json",
  "sha2",
- "thiserror 1.0.69",
+ "thiserror 2.0.20",
  "tracing",
  "uuid",
  "vector-domain",
