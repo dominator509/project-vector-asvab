@@ -165,3 +165,22 @@ tests; the packaged artifact was rebuilt and the packaged live-fire passed.
 Objective part 5 is now complete: the content manager installs, quarantines and rolls
 back packs. Still open: Shop and Auto Information items, the curriculum graph and
 calibration metadata in the pack schema, and the Word Knowledge distractor gap.
+
+### Round 17
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| Shop Information | `crates/vector-questions/src/purposes.rs` reads a tool manual's descriptions and forms a "Which tool is used to ...?" item from each, with the purpose quoted verbatim and distractors drawn from the manual's other tools. `content ingest-tools` wires it through the pipeline, the vault and the CLI. 31 items from *Tools and Their Uses* (NAVEDTRA 1971) and *TM 11-453 Shop Work* (US Army, 1942). | `.agent/evidence/EP-007/content-corpus/ROUND-17-REPORT.md`, `ingest-tools-si.json` |
+| The OCR check | Found doing nothing on two paths (a per-word test handed whole sentences, so it could not fail) and, once fixed, found doing harm (226 of 301 General Science items refused, every refusal an ordinary English word). It now runs only where its precision was measured: NEETS glossary terms (EI) and tool-name options (SI). `scripts/probes/check-options.py` reports 0 options containing scan damage across 7,047 items. | `check-options.log`, `ROUND-17-REPORT.md` |
+
+Three Machinery's Reference Series booklets were downloaded, measured and **refused**: their
+scans mangle tool names (`MaWng Oonoave Forming`, `Drill Jiers Drill`) and shipping them would
+have put visibly broken options in front of learners.
+
+Corpus as stored after round 17: 2,000 WK, 3,668 EI, 1,047 PC, 301 GS, 31 SI = 7,047 active
+items, 31 evidence records, 9,047 citations, 28,188 review rows. Gates: all eight exit 0; 906
+Rust tests across 70 binaries, 210 frontend, 36 E2E.
+
+Still open: Auto Information has no items; Shop Information is thin at 31; the Word Knowledge
+distractor gap is unchanged; the pack schema still lacks the curriculum graph and calibration
+metadata.

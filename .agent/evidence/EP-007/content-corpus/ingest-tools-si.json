@@ -1,0 +1,47 @@
+{
+  "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+  "dictionary": {
+    "entries": 93308,
+    "path": "sources/webster-1913/pg29765.txt",
+    "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
+  },
+  "elapsed_ms": 5673,
+  "manuals": [
+    {
+      "activated": 22,
+      "already_present": 0,
+      "archive_id": "micro_IA41153156_0308",
+      "built": 22,
+      "path": "sources/federal/tools-and-uses.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:ec5c10f87471deae564d5bad632db9fb4e1dc3a362190a2d9456c5938d6324c9",
+      "skipped": null,
+      "statements": 24,
+      "title": "Tools and Their Uses, NAVEDTRA Rate Training Manual"
+    },
+    {
+      "activated": 9,
+      "already_present": 0,
+      "archive_id": "TM11-453",
+      "built": 9,
+      "path": "sources/federal/army-shop-work.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:e0e982d35aacfc0b90248219e207b4b0455446fdf183666f156782cae2d6a339",
+      "skipped": null,
+      "statements": 9,
+      "title": "TM 11-453 Shop Work, US Army Signal Corps"
+    }
+  ],
+  "requested_per_manual": 200,
+  "seed": 20260922,
+  "subtest": "SI",
+  "totals": {
+    "activated": 31,
+    "already_present": 0,
+    "built": 31,
+    "rejected": 0,
+    "statements": 33
+  }
+}

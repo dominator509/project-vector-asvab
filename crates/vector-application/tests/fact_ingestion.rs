@@ -16,7 +16,6 @@ use vector_application::content::{ContentPipeline, FactIngestRequest};
 use vector_persistence::content::ContentItemRepo;
 use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::{Database, Migration, MigrationManager};
-use vector_questions::dictionary::parse_webster;
 use vector_questions::facts::{parse_faq, verify, FactItem, Faq};
 
 mod tempdir {
@@ -93,31 +92,6 @@ Our eyes read that scattered light as blue.
 *** END OF THE PROJECT GUTENBERG EBOOK A TEST WORK ***
 ";
 
-/// A miniature Webster's, enough for the OCR check to run.
-const DICTIONARY: &str = "\
-*** START OF THE PROJECT GUTENBERG EBOOK ***
-
-Count
-
-Count, v. To number; to reckon.
-
-Wind
-
-Wind, n. Air in motion.
-
-Pencil
-
-Pencil, n. An instrument for writing.
-
-Sky
-
-Sky, n. The apparent arch of the heavens.
-
-Carbon
-
-Carbon, n. A chemical element.
-";
-
 fn migrations() -> Vec<Migration> {
     MigrationManager::load_from_dir(Path::new("../../migrations")).expect("migrations load")
 }
@@ -140,17 +114,13 @@ fn database(tag: &str) -> (tempdir::TempDir, Database, String) {
     (dir, db, source)
 }
 
-fn request<'a>(
-    source: &'a str,
-    dictionary: &'a vector_questions::dictionary::Dictionary,
-) -> FactIngestRequest<'a> {
+fn request<'a>(source: &'a str) -> FactIngestRequest<'a> {
     FactIngestRequest {
         subtest: "GS",
         label: "A Test Work",
         source_id: source,
         count: 8,
         seed: 20_260_922,
-        dictionary,
         reviewer: "content-reviewer",
         generator: "fact-ingester",
     }
@@ -158,10 +128,6 @@ fn request<'a>(
 
 fn fixture() -> Faq {
     parse_faq(WORK, "A Test Work")
-}
-
-fn dictionary() -> vector_questions::dictionary::Dictionary {
-    parse_webster(DICTIONARY)
 }
 
 // ---------------------------------------------------------------------------
@@ -172,9 +138,8 @@ fn dictionary() -> vector_questions::dictionary::Dictionary {
 fn ingestion_activates_servable_items_citing_the_work() {
     let (_dir, db, source) = database("ingest");
     let pipeline = ContentPipeline::new(&db);
-    let dictionary = dictionary();
     let report = pipeline
-        .ingest_facts(&fixture(), &request(&source, &dictionary))
+        .ingest_facts(&fixture(), &request(&source))
         .expect("ingest");
 
     assert_eq!(report.questions, 4, "the fixture asks four questions");
@@ -212,9 +177,8 @@ fn ingestion_activates_servable_items_citing_the_work() {
 fn ingested_items_are_reachable_through_the_serving_api() {
     let (_dir, db, source) = database("serving");
     let pipeline = ContentPipeline::new(&db);
-    let dictionary = dictionary();
     pipeline
-        .ingest_facts(&fixture(), &request(&source, &dictionary))
+        .ingest_facts(&fixture(), &request(&source))
         .expect("ingest");
 
     let item = pipeline
@@ -244,9 +208,8 @@ fn ingested_items_are_reachable_through_the_serving_api() {
 fn the_stored_rubric_names_the_work() {
     let (_dir, db, source) = database("rubric");
     let pipeline = ContentPipeline::new(&db);
-    let dictionary = dictionary();
     pipeline
-        .ingest_facts(&fixture(), &request(&source, &dictionary))
+        .ingest_facts(&fixture(), &request(&source))
         .expect("ingest");
 
     let repo = ContentItemRepo::new(&db);
@@ -271,9 +234,8 @@ fn the_stored_rubric_names_the_work() {
 fn the_audit_trail_records_the_whole_pipeline() {
     let (_dir, db, source) = database("audit");
     let pipeline = ContentPipeline::new(&db);
-    let dictionary = dictionary();
     let report = pipeline
-        .ingest_facts(&fixture(), &request(&source, &dictionary))
+        .ingest_facts(&fixture(), &request(&source))
         .expect("ingest");
 
     let repo = ContentItemRepo::new(&db);
@@ -293,12 +255,11 @@ fn the_audit_trail_records_the_whole_pipeline() {
 fn repeating_an_ingestion_adds_nothing() {
     let (_dir, db, source) = database("idempotent");
     let pipeline = ContentPipeline::new(&db);
-    let dictionary = dictionary();
     let first = pipeline
-        .ingest_facts(&fixture(), &request(&source, &dictionary))
+        .ingest_facts(&fixture(), &request(&source))
         .expect("first");
     let second = pipeline
-        .ingest_facts(&fixture(), &request(&source, &dictionary))
+        .ingest_facts(&fixture(), &request(&source))
         .expect("second");
 
     assert_eq!(second.activated, 0, "nothing new on a repeat: {second:?}");
@@ -309,9 +270,8 @@ fn repeating_an_ingestion_adds_nothing() {
 fn ingestion_refuses_a_work_the_vault_has_not_recorded() {
     let (_dir, db, _source) = database("unknown-source");
     let pipeline = ContentPipeline::new(&db);
-    let dictionary = dictionary();
     let error = pipeline
-        .ingest_facts(&fixture(), &request("SRC-INVENTED", &dictionary))
+        .ingest_facts(&fixture(), &request("SRC-INVENTED"))
         .expect_err("an unrecorded source must be refused");
     assert!(
         error.to_string().contains("vault") || error.to_string().contains("source"),
@@ -330,11 +290,7 @@ fn ingestion_refuses_a_work_the_vault_has_not_recorded() {
 fn an_empty_text_is_an_error_rather_than_an_empty_corpus() {
     let (_dir, db, source) = database("empty");
     let pipeline = ContentPipeline::new(&db);
-    let dictionary = dictionary();
-    let result = pipeline.ingest_facts(
-        &parse_faq("", "A Test Work"),
-        &request(&source, &dictionary),
-    );
+    let result = pipeline.ingest_facts(&parse_faq("", "A Test Work"), &request(&source));
     assert!(
         result.is_err(),
         "an empty file must not report a successful empty ingestion"
@@ -351,7 +307,6 @@ fn storing_refuses_a_distractor_that_answers_the_question_asked() {
     let (_dir, db, source) = database("same-question");
     let pipeline = ContentPipeline::new(&db);
     let faq = fixture();
-    let dictionary = dictionary();
 
     let mut item: FactItem = faq
         .build_items("GS", 1, 20_260_922, 6, 30, |_| true)
@@ -367,7 +322,7 @@ fn storing_refuses_a_distractor_that_answers_the_question_asked() {
     verify(&item, &faq).expect_err("two options cannot both answer the question");
 
     let error = pipeline
-        .store_fact_verified(&faq, &request(&source, &dictionary), &item)
+        .store_fact_verified(&faq, &request(&source), &item)
         .expect_err("an ambiguous item must be refused");
     assert!(
         error.to_string().contains("verification"),

@@ -31,6 +31,7 @@ use vector_questions::ingestion::AnswerProof;
 use vector_questions::neets::{self, EiItem, Glossary};
 use vector_questions::passages::{self, PcItem, Text};
 use vector_questions::provenance::ContentHash;
+use vector_questions::purposes::{self, PurposeItem, Purposes};
 use vector_questions::thesaurus::{self, Thesaurus, WkItem};
 
 /// What to generate.
@@ -749,14 +750,11 @@ impl<'a> ContentPipeline<'a> {
             request.seed,
             facts::MIN_OPTION_WORDS,
             facts::MAX_OPTION_WORDS,
-            |item| {
-                // The dictionary check runs on what a learner will read: the
-                // question, the correct answer, and every option.
-                item.options
-                    .iter()
-                    .all(|option| !looks_like_misreading(request.dictionary, option))
-                    && !looks_like_misreading(request.dictionary, &item.prompt)
-            },
+            // No dictionary check here. The one this corpus has was measured against this
+            // very book and refused 226 of 301 items, every refusal an ordinary word; see
+            // `option_words_are_known`. The work is a proofread reprint, not a scan, so
+            // there is no scanner damage for a check to find.
+            |_| true,
         );
 
         let mut report = FactIngestReport {
@@ -894,6 +892,155 @@ impl<'a> ContentPipeline<'a> {
             &id,
             request.reviewer,
             "ingested from a public-domain work; question and answer quoted verbatim",
+        )?;
+
+        Ok(id)
+    }
+
+    /// Ingest Shop Information items from one public-domain tool manual.
+    ///
+    /// One work per call for the same reason as the others: an item's evidence is a
+    /// sentence in a named manual, and the citation has to name that manual.
+    ///
+    /// The OCR check matters more here than anywhere else in the corpus. These manuals
+    /// are scans of 1940s and 1970s print, and a misread word became a *distractor* --
+    /// `inuide micrometer` for `inside micrometer` -- which is a wrong answer that looks
+    /// like a tool. Every option is checked, not only the correct one.
+    pub fn ingest_purposes(
+        &self,
+        source: &Purposes,
+        request: &PurposeIngestRequest<'_>,
+    ) -> anyhow::Result<PurposeIngestReport> {
+        // The options are checked, the prompt is not: a tool's name is one to three common
+        // nouns, so a word the dictionary does not carry is suspect, while the prompt
+        // quotes the manual's own prose and would trip a vocabulary rule.
+        let items = source.build_items(request.subtest, request.count, request.seed, |item| {
+            item.options
+                .iter()
+                .all(|option| option_words_are_known(request.dictionary, option))
+        });
+
+        let mut report = PurposeIngestReport {
+            label: request.label.to_string(),
+            statements: source.entry_count(),
+            built: items.len(),
+            ..Default::default()
+        };
+        if source.is_empty() {
+            anyhow::bail!(
+                "text {:?} described no tools at all; the file's shape or its scanner's \
+                 habits may have changed",
+                request.label
+            );
+        }
+        if items.is_empty() {
+            report.skipped = Some(
+                "no tool description survived the dictionary check on its options".to_string(),
+            );
+            return Ok(report);
+        }
+
+        for item in items {
+            let content_hash = item.content_hash();
+            if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            match self.store_purpose_verified(source, request, &item) {
+                Ok(id) => {
+                    report.verified += 1;
+                    report.activated += 1;
+                    report.item_ids.push(id);
+                }
+                Err(error) => report.rejected.push(Rejection {
+                    template_id: Some(item.prompt.clone()),
+                    reason: error.to_string(),
+                }),
+            }
+        }
+
+        if report.activated == 0 && report.already_present == 0 {
+            let first = report
+                .rejected
+                .first()
+                .map(|rejection| rejection.reason.as_str())
+                .unwrap_or("no reason recorded");
+            anyhow::bail!(
+                "text {:?} stored nothing: all {} item(s) were refused; first reason: {first}",
+                request.label,
+                report.rejected.len()
+            );
+        }
+
+        Ok(report)
+    }
+
+    /// Verify one tool item against its source and, only if it proves out, store it.
+    pub fn store_purpose_verified(
+        &self,
+        source: &Purposes,
+        request: &PurposeIngestRequest<'_>,
+        item: &PurposeItem,
+    ) -> anyhow::Result<String> {
+        purposes::verify(item, source)
+            .map_err(|failure| anyhow::anyhow!("item failed source verification: {failure}"))?;
+
+        let repo = ContentItemRepo::new(self.db);
+        let id = format!("q-{}", uuid::Uuid::new_v4());
+        let content_hash = item.content_hash();
+
+        let rubric = format!(
+            "{} describes this tool and what it is for, in the sentence quoted; every \
+             other option is a tool the same manual describes doing something else, so \
+             the manual itself rules each one out.",
+            request.label
+        );
+        let proof = AnswerProof::SourceBacked {
+            source_id: request.source_id.to_string(),
+            rubric,
+        };
+        let proof_json = serde_json::to_string(&proof)?;
+
+        let generator_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}{}",
+            item.prompt,
+            item.options.join("\u{2}"),
+            item.correct_index
+        ));
+        let verifier_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}from_source={}",
+            item.supporting_sentence, item.prompt, true
+        ));
+
+        repo.insert_draft(&NewContentItem {
+            id: &id,
+            subtest: request.subtest,
+            objective_id: &item.objective_id,
+            stem: &item.prompt,
+            passage: None,
+            options: &item.options,
+            correct_index: item.correct_index,
+            explanation: &item.explanation(),
+            distractor_rationales: &item.distractor_rationales,
+            difficulty: item.difficulty,
+            proof_kind: "source_backed",
+            proof_json: &proof_json,
+            content_hash: &content_hash,
+            generator_hash: Some(generator_hash.as_str()),
+        })?;
+
+        repo.cite(&id, request.source_id)?;
+
+        self.db.connection().execute(
+            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+            rusqlite::params![id, verifier_hash.as_str()],
+        )?;
+
+        repo.walk_to_content_reviewed(&id, request.generator)?;
+        repo.activate(
+            &id,
+            request.reviewer,
+            "ingested from a public-domain tool manual; description quoted verbatim",
         )?;
 
         Ok(id)
@@ -1305,8 +1452,6 @@ pub struct FactIngestRequest<'a> {
     pub source_id: &'a str,
     pub count: usize,
     pub seed: u64,
-    /// Used only to refuse an answer containing an OCR misreading.
-    pub dictionary: &'a Dictionary,
     /// Named reviewer recorded on activation (REQ-056).
     pub reviewer: &'a str,
     /// Actor recorded in the audit trail for the machine steps.
@@ -1338,6 +1483,109 @@ impl FactIngestReport {
     pub fn is_productive(&self) -> bool {
         self.built > 0
     }
+}
+
+/// What one tool-manual ingestion run needs.
+#[derive(Debug, Clone)]
+pub struct PurposeIngestRequest<'a> {
+    /// The subtest the items serve: `SI` for the shop manuals.
+    pub subtest: &'a str,
+    /// The manual's own title, recorded on every item's rubric.
+    pub label: &'a str,
+    /// The vault id of this manual's text.
+    pub source_id: &'a str,
+    pub count: usize,
+    pub seed: u64,
+    /// Used only to refuse an option containing an OCR misreading.
+    pub dictionary: &'a Dictionary,
+    /// Named reviewer recorded on activation (REQ-056).
+    pub reviewer: &'a str,
+    /// Actor recorded in the audit trail for the machine steps.
+    pub generator: &'a str,
+}
+
+/// What one manual's ingestion run did.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct PurposeIngestReport {
+    pub label: String,
+    /// Tool descriptions the manual yielded, before any were filtered.
+    pub statements: usize,
+    pub built: usize,
+    pub verified: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    pub rejected: Vec<Rejection>,
+    pub item_ids: Vec<String>,
+    /// Why this manual contributed nothing, when that is a property of its text.
+    pub skipped: Option<String>,
+}
+
+impl PurposeIngestReport {
+    pub fn is_clean(&self) -> bool {
+        self.rejected.is_empty()
+    }
+
+    pub fn is_productive(&self) -> bool {
+        self.built > 0
+    }
+}
+
+/// Whether every word of a learner-facing *option* is a word the dictionary carries.
+///
+/// ## Why this is not `looks_like_misreading`
+///
+/// `looks_like_misreading` asks whether a token is one edit from a dictionary word, which
+/// is sound for the technical glossary terms it was written for and unsound for prose.
+/// Measured against *The book of wonders* it refused 226 of 301 items, and every refusal
+/// it printed was an ordinary English word: `produced`, `caused`, `applied`, `began`,
+/// `countries`, `today`. Those are one edit from their own base forms -- `produced` is
+/// `produce` plus a deletion, because the inflection helper does not know that `-ed`
+/// follows a silent `e`. A filter that rejects the language is worse than no filter: it
+/// removes real content while looking like diligence.
+///
+/// So the factual path carries no dictionary check at all, and the shop path checks the
+/// one thing whose vocabulary is small and technical enough for the rule to mean
+/// something: the options. A tool is one to three words, all of them common nouns, so a
+/// word the dictionary does not carry is genuinely suspect -- `inuide micrometer` was a
+/// real misreading that reached an option.
+///
+/// The check stays where it was designed and measured: the NEETS glossary path, whose
+/// terms and definitions are short and technical.
+fn option_words_are_known(dictionary: &Dictionary, text: &str) -> bool {
+    text.split(|c: char| !c.is_alphabetic())
+        .filter(|word| word.len() >= 4)
+        .all(|word| covers_word(dictionary, word))
+}
+
+/// Whether the dictionary carries a word, allowing for the inflections Webster's omits.
+///
+/// The suffix list is longer than the one in the dictionary module because this runs over
+/// a learner-facing option rather than over a glossary term: `-ies` to `-y` (`batteries`),
+/// `-ied` to `-y` (`applied`), and a silent `e` before `-ed` or `-ing` (`produced`,
+/// `causing`) all have to resolve, or the check refuses ordinary tools.
+fn covers_word(dictionary: &Dictionary, word: &str) -> bool {
+    if dictionary.covers(word) {
+        return true;
+    }
+    let lower = word.to_lowercase();
+    for suffix in ["s", "es", "ed", "ing", "ly", "est", "er"] {
+        if let Some(stem) = lower.strip_suffix(suffix) {
+            if stem.len() >= 3
+                && (dictionary.covers(stem) || dictionary.covers(&format!("{stem}e")))
+            {
+                return true;
+            }
+        }
+    }
+    // `-ies` and `-ied` are `-y` in the base form.
+    for suffix in ["ies", "ied"] {
+        if let Some(stem) = lower.strip_suffix(suffix) {
+            if stem.len() >= 2 && dictionary.covers(&format!("{stem}y")) {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 /// Whether a glossary definition survived the scan intact.

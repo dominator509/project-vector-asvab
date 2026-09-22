@@ -1,0 +1,10 @@
+database        : C:\Users\domin\AppData\Roaming\com.vector.app\vector.db
+subtest         : SI
+dictionary      : 93,308 entries
+requested/manual: 200  seed=20260922
+elapsed         : 5673 ms
+
+  micro_IA41153156_0308      statements=24   built=22   activated=22   rejected=0  Tools and Their Uses, NAVEDTRA Rate Training M
+  TM11-453                   statements=9    built=9    activated=9    rejected=0  TM 11-453 Shop Work, US Army Signal Corps
+
+totals: 31 activated, 0 already present, 31 built, 0 refused, 33 descriptions

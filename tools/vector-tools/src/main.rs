@@ -361,6 +361,36 @@ enum ContentCommands {
         #[arg(long)]
         out: Option<PathBuf>,
     },
+    /// Ingest Shop Information items from public-domain tool manuals.
+    ///
+    /// These manuals are Internet Archive scans rather than Project Gutenberg works, so a
+    /// manual is named `<archive-id>:<title>=<path>`: the id makes the recorded URL
+    /// resolvable and the title is what a citation should say.
+    #[command(name = "ingest-tools")]
+    Tools {
+        /// Database to write into.
+        #[arg(long)]
+        db: PathBuf,
+        /// The subtest the items serve: `SI` for the shop manuals.
+        #[arg(long, default_value = "SI")]
+        subtest: String,
+        /// Webster's Unabridged 1913 text, used only for the OCR check.
+        #[arg(long)]
+        dictionary: PathBuf,
+        /// A manual, as `<archive-id>:<title>=<path>`. Repeat for each manual.
+        #[arg(long = "work", required = true)]
+        works: Vec<String>,
+        /// Items to attempt per manual.
+        #[arg(long, default_value_t = 200)]
+        count: usize,
+        #[arg(long, default_value_t = 20_260_922)]
+        seed: u64,
+        #[arg(long, default_value = "content-reviewer")]
+        reviewer: String,
+        /// Write a JSON report here as well as printing it.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
     /// Ingest factual items from public-domain question-and-answer works.
     ///
     /// The subtest is required because one book can serve more than one: a science
@@ -371,12 +401,9 @@ enum ContentCommands {
         /// Database to write into.
         #[arg(long)]
         db: PathBuf,
-        /// The subtest the items serve, e.g. `GS`, `SI`, `AI`.
+        /// The subtest the items serve, e.g. `GS`, `AI`.
         #[arg(long)]
         subtest: String,
-        /// Webster's Unabridged 1913 text, used only for the OCR check.
-        #[arg(long)]
-        dictionary: PathBuf,
         /// A work to ingest, as `<project-gutenberg-ebook-number>=<path>`. Repeat
         /// for each work.
         #[arg(long = "work", required = true)]
@@ -582,7 +609,6 @@ fn main() -> Result<()> {
             ContentCommands::Facts {
                 db,
                 subtest,
-                dictionary,
                 works,
                 count,
                 seed,
@@ -594,24 +620,12 @@ fn main() -> Result<()> {
                     .iter()
                     .map(|work| content::parse_work(work))
                     .collect::<Result<Vec<_>>>()?;
-                let outcome = content::ingest_facts(
-                    &db,
-                    &subtest,
-                    &parsed,
-                    count,
-                    seed,
-                    &dictionary,
-                    &reviewer,
-                )?;
+                let outcome =
+                    content::ingest_facts(&db, &subtest, &parsed, count, seed, &reviewer)?;
 
                 let report = serde_json::json!({
                     "database": db.display().to_string(),
                     "subtest": outcome.subtest,
-                    "dictionary": {
-                        "path": dictionary.display().to_string(),
-                        "sha256": outcome.dictionary_hash,
-                        "entries": outcome.dictionary_entries,
-                    },
                     "requested_per_work": count,
                     "seed": seed,
                     "works": outcome.works.iter().map(|w| serde_json::json!({
@@ -647,6 +661,78 @@ fn main() -> Result<()> {
                 if outcome.total_activated == 0 {
                     eprintln!(
                         "content ingest-facts: nothing new; {} item(s) already present",
+                        outcome.total_already_present
+                    );
+                }
+            }
+            ContentCommands::Tools {
+                db,
+                subtest,
+                dictionary,
+                works,
+                count,
+                seed,
+                reviewer,
+                out,
+            } => {
+                let started = std::time::Instant::now();
+                let parsed = works
+                    .iter()
+                    .map(|work| content::parse_archive_work(work))
+                    .collect::<Result<Vec<_>>>()?;
+                let outcome = content::ingest_tools(
+                    &db,
+                    &subtest,
+                    &parsed,
+                    count,
+                    seed,
+                    &dictionary,
+                    &reviewer,
+                )?;
+
+                let report = serde_json::json!({
+                    "database": db.display().to_string(),
+                    "subtest": outcome.subtest,
+                    "dictionary": {
+                        "path": dictionary.display().to_string(),
+                        "sha256": outcome.dictionary_hash,
+                        "entries": outcome.dictionary_entries,
+                    },
+                    "requested_per_manual": count,
+                    "seed": seed,
+                    "manuals": outcome.works.iter().map(|w| serde_json::json!({
+                        "archive_id": w.archive_id,
+                        "title": w.title,
+                        "path": w.path,
+                        "sha256": w.sha256,
+                        "statements": w.statements,
+                        "built": w.built,
+                        "activated": w.activated,
+                        "already_present": w.already_present,
+                        "rejected": w.rejected,
+                        "rejection_reasons": w.rejection_reasons,
+                        "skipped": w.skipped,
+                    })).collect::<Vec<_>>(),
+                    "totals": {
+                        "statements": outcome.total_statements,
+                        "built": outcome.total_built,
+                        "activated": outcome.total_activated,
+                        "already_present": outcome.total_already_present,
+                        "rejected": outcome.total_rejected,
+                    },
+                    "elapsed_ms": started.elapsed().as_millis(),
+                });
+                let text = serde_json::to_string_pretty(&report)?;
+                println!("{text}");
+                if let Some(path) = out {
+                    if let Some(parent) = path.parent() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                    std::fs::write(&path, format!("{text}\n"))?;
+                }
+                if outcome.total_activated == 0 {
+                    eprintln!(
+                        "content ingest-tools: nothing new; {} item(s) already present",
                         outcome.total_already_present
                     );
                 }

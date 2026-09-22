@@ -12,6 +12,7 @@ pub mod neets;
 pub mod passages;
 pub mod proof;
 pub mod provenance;
+pub mod purposes;
 pub mod thesaurus;
 
 pub fn name() -> &'static str {

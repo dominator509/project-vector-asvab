@@ -1,0 +1,47 @@
+Shop Information, and an OCR check that was doing nothing
+
+REQ-022, REQ-023, REQ-048, REQ-056.
+
+Shop Information
+- `crates/vector-questions/src/purposes.rs` reads a tool manual describing what each tool
+  is for and forms an item from it: the purpose clause is the manual's own words, the
+  question is built around it, and the distractors are tools the same manual describes
+  doing something else.
+- `content ingest-tools` wires it through the pipeline, the vault and the CLI. Manuals are
+  Internet Archive scans, so a work is named `<archive-id>:<title>=<path>`; the id makes
+  the recorded URL resolvable.
+- 31 items from *Tools and Their Uses* (NAVEDTRA rate training manual, 1971) and *TM 11-453
+  Shop Work* (US Army Signal Corps, 1942).
+
+The OCR check, which was doing nothing and then doing harm
+- On the factual and shop paths it was handed whole sentences and whole options, and it
+  answers a question about a word, so it could not fail. Found by a test that insisted a
+  misread tool must not reach an option: `inuide micrometer` had.
+- Fixed to run word by word, it immediately refused 226 of 301 General Science items, every
+  refusal an ordinary English word: `produced`, `caused`, `applied`, `began`, `countries`,
+  `today`. Those are one edit from their own base forms, because the inflection helper does
+  not know that `-ed` follows a silent `e`.
+- It now runs only where its precision was measured: NEETS glossary terms (EI), and every
+  word of a tool-name option (SI), where a tool is one to three common nouns and an unknown
+  word is genuinely suspect. General Science carries no dictionary check, and its corpus
+  returns from 209 items to 301.
+- `scripts/probes/check-options.py` reads the stored corpus -- not the ingester's report --
+  and finds 0 options containing scan damage across 7,047 items. It reports two Word
+  Knowledge options containing a rare word (`unendowed`, `becharm`) as a separate category:
+  that is the corpus's oldest open gap, and it is not scan damage.
+
+Refused sources
+- Machinery's Reference Series booklets 3, 11 and 12 were downloaded, measured and refused.
+  Their scans mangle tool names into `MaWng Oonoave Forming`, `Drill Jiers Drill` and
+  `punch does not`; shipping them would have put visibly broken options in front of learners
+  to make a count look better.
+- Auto Information still has no items: the Navy automotive manual's review questions refer to
+  figures that are not in the item, and the Project Gutenberg automotive texts are
+  essayistic.
+
+Corpus: 2,000 WK + 3,668 EI + 1,047 PC + 301 GS + 31 SI = 7,047 active items, 31 evidence
+records, 9,047 citations, 28,188 review rows, every provenance invariant zero-offender,
+including the two added for SI.
+
+Gates: all eight exit 0. 906 Rust tests across 70 binaries, 210 frontend tests, 36 E2E.
+Evidence: `.agent/evidence/EP-007/content-corpus/ROUND-17-REPORT.md`.

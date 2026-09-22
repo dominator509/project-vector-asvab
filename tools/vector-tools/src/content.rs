@@ -23,7 +23,8 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use vector_application::content::{
-    ContentPipeline, EiIngestRequest, FactIngestRequest, PcIngestRequest, WkIngestRequest,
+    ContentPipeline, EiIngestRequest, FactIngestRequest, PcIngestRequest, PurposeIngestRequest,
+    WkIngestRequest,
 };
 use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::{Database, MigrationManager};
@@ -31,6 +32,7 @@ use vector_questions::dictionary::parse_webster;
 use vector_questions::facts::parse_faq;
 use vector_questions::neets::parse_neets_glossary;
 use vector_questions::passages::{gutenberg_title, parse_gutenberg};
+use vector_questions::purposes::parse_purposes;
 use vector_questions::thesaurus::parse_moby;
 
 /// The two public-domain sources Word Knowledge items are built from.
@@ -556,8 +558,6 @@ pub struct FactWorkOutcome {
 pub struct FactOutcome {
     pub subtest: String,
     pub works: Vec<FactWorkOutcome>,
-    pub dictionary_entries: usize,
-    pub dictionary_hash: String,
     pub total_questions: usize,
     pub total_built: usize,
     pub total_activated: usize,
@@ -576,7 +576,6 @@ pub fn ingest_facts(
     works: &[PcWork],
     count: usize,
     seed: u64,
-    dictionary_path: &Path,
     reviewer: &str,
 ) -> Result<FactOutcome> {
     if let Some(parent) = db_path.parent() {
@@ -592,20 +591,13 @@ pub fn ingest_facts(
     )?;
     MigrationManager::apply(&mut db, &migrations)?;
 
-    // Webster's is loaded for the OCR check, exactly as the EI path does: these
-    // works are scans, and an option containing a misreading teaches the misreading.
-    let dictionary_bytes = read_source(dictionary_path, "the dictionary")?;
-    let dictionary_hash = digest(&dictionary_bytes);
-    let dictionary_text = String::from_utf8(dictionary_bytes)
-        .context("the dictionary is not valid UTF-8, so it cannot be parsed as ASCII")?;
-    let dictionary = parse_webster(&dictionary_text);
-    if dictionary.is_empty() {
-        anyhow::bail!(
-            "{} parsed to no entries, so the OCR check cannot run",
-            dictionary_path.display()
-        );
-    }
-
+    // No dictionary is loaded on this path. The corpus's OCR check was measured against
+    // exactly these works and refused 226 of 301 items, every refusal an ordinary English
+    // word (`produced`, `caused`, `today`): a token that is one edit from a dictionary word
+    // is what an inflection looks like too, so the rule cannot separate a scanner's error
+    // from the language. The sources here are proofread reprints rather than scans, so
+    // there is nothing for it to find. The EI path keeps the check, where its precision was
+    // measured on short technical glossary terms.
     let pipeline = ContentPipeline::new(&db);
     let mut outcomes = Vec::new();
     for (index, work) in works.iter().enumerate() {
@@ -628,7 +620,6 @@ pub fn ingest_facts(
             source_id: &source_id,
             count,
             seed: seed.wrapping_add(index as u64),
-            dictionary: &dictionary,
             reviewer,
             generator: "fact-ingester",
         };
@@ -673,8 +664,6 @@ pub fn ingest_facts(
         total_activated: activated,
         total_already_present: already_present,
         total_rejected: outcomes.iter().map(|work| work.rejected).sum(),
-        dictionary_entries: dictionary.len(),
-        dictionary_hash,
         works: outcomes,
     })
 }
@@ -845,4 +834,190 @@ pub fn rollback_pack(
     let db = Database::open(db_path)
         .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
     vector_application::packs::rollback_pack(&db, name)
+}
+
+/// Parse a `--work` argument for an Internet Archive manual.
+///
+/// The archive id is not optional, for the same reason the ebook number is not: the vault
+/// records a URL, and a reviewer has to be able to fetch the bytes again and get the same
+/// digest. These manuals have no Gutenberg header to read a title from, so the title is
+/// given alongside the id.
+pub fn parse_archive_work(argument: &str) -> Result<(String, String, PathBuf)> {
+    let (naming, path) = argument
+        .split_once('=')
+        .with_context(|| format!("--work must be <archive-id>:<title>=<path>, not {argument:?}"))?;
+    let (archive_id, title) = naming
+        .split_once(':')
+        .with_context(|| format!("--work must be <archive-id>:<title>=<path>, not {argument:?}"))?;
+    if archive_id.trim().is_empty() || title.trim().is_empty() || path.trim().is_empty() {
+        anyhow::bail!("--work {argument:?} is missing an id, a title or a path");
+    }
+    Ok((
+        archive_id.trim().to_string(),
+        title.trim().to_string(),
+        PathBuf::from(path),
+    ))
+}
+
+/// What one tool manual yielded.
+pub struct ToolWorkOutcome {
+    pub archive_id: String,
+    pub title: String,
+    pub path: String,
+    pub sha256: String,
+    pub statements: usize,
+    pub built: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    pub rejected: usize,
+    pub rejection_reasons: Vec<String>,
+    pub skipped: Option<String>,
+}
+
+/// What a Shop Information ingestion run produced.
+pub struct ToolOutcome {
+    pub subtest: String,
+    pub works: Vec<ToolWorkOutcome>,
+    /// The dictionary this run checked the options against, and its digest.
+    ///
+    /// Reported because the check is part of what produced the corpus: a reader asking why
+    /// a tool is missing needs to know which dictionary refused it.
+    pub dictionary_entries: usize,
+    pub dictionary_hash: String,
+    pub total_statements: usize,
+    pub total_built: usize,
+    pub total_activated: usize,
+    pub total_already_present: usize,
+    pub total_rejected: usize,
+}
+
+/// Record an Internet Archive item in the vault, returning its id.
+///
+/// These manuals have no Project Gutenberg header, so the title is passed in and the URL
+/// is the item's own page. The digest is computed from the bytes, so the record can be
+/// checked by re-downloading the item.
+fn record_archive_work(
+    db: &Database,
+    archive_id: &str,
+    title: &str,
+    path: &Path,
+    text: &str,
+) -> Result<String> {
+    let url = format!("https://archive.org/details/{archive_id}");
+    let titled = format!("{title} (Internet Archive {archive_id})");
+    let content_hash = digest(text.as_bytes());
+    EvidenceRepo::new(db)
+        .put(&NewEvidence::new(
+            &url,
+            &titled,
+            &content_hash,
+            "Public domain (US government work)",
+            &chrono::Utc::now().format("%Y-%m-%d").to_string(),
+            0.90,
+            "retrieved",
+        ))
+        .with_context(|| format!("cannot record {} in the evidence vault", path.display()))
+}
+
+/// Ingest Shop Information items from public-domain tool manuals.
+///
+/// One manual per vault row and one run per manual, so a manual that parses badly cannot
+/// take the rest down with it and an item's citation names the manual it came from.
+pub fn ingest_tools(
+    db_path: &Path,
+    subtest: &str,
+    works: &[(String, String, PathBuf)],
+    count: usize,
+    seed: u64,
+    dictionary_path: &Path,
+    reviewer: &str,
+) -> Result<ToolOutcome> {
+    if let Some(parent) = db_path.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)
+                .with_context(|| format!("cannot create {}", parent.display()))?;
+        }
+    }
+    let mut db = Database::open(db_path)
+        .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
+    let migrations = MigrationManager::load_from_dir(
+        &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../migrations"),
+    )?;
+    MigrationManager::apply(&mut db, &migrations)?;
+
+    let dictionary_bytes = read_source(dictionary_path, "the dictionary")?;
+    let dictionary_hash = digest(&dictionary_bytes);
+    let dictionary_text = String::from_utf8(dictionary_bytes)
+        .context("the dictionary is not valid UTF-8, so it cannot be parsed as ASCII")?;
+    let dictionary = parse_webster(&dictionary_text);
+    if dictionary.is_empty() {
+        anyhow::bail!(
+            "{} parsed to no entries, so the OCR check cannot run",
+            dictionary_path.display()
+        );
+    }
+
+    let pipeline = ContentPipeline::new(&db);
+    let mut outcomes = Vec::new();
+    for (index, (archive_id, title, path)) in works.iter().enumerate() {
+        let text = std::fs::read_to_string(path)
+            .with_context(|| format!("cannot read {} as UTF-8", path.display()))?;
+        let source = parse_purposes(&text, title);
+        let source_id = record_archive_work(&db, archive_id, title, path, &text)?;
+
+        let request = PurposeIngestRequest {
+            subtest,
+            label: title,
+            source_id: &source_id,
+            count,
+            seed: seed.wrapping_add(index as u64),
+            dictionary: &dictionary,
+            reviewer,
+            generator: "tool-ingester",
+        };
+        let report = pipeline.ingest_purposes(&source, &request)?;
+
+        outcomes.push(ToolWorkOutcome {
+            archive_id: archive_id.clone(),
+            title: title.clone(),
+            path: path.display().to_string(),
+            sha256: digest(text.as_bytes()),
+            statements: report.statements,
+            built: report.built,
+            activated: report.activated,
+            already_present: report.already_present,
+            rejected: report.rejected.len(),
+            rejection_reasons: report
+                .rejected
+                .iter()
+                .take(5)
+                .map(|rejection| rejection.reason.clone())
+                .collect(),
+            skipped: report.skipped,
+        });
+        if let Some(reason) = outcomes.last().and_then(|work| work.skipped.as_deref()) {
+            eprintln!("content ingest-tools: {title:?} contributed nothing: {reason}");
+        }
+    }
+
+    let activated: usize = outcomes.iter().map(|work| work.activated).sum();
+    let already_present: usize = outcomes.iter().map(|work| work.already_present).sum();
+    if activated == 0 && already_present == 0 {
+        anyhow::bail!(
+            "no manual in this run produced an item: {} manual(s) were skipped or refused",
+            outcomes.len()
+        );
+    }
+
+    Ok(ToolOutcome {
+        subtest: subtest.to_string(),
+        dictionary_entries: dictionary.len(),
+        dictionary_hash,
+        total_statements: outcomes.iter().map(|work| work.statements).sum(),
+        total_built: outcomes.iter().map(|work| work.built).sum(),
+        total_activated: activated,
+        total_already_present: already_present,
+        total_rejected: outcomes.iter().map(|work| work.rejected).sum(),
+        works: outcomes,
+    })
 }

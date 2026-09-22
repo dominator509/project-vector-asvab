@@ -29,7 +29,7 @@ print("=== provenance invariants over the whole corpus ===")
 # Comprehension item on a single public-domain work whose passage it quotes, so
 # both cite one. Asserting a flat "2" here reported 4,000 EI items as broken when
 # the corpus was correct -- the probe was wrong, not the data.
-EXPECTED_SOURCES = {"WK": 2, "EI": 1, "PC": 1, "GS": 1}
+EXPECTED_SOURCES = {"WK": 2, "EI": 1, "PC": 1, "GS": 1, "SI": 1}
 
 bad_citations = 0
 for subtest, expected in EXPECTED_SOURCES.items():
@@ -105,6 +105,20 @@ checks = [
              where length(trim(value)) - length(replace(trim(value), ' ', '')) + 1 < 5
            )""",
     ),
+    # A shop item asks what a tool is for, and offers tools rather than sentences: every
+    # option should be a short name, and none should be a sentence about a tool.
+    (
+        "SI items whose stem is not a tool-purpose question",
+        """select count(*) from content_items where subtest='SI'
+           and stem not like 'Which tool is used%'""",
+    ),
+    (
+        "SI items with an option longer than 4 words",
+        """select count(*) from content_items where subtest='SI' and exists (
+             select 1 from json_each(content_items.options_json)
+             where length(trim(value)) - length(replace(trim(value), ' ', '')) + 1 > 4
+           )""",
+    ),
 ]
 for label, sql in checks:
     print(f"  {label:<48} {c.execute(sql).fetchone()[0]}")
@@ -142,3 +156,4 @@ for from_state, to_state, actor, rationale in c.execute(
     (item_id,),
 ):
     print(f"  {from_state:<20} -> {to_state:<20} by {actor:<16} {rationale[:50]}")
+
