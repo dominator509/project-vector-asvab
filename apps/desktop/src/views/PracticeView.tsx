@@ -153,7 +153,9 @@ export function PracticeView({ questions, learnerId }: PracticeViewProps) {
       </h3>
 
       <p className="subtest-tag">Subtest: {question.subtest}</p>
-      <p data-testid="practice-prompt">{question.prompt}</p>
+      <p data-testid="practice-prompt" data-question-id={question.id}>
+        {question.prompt}
+      </p>
 
       {/*
         A fieldset with a legend groups the options so a screen reader announces
@@ -162,7 +164,20 @@ export function PracticeView({ questions, learnerId }: PracticeViewProps) {
       <fieldset>
         <legend>Choose the best answer</legend>
         {question.options.map((option, optionIndex) => (
-          <label key={option} className="option-row">
+          <label
+            key={option}
+            className="option-row"
+            data-option-index={optionIndex}
+            /*
+             * Which option is correct is real state the view already holds, and
+             * stating it on the element is what lets the packaged live-fire test
+             * answer correctly or incorrectly on purpose. Without it that test
+             * has to hard-code option text, which ties it to one particular
+             * corpus and made it fail the moment real generated items replaced
+             * the demonstration ones.
+             */
+            data-correct={optionIndex === question.correctIndex}
+          >
             <input
               type="radio"
               name={`answer-${question.id}`}
@@ -220,7 +235,15 @@ export function PracticeView({ questions, learnerId }: PracticeViewProps) {
           <h4>Worked solution</h4>
           <p>{question.explanation}</p>
           <p className="source-line">
-            Source: <code>{question.sourceId}</code>
+            {question.objectiveId ? (
+              <>
+                Objective: <code>{question.objectiveId}</code>
+              </>
+            ) : question.sourceId ? (
+              <>
+                Source: <code>{question.sourceId}</code>
+              </>
+            ) : null}
           </p>
           <button type="button" onClick={next}>
             Next question

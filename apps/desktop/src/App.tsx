@@ -17,7 +17,7 @@ import { BackendProvider, useBackend } from "./ipc/Backend";
 import { ProfileProvider, useActiveProfile } from "./state/ProfileContext";
 import { AccessibleSettings } from "./views/AccessibleSettings";
 import { OnboardingView } from "./views/OnboardingView";
-import { PracticeView } from "./views/PracticeView";
+import { PracticeContentView } from "./views/PracticeContentView";
 import { SearchView } from "./views/SearchView";
 import { ExamSimulatorView } from "./views/ExamSimulatorView";
 import { ReadinessPanel } from "./views/ReadinessView";
@@ -25,7 +25,7 @@ import { ReviewQueueView } from "./views/ReviewQueueView";
 import { PrivacyView } from "./views/PrivacyView";
 import { SourcesView } from "./views/SourcesView";
 import { TodayView } from "./views/TodayView";
-import { sampleQuestions, reviewCards } from "./data/sample";
+import { reviewCards } from "./data/sample";
 import "./styles.css";
 
 export default function App() {
@@ -194,9 +194,9 @@ function ViewBody({ view, a11y, onA11yChange }: ViewBodyProps) {
     case "accessibility":
       return <AccessibleSettings settings={a11y} onChange={onA11yChange} />;
     case "practice":
-      return (
-        <PracticeView questions={sampleQuestions} learnerId={profile?.id} />
-      );
+      // Real generated items, loaded from the command boundary. This used to
+      // pass `sampleQuestions`, which is how the app appeared to have content.
+      return <PracticeContentView learnerId={profile?.id} />;
     case "search":
       return <SearchView />;
     case "cat":

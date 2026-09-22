@@ -1,0 +1,128 @@
+/**
+ * Load practice items for a subtest from the command boundary.
+ *
+ * Before this existed the practice view rendered `sampleQuestions` — three
+ * literals compiled into the frontend bundle — because nothing asked the backend
+ * for a question. The corpus is now real, so the view loads from it.
+ *
+ * ## Why an empty corpus is a state and not a fallback
+ *
+ * When there is no content, this reports `empty` rather than quietly falling
+ * back to the demonstration items. A silent fallback is precisely how the gap
+ * stayed invisible: the app looked like it had questions, so nobody checked
+ * whether it did. An empty corpus is a fact the learner is entitled to see, and
+ * the surface offers to fix it.
+ */
+
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import type { VectorClient } from "../ipc/client";
+import type { ContentStatsDto } from "../ipc/types";
+import type { PracticeQuestion } from "../data/sample";
+import { practiceQuestionsFromItems } from "../data/fromBackend";
+
+/** Items requested on a first run, matching the real per-call ceiling's spirit. */
+export const STARTER_BATCH = 40;
+
+/**
+ * How many items a practice set holds.
+ *
+ * The view pages through an array, so the set is fetched up front. Ten is a
+ * sitting's worth; `ARG_AR` gives the learner a way to extend it.
+ */
+export const PRACTICE_SET_SIZE = 10;
+
+export type PracticeContentState =
+  | { status: "loading" }
+  | { status: "empty"; stats: ContentStatsDto }
+  | { status: "ready"; items: PracticeQuestion[]; stats: ContentStatsDto }
+  | { status: "error"; message: string };
+
+export interface PracticeContent {
+  state: PracticeContentState;
+  /** Generate another batch for this subtest, then reload. */
+  generate: (subtest: string, count?: number) => Promise<void>;
+  reload: () => Promise<void>;
+}
+
+/**
+ * Fetch `wanted` items for `subtest`, generating a starter batch if the corpus is
+ * empty.
+ *
+ * ## Why the seed is derived from the corpus size
+ *
+ * The generator is deterministic, so a fixed seed would reproduce the same items
+ * on every run and "generate more" would report them all as already present and
+ * add nothing. Seeding from the current total means the first run is
+ * reproducible and a later run extends the corpus instead of repeating it.
+ */
+export function usePracticeItems(
+  client: VectorClient,
+  subtest: string,
+  wanted: number = PRACTICE_SET_SIZE,
+): PracticeContent {
+  const [state, setState] = useState<PracticeContentState>({
+    status: "loading",
+  });
+  // Guards against a slower earlier load overwriting a newer one, which would
+  // show items for a subtest the learner has already navigated away from.
+  const run = useRef(0);
+
+  const load = useCallback(async () => {
+    const current = ++run.current;
+    setState({ status: "loading" });
+    try {
+      let stats = await client.contentStats();
+      if (current !== run.current) return;
+
+      if (stats.total === 0) {
+        await client.contentGenerate(subtest, STARTER_BATCH, 0);
+        if (current !== run.current) return;
+        stats = await client.contentStats();
+        if (current !== run.current) return;
+      }
+
+      const seen: string[] = [];
+      const collected = [];
+      for (let i = 0; i < wanted; i += 1) {
+        const item = await client.contentNext(subtest, seen);
+        if (current !== run.current) return;
+        // `null` means the corpus has nothing for this subtest; a repeated id
+        // means it is exhausted and would loop.
+        if (item === null || seen.includes(item.id)) break;
+        seen.push(item.id);
+        collected.push(item);
+      }
+
+      const items = practiceQuestionsFromItems(collected);
+      setState(
+        items.length === 0
+          ? { status: "empty", stats }
+          : { status: "ready", items, stats },
+      );
+    } catch (error) {
+      if (current !== run.current) return;
+      setState({
+        status: "error",
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [client, subtest, wanted]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const generate = useCallback(
+    async (target: string, count: number = STARTER_BATCH) => {
+      // Seeded from the current size so a second call extends rather than
+      // repeats, and so the first call for a fresh installation is reproducible.
+      const stats = await client.contentStats();
+      await client.contentGenerate(target, count, stats.total);
+      await load();
+    },
+    [client, load],
+  );
+
+  return { state, generate, reload: load };
+}

@@ -23,9 +23,12 @@ import type {
   AppPathsDto,
   BackupDto,
   BackupEntryDto,
+  ContentStatsDto,
   EvidenceDto,
+  GenerationReportDto,
   HealthDto,
   Invoke,
+  ItemDto,
   LatencyDto,
   MasteryDto,
   NewEvidenceDto,
@@ -60,6 +63,9 @@ export const COMMAND_NAMES = [
   "reset_local_data",
   "ui_ready",
   "recompute_mastery",
+  "content_generate",
+  "content_next",
+  "content_stats",
 ] as const;
 
 export type CommandName = (typeof COMMAND_NAMES)[number];
@@ -378,6 +384,153 @@ function readRowCount(command: string, value: unknown): number {
 }
 
 // ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
+
+/**
+ * Read one served item, and refuse one that cannot be answered.
+ *
+ * `correct_index` addressing an existing option is checked here rather than in
+ * the view. A view that reads `options[correct_index]` on an out-of-range index
+ * renders a question whose right answer is `undefined`, which looks like a
+ * content problem and is really a boundary problem. This mirrors the schema's
+ * own `CHECK (correct_index < json_array_length(options_json))`, so a backend
+ * that somehow bypassed it still cannot reach the renderer.
+ */
+function readItem(command: string, value: unknown): ItemDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const options = new Reader(command, o.options).array().map((entry) => {
+    if (typeof entry !== "string") {
+      throw new MalformedResponseError(
+        command,
+        `option must be a string, got ${describe(entry)}`,
+      );
+    }
+    return entry;
+  });
+  const correctIndex = r.number(o, "correct_index");
+
+  if (options.length < 2) {
+    throw new MalformedResponseError(
+      command,
+      `an item needs at least 2 options, got ${options.length}`,
+    );
+  }
+  if (
+    !Number.isInteger(correctIndex) ||
+    correctIndex < 0 ||
+    correctIndex >= options.length
+  ) {
+    throw new MalformedResponseError(
+      command,
+      `correct_index ${correctIndex} does not address any of the ${options.length} options`,
+    );
+  }
+
+  const rawRationales = new Reader(command, o.distractor_rationales).object();
+  const distractorRationales: Record<string, string> = {};
+  for (const [key, entry] of Object.entries(rawRationales)) {
+    if (typeof entry !== "string") {
+      throw new MalformedResponseError(
+        command,
+        `distractor rationale ${key} must be a string, got ${describe(entry)}`,
+      );
+    }
+    distractorRationales[key] = entry;
+  }
+
+  return {
+    id: r.string(o, "id"),
+    subtest: r.string(o, "subtest"),
+    objective_id: r.string(o, "objective_id"),
+    stem: r.string(o, "stem"),
+    options,
+    correct_index: correctIndex,
+    explanation: r.string(o, "explanation"),
+    distractor_rationales: distractorRationales,
+    difficulty: r.number(o, "difficulty"),
+  };
+}
+
+/**
+ * Read the next item, which the backend represents as `null` when the corpus
+ * has nothing to serve. `undefined` would mean the field was missing, and those
+ * are different facts, so only an explicit null is accepted.
+ */
+function readOptionalItem(command: string, value: unknown): ItemDto | null {
+  if (value === null) {
+    return null;
+  }
+  if (value === undefined) {
+    throw new MalformedResponseError(
+      command,
+      "expected an item or null; the field was absent entirely",
+    );
+  }
+  return readItem(command, value);
+}
+
+function readContentStats(command: string, value: unknown): ContentStatsDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const byState = new Reader(command, o.by_state).array().map((entry) => {
+    const row = new Reader(command, entry).object();
+    return { state: r.string(row, "state"), count: r.number(row, "count") };
+  });
+  const bySubtest = new Reader(command, o.by_subtest).array().map((entry) => {
+    const row = new Reader(command, entry).object();
+    return { subtest: r.string(row, "subtest"), count: r.number(row, "count") };
+  });
+  return {
+    total: r.number(o, "total"),
+    servable: r.number(o, "servable"),
+    sources: r.number(o, "sources"),
+    by_state: byState,
+    by_subtest: bySubtest,
+  };
+}
+
+function readGenerationReport(
+  command: string,
+  value: unknown,
+): GenerationReportDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const rejected = new Reader(command, o.rejected).array().map((entry) => {
+    if (typeof entry !== "string") {
+      throw new MalformedResponseError(
+        command,
+        `rejection must be a string, got ${describe(entry)}`,
+      );
+    }
+    return entry;
+  });
+  const activated = r.number(o, "activated");
+  const verified = r.number(o, "verified");
+
+  // Verification happens before storage, so an item cannot be activated without
+  // having verified. A report claiming otherwise would mean the pipeline order
+  // was reversed, and the content manager would then show a reassuring number
+  // over content that was never checked.
+  if (activated > verified) {
+    throw new MalformedResponseError(
+      command,
+      `activated ${activated} exceeds verified ${verified}, which the pipeline cannot produce`,
+    );
+  }
+
+  return {
+    subtest: r.string(o, "subtest"),
+    generated: r.number(o, "generated"),
+    verified,
+    activated,
+    already_present: r.number(o, "already_present"),
+    rejected,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // The client
 // ---------------------------------------------------------------------------
 
@@ -431,6 +584,21 @@ export interface VectorClient {
    * Resolves to the number of mastery rows written.
    */
   recomputeMastery(learnerId: string): Promise<number>;
+  /**
+   * Generate original items for a subtest and activate the ones that prove out.
+   *
+   * Idempotent for a given seed: repeating the call reports the items as
+   * `already_present` and writes nothing.
+   */
+  contentGenerate(
+    subtest: string,
+    count: number,
+    seed: number,
+  ): Promise<GenerationReportDto>;
+  /** The next item to practise, or `null` when the corpus has nothing to serve. */
+  contentNext(subtest: string, seen: string[]): Promise<ItemDto | null>;
+  /** How much content this installation holds. */
+  contentStats(): Promise<ContentStatsDto>;
 }
 
 /**
@@ -546,5 +714,13 @@ export function createVectorClient(invoke: Invoke): VectorClient {
 
     recomputeMastery: (learnerId) =>
       call("recompute_mastery", { learner_id: learnerId }, readRowCount),
+
+    contentGenerate: (subtest, count, seed) =>
+      call("content_generate", { subtest, count, seed }, readGenerationReport),
+
+    contentNext: (subtest, seen) =>
+      call("content_next", { subtest, seen }, readOptionalItem),
+
+    contentStats: () => call("content_stats", undefined, readContentStats),
   };
 }

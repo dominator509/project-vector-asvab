@@ -29,8 +29,11 @@ import type {
   AppPathsDto,
   BackupDto,
   BackupEntryDto,
+  ContentStatsDto,
   EvidenceDto,
+  GenerationReportDto,
   HealthDto,
+  ItemDto,
   LatencyDto,
   MasteryDto,
   NewEvidenceDto,
@@ -40,7 +43,6 @@ import type {
   ResetDto,
   RestoreDto,
 } from "../types";
-
 export interface FakeCall {
   command: string;
   args?: Record<string, unknown>;
@@ -53,6 +55,8 @@ export interface FakeState {
     { learnerId: string; subtest: string; correct: boolean; latencyMs: number }
   >;
   mastery: Map<string, MasteryDto>;
+  /** Generated practice items, keyed by id. */
+  items: Map<string, ItemDto>;
   evidence: Map<string, EvidenceDto>;
   backups: Array<{
     path: string;
@@ -115,6 +119,7 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
     profiles: new Map(),
     attempts: new Map(),
     mastery: new Map(),
+    items: new Map(),
     evidence: new Map(),
     backups: [],
     uiReadyMarkers: [],
@@ -492,6 +497,92 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
         written += 1;
       }
       return written;
+    },
+
+    async contentGenerate(
+      subtest: string,
+      count: number,
+      seed: number,
+    ): Promise<GenerationReportDto> {
+      record("content_generate", { subtest, count, seed });
+      if (count < 1) {
+        throw new Error("invalid request: count must be at least 1");
+      }
+      let activated = 0;
+      let alreadyPresent = 0;
+      for (let i = 0; i < count; i += 1) {
+        // Deterministic from the seed, like the real factory, so a test that
+        // repeats a call sees the same ids and the same `already_present`.
+        const id = `q-${subtest}-${seed}-${i}`;
+        if (state.items.has(id)) {
+          alreadyPresent += 1;
+          continue;
+        }
+        const answer = ((seed + i) % 9) + 1;
+        state.items.set(id, {
+          id,
+          subtest,
+          objective_id: `OBJ-${subtest}-TEST-01`,
+          stem: `${subtest} generated item ${i} for seed ${seed}`,
+          options: [
+            String(answer),
+            String(answer + 1),
+            String(answer + 2),
+            String(answer + 3),
+          ],
+          correct_index: 0,
+          explanation: `${answer} + 0 = ${answer}`,
+          distractor_rationales: {
+            "1": "Added one too many.",
+            "2": "Added two too many.",
+            "3": "Added three too many.",
+          },
+          difficulty: 0,
+        });
+        activated += 1;
+      }
+      return {
+        subtest,
+        generated: count,
+        verified: count,
+        activated,
+        already_present: alreadyPresent,
+        rejected: [],
+      };
+    },
+
+    async contentNext(
+      subtest: string,
+      seen: string[],
+    ): Promise<ItemDto | null> {
+      record("content_next", { subtest, seen });
+      const candidates = [...state.items.values()].filter(
+        (item) => item.subtest === subtest,
+      );
+      if (candidates.length === 0) {
+        return null;
+      }
+      return (
+        candidates.find((item) => !seen.includes(item.id)) ?? candidates[0]
+      );
+    },
+
+    async contentStats(): Promise<ContentStatsDto> {
+      record("content_stats");
+      const items = [...state.items.values()];
+      const byState =
+        items.length === 0 ? [] : [{ state: "active", count: items.length }];
+      const subtests = [...new Set(items.map((item) => item.subtest))].sort();
+      return {
+        total: items.length,
+        servable: items.length,
+        sources: items.length === 0 ? 0 : 1,
+        by_state: byState,
+        by_subtest: subtests.map((subtest) => ({
+          subtest,
+          count: items.filter((item) => item.subtest === subtest).length,
+        })),
+      };
     },
   };
 

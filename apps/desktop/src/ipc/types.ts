@@ -130,3 +130,60 @@ export interface LatencyDto {
   mean_micros: number;
   max_micros: number;
 }
+
+/**
+ * A generated practice item, as served.
+ *
+ * `correct_index` is present because grading happens locally. It is not a
+ * secret: this is a study tool on the learner's own machine.
+ */
+export interface ItemDto {
+  id: string;
+  subtest: string;
+  /** The versioned learning objective this item serves (REQ-056). */
+  objective_id: string;
+  stem: string;
+  options: string[];
+  correct_index: number;
+  /** The worked answer. For a generated item this is its proof expression. */
+  explanation: string;
+  /**
+   * Why each wrong option is wrong, keyed by option index. A generated item
+   * always names a misconception for every distractor it offers.
+   *
+   * JSON object keys are strings on the wire, so the runtime keys are strings
+   * even though the indices are numeric.
+   */
+  distractor_rationales: Record<string, string>;
+  difficulty: number;
+}
+
+export interface StateCountDto {
+  state: string;
+  count: number;
+}
+
+export interface SubtestCountDto {
+  subtest: string;
+  count: number;
+}
+
+/** How much content this installation holds. */
+export interface ContentStatsDto {
+  total: number;
+  servable: number;
+  sources: number;
+  by_state: StateCountDto[];
+  by_subtest: SubtestCountDto[];
+}
+
+/** What one generation run did. */
+export interface GenerationReportDto {
+  subtest: string;
+  generated: number;
+  verified: number;
+  activated: number;
+  already_present: number;
+  /** One line per refused item; empty on a clean run. */
+  rejected: string[];
+}

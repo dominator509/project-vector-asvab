@@ -71,7 +71,7 @@
         {
           "title": "live-fire: real artifact, real effects, independent readback",
           "file": "live-fire.spec.ts",
-          "line": 13,
+          "line": 128,
           "column": 6,
           "specs": [
             {
@@ -89,12 +89,12 @@
                     {
                       "workerIndex": 0,
                       "status": "passed",
-                      "duration": 238,
+                      "duration": 116,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-21T02:48:41.514Z",
+                      "startTime": "2026-09-22T04:09:10.264Z",
                       "attachments": []
                     }
                   ],
@@ -103,7 +103,7 @@
               ],
               "id": "86f582698c962c5bb6c1-9a5c8195de17c5435275",
               "file": "live-fire.spec.ts",
-              "line": 14,
+              "line": 129,
               "column": 3
             },
             {
@@ -121,12 +121,12 @@
                     {
                       "workerIndex": 0,
                       "status": "passed",
-                      "duration": 1075,
+                      "duration": 948,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-21T02:48:41.783Z",
+                      "startTime": "2026-09-22T04:09:10.402Z",
                       "attachments": []
                     }
                   ],
@@ -135,7 +135,7 @@
               ],
               "id": "86f582698c962c5bb6c1-da6558829da8c65d7eed",
               "file": "live-fire.spec.ts",
-              "line": 31,
+              "line": 146,
               "column": 3
             },
             {
@@ -153,12 +153,12 @@
                     {
                       "workerIndex": 0,
                       "status": "passed",
-                      "duration": 1092,
+                      "duration": 738,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-21T02:48:43.066Z",
+                      "startTime": "2026-09-22T04:09:11.478Z",
                       "attachments": []
                     }
                   ],
@@ -167,7 +167,7 @@
               ],
               "id": "86f582698c962c5bb6c1-29c7318c5ff94fbce39a",
               "file": "live-fire.spec.ts",
-              "line": 49,
+              "line": 164,
               "column": 3
             },
             {
@@ -185,12 +185,12 @@
                     {
                       "workerIndex": 0,
                       "status": "passed",
-                      "duration": 1111,
+                      "duration": 735,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-21T02:48:44.173Z",
+                      "startTime": "2026-09-22T04:09:12.227Z",
                       "attachments": []
                     }
                   ],
@@ -199,7 +199,39 @@
               ],
               "id": "86f582698c962c5bb6c1-bdfecaf4cb09b16542d2",
               "file": "live-fire.spec.ts",
-              "line": 74,
+              "line": 195,
+              "column": 3
+            },
+            {
+              "title": "practice refuses rather than fabricating content with no backend",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "status": "passed",
+                      "duration": 457,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-09-22T04:09:12.970Z",
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "86f582698c962c5bb6c1-13468112521e701e417f",
+              "file": "live-fire.spec.ts",
+              "line": 232,
               "column": 3
             },
             {
@@ -217,12 +249,12 @@
                     {
                       "workerIndex": 0,
                       "status": "passed",
-                      "duration": 830,
+                      "duration": 572,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-21T02:48:45.299Z",
+                      "startTime": "2026-09-22T04:09:13.436Z",
                       "attachments": []
                     }
                   ],
@@ -231,7 +263,7 @@
               ],
               "id": "86f582698c962c5bb6c1-c87f6a2192c479119508",
               "file": "live-fire.spec.ts",
-              "line": 95,
+              "line": 252,
               "column": 3
             },
             {
@@ -249,12 +281,12 @@
                     {
                       "workerIndex": 0,
                       "status": "passed",
-                      "duration": 1657,
+                      "duration": 1494,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-21T02:48:46.141Z",
+                      "startTime": "2026-09-22T04:09:14.015Z",
                       "attachments": []
                     }
                   ],
@@ -263,7 +295,7 @@
               ],
               "id": "86f582698c962c5bb6c1-4aacc12acb27f3a98133",
               "file": "live-fire.spec.ts",
-              "line": 115,
+              "line": 272,
               "column": 3
             }
           ]
@@ -273,9 +305,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-21T02:48:37.695Z",
-    "duration": 10561.999,
-    "expected": 6,
+    "startTime": "2026-09-22T04:09:06.744Z",
+    "duration": 9332.756,
+    "expected": 7,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

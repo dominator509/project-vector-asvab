@@ -182,6 +182,9 @@ describe("command names and arguments", () => {
       () => spied.resetLocalData("DELETE"),
       () => spied.uiReady("stamp"),
       () => spied.recomputeMastery("l"),
+      () => spied.contentGenerate("AR", 5, 0),
+      () => spied.contentNext("AR", []),
+      () => spied.contentStats(),
     ];
     for (const attempt of attempts) {
       await attempt().catch(() => undefined);
@@ -363,6 +366,9 @@ describe("the declared command list", () => {
       "reset_local_data",
       "ui_ready",
       "recompute_mastery",
+      "content_generate",
+      "content_next",
+      "content_stats",
     ]);
   });
 

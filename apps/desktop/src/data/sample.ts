@@ -19,7 +19,18 @@ export interface PracticeQuestion {
   explanation: string;
   /** Why each wrong option is wrong — the distractor rationale. */
   distractorRationales: Record<number, string>;
-  sourceId: string;
+  /**
+   * The learning objective an item serves. Generated items carry this, because
+   * what a generated item takes from outside is the construct it targets rather
+   * than a source it quotes.
+   */
+  objectiveId?: string;
+  /**
+   * The source a *sourced* item draws on. Demonstration items carry this; a
+   * generated item has no third-party text to cite and deliberately does not
+   * borrow this field to look sourced.
+   */
+  sourceId?: string;
 }
 
 export interface ReviewCard {
