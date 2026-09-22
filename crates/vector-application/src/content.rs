@@ -24,9 +24,10 @@ use serde::{Deserialize, Serialize};
 use vector_persistence::content::{ContentItemRepo, NewContentItem, StoredItem};
 use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::Database;
-use vector_questions::dictionary::Dictionary;
+use vector_questions::dictionary::{looks_like_misreading, Dictionary};
 use vector_questions::factory;
 use vector_questions::ingestion::AnswerProof;
+use vector_questions::neets::{self, EiItem, Glossary};
 use vector_questions::provenance::ContentHash;
 use vector_questions::thesaurus::{self, Thesaurus, WkItem};
 
@@ -378,6 +379,161 @@ impl<'a> ContentPipeline<'a> {
         Ok(id)
     }
 
+    /// Ingest Electronics Information items from one NEETS module glossary.
+    ///
+    /// One module per call, because an item's evidence is a definition in a
+    /// specific module and the citation has to name it. The caller loops modules,
+    /// which also means a module that parses badly cannot take the rest down with
+    /// it.
+    ///
+    /// `dictionary` is used only for the OCR check; it is not the source of these
+    /// items and is not cited on them.
+    pub fn ingest_ei(
+        &self,
+        glossary: &Glossary,
+        dictionary: &Dictionary,
+        request: &EiIngestRequest<'_>,
+    ) -> anyhow::Result<EiIngestReport> {
+        let items = glossary.build_items(
+            request.count,
+            request.seed,
+            request.min_definition_words,
+            |term, definition| entry_is_legible(term, definition, dictionary, glossary),
+        );
+
+        let mut report = EiIngestReport {
+            module: request.module.to_string(),
+            entries: glossary.entry_count(),
+            built: items.len(),
+            ..Default::default()
+        };
+        if items.is_empty() {
+            anyhow::bail!(
+                "module {:?} produced no Electronics Information items from {} entries; \
+                 either the glossary shape changed or every definition was rejected",
+                request.module,
+                glossary.entry_count()
+            );
+        }
+
+        for item in items {
+            let content_hash = item.content_hash();
+            if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            match self.store_ei_verified(glossary, request, &item) {
+                Ok(id) => {
+                    report.verified += 1;
+                    report.activated += 1;
+                    report.item_ids.push(id);
+                }
+                Err(error) => report.rejected.push(Rejection {
+                    template_id: Some(item.term.clone()),
+                    reason: error.to_string(),
+                }),
+            }
+        }
+
+        // Same reasoning as the Word Knowledge path: a run that stored nothing
+        // because every item hit the same systemic problem is a failure, not a
+        // corpus of zero.
+        if report.activated == 0 && report.already_present == 0 {
+            let first = report
+                .rejected
+                .first()
+                .map(|rejection| rejection.reason.as_str())
+                .unwrap_or("no reason recorded");
+            anyhow::bail!(
+                "module {:?} stored nothing: all {} item(s) were refused; first reason: {first}",
+                request.module,
+                report.rejected.len()
+            );
+        }
+
+        Ok(report)
+    }
+
+    /// Verify one Electronics Information item and, only if it proves out, store it.
+    ///
+    /// Public for the same reason the other two are: the builder's own output
+    /// always verifies, so without a directly callable entry point the refusal
+    /// path would be unreachable code and deleting the check would break no test.
+    pub fn store_ei_verified(
+        &self,
+        glossary: &Glossary,
+        request: &EiIngestRequest<'_>,
+        item: &EiItem,
+    ) -> anyhow::Result<String> {
+        neets::verify(item, glossary)
+            .map_err(|failure| anyhow::anyhow!("item failed source verification: {failure}"))?;
+
+        let repo = ContentItemRepo::new(self.db);
+        let id = format!("q-{}", uuid::Uuid::new_v4());
+        let content_hash = item.content_hash();
+
+        // The rubric records what was checked, so a reviewer can re-check it
+        // without re-running the ingester.
+        let rubric = format!(
+            "NEETS, {}, defines \"{}\" as the definition quoted in the prompt, and every \
+             option is a term the same module defines.",
+            item.module, item.term
+        );
+        let proof = AnswerProof::SourceBacked {
+            source_id: request.source_id.to_string(),
+            rubric,
+        };
+        let proof_json = serde_json::to_string(&proof)?;
+
+        // What the builder produced, and what the verifier re-derived from the
+        // source. Different inputs, so they cannot coincide, which the schema
+        // requires before activation.
+        let generator_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}{}",
+            item.module,
+            item.options.join("\u{2}"),
+            item.term
+        ));
+        let verifier_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}defined={}",
+            item.supporting_definition,
+            item.term,
+            glossary.defines(&item.term)
+        ));
+
+        repo.insert_draft(&NewContentItem {
+            id: &id,
+            subtest: "EI",
+            objective_id: &item.objective_id,
+            stem: &item.prompt,
+            options: &item.options,
+            correct_index: item.correct_index,
+            explanation: &item.explanation(),
+            distractor_rationales: &item.distractor_rationales,
+            difficulty: item.difficulty,
+            proof_kind: "source_backed",
+            proof_json: &proof_json,
+            content_hash: &content_hash,
+            generator_hash: Some(generator_hash.as_str()),
+        })?;
+
+        repo.cite(&id, request.source_id)?;
+
+        self.db.connection().execute(
+            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+            rusqlite::params![id, verifier_hash.as_str()],
+        )?;
+
+        repo.walk_to_content_reviewed(&id, request.generator)?;
+        repo.activate(
+            &id,
+            request.reviewer,
+            "ingested from a public-domain Navy training module; definition quoted verbatim",
+        )?;
+
+        Ok(id)
+    }
+
     fn content_hash_exists(&self, content_hash: &str) -> anyhow::Result<bool> {
         let count: i64 = self.db.connection().query_row(
             "SELECT COUNT(*) FROM content_items WHERE content_hash = ?1",
@@ -530,6 +686,93 @@ impl WkIngestReport {
     pub fn is_clean(&self) -> bool {
         self.rejected.is_empty()
     }
+}
+
+/// A request to ingest Electronics Information items from one NEETS module.
+///
+/// The source id must already exist in the evidence vault: migration 004 refuses
+/// a citation the vault has not seen, so an ingester cannot invent provenance for
+/// itself.
+#[derive(Debug, Clone)]
+pub struct EiIngestRequest<'a> {
+    /// The module label recorded on the items, e.g. `NEETS MOD 1`.
+    pub module: &'a str,
+    /// The vault id of this module's text.
+    pub source_id: &'a str,
+    /// How many items to attempt.
+    pub count: usize,
+    pub seed: u64,
+    /// Definitions shorter than this cannot identify a concept.
+    pub min_definition_words: usize,
+    /// Named reviewer recorded on activation (REQ-056).
+    pub reviewer: &'a str,
+    /// Actor recorded in the audit trail for the machine steps.
+    pub generator: &'a str,
+}
+
+/// What one module's ingestion run did.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct EiIngestReport {
+    pub module: String,
+    /// Glossary entries the module yielded.
+    pub entries: usize,
+    pub built: usize,
+    pub verified: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    pub rejected: Vec<Rejection>,
+    pub item_ids: Vec<String>,
+}
+
+impl EiIngestReport {
+    pub fn is_clean(&self) -> bool {
+        self.rejected.is_empty()
+    }
+}
+
+/// Whether a glossary definition survived the scan intact.
+///
+/// The module text is OCR, and this scan read `c` as `e`: the corpus contains
+/// `eleetron`, `eurrent`, `eonduct` and `resistanee`. An item whose definition
+/// reads "the amount of eleetron flow" teaches a learner that `eleetron` is a
+/// word, which is worse than having no item at all.
+///
+/// The test is deliberately narrow. Refusing every token the dictionary lacks
+/// discards legitimate technical vocabulary -- Webster's 1913 predates
+/// electronics, so `amplidyne` would be refused -- and applied to NEETS module 5
+/// that rule produced **zero** items. `looks_like_misreading` targets the error
+/// this scanner actually makes. A term the module defines itself is accepted
+/// outright, because the glossary is the authority on its own vocabulary.
+pub fn entry_is_legible(
+    term: &str,
+    definition: &str,
+    dictionary: &Dictionary,
+    glossary: &Glossary,
+) -> bool {
+    let tokens = |text: &str| -> Vec<String> {
+        text.split(|c: char| !c.is_ascii_alphabetic())
+            .filter(|token| token.len() >= 4)
+            .map(str::to_string)
+            .collect()
+    };
+
+    // The term's own words are checked against the dictionary alone. The glossary
+    // exemption below must not apply to them, and the reason is subtle: `LILTER`
+    // *is* defined by the glossary, because it heads the entry `BANDPASS LILTER`.
+    // Exempting it let a misspelled term certify itself, and fourteen items reached
+    // the corpus with a misspelling as their correct answer.
+    let term_is_clean = tokens(term)
+        .iter()
+        .all(|token| !looks_like_misreading(dictionary, token));
+
+    // Definition tokens may be technical vocabulary the dictionary never carried,
+    // so a term the module defines itself is accepted outright. That is what keeps
+    // `amplidyne` from being read as a typo.
+    let definition_is_clean = tokens(definition)
+        .iter()
+        .all(|token| glossary.defines(token) || !looks_like_misreading(dictionary, token));
+
+    term_is_clean && definition_is_clean
 }
 
 /// An item as the interface sees it.

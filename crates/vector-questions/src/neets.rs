@@ -369,17 +369,17 @@ impl Glossary {
 
     /// Build up to `count` items.
     ///
-    /// `definition_ok` vets the definition text; the application layer supplies
+    /// `accept` vets the term and the definition; the application layer supplies
     /// the OCR check described in the module documentation.
     pub fn build_items<F>(
         &self,
         count: usize,
         seed: u64,
         min_definition_words: usize,
-        mut definition_ok: F,
+        mut accept: F,
     ) -> Vec<EiItem>
     where
-        F: FnMut(&str) -> bool,
+        F: FnMut(&str, &str) -> bool,
     {
         if self.entries.is_empty() {
             return Vec::new();
@@ -392,8 +392,7 @@ impl Glossary {
             if items.len() >= count {
                 break;
             }
-            let Some(item) =
-                self.build_one(&mut rng, seed, min_definition_words, &mut definition_ok)
+            let Some(item) = self.build_one(&mut rng, seed, min_definition_words, &mut accept)
             else {
                 continue;
             };
@@ -409,10 +408,10 @@ impl Glossary {
         rng: &mut Rng,
         seed: u64,
         min_definition_words: usize,
-        definition_ok: &mut F,
+        accept: &mut F,
     ) -> Option<EiItem>
     where
-        F: FnMut(&str) -> bool,
+        F: FnMut(&str, &str) -> bool,
     {
         let index = rng.range(0, self.entries.len() as i64 - 1) as usize;
         let entry = &self.entries[index];
@@ -423,8 +422,10 @@ impl Glossary {
         if word_count < min_definition_words || word_count > 30 {
             return None;
         }
-        // The caller's veto, which is where OCR noise is caught.
-        if !definition_ok(&entry.definition) {
+        // The caller's veto, which is where OCR noise is caught. It receives the
+        // term as well as the definition: checking only definitions let a
+        // misspelled *term* reach the corpus as a correct answer.
+        if !accept(&entry.term, &entry.definition) {
             return None;
         }
 
@@ -460,6 +461,14 @@ impl Glossary {
                 // A term conspicuously longer than the others is the option a
                 // learner eliminates first.
                 if candidate.term.len().abs_diff(entry.term.len()) > 10 {
+                    continue;
+                }
+                // The caller's veto applies to distractors too. Checking only the
+                // answer let a misspelled term be offered as a wrong option in
+                // fourteen items: `BANDPASS LILTER` heads its own glossary entry,
+                // so it is a legitimate distractor candidate, and the learner reads
+                // the misspelling either way.
+                if !accept(&candidate.term, &candidate.definition) {
                     continue;
                 }
                 options.push((candidate.term.clone(), false));

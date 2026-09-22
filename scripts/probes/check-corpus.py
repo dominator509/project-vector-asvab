@@ -22,12 +22,25 @@ for table in ("evidence_records", "content_item_sources", "content_item_reviews"
 
 print()
 print("=== provenance invariants over the whole corpus ===")
+
+# How many sources each subtest's items must cite. A Word Knowledge item rests on
+# a thesaurus line corroborated by a dictionary, so it cites two; an Electronics
+# Information item rests on a single NEETS module glossary and cites one. Asserting
+# a flat "2" here reported 4,000 EI items as broken when the corpus was correct --
+# the probe was wrong, not the data.
+EXPECTED_SOURCES = {"WK": 2, "EI": 1}
+
+bad_citations = 0
+for subtest, expected in EXPECTED_SOURCES.items():
+    offenders = c.execute(
+        """select count(*) from content_items i where i.subtest=? and i.state='active'
+           and (select count(*) from content_item_sources s where s.item_id=i.id) <> ?""",
+        (subtest, expected),
+    ).fetchone()[0]
+    print(f"  {subtest} active items not citing exactly {expected} source(s): {offenders}")
+    bad_citations += offenders
+
 checks = [
-    (
-        "active items not citing exactly 2 sources",
-        """select count(*) from content_items i where i.state='active'
-           and (select count(*) from content_item_sources s where s.item_id=i.id) <> 2""",
-    ),
     (
         "items whose generator and verifier hashes agree",
         "select count(*) from content_items where generator_hash = verifier_hash",
@@ -49,9 +62,22 @@ checks = [
         """select count(*) from content_items
            where correct_index >= json_array_length(options_json)""",
     ),
+    (
+        "active items with no objective",
+        "select count(*) from content_items where state='active' and trim(objective_id)=''",
+    ),
 ]
 for label, sql in checks:
     print(f"  {label:<48} {c.execute(sql).fetchone()[0]}")
+
+print()
+print("=== citations per subtest ===")
+for subtest, cite_count, items in c.execute(
+    """select i.subtest, count(s.item_id), count(distinct i.id)
+       from content_items i left join content_item_sources s on s.item_id = i.id
+       group by i.subtest order by i.subtest"""
+):
+    print(f"  {subtest:<4} {items} item(s), {cite_count} citation(s)")
 
 print()
 print("=== three real items ===")

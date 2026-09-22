@@ -166,8 +166,8 @@ fn a_hyphen_inside_a_definition_does_not_truncate_it() {
 // Building
 // ---------------------------------------------------------------------------
 
-/// Accept every definition, standing in for the caller's OCR check.
-fn accept_all(_: &str) -> bool {
+/// Accept every entry, standing in for the caller's OCR check.
+fn accept_all(_: &str, _: &str) -> bool {
     true
 }
 
@@ -247,7 +247,7 @@ fn every_built_item_passes_independent_verification() {
 fn a_definition_the_caller_vetoes_is_never_used() {
     let g = fixture();
     // Reject anything mentioning electrons, standing in for the OCR check.
-    let items = g.build_items(6, 5, 3, |definition| !definition.contains("electron"));
+    let items = g.build_items(6, 5, 3, |_, definition| !definition.contains("electron"));
     assert!(!items.is_empty());
     for item in &items {
         assert!(
@@ -385,6 +385,28 @@ fn verification_refuses_a_term_the_glossary_does_not_define() {
     match verify(&item, &g) {
         Err(EiVerificationFailure::UnknownTerm(_)) => {}
         other => panic!("expected an unknown-term refusal, got {other:?}"),
+    }
+}
+
+#[test]
+fn a_vetoed_term_is_not_offered_even_as_a_distractor() {
+    let g = fixture();
+    // The caller''s check must gate distractors as well as answers. Validating only
+    // the answer let a misspelled term be offered as a wrong option in fourteen
+    // real items, because a misspelled term still heads its own glossary entry and
+    // is therefore a legitimate distractor candidate.
+    let items = g.build_items(30, 3, 3, |term, _| term != "BLEEDER RESISTOR");
+    assert!(!items.is_empty());
+    for item in &items {
+        assert!(
+            !item
+                .options
+                .iter()
+                .any(|option| option == "BLEEDER RESISTOR"),
+            "a vetoed term appeared as an option in {}: {:?}",
+            item.term,
+            item.options
+        );
     }
 }
 

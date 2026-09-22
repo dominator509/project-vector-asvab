@@ -225,38 +225,84 @@ pub fn definition_vocabulary(dictionary: &Dictionary, limit: usize) -> HashSet<S
     out
 }
 
-/// Whether a token looks like a scan misreading a real word, rather than a word
-/// the dictionary simply does not carry.
+/// Whether a token looks like a scan misreading of a real word, rather than a
+/// word the dictionary simply does not carry.
 ///
 /// ## Why "not in the dictionary" is the wrong test
 ///
 /// The obvious filter for OCR corruption is "reject tokens the dictionary does
 /// not define", and it fails badly: Webster's 1913 predates electronics, so a
 /// perfectly good definition of `AMPLIDYNE` is rejected for containing
-/// `amplidyne`. Applied to NEETS module 5, that rule discarded every item in the
+/// `amplidyne`. Applied to NEETS module 5 that rule discarded every item in the
 /// module while reporting success.
 ///
-/// This scan has a *specific* failure: it read `c` as `e`, producing `eleetron`,
-/// `eurrent`, `eonduct`, `earry`, `resistanee` and `reeiproeal`. So the test is
-/// narrow -- if restoring a `c` anywhere in the token yields a word the
-/// dictionary carries, the token is a misreading. `amplidyne` is not one
-/// substitution away from anything and survives.
+/// ## Why a single scanner error was not enough either
 ///
-/// This detects one scanner's error, not misspelling in general, and it is named
-/// for what it does.
-pub fn looks_like_misread_c(dictionary: &Dictionary, token: &str) -> bool {
+/// The first version of this checked only for `c` misread as `e`, which is the
+/// most common error in this corpus (`eleetron`, `eurrent`, `eonduct`). Reading
+/// real items then turned up `BANDPASS LILTER`, where the scan had read `F` as
+/// `L` -- and because only *definitions* were being checked, a misspelled **term**
+/// reached the corpus as a correct answer. A learner would have been taught
+/// `LILTER`.
+///
+/// So the test is now general: a token is a misreading when a single character
+/// substitution or deletion turns it into a word the dictionary carries. That
+/// covers both errors without becoming a spell-checker that rejects technical
+/// vocabulary -- `amplidyne` is not one edit from any English word.
+///
+/// Tokens shorter than five characters are exempt, because short words really are
+/// one edit apart from each other and the test would reject legitimate terms.
+pub fn looks_like_misreading(dictionary: &Dictionary, token: &str) -> bool {
     let lower = token.to_lowercase();
-    if dictionary.covers(&lower) {
+    let characters: Vec<char> = lower.chars().collect();
+    if characters.len() < 5 || covers_including_inflections(dictionary, &lower) {
         return false;
     }
-    for (index, character) in lower.char_indices() {
-        if character != 'e' {
-            continue;
+
+    // Single-character substitutions: `lilter` -> `filter`, `eleetron` -> `electron`.
+    for position in 0..characters.len() {
+        for letter in b'a'..=b'z' {
+            let candidate_letter = letter as char;
+            if candidate_letter == characters[position] {
+                continue;
+            }
+            let mut candidate: String = characters[..position].iter().collect();
+            candidate.push(candidate_letter);
+            candidate.extend(&characters[position + 1..]);
+            if covers_including_inflections(dictionary, &candidate) {
+                return true;
+            }
         }
-        let mut restored = lower.clone();
-        restored.replace_range(index..index + 1, "c");
-        if dictionary.covers(&restored) {
+    }
+
+    // Single-character deletions, which catch a doubled or spurious character.
+    for position in 0..characters.len() {
+        let candidate: String = characters[..position]
+            .iter()
+            .chain(characters[position + 1..].iter())
+            .collect();
+        if candidate.len() >= 4 && covers_including_inflections(dictionary, &candidate) {
             return true;
+        }
+    }
+
+    false
+}
+
+/// Whether the dictionary carries a word, allowing for simple inflections.
+///
+/// A dictionary's headwords are base forms, so a definition saying `electrons`
+/// looks absent even though `electron` is present. Without this the plural
+/// `eleetrons` escaped the misreading check entirely, which a test caught.
+fn covers_including_inflections(dictionary: &Dictionary, word: &str) -> bool {
+    if dictionary.covers(word) {
+        return true;
+    }
+    for suffix in ["s", "es", "ed", "ing", "ly"] {
+        if let Some(stem) = word.strip_suffix(suffix) {
+            if stem.len() >= 3 && dictionary.covers(stem) {
+                return true;
+            }
         }
     }
     false
@@ -289,9 +335,17 @@ Electron
 
 Electron (n.) A particle of negative electricity.
 
+Filter
+
+Filter (n.) A device that separates one thing from another.
+
 Electron
 
 Electron (n.) A particle of negative electricity.
+
+Filter
+
+Filter (n.) A device that separates one thing from another.
 
 Sodden
 
@@ -389,8 +443,8 @@ Licence text that must not become a definition.
         let d = fixture();
         // `electron` is in the fixture; the NEETS scan renders it `eleetron` by
         // reading one `c` as `e`, which is a single substitution away.
-        assert!(looks_like_misread_c(&d, "eleetron"));
-        assert!(looks_like_misread_c(&d, "eurrent") || !d.covers("current"));
+        assert!(looks_like_misreading(&d, "eleetron"));
+        assert!(looks_like_misreading(&d, "eurrent") || !d.covers("current"));
     }
 
     #[test]
@@ -399,14 +453,24 @@ Licence text that must not become a definition.
         // The distinction the whole function exists for: Webster's 1913 predates
         // electronics, so `amplidyne` is absent without being corrupt. The blunt
         // "not in the dictionary" rule discarded every item in NEETS module 5.
-        assert!(!looks_like_misread_c(&d, "amplidyne"));
-        assert!(!looks_like_misread_c(&d, "thyristor"));
+        assert!(!looks_like_misreading(&d, "amplidyne"));
+        assert!(!looks_like_misreading(&d, "thyristor"));
+    }
+
+    #[test]
+    fn a_term_misread_as_a_different_letter_is_detected() {
+        let d = fixture();
+        // The defect that widened this check: NEETS module 9 rendered `BANDPASS
+        // FILTER` as `BANDPASS LILTER`, and because only definitions were being
+        // validated, the misspelled term reached the corpus as a correct answer.
+        assert!(looks_like_misreading(&d, "lilter"));
+        assert!(looks_like_misreading(&d, "eleetron"));
     }
 
     #[test]
     fn a_word_the_dictionary_has_is_never_flagged() {
         let d = fixture();
-        assert!(!looks_like_misread_c(&d, "brave"));
-        assert!(!looks_like_misread_c(&d, "electron"));
+        assert!(!looks_like_misreading(&d, "brave"));
+        assert!(!looks_like_misreading(&d, "electron"));
     }
 }

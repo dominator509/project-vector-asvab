@@ -237,6 +237,35 @@ enum ContentCommands {
         #[arg(long)]
         out: Option<PathBuf>,
     },
+    /// Ingest Electronics Information items from NEETS module glossaries.
+    ///
+    /// One vault row and one ingestion run per module, so an item's citation names
+    /// the module it came from and a module that parses badly cannot take the rest
+    /// of the collection down with it.
+    IngestEi {
+        /// Database to write into.
+        #[arg(long)]
+        db: PathBuf,
+        /// Webster's Unabridged 1913 text, used only for the OCR check.
+        #[arg(long)]
+        dictionary: PathBuf,
+        /// A NEETS module text file. Repeat for each module.
+        #[arg(long = "module", required = true)]
+        modules: Vec<PathBuf>,
+        /// Items to attempt per module.
+        #[arg(long, default_value_t = 400)]
+        count: usize,
+        #[arg(long, default_value_t = 20_260_922)]
+        seed: u64,
+        /// Definitions shorter than this cannot identify a concept.
+        #[arg(long, default_value_t = 5)]
+        min_definition_words: usize,
+        #[arg(long, default_value = "content-reviewer")]
+        reviewer: String,
+        /// Write a JSON report here as well as printing it.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
 }
 
 fn migrate(db_path: &str) -> Result<usize> {
@@ -300,6 +329,71 @@ fn main() -> Result<()> {
                     eprintln!(
                         "content ingest-wk: nothing new; {} item(s) already present",
                         outcome.already_present
+                    );
+                }
+            }
+            ContentCommands::IngestEi {
+                db,
+                dictionary,
+                modules,
+                count,
+                seed,
+                min_definition_words,
+                reviewer,
+                out,
+            } => {
+                let started = std::time::Instant::now();
+                let outcome = content::ingest_ei(
+                    &db,
+                    &dictionary,
+                    &modules,
+                    count,
+                    seed,
+                    &reviewer,
+                    min_definition_words,
+                )?;
+
+                let report = serde_json::json!({
+                    "database": db.display().to_string(),
+                    "dictionary": {
+                        "path": dictionary.display().to_string(),
+                        "sha256": outcome.dictionary_hash,
+                        "entries": outcome.dictionary_entries,
+                    },
+                    "requested_per_module": count,
+                    "seed": seed,
+                    "min_definition_words": min_definition_words,
+                    "modules": outcome.modules.iter().map(|m| serde_json::json!({
+                        "module": m.module,
+                        "path": m.path,
+                        "sha256": m.sha256,
+                        "glossary_entries": m.entries,
+                        "built": m.built,
+                        "activated": m.activated,
+                        "already_present": m.already_present,
+                        "rejected": m.rejected,
+                    })).collect::<Vec<_>>(),
+                    "totals": {
+                        "glossary_entries": outcome.total_entries,
+                        "built": outcome.total_built,
+                        "activated": outcome.total_activated,
+                        "already_present": outcome.total_already_present,
+                        "rejected": outcome.total_rejected,
+                    },
+                    "elapsed_ms": started.elapsed().as_millis(),
+                });
+                let text = serde_json::to_string_pretty(&report)?;
+                println!("{text}");
+                if let Some(path) = out {
+                    if let Some(parent) = path.parent() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                    std::fs::write(&path, format!("{text}\n"))?;
+                }
+                if outcome.total_activated == 0 {
+                    eprintln!(
+                        "content ingest-ei: nothing new; {} item(s) already present",
+                        outcome.total_already_present
                     );
                 }
             }

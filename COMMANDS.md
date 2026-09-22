@@ -49,7 +49,10 @@ export RUST_BACKTRACE=1
 | MCP probe | `sh scripts/mcp-probe.sh` |
 | Isolated worktree lane | `cargo run -p vector-tools -- repair lane --gate reality-gate` |
 | Content ingestion (Word Knowledge) | `cargo run -p vector-tools -- content ingest-wk --db <db> --thesaurus <moby words.txt> --dictionary <webster pg29765.txt>` |
+| Content ingestion (Electronics Information) | `cargo run -p vector-tools -- content ingest-ei --db <db> --dictionary <webster pg29765.txt> --module <neets module.txt> [--module ...]` |
 | Corpus readback | `python3 scripts/probes/check-corpus.py <db>` |
+| OCR residue check | `python3 scripts/probes/check-ocr-residue.py <db>` |
+| OCR detector probe | `cargo run -p vector-questions --example ocr_probe -- <webster pg29765.txt> <token>` |
 
 ## Adapter parity
 After changing commands, run `python3 scripts/validate-generated-pack.py .` and ensure every platform adapter points back to AGENTS.md rather than duplicating a conflicting command surface.

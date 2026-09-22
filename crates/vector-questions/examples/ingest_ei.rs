@@ -26,7 +26,7 @@
 
 use std::path::PathBuf;
 
-use vector_questions::dictionary::{looks_like_misread_c, parse_webster, Dictionary};
+use vector_questions::dictionary::{looks_like_misreading, parse_webster, Dictionary};
 use vector_questions::neets::{parse_neets_glossary, verify, Glossary};
 
 fn digest(text: &str) -> String {
@@ -43,14 +43,21 @@ fn digest(text: &str) -> String {
 /// matters: Webster's 1913 predates electronics, so a definition may legitimately
 /// use a term it does not carry, and the check has to target misspellings rather
 /// than technical language.
-fn definition_is_legible(definition: &str, dictionary: &Dictionary, glossary: &Glossary) -> bool {
-    definition
-        .split(|c: char| !c.is_ascii_alphabetic())
-        .filter(|token| token.len() >= 4)
-        // A term the module defines itself is technical vocabulary this scan
-        // rendered correctly; `looks_like_misread_c` targets the scan's actual
-        // error rather than unknown words.
-        .all(|token| glossary.defines(token) || !looks_like_misread_c(dictionary, token))
+fn entry_is_legible(
+    term: &str,
+    definition: &str,
+    dictionary: &Dictionary,
+    glossary: &Glossary,
+) -> bool {
+    let check = |text: &str| {
+        text.split(|c: char| !c.is_ascii_alphabetic())
+            .filter(|token| token.len() >= 4)
+            // A term the module defines itself is technical vocabulary this scan
+            // rendered correctly; `looks_like_misread_c` targets the scan's actual
+            // error rather than unknown words.
+            .all(|token| glossary.defines(token) || !looks_like_misreading(dictionary, token))
+    };
+    check(term) && check(definition)
 }
 
 fn main() {
@@ -108,8 +115,8 @@ fn main() {
         total_entries += glossary.entry_count();
 
         let mut refused = 0usize;
-        let items = glossary.build_items(400, 20_260_922, 5, |definition| {
-            let ok = definition_is_legible(definition, &dictionary, &glossary);
+        let items = glossary.build_items(400, 20_260_922, 5, |term, definition| {
+            let ok = entry_is_legible(term, definition, &dictionary, &glossary);
             if !ok {
                 refused += 1;
             }
