@@ -101,8 +101,29 @@ export const PC_ITEM: StubItem = {
 export interface StubOptions {
   /** Items `content_next` may serve. Defaults to the Arithmetic Reasoning item. */
   items?: StubItem[];
+  /** Packs `content_packs` reports. Empty by default, which is a fresh install. */
+  packs?: StubPack[];
   /** Value `ui_ready` returns, for specs that read the marker back. */
   marker?: string;
+}
+
+/**
+ * A pack as the registry reports it.
+ *
+ * `signature_valid` is here because the content manager shows it, and a stub that
+ * omitted it would let that column render `undefined` without failing.
+ */
+export interface StubPack {
+  id: string;
+  name: string;
+  version: number;
+  status: string;
+  signer: string;
+  content_hash: string;
+  schema_version: number;
+  item_count: number;
+  created_at: string;
+  signature_valid: boolean;
 }
 
 /**
@@ -117,10 +138,11 @@ export async function installStubBackend(
   options: StubOptions = {},
 ): Promise<void> {
   const items = options.items ?? [AR_ITEM];
+  const packs = options.packs ?? [];
   const marker = options.marker ?? "marker-e2e";
 
   await page.addInitScript(
-    ({ items, marker }) => {
+    ({ items, packs, marker }) => {
       const subtests = [...new Set(items.map((item) => item.subtest))].sort();
       const w = window as unknown as Record<string, unknown>;
       w.__TAURI_INTERNALS__ = {
@@ -208,6 +230,65 @@ export async function installStubBackend(
             case "record_attempt":
               return true;
 
+            // The pack registry, and the two actions the content manager offers.
+            // Installation is refused here for the same reason the backend refuses
+            // it: this stub trusts no signing key, so it cannot verify a pack.
+            case "content_packs":
+              return packs;
+            case "content_pack_install":
+              throw new Error(
+                "the pack is not signed by the key this installation trusts",
+              );
+            case "content_pack_rollback":
+              return packs.find((pack) => pack.name === args.name) ?? null;
+
+            // The corpus half of the content manager. It has to answer as well as the
+            // pack half, or the view sits in its error state and the packs panel is
+            // never reached -- which is exactly how these tests failed the first time.
+            case "content_manager": {
+              const sourceId = "ev-e2e-source";
+              return {
+                stats: {
+                  total: items.length,
+                  servable: items.length,
+                  sources: items.length === 0 ? 0 : 1,
+                  by_state:
+                    items.length === 0
+                      ? []
+                      : [{ state: "active", count: items.length }],
+                  by_subtest: subtests.map((subtest) => ({
+                    subtest,
+                    count: items.filter((item) => item.subtest === subtest)
+                      .length,
+                  })),
+                },
+                sources:
+                  items.length === 0
+                    ? []
+                    : [
+                        {
+                          id: sourceId,
+                          title: "Test source",
+                          url: "https://example.invalid/source",
+                          licence: "Public domain in the USA",
+                          trust: 0.9,
+                          item_count: items.length,
+                        },
+                      ],
+                items: items.map((item) => ({
+                  id: item.id,
+                  subtest: item.subtest,
+                  state: "active",
+                  objective_id: item.objective_id,
+                  preview: item.stem.slice(0, 120),
+                  correct_answer: item.options[item.correct_index] ?? "",
+                  reviewer: "content-reviewer",
+                  content_hash: `sha256:${item.id}`,
+                  sources: [sourceId],
+                })),
+              };
+            }
+
             default:
               // Loud rather than silent: an unexpected call means the surface moved
               // and this stub no longer describes it.
@@ -216,6 +297,6 @@ export async function installStubBackend(
         },
       };
     },
-    { items, marker },
+    { items, packs, marker },
   );
 }

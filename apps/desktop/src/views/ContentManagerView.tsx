@@ -26,6 +26,7 @@ import { useBackend } from "../ipc/Backend";
 import type {
   ContentItemSummaryDto,
   ContentManagerDto,
+  InstalledPackDto,
   ReviewEntryDto,
   SourceDto,
 } from "../ipc/types";
@@ -57,6 +58,9 @@ export function ContentManagerView() {
     itemId: string;
     entries: ReviewEntryDto[];
   } | null>(null);
+  const [packs, setPacks] = useState<InstalledPackDto[]>([]);
+  const [packPath, setPackPath] = useState("");
+  const [packNotice, setPackNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -70,9 +74,58 @@ export function ContentManagerView() {
     }
   }, [backend.client]);
 
+  const loadPacks = useCallback(async () => {
+    try {
+      setPacks(await backend.client.contentPacks());
+    } catch {
+      // A registry that cannot be read shows as an empty list rather than as a
+      // failure of the whole view: the corpus half of this surface is still usable,
+      // and an install or rollback reports its own error.
+      setPacks([]);
+    }
+  }, [backend.client]);
+
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadPacks();
+  }, [load, loadPacks]);
+
+  async function installPack() {
+    setBusy("pack-install");
+    setActionError(null);
+    setPackNotice(null);
+    try {
+      const report = await backend.client.contentPackInstall(packPath.trim());
+      setPackPath("");
+      await Promise.all([load(), loadPacks()]);
+      setPackNotice(
+        `Installed ${report.name} v${report.version}: ${report.installed} item(s) ` +
+          `added, ${report.already_present} already present.`,
+      );
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function rollbackPack(pack: InstalledPackDto) {
+    setBusy(`pack-rollback-${pack.id}`);
+    setActionError(null);
+    setPackNotice(null);
+    try {
+      const rolled = await backend.client.contentPackRollback(pack.name);
+      await Promise.all([load(), loadPacks()]);
+      setPackNotice(
+        `Rolled ${pack.name} back to v${rolled.version}: ${rolled.item_count} ` +
+          `item(s) in service again.`,
+      );
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   async function act(
     item: ContentItemSummaryDto,
@@ -222,6 +275,88 @@ export function ContentManagerView() {
         {actionError && (
           <p className="error" role="alert" data-testid="action-error">
             {actionError}
+          </p>
+        )}
+      </section>
+
+      <section aria-labelledby="packs-heading">
+        <h3 id="packs-heading">Content packs</h3>
+        <p className="hint">
+          A pack is signed content with its sources and licences attached. Every
+          check the installer makes has to pass before anything is written, and
+          the version it replaces stays on disk so it can be put back.
+        </p>
+
+        {packs.length === 0 ? (
+          <p className="hint" data-testid="packs-empty">
+            No packs installed. The corpus on this device came from the
+            ingestion tools or from practising a subtest.
+          </p>
+        ) : (
+          <table data-testid="packs-table">
+            <thead>
+              <tr>
+                <th scope="col">Pack</th>
+                <th scope="col">Version</th>
+                <th scope="col">Status</th>
+                <th scope="col">Items</th>
+                <th scope="col">Signature</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {packs.map((pack) => (
+                <tr key={pack.id} data-testid={`pack-${pack.id}`}>
+                  <td>{pack.name}</td>
+                  <td>{pack.version}</td>
+                  <td>{pack.status}</td>
+                  <td>{pack.item_count}</td>
+                  {/* The signature column is separate from the status column on
+                      purpose: a pack can be active with an attestation that no
+                      longer verifies, and that is the fact a reviewer needs. */}
+                  <td data-testid={`pack-signature-${pack.id}`}>
+                    {pack.signature_valid ? "verified" : "does not verify"}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      disabled={
+                        pack.status !== "active" ||
+                        busy === `pack-rollback-${pack.id}`
+                      }
+                      onClick={() => void rollbackPack(pack)}
+                      data-testid={`pack-rollback-${pack.id}`}
+                    >
+                      Roll back
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <label>
+          Install a pack from this machine
+          <input
+            type="text"
+            value={packPath}
+            onChange={(event) => setPackPath(event.target.value)}
+            placeholder="path to a .vpack file"
+            data-testid="pack-path-input"
+          />
+        </label>
+        <button
+          type="button"
+          disabled={packPath.trim().length === 0 || busy === "pack-install"}
+          onClick={() => void installPack()}
+          data-testid="pack-install"
+        >
+          {busy === "pack-install" ? "Installing…" : "Install pack"}
+        </button>
+        {packNotice && (
+          <p className="hint" data-testid="pack-notice" role="status">
+            {packNotice}
           </p>
         )}
       </section>

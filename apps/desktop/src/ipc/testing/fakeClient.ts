@@ -42,6 +42,8 @@ import type {
   PlanDto,
   ProfileDto,
   ReadinessDto,
+  InstallReportDto,
+  InstalledPackDto,
   ResetDto,
   RestoreDto,
   ReviewEntryDto,
@@ -64,6 +66,15 @@ export interface FakeState {
   quarantined: Set<string>;
   /** Review entries appended by quarantine and reinstatement. */
   reviews: ReviewEntryDto[];
+  /**
+   * Installed content packs, keyed by `name@version`.
+   *
+   * The fake models the registry, not the corpus: installing a pack adds a row and
+   * never invents items, because the items a real install delivers come from the pack
+   * file and this fake has no file. A view tested against invented items would be
+   * tested against something the backend cannot produce.
+   */
+  packs: Map<string, InstalledPackDto>;
   evidence: Map<string, EvidenceDto>;
   backups: Array<{
     path: string;
@@ -128,6 +139,7 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
     mastery: new Map(),
     items: new Map(),
     quarantined: new Set(),
+    packs: new Map(),
     reviews: [],
     evidence: new Map(),
     backups: [],
@@ -659,6 +671,92 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
     async contentHistory(itemId: string): Promise<ReviewEntryDto[]> {
       record("content_history", { item_id: itemId });
       return [...state.reviews];
+    },
+
+    async contentPacks(): Promise<InstalledPackDto[]> {
+      record("content_packs");
+      return [...state.packs.values()].sort(
+        (a, b) => a.name.localeCompare(b.name) || b.version - a.version,
+      );
+    },
+
+    async contentPackInstall(packPath: string): Promise<InstallReportDto> {
+      record("content_pack_install", { pack_path: packPath });
+      if (packPath.trim().length === 0) {
+        throw new Error("a pack path is required");
+      }
+      // A pack the backend would refuse is refused here too, so a view cannot pass
+      // its tests by installing something the installer would reject.
+      if (packPath.includes("unsigned") || packPath.includes("untrusted")) {
+        throw new Error(
+          "the pack is not signed by the key this installation trusts",
+        );
+      }
+      const name = "core-asvab";
+      const version =
+        Math.max(
+          0,
+          ...[...state.packs.values()]
+            .filter((pack) => pack.name === name)
+            .map((pack) => pack.version),
+        ) + 1;
+      const items = state.items.size;
+      for (const pack of state.packs.values()) {
+        if (pack.name === name && pack.status === "active") {
+          state.packs.set(`${pack.name}@${pack.version}`, {
+            ...pack,
+            status: "superseded",
+          });
+        }
+      }
+      state.packs.set(`${name}@${version}`, {
+        id: `pack-${name}-${version}`,
+        name,
+        version,
+        status: "active",
+        signer: "86b0ed0e",
+        content_hash: `sha256:${name}-${version}`,
+        schema_version: 1,
+        item_count: items,
+        created_at: "2026-09-22T00:00:00Z",
+        signature_valid: true,
+      });
+      return {
+        name,
+        version,
+        content_hash: `sha256:${name}-${version}`,
+        items,
+        installed: 0,
+        already_present: items,
+        sources_added: 0,
+        sources_reused: 1,
+      };
+    },
+
+    async contentPackRollback(name: string): Promise<InstalledPackDto> {
+      record("content_pack_rollback", { name });
+      const versions = [...state.packs.values()]
+        .filter((pack) => pack.name === name)
+        .sort((a, b) => b.version - a.version);
+      const active = versions.find((pack) => pack.status === "active");
+      if (!active) {
+        throw new Error(`no active pack named ${name}`);
+      }
+      const previous = versions.find(
+        (pack) => pack.status === "superseded" && pack.version < active.version,
+      );
+      if (!previous) {
+        throw new Error(`no earlier pack to roll back to for ${name}`);
+      }
+      state.packs.set(`${name}@${active.version}`, {
+        ...active,
+        status: "quarantined",
+      });
+      state.packs.set(`${previous.name}@${previous.version}`, {
+        ...previous,
+        status: "active",
+      });
+      return { ...previous, status: "active" };
     },
 
     async contentStats(): Promise<ContentStatsDto> {

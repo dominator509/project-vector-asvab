@@ -116,3 +116,57 @@ test.describe("production artifact smoke", () => {
     await expect(page.getByTestId("worked-solution")).toBeVisible();
   });
 });
+
+test.describe("content packs in the built bundle", () => {
+  test("the content manager shows an installed pack and its signature state", async ({
+    page,
+  }) => {
+    await installStubBackend(page, {
+      packs: [
+        {
+          id: "pack-core-asvab-1",
+          name: "core-asvab",
+          version: 1,
+          status: "active",
+          signer: "86b0ed0e",
+          content_hash: "sha256:abc",
+          schema_version: 1,
+          item_count: 1234,
+          created_at: "2026-09-22T00:00:00Z",
+          signature_valid: true,
+        },
+      ],
+    });
+    await page.goto("/");
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /content/i })
+      .click();
+
+    const table = page.getByTestId("packs-table");
+    await expect(table).toBeVisible();
+    await expect(table).toContainText("core-asvab");
+    await expect(table).toContainText("1234");
+    await expect(table).toContainText("verified");
+
+    // Installing with no path is refused by the interface rather than by the
+    // backend, and a pack this stub cannot verify is refused by the backend with the
+    // reason shown.
+    await expect(page.getByTestId("pack-install")).toBeDisabled();
+    await page.getByTestId("pack-path-input").fill("/tmp/some.vpack");
+    await page.getByTestId("pack-install").click();
+    await expect(page.getByTestId("action-error")).toContainText(
+      /not signed by the key this installation trusts/,
+    );
+  });
+
+  test("a fresh installation says there are no packs", async ({ page }) => {
+    await installStubBackend(page);
+    await page.goto("/");
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /content/i })
+      .click();
+    await expect(page.getByTestId("packs-empty")).toBeVisible();
+  });
+});

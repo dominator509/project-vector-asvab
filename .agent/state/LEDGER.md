@@ -148,3 +148,20 @@ Still open after round 15: packs are not reachable from the interface or from a 
 command, Shop and Auto Information still have no items, and the pack schema carries
 neither the curriculum graph nor the calibration metadata that `CONTENT_PACK_SPEC.md`
 lists.
+
+### Round 16
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| Packs in the product | Three Tauri commands (`content_packs`, `content_pack_install`, `content_pack_rollback`), the trusted signing key as configuration rather than an argument, the content manager's packs panel (status, signature state, rollback, install by path), IPC types and validating readers, and a fake that models the registry. | `.agent/evidence/EP-007/content-corpus/ROUND-16-REPORT.md` |
+
+The reader refuses an install report claiming more deliveries than the pack holds, and
+the command refuses every pack when no trusted key is configured, because a caller able
+to name the key it trusts could install a pack it signed itself.
+
+Gates: all eight exit 0. 880 Rust tests across 69 binaries, 210 frontend tests, 36 E2E
+tests; the packaged artifact was rebuilt and the packaged live-fire passed.
+
+Objective part 5 is now complete: the content manager installs, quarantines and rolls
+back packs. Still open: Shop and Auto Information items, the curriculum graph and
+calibration metadata in the pack schema, and the Word Knowledge distractor gap.

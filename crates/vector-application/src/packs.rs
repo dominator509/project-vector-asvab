@@ -669,7 +669,11 @@ pub fn verify_pack(
 }
 
 /// What an installation did.
-#[derive(Debug, Clone, PartialEq)]
+///
+/// Serializable because it is what the command boundary returns: the interface reports
+/// what an install delivered, and a caller reading a report that could not cross the
+/// boundary would have to re-read the store to learn the same thing.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstallReport {
     pub name: String,
     pub version: i64,

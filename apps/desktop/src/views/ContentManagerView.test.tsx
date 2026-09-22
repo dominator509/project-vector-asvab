@@ -204,3 +204,131 @@ describe("ContentManagerView", () => {
     expect(screen.queryByTestId("corpus-empty")).not.toBeInTheDocument();
   });
 });
+
+describe("the packs panel", () => {
+  it("says there are no packs rather than showing an empty table", async () => {
+    const fake = await seeded();
+    renderWith(fake);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("packs-empty")).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId("packs-table")).not.toBeInTheDocument();
+  });
+
+  it("installs a pack and reports what it delivered", async () => {
+    const fake = await seeded();
+    renderWith(fake);
+    await waitFor(() =>
+      expect(screen.getByTestId("pack-path-input")).toBeInTheDocument(),
+    );
+
+    // The button is disabled until there is a path: an install with nothing to
+    // install is a failure the learner would have to guess at.
+    expect(screen.getByTestId("pack-install")).toBeDisabled();
+
+    await userEvent.type(
+      screen.getByTestId("pack-path-input"),
+      "C:/packs/core-asvab.vpack",
+    );
+    await userEvent.click(screen.getByTestId("pack-install"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("packs-table")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("packs-table")).toHaveTextContent("core-asvab");
+    expect(screen.getByTestId("packs-table")).toHaveTextContent("verified");
+    expect(screen.getByTestId("pack-notice")).toHaveTextContent(
+      /Installed core-asvab v1/,
+    );
+    // The path is cleared so a second click cannot reinstall the same file by
+    // accident.
+    expect(screen.getByTestId("pack-path-input")).toHaveValue("");
+  });
+
+  it("shows a refused install as an error rather than as success", async () => {
+    const fake = await seeded();
+    renderWith(fake);
+    await waitFor(() =>
+      expect(screen.getByTestId("pack-path-input")).toBeInTheDocument(),
+    );
+
+    await userEvent.type(
+      screen.getByTestId("pack-path-input"),
+      "C:/packs/untrusted.vpack",
+    );
+    await userEvent.click(screen.getByTestId("pack-install"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("action-error")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("action-error")).toHaveTextContent(
+      /not signed by the key this installation trusts/,
+    );
+    expect(screen.queryByTestId("pack-notice")).not.toBeInTheDocument();
+  });
+
+  it("rolls a pack back and says what is in service again", async () => {
+    const fake = await seeded();
+    renderWith(fake);
+    await waitFor(() =>
+      expect(screen.getByTestId("pack-path-input")).toBeInTheDocument(),
+    );
+
+    // Two installs, so there is an earlier version to go back to.
+    await userEvent.type(screen.getByTestId("pack-path-input"), "first.vpack");
+    await userEvent.click(screen.getByTestId("pack-install"));
+    await waitFor(() =>
+      expect(screen.getByTestId("packs-table")).toBeInTheDocument(),
+    );
+    await userEvent.type(screen.getByTestId("pack-path-input"), "second.vpack");
+    await userEvent.click(screen.getByTestId("pack-install"));
+    await waitFor(() =>
+      expect(screen.getByTestId("packs-table")).toHaveTextContent("2"),
+    );
+
+    const rows = within(screen.getByTestId("packs-table")).getAllByRole("row");
+    // Header plus two versions; the newest is active and the older superseded.
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).toHaveTextContent("2");
+    expect(rows[1]).toHaveTextContent("active");
+    expect(rows[2]).toHaveTextContent("superseded");
+
+    // Only the active version offers a rollback; the older one has nothing below it
+    // to go back to.
+    await userEvent.click(
+      screen.getByTestId("pack-rollback-pack-core-asvab-2"),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("pack-notice")).toHaveTextContent(
+        /Rolled core-asvab back to v1/,
+      ),
+    );
+    const after = within(screen.getByTestId("packs-table")).getAllByRole("row");
+    expect(after[1]).toHaveTextContent("2");
+    expect(after[1]).toHaveTextContent("quarantined");
+    expect(after[2]).toHaveTextContent("1");
+    expect(after[2]).toHaveTextContent("active");
+  });
+
+  it("reports a registry that cannot be read as an empty list without breaking the corpus view", async () => {
+    const fake = await seeded();
+    const client = {
+      ...fake.client,
+      contentPacks: async () => {
+        throw new Error("the registry is unreadable");
+      },
+    };
+    render(
+      <BackendProvider available client={client}>
+        <ContentManagerView />
+      </BackendProvider>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("corpus-summary")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("packs-empty")).toBeInTheDocument();
+  });
+});

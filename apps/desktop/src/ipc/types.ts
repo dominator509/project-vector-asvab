@@ -240,3 +240,36 @@ export interface ContentManagerDto {
   sources: SourceDto[];
   items: ContentItemSummaryDto[];
 }
+
+/**
+ * A signed content pack as the registry holds it.
+ *
+ * `signature_valid` is the field a reader has to see: a pack whose stored identity no
+ * longer verifies against the key that signed it is one nobody should act on, and
+ * hiding that behind a status of "active" would present a broken attestation as a good
+ * one.
+ */
+export interface InstalledPackDto {
+  id: string;
+  name: string;
+  version: number;
+  status: string;
+  signer: string;
+  content_hash: string;
+  schema_version: number;
+  item_count: number;
+  created_at: string;
+  signature_valid: boolean;
+}
+
+/** What installing a pack delivered. */
+export interface InstallReportDto {
+  name: string;
+  version: number;
+  content_hash: string;
+  items: number;
+  installed: number;
+  already_present: number;
+  sources_added: number;
+  sources_reused: number;
+}

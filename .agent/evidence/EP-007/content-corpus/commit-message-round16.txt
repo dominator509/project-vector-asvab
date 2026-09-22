@@ -1,0 +1,46 @@
+Packs in the product: install, quarantine and rollback in the content manager
+
+REQ-023, REQ-032, REQ-048, REQ-056.
+
+Round 15 built the pack engine and left it reachable only from `vector-tools`. The
+objective asks for a content manager with pack install and quarantine, so packs are now
+behind the command boundary and in front of a reviewer.
+
+- Three Tauri commands, registered in `generate_handler!`, each with a testable impl:
+  `content_packs`, `content_pack_install`, `content_pack_rollback`.
+- The trusted signing key is configuration, not an argument. `content_pack_install`
+  reads `VECTOR_PACK_TRUSTED_SIGNER`; a caller able to name the key it trusts could
+  install a pack it signed itself, which is the one thing the signature exists to
+  prevent. With no key configured, installation refuses every pack and says so.
+- The content manager has a Content packs panel: name, version, status, item count,
+  whether the stored signature still verifies, a Roll back button on the active version,
+  and an install box taking a path on this machine. The install button stays disabled
+  until a path is given, the path clears after a successful install, and a refusal shows
+  as an error rather than as a success.
+- IPC: `InstalledPackDto` and `InstallReportDto`, validating readers, three client
+  methods, and a fake client that models the registry and refuses a pack the backend
+  would refuse.
+
+`readInstallReport` refuses a report claiming more deliveries than the pack has items.
+Verification happens before storage, so that report is not one an honest installer can
+produce, and a surface showing it would put a reassuring number over content that was
+never delivered. It is the same shape as the existing "more activations than
+verifications" check on generation reports.
+
+`InstallReport` gained `Serialize` because it crosses the command boundary.
+
+Tests: five new command-boundary tests (install served back through `content_next_impl`,
+no configured key refuses everything, a malformed key refused before any file is read,
+another key's pack refused leaving nothing to serve, rollback with no earlier version);
+five new frontend tests for the panel; two new E2E tests against the built bundle. The
+E2E stub had to learn `content_manager` as well as `content_packs` -- without it the view
+sat in its error state and the panel was never reached, which is how those tests failed
+the first time.
+
+Gates: all eight exit 0. 880 Rust tests across 69 binaries, 210 frontend tests, 36 E2E.
+The packaged artifact was rebuilt and the packaged live-fire passed.
+
+Not done, and named rather than implied: Shop and Auto Information still have no items,
+the pack schema still carries neither the curriculum graph nor the calibration metadata
+the spec lists, the interface installs from a hand-typed path because a file picker needs
+a new dependency, and the Word Knowledge distractor gap is unchanged.

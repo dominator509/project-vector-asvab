@@ -16,8 +16,13 @@ tauri-build.workspace = true
 # boundary, and building one needs the passage parser. The desktop crate itself has
 # no business parsing prose, so this stays out of `[dependencies]`. The crate is a
 # workspace member, so no new third-party code enters the build.
+#
+# `ed25519-dalek` is here for the pack tests, which sign a pack with a fixed test key
+# and hand its public half to the install command; the same version the pack engine
+# signs with, so a test cannot pass against a different signature scheme.
 [dev-dependencies]
 vector-questions = { path = "../../../crates/vector-questions" }
+ed25519-dalek = "2"
 
 [dependencies]
 vector-application = { path = "../../../crates/vector-application" }
@@ -32,3 +37,4 @@ uuid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
+

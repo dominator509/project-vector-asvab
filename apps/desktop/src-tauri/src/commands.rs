@@ -751,3 +751,106 @@ pub fn content_history(
 ) -> Result<Vec<ReviewEntryDto>, String> {
     with_db(&state, |db| content_history_impl(db, &item_id))
 }
+
+// ---------------------------------------------------------------------------
+// Content packs (REQ-023, REQ-032)
+// ---------------------------------------------------------------------------
+
+/// Every pack the registry holds.
+pub fn content_packs_impl(
+    db: &Database,
+) -> Result<Vec<vector_application::packs::InstalledPackDto>, ServiceError> {
+    vector_application::packs::installed_packs(db).map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_packs(
+    state: State<'_, AppState>,
+) -> Result<Vec<vector_application::packs::InstalledPackDto>, String> {
+    with_db(&state, content_packs_impl)
+}
+
+/// Install a pack file, after every check the installer performs.
+///
+/// The trusted signer is application configuration rather than a command argument: a
+/// caller that could name the key it trusts could install a pack it signed itself,
+/// which is the one thing the signature is there to prevent. It is read from the
+/// environment at startup and defaults to absent, in which case installation refuses
+/// every pack and says so.
+pub fn content_pack_install_impl(
+    db: &Database,
+    pack_path: &str,
+    trusted_signer: Option<&str>,
+    app_version: &str,
+) -> Result<vector_application::packs::InstallReport, ServiceError> {
+    let trusted = trusted_signer.ok_or_else(|| {
+        ServiceError::Invalid(
+            "no pack signing key is configured, so no pack can be verified; set \
+             VECTOR_PACK_TRUSTED_SIGNER to the public key this installation trusts"
+                .to_string(),
+        )
+    })?;
+    let signer = decode_hex_key(trusted).ok_or_else(|| {
+        ServiceError::Invalid(
+            "the configured pack signing key is not 64 hex characters".to_string(),
+        )
+    })?;
+    let path = std::path::Path::new(pack_path);
+    let bytes = std::fs::read(path).map_err(|error| {
+        ServiceError::Invalid(format!("cannot read the pack at {pack_path}: {error}"))
+    })?;
+    vector_application::packs::install_pack(db, &bytes, &signer, app_version).map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_pack_install(
+    state: State<'_, AppState>,
+    pack_path: String,
+) -> Result<vector_application::packs::InstallReport, String> {
+    let trusted = std::env::var(PACK_TRUSTED_SIGNER_ENV).ok();
+    with_db(&state, |db| {
+        content_pack_install_impl(db, &pack_path, trusted.as_deref(), APP_VERSION)
+    })
+}
+
+/// Withdraw the active version of a pack in favour of the previous one.
+pub fn content_pack_rollback_impl(
+    db: &Database,
+    name: &str,
+) -> Result<vector_application::packs::InstalledPackDto, ServiceError> {
+    vector_application::packs::rollback_pack(db, name).map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_pack_rollback(
+    state: State<'_, AppState>,
+    name: String,
+) -> Result<vector_application::packs::InstalledPackDto, String> {
+    with_db(&state, |db| content_pack_rollback_impl(db, &name))
+}
+
+/// The environment variable naming the public key an installation trusts for packs.
+pub const PACK_TRUSTED_SIGNER_ENV: &str = "VECTOR_PACK_TRUSTED_SIGNER";
+
+/// The version this build reports for the pack compatibility check.
+pub const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// Decode 64 hex characters into the 32 bytes of an Ed25519 public key.
+fn decode_hex_key(text: &str) -> Option<Vec<u8>> {
+    let text = text.trim();
+    if !text.len().is_multiple_of(2) {
+        return None;
+    }
+    let bytes = text.as_bytes();
+    let mut out = Vec::with_capacity(text.len() / 2);
+    for pair in bytes.chunks(2) {
+        let high = (pair[0] as char).to_digit(16)?;
+        let low = (pair[1] as char).to_digit(16)?;
+        out.push((high * 16 + low) as u8);
+    }
+    if out.len() == 32 {
+        Some(out)
+    } else {
+        None
+    }
+}

@@ -14,6 +14,7 @@
 
 use vector_desktop_lib::commands::{
     content_generate_impl, content_history_impl, content_manager_impl, content_next_impl,
+    content_pack_install_impl, content_pack_rollback_impl, content_packs_impl,
     content_quarantine_impl, content_reinstate_impl, content_stats_impl, migrations,
 };
 use vector_persistence::{Database, MigrationManager};
@@ -596,4 +597,199 @@ fn an_ingested_comprehension_item_is_served_with_its_passage() {
         !item.objective_id.trim().is_empty() && !item.explanation.trim().is_empty(),
         "the item must carry its objective and its explanation"
     );
+}
+
+// ---------------------------------------------------------------------------
+// Content packs through the command boundary (REQ-023, REQ-032)
+// ---------------------------------------------------------------------------
+
+/// A pack the tests can install: two Arithmetic Reasoning items, signed by a key the
+/// test holds.
+fn a_signed_pack(db: &Database, signing: &ed25519_dalek::SigningKey) -> Vec<u8> {
+    use vector_application::content::{ContentPipeline, GenerateRequest};
+    use vector_persistence::repo::{EvidenceRepo, NewEvidence};
+
+    let source = EvidenceRepo::new(db)
+        .put(&NewEvidence::new(
+            "https://www.officialasvab.com/applicants/sample-questions/",
+            "ASVAB subtest constructs (facts only)",
+            "sha256:pack-command-source",
+            "Public domain in the USA",
+            "2026-09-22",
+            0.9,
+            "retrieved",
+        ))
+        .expect("record the source");
+    ContentPipeline::new(db)
+        .generate_and_activate(&GenerateRequest {
+            subtest: "AR",
+            count: 4,
+            seed: 20_260_922,
+            reviewer: "content-reviewer",
+            source_id: &source,
+            generator: "factory",
+        })
+        .expect("generate");
+
+    let document = vector_application::packs::build_pack(
+        db,
+        &vector_application::packs::BuildPackRequest {
+            name: "core-asvab",
+            version: 1,
+            app_min: "0.1.0",
+            app_max: None,
+        },
+        signing,
+    )
+    .expect("build the pack");
+    vector_application::packs::pack_bytes(&document).expect("serialize")
+}
+
+fn test_key() -> ed25519_dalek::SigningKey {
+    ed25519_dalek::SigningKey::from_bytes(&[7_u8; 32])
+}
+
+fn hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+#[test]
+fn a_pack_installed_through_the_command_is_served() {
+    let (_source_dir, source_db) = database("pack-build-source");
+    let bytes = a_signed_pack(&source_db, &test_key());
+    let pack_path = std::env::temp_dir().join(format!(
+        "vector-pack-command-{}-{}.vpack",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos()
+    ));
+    std::fs::write(&pack_path, &bytes).expect("write the pack");
+
+    let (_target_dir, target_db) = database("pack-install-target");
+    let trusted = hex(&test_key().verifying_key().to_bytes());
+    let report = content_pack_install_impl(
+        &target_db,
+        pack_path.to_str().expect("path"),
+        Some(&trusted),
+        "0.1.0",
+    )
+    .expect("install");
+    assert_eq!(report.installed, 4);
+    assert_eq!(report.name, "core-asvab");
+
+    // The effect is read back through the serving command, not the report.
+    let item = content_next_impl(&target_db, "AR", &[])
+        .expect("next")
+        .expect("an installed item must be served");
+    assert_eq!(item.subtest, "AR");
+
+    let packs = content_packs_impl(&target_db).expect("packs");
+    assert_eq!(packs.len(), 1);
+    assert_eq!(packs[0].status, "active");
+    assert!(packs[0].signature_valid);
+
+    let _ = std::fs::remove_file(&pack_path);
+}
+
+#[test]
+fn installing_with_no_trusted_key_configured_is_refused() {
+    // The trusted key is configuration, not an argument: a caller that could name the
+    // key it trusts could install a pack it signed itself, which is the one thing the
+    // signature exists to prevent.
+    let (_dir, db) = database("pack-no-key");
+    let error = content_pack_install_impl(&db, "any.vpack", None, "0.1.0")
+        .expect_err("an installation with no trusted key must refuse every pack");
+    assert!(
+        error
+            .to_string()
+            .contains("no pack signing key is configured"),
+        "the refusal should say what is missing: {error}"
+    );
+    assert!(content_packs_impl(&db).expect("packs").is_empty());
+}
+
+#[test]
+fn a_trusted_key_that_is_not_a_public_key_is_refused_before_any_file_is_read() {
+    let (_dir, db) = database("pack-bad-key");
+    let error = content_pack_install_impl(&db, "missing.vpack", Some("not-hex"), "0.1.0")
+        .expect_err("a malformed key must be refused");
+    assert!(
+        error.to_string().contains("64 hex"),
+        "the refusal should name the problem: {error}"
+    );
+}
+
+#[test]
+fn a_pack_signed_by_another_key_is_refused_through_the_command() {
+    let (_source_dir, source_db) = database("pack-wrong-signer");
+    let bytes = a_signed_pack(&source_db, &test_key());
+    let pack_path = std::env::temp_dir().join(format!(
+        "vector-pack-signer-{}-{}.vpack",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos()
+    ));
+    std::fs::write(&pack_path, &bytes).expect("write the pack");
+
+    let other = ed25519_dalek::SigningKey::from_bytes(&[9_u8; 32]);
+    let trusted = hex(&other.verifying_key().to_bytes());
+    let (_target_dir, target_db) = database("pack-wrong-signer-target");
+    let error = content_pack_install_impl(
+        &target_db,
+        pack_path.to_str().expect("path"),
+        Some(&trusted),
+        "0.1.0",
+    )
+    .expect_err("a pack signed by another key must be refused");
+    assert!(
+        error
+            .to_string()
+            .contains("not the key this installation trusts"),
+        "the refusal should say why: {error}"
+    );
+    assert_eq!(
+        content_next_impl(&target_db, "AR", &[]).expect("next"),
+        None,
+        "a refused pack leaves nothing to serve"
+    );
+
+    let _ = std::fs::remove_file(&pack_path);
+}
+
+#[test]
+fn rolling_back_a_pack_with_no_earlier_version_is_refused_through_the_command() {
+    let (_source_dir, source_db) = database("pack-rollback-source");
+    let bytes = a_signed_pack(&source_db, &test_key());
+    let pack_path = std::env::temp_dir().join(format!(
+        "vector-pack-rollback-{}-{}.vpack",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos()
+    ));
+    std::fs::write(&pack_path, &bytes).expect("write the pack");
+
+    let (_target_dir, target_db) = database("pack-rollback-target");
+    let trusted = hex(&test_key().verifying_key().to_bytes());
+    content_pack_install_impl(
+        &target_db,
+        pack_path.to_str().expect("path"),
+        Some(&trusted),
+        "0.1.0",
+    )
+    .expect("install");
+
+    let error = content_pack_rollback_impl(&target_db, "core-asvab")
+        .expect_err("there is no earlier version to roll back to");
+    assert!(
+        error.to_string().contains("no earlier pack"),
+        "the refusal should say why: {error}"
+    );
+
+    let _ = std::fs::remove_file(&pack_path);
 }

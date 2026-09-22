@@ -69,6 +69,9 @@ pub fn run() {
             commands::content_quarantine,
             commands::content_reinstate,
             commands::content_history,
+            commands::content_packs,
+            commands::content_pack_install,
+            commands::content_pack_rollback,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

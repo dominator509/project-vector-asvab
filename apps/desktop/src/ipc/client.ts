@@ -27,6 +27,8 @@ import type {
   ContentManagerDto,
   ContentStatsDto,
   EvidenceDto,
+  InstallReportDto,
+  InstalledPackDto,
   GenerationReportDto,
   HealthDto,
   Invoke,
@@ -74,6 +76,9 @@ export const COMMAND_NAMES = [
   "content_quarantine",
   "content_reinstate",
   "content_history",
+  "content_packs",
+  "content_pack_install",
+  "content_pack_rollback",
 ] as const;
 
 export type CommandName = (typeof COMMAND_NAMES)[number];
@@ -681,6 +686,55 @@ function readReviewHistory(command: string, value: unknown): ReviewEntryDto[] {
     };
   });
 }
+
+function readInstalledPack(command: string, value: unknown): InstalledPackDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  return {
+    id: r.string(o, "id"),
+    name: r.string(o, "name"),
+    version: r.number(o, "version"),
+    status: r.string(o, "status"),
+    signer: r.string(o, "signer"),
+    content_hash: r.string(o, "content_hash"),
+    schema_version: r.number(o, "schema_version"),
+    item_count: r.number(o, "item_count"),
+    created_at: r.string(o, "created_at"),
+    signature_valid: r.boolean(o, "signature_valid"),
+  };
+}
+
+function readPacks(command: string, value: unknown): InstalledPackDto[] {
+  return new Reader(command, value)
+    .array()
+    .map((entry) => readInstalledPack(command, entry));
+}
+
+function readInstallReport(command: string, value: unknown): InstallReportDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const report: InstallReportDto = {
+    name: r.string(o, "name"),
+    version: r.number(o, "version"),
+    content_hash: r.string(o, "content_hash"),
+    items: r.number(o, "items"),
+    installed: r.number(o, "installed"),
+    already_present: r.number(o, "already_present"),
+    sources_added: r.number(o, "sources_added"),
+    sources_reused: r.number(o, "sources_reused"),
+  };
+  // Verification happens before storage, so more installs than items is not a report
+  // any honest installer can produce, and a caller showing it would be showing a
+  // reassuring number over content that was not delivered.
+  if (report.installed + report.already_present > report.items) {
+    throw new MalformedResponseError(
+      command,
+      `the report claims ${report.installed} installed and ${report.already_present} ` +
+        `already present out of ${report.items} item(s)`,
+    );
+  }
+  return report;
+}
 // ---------------------------------------------------------------------------
 // The client
 // ---------------------------------------------------------------------------
@@ -766,6 +820,18 @@ export interface VectorClient {
   ): Promise<void>;
   /** One item's audit trail. */
   contentHistory(itemId: string): Promise<ReviewEntryDto[]>;
+  /** Every signed content pack the registry holds. */
+  contentPacks(): Promise<InstalledPackDto[]>;
+  /**
+   * Install a signed pack from a path on this machine.
+   *
+   * The trusted signing key is not a parameter: it is configuration the Rust side
+   * reads for itself, because a caller able to name the key it trusts could install a
+   * pack it had signed itself.
+   */
+  contentPackInstall(packPath: string): Promise<InstallReportDto>;
+  /** Withdraw the active version of a pack in favour of the previous one. */
+  contentPackRollback(name: string): Promise<InstalledPackDto>;
 }
 
 /**
@@ -901,5 +967,13 @@ export function createVectorClient(invoke: Invoke): VectorClient {
 
     contentHistory: (itemId) =>
       call("content_history", { item_id: itemId }, readReviewHistory),
+
+    contentPacks: () => call("content_packs", {}, readPacks),
+
+    contentPackInstall: (packPath) =>
+      call("content_pack_install", { pack_path: packPath }, readInstallReport),
+
+    contentPackRollback: (name) =>
+      call("content_pack_rollback", { name }, readInstalledPack),
   };
 }
