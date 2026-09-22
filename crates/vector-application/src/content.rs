@@ -18,7 +18,11 @@
 //! which is what the schema demands before an item may be active: a verifier
 //! that echoed the generator did not verify anything.
 
-use vector_persistence::content::{ContentItemRepo, NewContentItem};
+use std::collections::BTreeMap;
+
+use serde::{Deserialize, Serialize};
+use vector_persistence::content::{ContentItemRepo, NewContentItem, StoredItem};
+use vector_persistence::repo::{EvidenceRepo, NewEvidence};
 use vector_persistence::Database;
 use vector_questions::factory;
 use vector_questions::ingestion::AnswerProof;
@@ -216,5 +220,195 @@ impl<'a> ContentPipeline<'a> {
             |row| row.get(0),
         )?;
         Ok(count > 0)
+    }
+
+    /// An item a learner may be served, or `None` when none is available.
+    ///
+    /// Rotation rather than adaptive selection: `seen` is excluded so a session
+    /// does not repeat, and the lowest id wins so the order is stable and a
+    /// restart does not reshuffle. Item-level adaptive difficulty needs per-item
+    /// response history, and the mastery model is per *subtest*, so this
+    /// deliberately does not pretend to be the CAT-ASVAB's item selection.
+    pub fn next_item(&self, subtest: &str, seen: &[String]) -> anyhow::Result<Option<ItemDto>> {
+        let repo = ContentItemRepo::new(self.db);
+        let items = repo.servable(subtest)?;
+        let chosen = items
+            .iter()
+            .find(|item| !seen.iter().any(|id| id == &item.id))
+            .or_else(|| items.first());
+        Ok(chosen.map(ItemDto::from))
+    }
+
+    /// How much content exists, by state and by subtest.
+    pub fn stats(&self) -> anyhow::Result<ContentStatsDto> {
+        let conn = self.db.connection();
+        let repo = ContentItemRepo::new(self.db);
+
+        let by_state = repo
+            .counts_by_state()?
+            .into_iter()
+            .map(|(state, count)| StateCountDto { state, count })
+            .collect();
+
+        let mut statement = conn.prepare(
+            "SELECT subtest, COUNT(*) FROM content_items GROUP BY subtest ORDER BY subtest",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok(SubtestCountDto {
+                subtest: row.get(0)?,
+                count: row.get(1)?,
+            })
+        })?;
+        let mut by_subtest = Vec::new();
+        for row in rows {
+            by_subtest.push(row?);
+        }
+
+        let servable: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM content_items WHERE state = 'active'",
+            [],
+            |row| row.get(0),
+        )?;
+        let sources: i64 = conn.query_row("SELECT COUNT(*) FROM evidence_records", [], |row| {
+            row.get(0)
+        })?;
+        let total: i64 =
+            conn.query_row("SELECT COUNT(*) FROM content_items", [], |row| row.get(0))?;
+
+        Ok(ContentStatsDto {
+            total,
+            servable,
+            sources,
+            by_state,
+            by_subtest,
+        })
+    }
+
+    /// Record the source every generated item cites, returning its id.
+    ///
+    /// ## Why the licence string says what it says
+    ///
+    /// A generated item's *text* is original work. What it takes from outside is
+    /// the **construct** it targets -- "ability to solve basic arithmetic word
+    /// problems" and the rest of the programme's published one-line subtest
+    /// definitions. Those are facts about the test, and facts are not
+    /// copyrightable, but the page they are published on carries an
+    /// all-rights-reserved notice.
+    ///
+    /// So the licence recorded here says exactly that, rather than labelling a
+    /// copyrighted page "US-Government-Work" because the subject matter is
+    /// government-adjacent. A provenance record that overstates its rights is
+    /// worse than no record: it is the first thing an audit would find. No
+    /// question text from any source is used, which is why each item is provable
+    /// from its own arithmetic rather than from a citation.
+    pub fn ensure_construct_source(&self) -> anyhow::Result<String> {
+        EvidenceRepo::new(self.db).put(&NewEvidence::new(
+            GENERATOR_SOURCE_URL,
+            GENERATOR_SOURCE_TITLE,
+            GENERATOR_SOURCE_HASH,
+            GENERATOR_SOURCE_LICENSE,
+            "2026-09-22",
+            0.9,
+            "retrieved",
+        ))
+    }
+}
+
+/// The published subtest definitions the item templates target.
+const GENERATOR_SOURCE_URL: &str = "https://www.officialasvab.com/applicants/sample-questions/";
+const GENERATOR_SOURCE_TITLE: &str = "ASVAB subtest construct definitions (facts only)";
+/// Stable identity for the vault's hash-addressed dedupe. This names the source
+/// record; it is not a digest of a page we retained, and it must not claim to be.
+const GENERATOR_SOURCE_HASH: &str = "sha256:asvab-subtest-constructs-2026-09-22";
+/// Deliberately not "US-Government-Work": the page asserts all rights reserved.
+const GENERATOR_SOURCE_LICENSE: &str = "Facts-only; item text is original work";
+
+/// An item as the interface sees it.
+///
+/// `correct_index` is included because grading happens locally and the practice
+/// view already grades from an option index. It is not a secret: this is a study
+/// tool on the learner's own machine, and hiding the answer from the person
+/// studying would not make the product more honest, only less useful.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ItemDto {
+    pub id: String,
+    pub subtest: String,
+    pub objective_id: String,
+    pub stem: String,
+    pub options: Vec<String>,
+    pub correct_index: usize,
+    pub explanation: String,
+    pub distractor_rationales: BTreeMap<usize, String>,
+    pub difficulty: f64,
+}
+
+impl From<&StoredItem> for ItemDto {
+    fn from(item: &StoredItem) -> Self {
+        Self {
+            id: item.id.clone(),
+            subtest: item.subtest.clone(),
+            objective_id: item.objective_id.clone(),
+            stem: item.stem.clone(),
+            options: item.options.clone(),
+            correct_index: item.correct_index,
+            explanation: item.explanation.clone(),
+            distractor_rationales: item.distractor_rationales.clone(),
+            difficulty: item.difficulty,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StateCountDto {
+    pub state: String,
+    pub count: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SubtestCountDto {
+    pub subtest: String,
+    pub count: i64,
+}
+
+/// What the corpus holds, for the content manager surface.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ContentStatsDto {
+    pub total: i64,
+    /// Items that are `active` and therefore servable.
+    pub servable: i64,
+    pub sources: i64,
+    pub by_state: Vec<StateCountDto>,
+    pub by_subtest: Vec<SubtestCountDto>,
+}
+
+/// A generation run as the interface sees it.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GenerationReportDto {
+    pub subtest: String,
+    pub generated: usize,
+    pub verified: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    /// One line per refused item. Empty on a clean run.
+    pub rejected: Vec<String>,
+}
+
+impl From<GenerationReport> for GenerationReportDto {
+    fn from(report: GenerationReport) -> Self {
+        Self {
+            subtest: report.subtest,
+            generated: report.generated,
+            verified: report.verified,
+            activated: report.activated,
+            already_present: report.already_present,
+            rejected: report
+                .rejected
+                .into_iter()
+                .map(|r| match r.template_id {
+                    Some(id) => format!("{id}: {}", r.reason),
+                    None => r.reason,
+                })
+                .collect(),
+        }
     }
 }

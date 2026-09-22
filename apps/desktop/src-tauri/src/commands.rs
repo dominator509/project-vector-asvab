@@ -26,6 +26,9 @@
 use std::sync::{Mutex, MutexGuard};
 
 use tauri::State;
+use vector_application::content::{
+    ContentPipeline, ContentStatsDto, GenerateRequest, GenerationReportDto, ItemDto,
+};
 use vector_application::service::{
     AnalyticsDto, BackupDto, BackupEntryDto, EvidenceDto, HealthDto, LatencyDto, MasteryDto,
     PlanDto, ProfileDto, ReadinessDto, ResetDto, RestoreDto, ServiceError, Services,
@@ -544,4 +547,110 @@ pub fn reset_local_data(
     confirmation: String,
 ) -> Result<ResetDto, String> {
     with_db(&state, |db| reset_local_data_impl(db, &confirmation))
+}
+
+// ---------------------------------------------------------------------------
+// Content: generation, serving, and corpus statistics (REQ-022, REQ-056)
+// ---------------------------------------------------------------------------
+//
+// Until these existed the practice view rendered three literals from
+// `apps/desktop/src/data/sample.ts`, because the frontend had no way to ask the
+// backend for a question. The database could hold provable items and nothing
+// could reach them.
+
+/// Convert a pipeline failure into a service error.
+///
+/// Generic over the error rather than taking `anyhow::Error` by name, so the
+/// desktop crate does not gain a dependency purely to spell a type it only calls
+/// `to_string` on. Every failure the pipeline can produce is a storage or
+/// provenance failure rather than a malformed request, so `Storage` is the right
+/// side of the distinction the service boundary already draws.
+fn content_error<E: std::fmt::Display>(error: E) -> ServiceError {
+    ServiceError::Storage(error.to_string())
+}
+
+/// Generate original items for a subtest and activate the ones that prove out.
+///
+/// Idempotent in the useful direction: the same `subtest`, `count` and seed
+/// regenerate the same questions, so a second call reports them as
+/// `already_present` and adds nothing. `count` is capped because generation
+/// writes to the database on the caller's thread and an unbounded request would
+/// block the command for an unbounded time.
+pub fn content_generate_impl(
+    db: &Database,
+    subtest: &str,
+    count: u32,
+    seed: u64,
+) -> Result<GenerationReportDto, ServiceError> {
+    const MAX_PER_CALL: u32 = 500;
+    if count == 0 {
+        return Err(ServiceError::Invalid(
+            "count must be at least 1".to_string(),
+        ));
+    }
+    if count > MAX_PER_CALL {
+        return Err(ServiceError::Invalid(format!(
+            "count {count} exceeds the per-call limit of {MAX_PER_CALL}"
+        )));
+    }
+
+    let pipeline = ContentPipeline::new(db);
+    let source_id = pipeline.ensure_construct_source().map_err(content_error)?;
+    let request = GenerateRequest {
+        subtest,
+        count: count as usize,
+        seed,
+        // The reviewer recorded on activation. A generated item's proof is
+        // machine-checked, but REQ-056 still requires a named reviewer, and
+        // naming the automated one is more honest than inventing a person.
+        reviewer: "machine-verifier",
+        source_id: &source_id,
+        generator: "factory",
+    };
+    pipeline
+        .generate_and_activate(&request)
+        .map(GenerationReportDto::from)
+        .map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_generate(
+    state: State<'_, AppState>,
+    subtest: String,
+    count: u32,
+    seed: u64,
+) -> Result<GenerationReportDto, String> {
+    with_db(&state, |db| {
+        content_generate_impl(db, &subtest, count, seed)
+    })
+}
+
+/// The next item to practise, skipping ids the caller has already seen.
+pub fn content_next_impl(
+    db: &Database,
+    subtest: &str,
+    seen: &[String],
+) -> Result<Option<ItemDto>, ServiceError> {
+    ContentPipeline::new(db)
+        .next_item(subtest, seen)
+        .map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_next(
+    state: State<'_, AppState>,
+    subtest: String,
+    seen: Vec<String>,
+) -> Result<Option<ItemDto>, String> {
+    with_db(&state, |db| content_next_impl(db, &subtest, &seen))
+}
+
+/// How much content this installation holds, by state and subtest.
+pub fn content_stats_impl(db: &Database) -> Result<ContentStatsDto, ServiceError> {
+    ContentPipeline::new(db).stats().map_err(content_error)
+}
+
+#[tauri::command]
+pub fn content_stats(state: State<'_, AppState>) -> Result<ContentStatsDto, String> {
+    with_db(&state, content_stats_impl)
 }
