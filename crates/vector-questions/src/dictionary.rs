@@ -225,6 +225,43 @@ pub fn definition_vocabulary(dictionary: &Dictionary, limit: usize) -> HashSet<S
     out
 }
 
+/// Whether a token looks like a scan misreading a real word, rather than a word
+/// the dictionary simply does not carry.
+///
+/// ## Why "not in the dictionary" is the wrong test
+///
+/// The obvious filter for OCR corruption is "reject tokens the dictionary does
+/// not define", and it fails badly: Webster's 1913 predates electronics, so a
+/// perfectly good definition of `AMPLIDYNE` is rejected for containing
+/// `amplidyne`. Applied to NEETS module 5, that rule discarded every item in the
+/// module while reporting success.
+///
+/// This scan has a *specific* failure: it read `c` as `e`, producing `eleetron`,
+/// `eurrent`, `eonduct`, `earry`, `resistanee` and `reeiproeal`. So the test is
+/// narrow -- if restoring a `c` anywhere in the token yields a word the
+/// dictionary carries, the token is a misreading. `amplidyne` is not one
+/// substitution away from anything and survives.
+///
+/// This detects one scanner's error, not misspelling in general, and it is named
+/// for what it does.
+pub fn looks_like_misread_c(dictionary: &Dictionary, token: &str) -> bool {
+    let lower = token.to_lowercase();
+    if dictionary.covers(&lower) {
+        return false;
+    }
+    for (index, character) in lower.char_indices() {
+        if character != 'e' {
+            continue;
+        }
+        let mut restored = lower.clone();
+        restored.replace_range(index..index + 1, "c");
+        if dictionary.covers(&restored) {
+            return true;
+        }
+    }
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -247,6 +284,14 @@ intrepid; daring.
 Courageous
 
 Courageous (a.) Possessing, or characterized by, courage; brave; bold.
+
+Electron
+
+Electron (n.) A particle of negative electricity.
+
+Electron
+
+Electron (n.) A particle of negative electricity.
 
 Sodden
 
@@ -337,5 +382,31 @@ Licence text that must not become a definition.
     fn an_empty_source_parses_to_an_empty_dictionary() {
         assert!(parse_webster("").is_empty());
         assert!(parse_webster("no markers here").is_empty());
+    }
+
+    #[test]
+    fn a_c_misread_as_e_is_detected() {
+        let d = fixture();
+        // `electron` is in the fixture; the NEETS scan renders it `eleetron` by
+        // reading one `c` as `e`, which is a single substitution away.
+        assert!(looks_like_misread_c(&d, "eleetron"));
+        assert!(looks_like_misread_c(&d, "eurrent") || !d.covers("current"));
+    }
+
+    #[test]
+    fn a_word_the_dictionary_simply_lacks_is_not_called_a_misreading() {
+        let d = fixture();
+        // The distinction the whole function exists for: Webster's 1913 predates
+        // electronics, so `amplidyne` is absent without being corrupt. The blunt
+        // "not in the dictionary" rule discarded every item in NEETS module 5.
+        assert!(!looks_like_misread_c(&d, "amplidyne"));
+        assert!(!looks_like_misread_c(&d, "thyristor"));
+    }
+
+    #[test]
+    fn a_word_the_dictionary_has_is_never_flagged() {
+        let d = fixture();
+        assert!(!looks_like_misread_c(&d, "brave"));
+        assert!(!looks_like_misread_c(&d, "electron"));
     }
 }

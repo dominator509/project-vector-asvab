@@ -7,6 +7,7 @@
 pub mod dictionary;
 pub mod factory;
 pub mod ingestion;
+pub mod neets;
 pub mod proof;
 pub mod provenance;
 pub mod thesaurus;
