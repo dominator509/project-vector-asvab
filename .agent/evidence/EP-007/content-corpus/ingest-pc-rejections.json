@@ -1,0 +1,58 @@
+{
+  "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+  "elapsed_ms": 29873,
+  "requested_per_work": 400,
+  "seed": 20260922,
+  "totals": {
+    "activated": 160,
+    "already_present": 68,
+    "built": 231,
+    "paragraphs": 5709,
+    "rejected": 3
+  },
+  "works": [
+    {
+      "activated": 99,
+      "already_present": 38,
+      "built": 137,
+      "ebook": "944",
+      "paragraphs": 897,
+      "path": "sources/gutenberg/darwin-beagle.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:e13d57170a6dd9f7d97ddbc14cbde961dffbd95e8861ed199e5f00a525e7e52a",
+      "skipped": null,
+      "title": "The Voyage of the Beagle"
+    },
+    {
+      "activated": 3,
+      "already_present": 0,
+      "built": 3,
+      "ebook": "2701",
+      "paragraphs": 2234,
+      "path": "sources/gutenberg/melville-moby.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:907420db6c4b68c70e2988cd2ad9c8cf79138667a01b63376d18dd17fef1a18b",
+      "skipped": null,
+      "title": "Moby Dick; Or, The Whale"
+    },
+    {
+      "activated": 58,
+      "already_present": 30,
+      "built": 91,
+      "ebook": "75948",
+      "paragraphs": 2578,
+      "path": "sources/gutenberg/book-of-wonders.txt",
+      "rejected": 3,
+      "rejection_reasons": [
+        "the item's passage does not occur in \"The book of wonders\", so the item is not source-backed",
+        "the item's passage does not occur in \"The book of wonders\", so the item is not source-backed",
+        "the item's passage does not occur in \"The book of wonders\", so the item is not source-backed"
+      ],
+      "sha256": "sha256:7706458b733a223a04a2eb2e4d5ff780f73d50339af9b6fc11a6541664252ae9",
+      "skipped": null,
+      "title": "The book of wonders"
+    }
+  ]
+}

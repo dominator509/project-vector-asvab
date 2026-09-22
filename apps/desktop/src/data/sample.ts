@@ -13,6 +13,13 @@ export interface PracticeQuestion {
   id: string;
   subtest: string;
   prompt: string;
+  /**
+   * The passage to read before answering, for Paragraph Comprehension.
+   *
+   * Absent for every other subtest. A PC item without one is not merely thin: the
+   * prompt refers to a text, so there would be nothing to answer from.
+   */
+  passage?: string;
   options: string[];
   /** Index of the correct option. */
   correctIndex: number;

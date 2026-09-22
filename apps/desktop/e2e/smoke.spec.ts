@@ -9,6 +9,8 @@
 
 import { expect, test } from "@playwright/test";
 
+import { PC_ITEM, installStubBackend } from "./stubBackend";
+
 test.describe("production artifact smoke", () => {
   test("the built bundle serves and renders the shell", async ({ page }) => {
     const response = await page.goto("/");
@@ -37,6 +39,11 @@ test.describe("production artifact smoke", () => {
       return route.abort();
     });
 
+    // The bridge is stubbed in the page, not fetched, so it is available with the
+    // network blocked -- which is the situation a learner on a disconnected
+    // machine is in. Practice content is served by the local backend, never by a
+    // request, and this is what shows it.
+    await installStubBackend(page);
     await page.goto("/");
     await expect(
       page.getByRole("heading", { level: 1, name: /project vector/i }),
@@ -61,6 +68,7 @@ test.describe("production artifact smoke", () => {
       }
     });
 
+    await installStubBackend(page);
     await page.goto("/");
     await page
       .getByTestId("primary-nav")
@@ -73,5 +81,38 @@ test.describe("production artifact smoke", () => {
       external,
       `the app must not contact external hosts, saw: ${external.join(", ")}`,
     ).toEqual([]);
+  });
+
+  test("a comprehension passage reaches the learner with its question", async ({
+    page,
+  }) => {
+    // A Paragraph Comprehension item is a passage plus a question about it. The
+    // passage travels through the command contract, the response reader and the
+    // view; if any of the three drops it, the item is unanswerable and this fails.
+    await installStubBackend(page, { items: [PC_ITEM] });
+    await page.goto("/");
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /^practice$/i })
+      .click();
+
+    // The picker opens on a generatable subtest, so the learner chooses Paragraph
+    // Comprehension. That the subtest is offered at all is itself evidence that the
+    // corpus list reached the interface.
+    await page
+      .getByRole("group", { name: /choose a subtest/i })
+      .getByRole("button", { name: "PC" })
+      .click();
+
+    const passage = page.getByTestId("practice-passage");
+    await expect(passage).toBeVisible();
+    await expect(passage).toContainText(
+      "The cooling tower removes 1897 litres",
+    );
+
+    // Read the passage, then answer from it.
+    await page.locator('label.option-row[data-correct="true"] input').check();
+    await page.getByRole("button", { name: /check answer/i }).click();
+    await expect(page.getByTestId("worked-solution")).toBeVisible();
   });
 });

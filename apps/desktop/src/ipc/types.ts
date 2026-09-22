@@ -143,6 +143,15 @@ export interface ItemDto {
   /** The versioned learning objective this item serves (REQ-056). */
   objective_id: string;
   stem: string;
+  /**
+   * The passage the item is about, for Paragraph Comprehension; `null` for every
+   * other subtest.
+   *
+   * Explicitly nullable rather than optional: the backend always sends the field,
+   * and "this subtest has no passage" is a fact the interface can state, whereas a
+   * missing field would be indistinguishable from a malformed response.
+   */
+  passage: string | null;
   options: string[];
   correct_index: number;
   /** The worked answer. For a generated item this is its proof expression. */

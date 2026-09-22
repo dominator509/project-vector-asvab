@@ -28,6 +28,7 @@ use vector_questions::dictionary::{looks_like_misreading, Dictionary};
 use vector_questions::factory;
 use vector_questions::ingestion::AnswerProof;
 use vector_questions::neets::{self, EiItem, Glossary};
+use vector_questions::passages::{self, PcItem, Text};
 use vector_questions::provenance::ContentHash;
 use vector_questions::thesaurus::{self, Thesaurus, WkItem};
 
@@ -185,6 +186,7 @@ impl<'a> ContentPipeline<'a> {
             subtest: &item.subtest,
             objective_id: &item.objective_id,
             stem: &item.stem,
+            passage: None,
             options: &item.options,
             correct_index: item.correct_index,
             explanation: &explanation,
@@ -347,6 +349,7 @@ impl<'a> ContentPipeline<'a> {
             subtest: "WK",
             objective_id: &item.objective_id,
             stem: &item.prompt,
+            passage: None,
             options: &item.options,
             correct_index: item.correct_index,
             explanation: &item.explanation(),
@@ -506,6 +509,7 @@ impl<'a> ContentPipeline<'a> {
             subtest: "EI",
             objective_id: &item.objective_id,
             stem: &item.prompt,
+            passage: None,
             options: &item.options,
             correct_index: item.correct_index,
             explanation: &item.explanation(),
@@ -529,6 +533,186 @@ impl<'a> ContentPipeline<'a> {
             &id,
             request.reviewer,
             "ingested from a public-domain Navy training module; definition quoted verbatim",
+        )?;
+
+        Ok(id)
+    }
+
+    /// Ingest Paragraph Comprehension items from one public-domain text.
+    ///
+    /// One text per call for the same reason as EI: an item's evidence is a passage
+    /// in a named work, and the citation has to name that work, so the caller loops
+    /// the corpus and each work is recorded in the vault separately.
+    ///
+    /// The passage filter is `passages::is_usable_passage`, which is the module's
+    /// own definition of prose worth asking about. Passages outside the length band
+    /// are refused by `verify` in any case; filtering here keeps the builder from
+    /// spending its attempt budget on them.
+    pub fn ingest_pc(
+        &self,
+        text: &Text,
+        request: &PcIngestRequest<'_>,
+    ) -> anyhow::Result<PcIngestReport> {
+        let items = text.build_items(request.count, request.seed, passages::is_usable_passage);
+
+        let mut report = PcIngestReport {
+            label: request.label.to_string(),
+            paragraphs: text.paragraph_count(),
+            built: items.len(),
+            ..Default::default()
+        };
+        // A file with no paragraphs at all is broken -- the markers moved, or the
+        // wrong file was passed -- and must not be reported as a corpus of zero.
+        if text.is_empty() {
+            anyhow::bail!(
+                "text {:?} parsed to no paragraphs; the file's markers may have changed",
+                request.label
+            );
+        }
+        // A file that parses but yields nothing is a different fact: its prose does
+        // not fit the bands, which is a property of the work rather than a fault. It
+        // is reported as skipped so a corpus-wide run can continue and say which
+        // works contributed nothing, instead of failing on the first unsuitable
+        // book and hiding the rest.
+        if items.is_empty() {
+            report.skipped = Some(format!(
+                "no paragraph satisfies the {passage_min}-{passage_max} word passage band \
+                 with {clause_min}-{clause_max} word options",
+                passage_min = passages::MIN_PASSAGE_WORDS,
+                passage_max = passages::MAX_PASSAGE_WORDS,
+                clause_min = passages::MIN_CLAUSE_WORDS,
+                clause_max = passages::MAX_CLAUSE_WORDS,
+            ));
+            return Ok(report);
+        }
+
+        for item in items {
+            let content_hash = item.content_hash();
+            if self.content_hash_exists(&content_hash)? {
+                report.already_present += 1;
+                continue;
+            }
+            match self.store_pc_verified(text, request, &item) {
+                Ok(id) => {
+                    report.verified += 1;
+                    report.activated += 1;
+                    report.item_ids.push(id);
+                }
+                Err(error) => report.rejected.push(Rejection {
+                    template_id: Some(item.supporting_clause.clone()),
+                    reason: error.to_string(),
+                }),
+            }
+        }
+
+        // As with the other two paths: storing nothing because every item hit the
+        // same systemic problem is a failure, not a corpus of zero.
+        if report.activated == 0 && report.already_present == 0 {
+            let first = report
+                .rejected
+                .first()
+                .map(|rejection| rejection.reason.as_str())
+                .unwrap_or("no reason recorded");
+            anyhow::bail!(
+                "text {:?} stored nothing: all {} item(s) were refused; first reason: {first}",
+                request.label,
+                report.rejected.len()
+            );
+        }
+
+        Ok(report)
+    }
+
+    /// Verify one Paragraph Comprehension item and, only if it proves out, store it.
+    ///
+    /// Two checks, because they catch different forgeries. `verify` re-derives the
+    /// facts from the item's own passage: the correct option is stated there and no
+    /// distractor is. That catches a builder that contradicts itself. It cannot
+    /// catch a builder that invents a passage wholesale, because the passage travels
+    /// inside the item, so the passage is separately required to occur in the source
+    /// text. Public for the same reason the other three are: the builder's own output
+    /// always verifies, so the refusal path needs a directly callable entry point or
+    /// deleting a check would break no test.
+    pub fn store_pc_verified(
+        &self,
+        text: &Text,
+        request: &PcIngestRequest<'_>,
+        item: &PcItem,
+    ) -> anyhow::Result<String> {
+        passages::verify(item)
+            .map_err(|failure| anyhow::anyhow!("item failed source verification: {failure}"))?;
+
+        if !text.contains_passage(&item.passage) {
+            anyhow::bail!(
+                "the item's passage does not occur in {:?}, so the item is not source-backed",
+                request.label
+            );
+        }
+
+        let repo = ContentItemRepo::new(self.db);
+        let id = format!("q-{}", uuid::Uuid::new_v4());
+        let content_hash = item.content_hash();
+
+        // The rubric records what was checked, so a reviewer can re-check it
+        // without re-running the ingester.
+        let rubric = format!(
+            "{} contains the passage, and the passage states the correct option in its own \
+             words. Every other option differs from it by one word, and that word does not \
+             occur in the passage, so the passage rules the option out.",
+            request.label
+        );
+        let proof = AnswerProof::SourceBacked {
+            source_id: request.source_id.to_string(),
+            rubric,
+        };
+        let proof_json = serde_json::to_string(&proof)?;
+
+        // What the builder produced, and what the verifier re-derived. Different
+        // inputs, so they cannot coincide, which the schema requires before
+        // activation.
+        let generator_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}{}",
+            item.supporting_clause,
+            item.options.join("\u{2}"),
+            item.correct_index
+        ));
+        let verifier_hash = ContentHash::of_text(&format!(
+            "{}\u{1}{}\u{1}in_source={}\u{1}options={}",
+            item.passage,
+            item.supporting_clause,
+            text.contains_passage(&item.passage),
+            item.options.len()
+        ));
+
+        repo.insert_draft(&NewContentItem {
+            id: &id,
+            subtest: "PC",
+            objective_id: &item.objective_id,
+            stem: &item.prompt,
+            passage: Some(&item.passage),
+            options: &item.options,
+            correct_index: item.correct_index,
+            explanation: &item.explanation(),
+            distractor_rationales: &item.distractor_rationales,
+            difficulty: item.difficulty,
+            proof_kind: "source_backed",
+            proof_json: &proof_json,
+            content_hash: &content_hash,
+            generator_hash: Some(generator_hash.as_str()),
+        })?;
+
+        repo.cite(&id, request.source_id)?;
+
+        self.db.connection().execute(
+            "UPDATE content_items SET verifier_hash = ?2 WHERE id = ?1",
+            rusqlite::params![id, verifier_hash.as_str()],
+        )?;
+
+        repo.walk_to_content_reviewed(&id, request.generator)?;
+        repo.activate(
+            &id,
+            request.reviewer,
+            "ingested from public-domain prose; passage occurs verbatim in the source",
         )?;
 
         Ok(id)
@@ -877,6 +1061,54 @@ impl EiIngestReport {
     }
 }
 
+/// What one Paragraph Comprehension ingestion run needs.
+///
+/// The source id must already exist in the evidence vault: migration 004 refuses a
+/// citation the vault has not seen, so an ingester cannot invent provenance for
+/// itself.
+#[derive(Debug, Clone)]
+pub struct PcIngestRequest<'a> {
+    /// The work's own title, recorded on every item's rubric.
+    pub label: &'a str,
+    /// The vault id of this work's text.
+    pub source_id: &'a str,
+    /// How many items to attempt from this text.
+    pub count: usize,
+    pub seed: u64,
+    /// Named reviewer recorded on activation (REQ-056).
+    pub reviewer: &'a str,
+    /// Actor recorded in the audit trail for the machine steps.
+    pub generator: &'a str,
+}
+
+/// What one text's ingestion run did.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct PcIngestReport {
+    pub label: String,
+    /// Paragraphs the file parsed into, before any were filtered.
+    pub paragraphs: usize,
+    pub built: usize,
+    pub verified: usize,
+    pub activated: usize,
+    pub already_present: usize,
+    pub rejected: Vec<Rejection>,
+    pub item_ids: Vec<String>,
+    /// Why this work contributed nothing, when that is a property of its prose
+    /// rather than a failure. `None` on a work that built items.
+    pub skipped: Option<String>,
+}
+
+impl PcIngestReport {
+    pub fn is_clean(&self) -> bool {
+        self.rejected.is_empty()
+    }
+
+    /// Whether the work was usable at all.
+    pub fn is_productive(&self) -> bool {
+        self.built > 0
+    }
+}
+
 /// Whether a glossary definition survived the scan intact.
 ///
 /// The module text is OCR, and this scan read `c` as `e`: the corpus contains
@@ -996,6 +1228,11 @@ pub struct ItemDto {
     pub subtest: String,
     pub objective_id: String,
     pub stem: String,
+    /// The passage to read, for Paragraph Comprehension. `None` elsewhere.
+    ///
+    /// Without this an item of that subtest is unanswerable: the question refers to
+    /// a text, and a learner served the question alone has nothing to refer to.
+    pub passage: Option<String>,
     pub options: Vec<String>,
     pub correct_index: usize,
     pub explanation: String,
@@ -1010,6 +1247,7 @@ impl From<&StoredItem> for ItemDto {
             subtest: item.subtest.clone(),
             objective_id: item.objective_id.clone(),
             stem: item.stem.clone(),
+            passage: item.passage.clone(),
             options: item.options.clone(),
             correct_index: item.correct_index,
             explanation: item.explanation.clone(),

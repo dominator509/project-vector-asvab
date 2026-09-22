@@ -55,7 +55,7 @@ describe("PracticeContentView", () => {
     // The empty surface states the corpus size rather than claiming there is
     // nothing at all on the device, which would be untrue here.
     expect(screen.getByTestId("practice-empty")).toHaveTextContent(
-      /none for MK/,
+      /This device holds 4 question/,
     );
     expect(
       screen.getByRole("button", { name: /Prepare 40 MK questions/ }),
@@ -97,19 +97,77 @@ describe("PracticeContentView", () => {
     expect(screen.queryByTestId("practice-prompt")).not.toBeInTheDocument();
   });
 
-  it("offers only subtests the factory can actually generate for", async () => {
+  it("offers every subtest the device can serve, and no others", async () => {
     const fake = createFakeClient();
+    // Word Knowledge items are ingested from a public-domain source rather than
+    // generated, so a device that holds none must not offer the subtest at all.
+    await fake.client.contentGenerate("AR", 4, 0);
     renderWith(fake);
     await waitFor(() =>
       expect(screen.getByTestId("practice-prompt")).toBeInTheDocument(),
     );
 
-    // Word Knowledge has no template yet; offering it would be a button that
-    // always fails.
     expect(
       screen.queryByRole("button", { name: "WK" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "AR" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "MK" })).toBeInTheDocument();
+  });
+
+  it("offers an ingested subtest once the device holds items for it", async () => {
+    const fake = createFakeClient();
+    await fake.client.contentGenerate("AR", 4, 0);
+    await fake.client.contentGenerate("WK", 3, 0);
+    renderWith(fake);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "WK" })).toBeInTheDocument(),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "WK" }));
+    await waitFor(() =>
+      expect(screen.getByTestId("practice-prompt")).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/Subtest: WK/)).toBeInTheDocument();
+  });
+
+  it("never offers to generate a subtest the factory cannot serve", async () => {
+    const fake = createFakeClient();
+    // The reachable case: the device holds Word Knowledge items, so the subtest is
+    // offered, but every one of them is withdrawn, so the practice set is empty.
+    await fake.client.contentGenerate("WK", 3, 0);
+    const wkIds = [...fake.state.items.values()]
+      .filter((item) => item.subtest === "WK")
+      .map((item) => item.id);
+    for (const id of wkIds) {
+      await fake.client.contentQuarantine(id, "reviewer", "under review");
+    }
+    // Seeding the corpus uses the command under test, so only calls made after
+    // this point say anything about what the view asked for.
+    const seeded = fake.calls.length;
+    renderWith(fake);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "WK" })).toBeInTheDocument(),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "WK" }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("practice-empty")).toBeInTheDocument(),
+    );
+    // Word Knowledge items are ingested, not generated, so there is no button that
+    // could produce more and the surface says where they come from instead.
+    expect(
+      screen.queryByRole("button", { name: /Prepare .* WK questions/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("practice-no-generator")).toBeInTheDocument();
+    // And it must not have quietly asked the factory for a subtest it cannot serve.
+    expect(
+      fake.calls
+        .slice(seeded)
+        .some(
+          (call) =>
+            call.command === "content_generate" && call.args?.subtest === "WK",
+        ),
+    ).toBe(false);
   });
 });

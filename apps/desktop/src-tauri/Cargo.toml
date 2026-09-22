@@ -12,6 +12,13 @@ crate-type = ["lib"]
 [build-dependencies]
 tauri-build.workspace = true
 
+# Test-only. `content_commands.rs` serves an *ingested* item through the command
+# boundary, and building one needs the passage parser. The desktop crate itself has
+# no business parsing prose, so this stays out of `[dependencies]`. The crate is a
+# workspace member, so no new third-party code enters the build.
+[dev-dependencies]
+vector-questions = { path = "../../../crates/vector-questions" }
+
 [dependencies]
 vector-application = { path = "../../../crates/vector-application" }
 vector-domain = { path = "../../../crates/vector-domain" }

@@ -152,6 +152,28 @@ class Reader {
     }
     return field;
   }
+
+  /**
+   * A field that is either a string or an explicit null.
+   *
+   * Absence is rejected. The backend always sends the field, so a missing one means
+   * the response is not the shape the reader was written for, and quietly treating
+   * that as "no value" would hide a contract break behind a plausible-looking
+   * result.
+   */
+  nullableString(source: Record<string, unknown>, key: string): string | null {
+    const field = source[key];
+    if (field === null) {
+      return null;
+    }
+    if (typeof field !== "string") {
+      throw new MalformedResponseError(
+        this.command,
+        `field "${key}" must be a string or null, got ${describe(field)}`,
+      );
+    }
+    return field;
+  }
 }
 
 function describe(value: unknown): string {
@@ -453,6 +475,7 @@ function readItem(command: string, value: unknown): ItemDto {
     subtest: r.string(o, "subtest"),
     objective_id: r.string(o, "objective_id"),
     stem: r.string(o, "stem"),
+    passage: r.nullableString(o, "passage"),
     options,
     correct_index: correctIndex,
     explanation: r.string(o, "explanation"),

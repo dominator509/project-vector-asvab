@@ -71,10 +71,22 @@ export function practiceQuestionFromItem(item: ItemDto): PracticeQuestion {
     rationales[index] = rationale;
   }
 
+  // A Paragraph Comprehension item is a passage plus a question about it, so an
+  // item of that subtest without a passage cannot be answered. The store refuses
+  // one, which makes this a boundary check rather than a content check: reaching it
+  // means the response is not the shape the command contract describes.
+  if (item.subtest === "PC" && (item.passage ?? "").trim().length === 0) {
+    throw new ItemNotRenderableError(
+      item.id,
+      "a Paragraph Comprehension item must carry the passage it is about",
+    );
+  }
+
   return {
     id: item.id,
     subtest: item.subtest,
     prompt: item.stem,
+    passage: item.passage ?? undefined,
     options: item.options,
     correctIndex: item.correct_index,
     explanation: item.explanation,

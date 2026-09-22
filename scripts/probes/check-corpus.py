@@ -25,10 +25,11 @@ print("=== provenance invariants over the whole corpus ===")
 
 # How many sources each subtest's items must cite. A Word Knowledge item rests on
 # a thesaurus line corroborated by a dictionary, so it cites two; an Electronics
-# Information item rests on a single NEETS module glossary and cites one. Asserting
-# a flat "2" here reported 4,000 EI items as broken when the corpus was correct --
-# the probe was wrong, not the data.
-EXPECTED_SOURCES = {"WK": 2, "EI": 1}
+# Information item rests on a single NEETS module glossary, and a Paragraph
+# Comprehension item on a single public-domain work whose passage it quotes, so
+# both cite one. Asserting a flat "2" here reported 4,000 EI items as broken when
+# the corpus was correct -- the probe was wrong, not the data.
+EXPECTED_SOURCES = {"WK": 2, "EI": 1, "PC": 1}
 
 bad_citations = 0
 for subtest, expected in EXPECTED_SOURCES.items():
@@ -65,6 +66,24 @@ checks = [
     (
         "active items with no objective",
         "select count(*) from content_items where state='active' and trim(objective_id)=''",
+    ),
+    # A Paragraph Comprehension item is a passage plus a question about it, so one
+    # without a passage is unanswerable. The schema refuses it; this asks the store
+    # directly rather than trusting the schema to have been applied.
+    (
+        "PC items with no passage",
+        "select count(*) from content_items where subtest='PC' and (passage is null or trim(passage)='')",
+    ),
+    (
+        "PC items whose passage is under 40 words",
+        """select count(*) from content_items where subtest='PC'
+           and length(trim(passage)) - length(replace(trim(passage), ' ', '')) + 1 < 40""",
+    ),
+    (
+        "PC items whose correct option is not in the passage",
+        """select count(*) from content_items where subtest='PC'
+           and instr(lower(passage),
+                     lower(json_extract(options_json, '$[' || correct_index || ']'))) = 0""",
     ),
 ]
 for label, sql in checks:

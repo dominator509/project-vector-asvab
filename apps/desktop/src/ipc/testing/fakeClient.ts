@@ -533,6 +533,15 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
           subtest,
           objective_id: `OBJ-${subtest}-TEST-01`,
           stem: `${subtest} generated item ${i} for seed ${seed}`,
+          // A Paragraph Comprehension item always has a passage, because the store
+          // refuses one that does not: the question refers to a text, so an item
+          // without one is unanswerable. Every other subtest has none.
+          passage:
+            subtest === "PC"
+              ? `The tower stood on the ridge for ${100 + i} years before the surveyors ` +
+                "arrived. They measured its base and recorded the result in a log. " +
+                "The log is kept in the county office to this day, and anyone may read it."
+              : null,
           options: [
             String(answer),
             String(answer + 1),
@@ -565,8 +574,11 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
       seen: string[],
     ): Promise<ItemDto | null> {
       record("content_next", { subtest, seen });
+      // Quarantined items are excluded, mirroring the backend's `servable`, which
+      // reads `state = 'active'`. A fake that served them would let the practice
+      // view pass its tests while handing a learner a withdrawn question.
       const candidates = [...state.items.values()].filter(
-        (item) => item.subtest === subtest,
+        (item) => item.subtest === subtest && !state.quarantined.has(item.id),
       );
       if (candidates.length === 0) {
         return null;

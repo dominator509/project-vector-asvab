@@ -1,0 +1,43 @@
+
+faraday-candle         sha256=c053ca4ae788… paragraphs=171   built=3     verified=3     failed=0
+darwin-origin          sha256=ededa9c0bf87… paragraphs=795   built=11    verified=11    failed=0
+darwin-beagle          sha256=e13d57170a6d… paragraphs=897   built=137   verified=137   failed=0
+smith-nations          sha256=e91d52dca43f… paragraphs=2108  built=50    verified=50    failed=0
+austen-pride           sha256=3f6bb9d6f78e… paragraphs=1809  built=0     verified=0     failed=0
+doyle-holmes           sha256=922e2a12ccb4… paragraphs=1664  built=14    verified=14    failed=0
+thoreau-walden         sha256=2d9a76a2e3e8… paragraphs=540   built=5     verified=5     failed=0
+melville-moby          sha256=907420db6c4b… paragraphs=2234  built=3     verified=3     failed=0
+doe-nuclear-1          sha256=777fd73adeca… paragraphs=203   built=87    verified=87    failed=0
+doe-nuclear-2          sha256=fcf253315205… paragraphs=194   built=85    verified=85    failed=0
+doe-nuclear-3          sha256=d044edce0e87… paragraphs=242   built=109   verified=109   failed=0
+aec-savannah           sha256=3fea6280c4dc… paragraphs=114   built=28    verified=28    failed=0
+aec-science-fair       sha256=9d2f6a3de134… paragraphs=213   built=23    verified=23    failed=0
+aec-direct-energy      sha256=651c25d0850f… paragraphs=160   built=38    verified=38    failed=0
+fabre-story-science    sha256=4fd46f40d6b1… paragraphs=1245  built=24    verified=24    failed=0
+triumphs-wonders       sha256=974903b110d3… paragraphs=2393  built=335   verified=335   failed=0
+book-of-wonders        sha256=7706458b733a… paragraphs=2578  built=90    verified=90    failed=0
+
+paragraphs parsed : 17560
+items built       : 1042
+items verified    : 1042
+items failed      : 0
+
+--- sample items ---
+
+PASSAGE: A pint of it weighs 16⅓ grains, and a cubic foot weighs 1⁹⁄₁₀ ounce, almost two ounces. You can see by many experiments that this is a heavy gas. Suppose I take a glass containing nothing else but air, and from this vessel containing the carbonic acid I attempt to pour a little of this gas into that glass; I wonder whether any has gone in or not.
+According to the passage, which of the following is stated?
+  A. A pint of it weighs 16⅓ grains, and a cubic foot weighs 1⁹⁄₁₀ ounce, almost two ounces.  <-- correct
+  B. A pint of it weighs 18⅓ grains, and a cubic foot weighs 1⁹⁄₁₀ ounce, almost two ounces.
+  C. A pint of it weighs 17⅓ grains, and a cubic foot weighs 1⁹⁄₁₀ ounce, almost two ounces.
+  D. A pint of it weighs 23⅓ grains, and a cubic foot weighs 1⁹⁄₁₀ ounce, almost two ounces.
+  why a distractor is wrong: The passage states "16⅓" here; it does not state "18⅓".
+
+PASSAGE: We have the names in one of the tables arranged in two columns, representing, as you see, two groups—platinum, iridium, and osmium constituting one group; and ruthenium, rhodium, and palladium the other. Three of these have the chemical equivalent of 98½, and the others a chemical equivalent of about half that number.
+According to the passage, which of the following is stated?
+  A. Three of these have the chemical equivalent of 99½, and the others a chemical equivalent of about half that number.
+  B. Three of these have the chemical equivalent of 105½, and the others a chemical equivalent of about half that number.
+  C. Three of these have the chemical equivalent of 98½, and the others a chemical equivalent of about half that number.  <-- correct
+  D. Three of these have the chemical equivalent of 100½, and the others a chemical equivalent of about half that number.
+  why a distractor is wrong: The passage states "98½" here; it does not state "99½".
+
+all 1042 item(s) verified against their passages

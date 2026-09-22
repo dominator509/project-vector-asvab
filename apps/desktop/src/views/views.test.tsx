@@ -30,6 +30,32 @@ describe("practice view", () => {
     expect(screen.getAllByRole("radio").length).toBeGreaterThan(0);
   });
 
+  it("shows the passage before the question it is about", () => {
+    const passage =
+      "The tower stood on the ridge for a hundred years before the surveyors " +
+      "arrived to measure it. They recorded the result of that survey in a log.";
+    render(
+      <PracticeView
+        questions={[{ ...sampleQuestions[0], subtest: "PC", passage }]}
+      />,
+    );
+
+    const rendered = screen.getByTestId("practice-passage");
+    expect(rendered).toHaveTextContent(/The tower stood on the ridge/);
+    // The passage must come before the question in document order: a comprehension
+    // question read before its text cannot be answered.
+    const prompt = screen.getByTestId("practice-prompt");
+    expect(
+      rendered.compareDocumentPosition(prompt) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("shows no passage for a subtest that has none", () => {
+    render(<PracticeView questions={sampleQuestions} />);
+    expect(screen.queryByTestId("practice-passage")).not.toBeInTheDocument();
+  });
+
   it("groups the options in a fieldset with a legend", () => {
     // Screen readers need the options announced as one question.
     render(<PracticeView questions={sampleQuestions} />);

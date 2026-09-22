@@ -73,3 +73,40 @@ They are recorded here so a release verdict does not silently treat them as met.
 The full account of the post-closure work, including the defects it uncovered, is
 in `.agent/evidence/EP-010/PARTIAL_CLOSURE_REPORT.md`.
 
+## Content corpus rounds (after the eleven node closures)
+
+The corpus work runs after every node was closed. It is recorded here for the same
+reason the post-closure work above is: a `NODE_DONE` row that predates this work is
+not evidence about it.
+
+| Round | What it delivered | Evidence |
+|---|---|---|
+| 12 | Item store, serving API, generator wiring, Word Knowledge and Electronics Information ingestion, content manager, per-item provenance. | `.agent/evidence/EP-007/` (earlier rounds), `crates/vector-{persistence,application,questions}` |
+| 13 | Paragraph Comprehension ingestion (1,047 active items from 17 public-domain works), the passage column (`005_content_passage.sql`), corpus reachability in the practice surface, and the defects listed below. | `.agent/evidence/EP-007/content-corpus/ROUND-13-REPORT.md` |
+
+Round 13 found four defects that the earlier rounds' evidence could not see, because
+each needed a check that did not exist yet:
+
+1. The passage builder rejoined split sentences with a space, so where the split was
+   not at a space the item quoted text the work does not contain. Passages are now
+   cut from the paragraph by character span.
+2. Sentence terminators inside initials and abbreviations (`R.R.`) split tokens in
+   half.
+3. A list of illustrations was built into an item as a passage, with index entries as
+   its options.
+4. `darwin-origin.txt` was cited as Project Gutenberg **#2009** while the file is
+   **#1228** — a false provenance claim that only a re-download could reveal. The 13
+   affected items were deleted and re-ingested; 17/17 works now re-download to the
+   bytes they are cited as.
+
+Separately, four E2E tests had been failing since the corpus replaced the sample
+literals, asserting option text from `sample.ts` that the practice view no longer
+serves. They were proven pre-existing by running the same specs at `1ae9dce` in a
+worktree, and fixed by giving the specs a shared stub of the Tauri bridge and by
+reading the correct option and the item id from the page rather than hard-coding
+them. The E2E suite is green: 34 passed.
+
+Corpus as stored in the application's own database after round 13: 2,000 WK,
+3,668 EI, 1,047 PC = 6,715 active items, 29 evidence records, 8,715 citations,
+26,860 review rows, database SHA-256
+`9beaf1c2731936617eca25f70e5790808b294d6665d353a139f3b02b75801376`.

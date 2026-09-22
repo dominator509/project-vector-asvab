@@ -97,6 +97,7 @@ fn draft<'a>(
         subtest: "AR",
         objective_id: "OBJ-AR-RATE-01",
         stem: "A printer produces 12 pages per minute. How many in 2.5 hours?",
+        passage: None,
         options,
         correct_index: 1,
         explanation: "12 * 150 = 1800",
@@ -406,4 +407,142 @@ fn cited_sources_are_reported_for_an_item() {
     let sources = repo.sources("q-1").expect("sources");
     assert_eq!(sources.len(), 1);
     assert_eq!(sources[0], item_id(&db));
+}
+
+// ---------------------------------------------------------------------------
+// Migration 005: a Paragraph Comprehension item carries its passage
+// ---------------------------------------------------------------------------
+
+/// A drafting helper for PC items, whose rule is about a column the others ignore.
+fn pc_draft<'a>(
+    id: &'a str,
+    passage: Option<&'a str>,
+    options: &'a [String],
+    rationales: &'a BTreeMap<usize, String>,
+) -> NewContentItem<'a> {
+    let mut item = draft(id, options, rationales);
+    item.subtest = "PC";
+    item.proof_kind = "source_backed";
+    item.passage = passage;
+    item
+}
+
+/// A passage of the length the ingester writes, so it clears the store's floor.
+fn a_passage() -> String {
+    "The tower stood on the ridge for a hundred years before the surveyors arrived to \
+     measure it. They recorded the result of that survey in a log, and the log is kept \
+     in the county office where anyone may read it."
+        .to_string()
+}
+
+#[test]
+fn a_paragraph_comprehension_item_without_a_passage_cannot_be_stored() {
+    let dir = tempdir::TempDir::new("pc-no-passage");
+    let db = migrated(&dir);
+    seed_source(&db);
+    let repo = ContentItemRepo::new(&db);
+    let options = sample_options();
+    let rationales = sample_rationales();
+
+    let error = repo
+        .insert_draft(&pc_draft("q-pc", None, &options, &rationales))
+        .expect_err("a PC item with no passage must be refused");
+    assert!(
+        error.to_string().contains("passage"),
+        "the refusal should name the problem: {error}"
+    );
+}
+
+#[test]
+fn a_paragraph_comprehension_item_with_a_token_passage_is_refused() {
+    let dir = tempdir::TempDir::new("pc-short-passage");
+    let db = migrated(&dir);
+    seed_source(&db);
+    let repo = ContentItemRepo::new(&db);
+    let options = sample_options();
+    let rationales = sample_rationales();
+
+    // `MIN_PASSAGE_WORDS` is 40 and the ingester enforces it, but the store is the
+    // last line: "See above." is a passage a builder bug could write, and it asks
+    // the learner to find a detail in a text that has none.
+    let error = repo
+        .insert_draft(&pc_draft("q-pc", Some("See above."), &options, &rationales))
+        .expect_err("a passage too short to comprehend must be refused");
+    assert!(
+        error.to_string().contains("long enough"),
+        "the refusal should name the problem: {error}"
+    );
+}
+
+#[test]
+fn a_passage_cannot_be_stripped_from_a_stored_paragraph_comprehension_item() {
+    let dir = tempdir::TempDir::new("pc-strip");
+    let db = migrated(&dir);
+    seed_source(&db);
+    let repo = ContentItemRepo::new(&db);
+    let options = sample_options();
+    let rationales = sample_rationales();
+
+    let passage = a_passage();
+    repo.insert_draft(&pc_draft("q-pc", Some(&passage), &options, &rationales))
+        .expect("insert");
+
+    let error = db
+        .connection()
+        .execute(
+            "UPDATE content_items SET passage = NULL WHERE id = 'q-pc'",
+            [],
+        )
+        .expect_err("nulling the passage of a PC item must be refused");
+    assert!(
+        error.to_string().contains("passage"),
+        "the refusal should name the problem: {error}"
+    );
+
+    // The row is unchanged, so the guard cannot have half-applied.
+    let stored: Option<String> = db
+        .connection()
+        .query_row(
+            "SELECT passage FROM content_items WHERE id = 'q-pc'",
+            [],
+            |row| row.get(0),
+        )
+        .expect("row");
+    assert_eq!(stored.as_deref(), Some(passage.as_str()));
+}
+
+/// The rule is scoped to PC: no other subtest is required to carry a passage.
+#[test]
+fn subtests_without_a_passage_are_unaffected() {
+    let dir = tempdir::TempDir::new("pc-scope");
+    let db = migrated(&dir);
+    seed_source(&db);
+    let repo = ContentItemRepo::new(&db);
+    let options = sample_options();
+    let rationales = sample_rationales();
+
+    repo.insert_draft(&draft("q-ar", &options, &rationales))
+        .expect("an AR item needs no passage");
+    let stored = repo.get("q-ar").expect("get").expect("present");
+    assert_eq!(stored.passage, None);
+}
+
+/// The guard is a trigger, and this proves it: with the trigger removed the same
+/// insert succeeds, so what refused it was the rule and not an accident of the
+/// repository's own validation.
+#[test]
+fn the_passage_rule_is_load_bearing() {
+    let dir = tempdir::TempDir::new("pc-trigger-proof");
+    let db = migrated(&dir);
+    seed_source(&db);
+    let repo = ContentItemRepo::new(&db);
+    let options = sample_options();
+    let rationales = sample_rationales();
+
+    db.connection()
+        .execute_batch("DROP TRIGGER content_items_pc_requires_passage_insert;")
+        .expect("drop the guard");
+
+    repo.insert_draft(&pc_draft("q-pc", None, &options, &rationales))
+        .expect("with the trigger gone, the insert the guard refused now succeeds");
 }

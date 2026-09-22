@@ -215,7 +215,8 @@ enum ContentCommands {
     /// the dictionary links the two words. Running with the thesaurus alone
     /// produced a corpus the dictionary endorses 8% of the time; see the commit
     /// that added this filter.
-    IngestWk {
+    #[command(name = "ingest-wk")]
+    Wk {
         /// Database to write into. The application's own database is at
         /// `%APPDATA%\com.vector.app\vector.db`.
         #[arg(long)]
@@ -242,7 +243,8 @@ enum ContentCommands {
     /// One vault row and one ingestion run per module, so an item's citation names
     /// the module it came from and a module that parses badly cannot take the rest
     /// of the collection down with it.
-    IngestEi {
+    #[command(name = "ingest-ei")]
+    Ei {
         /// Database to write into.
         #[arg(long)]
         db: PathBuf,
@@ -266,6 +268,32 @@ enum ContentCommands {
         #[arg(long)]
         out: Option<PathBuf>,
     },
+    /// Ingest Paragraph Comprehension items from public-domain prose.
+    ///
+    /// One vault row and one run per work, so an item's citation names the work its
+    /// passage came from. The work's title and the ebook number are both required:
+    /// the title is read from the file's own header, and the number is what makes
+    /// the recorded URL resolvable, so provenance can be checked by re-downloading.
+    #[command(name = "ingest-pc")]
+    Pc {
+        /// Database to write into.
+        #[arg(long)]
+        db: PathBuf,
+        /// A work to ingest, as `<project-gutenberg-ebook-number>=<path>`. Repeat
+        /// for each work, e.g. `49819=sources/gutenberg/doe-nuclear-1.txt`.
+        #[arg(long = "work", required = true)]
+        works: Vec<String>,
+        /// Items to attempt per work.
+        #[arg(long, default_value_t = 400)]
+        count: usize,
+        #[arg(long, default_value_t = 20_260_922)]
+        seed: u64,
+        #[arg(long, default_value = "content-reviewer")]
+        reviewer: String,
+        /// Write a JSON report here as well as printing it.
+        #[arg(long)]
+        out: Option<PathBuf>,
+    },
 }
 
 fn migrate(db_path: &str) -> Result<usize> {
@@ -279,7 +307,7 @@ fn main() -> Result<()> {
 
     match cli.command {
         Commands::Content { action } => match action {
-            ContentCommands::IngestWk {
+            ContentCommands::Wk {
                 db,
                 thesaurus,
                 dictionary,
@@ -332,7 +360,7 @@ fn main() -> Result<()> {
                     );
                 }
             }
-            ContentCommands::IngestEi {
+            ContentCommands::Ei {
                 db,
                 dictionary,
                 modules,
@@ -393,6 +421,62 @@ fn main() -> Result<()> {
                 if outcome.total_activated == 0 {
                     eprintln!(
                         "content ingest-ei: nothing new; {} item(s) already present",
+                        outcome.total_already_present
+                    );
+                }
+            }
+            ContentCommands::Pc {
+                db,
+                works,
+                count,
+                seed,
+                reviewer,
+                out,
+            } => {
+                let started = std::time::Instant::now();
+                let parsed = works
+                    .iter()
+                    .map(|work| content::parse_work(work))
+                    .collect::<Result<Vec<_>>>()?;
+                let outcome = content::ingest_pc(&db, &parsed, count, seed, &reviewer)?;
+
+                let report = serde_json::json!({
+                    "database": db.display().to_string(),
+                    "requested_per_work": count,
+                    "seed": seed,
+                    "works": outcome.works.iter().map(|w| serde_json::json!({
+                        "ebook": w.ebook_id,
+                        "title": w.title,
+                        "path": w.path,
+                        "sha256": w.sha256,
+                        "paragraphs": w.paragraphs,
+                        "built": w.built,
+                        "activated": w.activated,
+                        "already_present": w.already_present,
+                        "rejected": w.rejected,
+                        "rejection_reasons": w.rejection_reasons,
+                        "skipped": w.skipped,
+                    })).collect::<Vec<_>>(),
+                    "totals": {
+                        "paragraphs": outcome.total_paragraphs,
+                        "built": outcome.total_built,
+                        "activated": outcome.total_activated,
+                        "already_present": outcome.total_already_present,
+                        "rejected": outcome.total_rejected,
+                    },
+                    "elapsed_ms": started.elapsed().as_millis(),
+                });
+                let text = serde_json::to_string_pretty(&report)?;
+                println!("{text}");
+                if let Some(path) = out {
+                    if let Some(parent) = path.parent() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                    std::fs::write(&path, format!("{text}\n"))?;
+                }
+                if outcome.total_activated == 0 {
+                    eprintln!(
+                        "content ingest-pc: nothing new; {} item(s) already present",
                         outcome.total_already_present
                     );
                 }

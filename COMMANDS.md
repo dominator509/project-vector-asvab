@@ -50,7 +50,15 @@ export RUST_BACKTRACE=1
 | Isolated worktree lane | `cargo run -p vector-tools -- repair lane --gate reality-gate` |
 | Content ingestion (Word Knowledge) | `cargo run -p vector-tools -- content ingest-wk --db <db> --thesaurus <moby words.txt> --dictionary <webster pg29765.txt>` |
 | Content ingestion (Electronics Information) | `cargo run -p vector-tools -- content ingest-ei --db <db> --dictionary <webster pg29765.txt> --module <neets module.txt> [--module ...]` |
+| Content ingestion (Paragraph Comprehension) | `cargo run -p vector-tools -- content ingest-pc --db <db> --work <gutenberg ebook number>=<text file> [--work ...]` |
+| Paragraph Comprehension corpus probe | `cargo run -p vector-questions --example ingest_pc -- <label>=<text file> [<label>=<text file> ...] [count]` |
 | Corpus readback | `python3 scripts/probes/check-corpus.py <db>` |
+| Corpus counts per subtest | `python3 scripts/probes/count-items.py <db>` |
+| Ingestion report rendered | `python3 scripts/probes/pc-report.py <ingest report.json>` |
+| Source URL provenance | `python3 scripts/probes/verify-gutenberg-provenance.py --manifest <id=path manifest>` |
+| Passage containment audit | `cargo run -p vector-questions --example pc_passage_audit -- <label>=<work.txt> [...] [limit]` |
+| Apparatus survey of a work | `python3 scripts/probes/survey-apparatus.py <work.txt> [...]` |
+| Rebuild a corpus subtest | `python3 scripts/probes/rebuild-pc-corpus.py <db> --subtest PC` (refuses to delete an item a learner has attempted) |
 | OCR residue check | `python3 scripts/probes/check-ocr-residue.py <db>` |
 | OCR detector probe | `cargo run -p vector-questions --example ocr_probe -- <webster pg29765.txt> <token>` |
 

@@ -8,6 +8,7 @@ pub mod dictionary;
 pub mod factory;
 pub mod ingestion;
 pub mod neets;
+pub mod passages;
 pub mod proof;
 pub mod provenance;
 pub mod thesaurus;

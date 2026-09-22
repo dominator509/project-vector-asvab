@@ -22,6 +22,7 @@ function item(overrides: Partial<ItemDto> = {}): ItemDto {
     subtest: "AR",
     objective_id: "OBJ-AR-RATE-01",
     stem: "A printer produces 12 pages per minute. How many in 2.5 hours?",
+    passage: null,
     options: ["180", "1800", "360", "1440"],
     correct_index: 1,
     explanation: "12 * 150 = 1800",

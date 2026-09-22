@@ -25,6 +25,79 @@ import { practiceQuestionsFromItems } from "../data/fromBackend";
 export const STARTER_BATCH = 40;
 
 /**
+ * The subtests the item factory can generate for.
+ *
+ * Arithmetic Reasoning and Mathematics Knowledge are computable, so their items
+ * carry deterministic proofs. Every other subtest's items are ingested from a
+ * public-domain source instead, which is why asking the factory for one is not a
+ * slow path but an impossible one.
+ */
+export const GENERATABLE_SUBTESTS = ["AR", "MK"] as const;
+
+/**
+ * The ten subtests in the order the ASVAB presents them.
+ *
+ * Duplicated here rather than fetched because the picker must render before any
+ * command returns, and it is a fixed fact about the test, not about this device.
+ * `Subtest::ORDER` in `vector-domain` is the authority; this mirrors it.
+ */
+export const SUBTEST_ORDER = [
+  "GS",
+  "AR",
+  "WK",
+  "PC",
+  "MK",
+  "EI",
+  "AI",
+  "SI",
+  "MC",
+  "AO",
+] as const;
+
+/** Whether the factory can produce items for this subtest. */
+export function isGeneratable(subtest: string): boolean {
+  return (GENERATABLE_SUBTESTS as readonly string[]).includes(subtest);
+}
+
+/**
+ * The subtests this device can actually serve a question for.
+ *
+ * A subtest is offered when the corpus holds items for it or the factory can make
+ * them. Offering one that satisfies neither would be a button that always reports
+ * an empty set, and hiding an ingested one would strand content the learner
+ * already has on disk.
+ */
+export function useCorpusSubtests(client: VectorClient): string[] {
+  const [held, setHeld] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const stats = await client.contentStats();
+        if (cancelled) return;
+        setHeld(
+          stats.by_subtest
+            .filter((row) => row.count > 0)
+            .map((row) => row.subtest),
+        );
+      } catch {
+        // The picker falls back to the generatable subtests. The practice load
+        // itself surfaces the failure, so reporting it twice would be noise.
+        if (!cancelled) setHeld([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [client]);
+
+  return SUBTEST_ORDER.filter(
+    (subtest) => isGeneratable(subtest) || held.includes(subtest),
+  );
+}
+
+/**
  * How many items a practice set holds.
  *
  * The view pages through an array, so the set is fetched up front. Ten is a
@@ -60,6 +133,7 @@ export function usePracticeItems(
   client: VectorClient,
   subtest: string,
   wanted: number = PRACTICE_SET_SIZE,
+  canGenerate: boolean = isGeneratable(subtest),
 ): PracticeContent {
   const [state, setState] = useState<PracticeContentState>({
     status: "loading",
@@ -75,7 +149,11 @@ export function usePracticeItems(
       let stats = await client.contentStats();
       if (current !== run.current) return;
 
-      if (stats.total === 0) {
+      // Only the generatable subtests have anything to generate. Asking the
+      // factory for an ingested subtest fails the whole load, which would report
+      // "content could not be loaded" when the truth is "this subtest has no
+      // items yet".
+      if (stats.total === 0 && canGenerate) {
         await client.contentGenerate(subtest, STARTER_BATCH, 0);
         if (current !== run.current) return;
         stats = await client.contentStats();
@@ -107,7 +185,7 @@ export function usePracticeItems(
         message: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [client, subtest, wanted]);
+  }, [client, subtest, wanted, canGenerate]);
 
   useEffect(() => {
     void load();

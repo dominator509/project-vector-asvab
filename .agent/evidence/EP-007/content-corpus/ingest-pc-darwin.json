@@ -1,0 +1,28 @@
+{
+  "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+  "elapsed_ms": 2639,
+  "requested_per_work": 400,
+  "seed": 20260922,
+  "totals": {
+    "activated": 10,
+    "already_present": 0,
+    "built": 10,
+    "paragraphs": 795,
+    "rejected": 0
+  },
+  "works": [
+    {
+      "activated": 10,
+      "already_present": 0,
+      "built": 10,
+      "ebook": "1228",
+      "paragraphs": 795,
+      "path": "sources/gutenberg/darwin-origin.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:ededa9c0bf8761efed092c303b46c1c92de956838cba6249a33bedfd6d7363b4",
+      "skipped": null,
+      "title": "On the Origin of Species By Means of Natural Selection"
+    }
+  ]
+}

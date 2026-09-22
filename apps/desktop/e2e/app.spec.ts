@@ -10,6 +10,8 @@
 
 import { expect, test } from "@playwright/test";
 
+import { installStubBackend } from "./stubBackend";
+
 test.describe("application shell", () => {
   test("loads and shows the product heading", async ({ page }) => {
     await page.goto("/");
@@ -189,32 +191,57 @@ test.describe("exam simulation constraints", () => {
 
 test.describe("practice flow", () => {
   test("answers a question and sees the worked solution", async ({ page }) => {
+    // The bundle has no Rust process behind it here, so the bridge is stubbed.
+    // The practice view serves corpus items, not literals, so a spec that wants a
+    // question has to provide a backend that serves one.
+    await installStubBackend(page);
     await page.goto("/");
     await page
       .getByTestId("primary-nav")
       .getByRole("button", { name: /^practice$/i })
       .click();
 
-    await page.getByRole("radio", { name: /1,800/ }).check();
+    // Which option is correct belongs to the corpus, not to this spec, so the page
+    // is asked rather than the option text being hard-coded. That hard-coded text
+    // is what kept this test asserting on demonstration content long after the
+    // view stopped serving it.
+    await page.locator('label.option-row[data-correct="true"] input').check();
     await page.getByRole("button", { name: /check answer/i }).click();
 
     await expect(page.getByTestId("worked-solution")).toBeVisible();
-    await expect(page.getByTestId("worked-solution")).toContainText(/source:/i);
+    // What the view shows for provenance is the objective an item serves. A
+    // generated item quotes nobody, so it must not claim a source; the old
+    // assertion here demanded "Source:" from items that were sample literals.
+    await expect(page.getByTestId("worked-solution")).toContainText(
+      /objective:/i,
+    );
   });
 
   test("captures a mistake into the error notebook", async ({ page }) => {
+    await installStubBackend(page);
     await page.goto("/");
     await page
       .getByTestId("primary-nav")
       .getByRole("button", { name: /^practice$/i })
       .click();
 
-    // Option "180" is the wrong answer for the first question.
-    await page.getByRole("radio", { name: /^180$/ }).check();
+    const questionId = await page
+      .getByTestId("practice-prompt")
+      .getAttribute("data-question-id");
+    expect(questionId, "the served question must identify itself").toBeTruthy();
+
+    await page
+      .locator('label.option-row[data-correct="false"] input')
+      .first()
+      .check();
     await page.getByRole("button", { name: /check answer/i }).click();
     await page.getByRole("button", { name: /add to error notebook/i }).click();
 
-    await expect(page.getByTestId("notebook-list")).toContainText("q-ar-1");
+    // The id comes from the page rather than from a literal, so this holds for
+    // whatever the corpus serves.
+    await expect(page.getByTestId("notebook-list")).toContainText(
+      questionId as string,
+    );
   });
 });
 

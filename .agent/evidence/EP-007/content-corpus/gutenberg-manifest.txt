@@ -1,0 +1,25 @@
+# Project Gutenberg works in the Paragraph Comprehension corpus.
+# One `<ebook-number>=<path>` per line, in the form both the ingestion command and
+# scripts/probes/verify-gutenberg-provenance.py accept, so the recorded URL and the
+# file it describes cannot drift apart by transcription.
+#
+# The ebook number is what the evidence vault records as the source URL
+# (https://www.gutenberg.org/ebooks/<number>) and the digest is what a reviewer
+# re-checks; run the provenance probe against this manifest to confirm all of them.
+14474=sources/gutenberg/faraday-candle.txt
+1228=sources/gutenberg/darwin-origin.txt
+944=sources/gutenberg/darwin-beagle.txt
+3300=sources/gutenberg/smith-nations.txt
+1342=sources/gutenberg/austen-pride.txt
+1661=sources/gutenberg/doyle-holmes.txt
+205=sources/gutenberg/thoreau-walden.txt
+2701=sources/gutenberg/melville-moby.txt
+49819=sources/gutenberg/doe-nuclear-1.txt
+49820=sources/gutenberg/doe-nuclear-2.txt
+49821=sources/gutenberg/doe-nuclear-3.txt
+63584=sources/gutenberg/aec-savannah.txt
+65893=sources/gutenberg/aec-science-fair.txt
+66033=sources/gutenberg/aec-direct-energy.txt
+56795=sources/gutenberg/fabre-story-science.txt
+55390=sources/gutenberg/triumphs-wonders.txt
+75948=sources/gutenberg/book-of-wonders.txt

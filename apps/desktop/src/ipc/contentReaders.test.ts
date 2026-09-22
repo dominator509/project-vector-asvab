@@ -22,6 +22,7 @@ function validItem(overrides: Record<string, unknown> = {}) {
     subtest: "AR",
     objective_id: "OBJ-AR-RATE-01",
     stem: "A printer produces 12 pages per minute. How many in 2.5 hours?",
+    passage: null,
     options: ["180", "1800", "360", "1440"],
     correct_index: 1,
     explanation: "12 * 150 = 1800",
@@ -145,5 +146,40 @@ describe("content_generate", () => {
         rejected: [],
       }).contentGenerate("AR", 10, 0),
     ).rejects.toThrow(/exceeds verified/);
+  });
+});
+
+describe("the passage on a served item", () => {
+  it("accepts a null passage, which is what every subtest but PC has", async () => {
+    const item = await serve(validItem()).contentNext("AR", []);
+    expect(item?.passage).toBeNull();
+  });
+
+  it("carries a Paragraph Comprehension passage through to the view", async () => {
+    const passage =
+      "The tower stood on the ridge for a hundred years before the surveyors arrived. " +
+      "They measured its base and recorded the result in a log.";
+    const item = await serve(validItem({ subtest: "PC", passage })).contentNext(
+      "PC",
+      [],
+    );
+    expect(item?.passage).toBe(passage);
+  });
+
+  it("refuses an item whose passage field is absent entirely", async () => {
+    // Absence is not the same fact as "this subtest has no passage". The backend
+    // always sends the field, so a missing one means the response is not the shape
+    // the reader was written for, and treating it as null would hide that.
+    const withoutPassage = validItem();
+    delete (withoutPassage as Record<string, unknown>).passage;
+    await expect(serve(withoutPassage).contentNext("AR", [])).rejects.toThrow(
+      /passage/,
+    );
+  });
+
+  it("refuses a passage that is neither a string nor null", async () => {
+    await expect(
+      serve(validItem({ passage: 42 })).contentNext("AR", []),
+    ).rejects.toThrow(/passage/);
   });
 });

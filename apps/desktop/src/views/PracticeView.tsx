@@ -153,6 +153,22 @@ export function PracticeView({ questions, learnerId }: PracticeViewProps) {
       </h3>
 
       <p className="subtest-tag">Subtest: {question.subtest}</p>
+
+      {/*
+        The passage comes before the question, because that is the order it has to
+        be read in and the order a screen reader will announce it. It is rendered
+        only when the item carries one: hiding it behind a toggle would make a
+        comprehension question answerable without reading.
+      */}
+      {question.passage && (
+        <blockquote
+          data-testid="practice-passage"
+          data-question-id={question.id}
+        >
+          {question.passage}
+        </blockquote>
+      )}
+
       <p data-testid="practice-prompt" data-question-id={question.id}>
         {question.prompt}
       </p>

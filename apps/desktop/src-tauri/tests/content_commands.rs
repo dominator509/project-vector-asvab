@@ -485,3 +485,86 @@ fn the_manager_limit_bounds_the_listing() {
     assert_eq!(view.items.len(), 5, "the limit must bound the listing");
     assert_eq!(view.stats.total, 20, "but not the statistics");
 }
+
+// ---------------------------------------------------------------------------
+// Ingested content through the command boundary
+// ---------------------------------------------------------------------------
+
+/// A miniature Project Gutenberg work, in the corpus's own shape.
+const WORK: &str = "\
+The Project Gutenberg eBook of A Test Work
+
+*** START OF THE PROJECT GUTENBERG EBOOK A TEST WORK ***
+
+The laboratory keeps 600 grams of the salt in a sealed glass jar on the bench. That jar stands on the upper shelf, 340 millimetres above the stone floor. A paper label gives the date of the last weighing, 118 days before the audit.
+
+The cooling tower removes 1897 litres of water from the air each working day. The process works best when the outside air is dry, below 24 percent humidity. Operators check the gauge every morning before the shift, and keep 365 days of readings on file.
+
+*** END OF THE PROJECT GUTENBERG EBOOK A TEST WORK ***
+";
+
+/// An ingested item is served through the same command as a generated one, and
+/// carries what makes it answerable.
+///
+/// The two paths meet here and nowhere else in the suite: `pc_ingestion.rs` proves
+/// the pipeline stores provenance, and this proves the command boundary serves what
+/// it stored. Without the passage travelling across, a learner is handed a question
+/// about a text they were never shown.
+#[test]
+fn an_ingested_comprehension_item_is_served_with_its_passage() {
+    use vector_application::content::{ContentPipeline, PcIngestRequest};
+    use vector_persistence::repo::{EvidenceRepo, NewEvidence};
+    use vector_questions::passages::parse_gutenberg;
+
+    let (_dir, db) = database("ingested-pc");
+    let source = EvidenceRepo::new(&db)
+        .put(&NewEvidence::new(
+            "https://www.gutenberg.org/ebooks/99999",
+            "A Test Work (Project Gutenberg #99999)",
+            "sha256:pc-command-test",
+            "Public domain in the USA",
+            "2026-09-22",
+            0.90,
+            "retrieved",
+        ))
+        .expect("record the work");
+
+    let pipeline = ContentPipeline::new(&db);
+    let report = pipeline
+        .ingest_pc(
+            &parse_gutenberg(WORK, "A Test Work"),
+            &PcIngestRequest {
+                label: "A Test Work",
+                source_id: &source,
+                count: 6,
+                seed: 20_260_922,
+                reviewer: "content-reviewer",
+                generator: "pc-ingester",
+            },
+        )
+        .expect("ingest");
+    assert!(report.activated > 0, "the fixture should yield items");
+
+    let item = content_next_impl(&db, "PC", &[])
+        .expect("next")
+        .expect("an ingested item must be servable");
+    assert_eq!(item.subtest, "PC");
+    let passage = item
+        .passage
+        .as_deref()
+        .expect("a served comprehension item must carry its passage");
+    assert!(
+        passage.split_whitespace().count() >= 40,
+        "the passage is too short to comprehend: {passage}"
+    );
+    assert!(
+        passage
+            .to_lowercase()
+            .contains(&item.options[item.correct_index].to_lowercase()),
+        "the correct option must be stated in the served passage"
+    );
+    assert!(
+        !item.objective_id.trim().is_empty() && !item.explanation.trim().is_empty(),
+        "the item must carry its objective and its explanation"
+    );
+}

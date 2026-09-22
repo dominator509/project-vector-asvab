@@ -15,23 +15,27 @@
 import { useState } from "react";
 
 import { useBackend } from "../ipc/Backend";
-import { usePracticeItems, STARTER_BATCH } from "../state/usePracticeItems";
+import {
+  GENERATABLE_SUBTESTS,
+  isGeneratable,
+  useCorpusSubtests,
+  usePracticeItems,
+  STARTER_BATCH,
+} from "../state/usePracticeItems";
 import { PracticeView } from "./PracticeView";
-
-/**
- * Subtests the factory can generate for.
- *
- * Arithmetic Reasoning and Mathematics Knowledge are computable, so their items
- * carry deterministic proofs. Listing a subtest here that the factory cannot
- * generate for would offer a button that always fails.
- */
-const GENERATABLE_SUBTESTS = ["AR", "MK"] as const;
 
 export function PracticeContentView({ learnerId }: { learnerId?: string }) {
   const backend = useBackend();
   const [subtest, setSubtest] = useState<string>(GENERATABLE_SUBTESTS[0]);
   const [working, setWorking] = useState(false);
-  const { state, generate } = usePracticeItems(backend.client, subtest);
+  const offered = useCorpusSubtests(backend.client);
+  const canGenerate = isGeneratable(subtest);
+  const { state, generate } = usePracticeItems(
+    backend.client,
+    subtest,
+    undefined,
+    canGenerate,
+  );
 
   async function onGenerate() {
     setWorking(true);
@@ -49,7 +53,7 @@ export function PracticeContentView({ learnerId }: { learnerId?: string }) {
         role="group"
         aria-label="Choose a subtest"
       >
-        {GENERATABLE_SUBTESTS.map((option) => (
+        {offered.map((option) => (
           <button
             key={option}
             type="button"
@@ -73,17 +77,30 @@ export function PracticeContentView({ learnerId }: { learnerId?: string }) {
 
       {state.status === "empty" && (
         <div data-testid="practice-empty">
-          <p>No {subtest} questions have been prepared on this device yet.</p>
+          <p>No {subtest} questions are available to practise yet.</p>
           <p className="hint">
             {state.stats.sources === 0
               ? "The content library is empty."
-              : `This device holds ${state.stats.total} question(s), none for ${subtest}.`}
+              : `This device holds ${state.stats.total} question(s), ${state.stats.servable} of them available.`}
           </p>
-          <button type="button" onClick={onGenerate} disabled={working}>
-            {working
-              ? "Generating…"
-              : `Prepare ${STARTER_BATCH} ${subtest} questions`}
-          </button>
+          {/*
+            Only a generatable subtest gets a button. Every other subtest's items
+            are ingested from a public-domain source at pack-build time, so a
+            "prepare questions" button here would always fail -- which is exactly
+            what the previous version of this surface did for Word Knowledge.
+          */}
+          {canGenerate ? (
+            <button type="button" onClick={onGenerate} disabled={working}>
+              {working
+                ? "Generating…"
+                : `Prepare ${STARTER_BATCH} ${subtest} questions`}
+            </button>
+          ) : (
+            <p className="hint" data-testid="practice-no-generator">
+              {subtest} questions come from the study content pack rather than
+              from the generator, so they cannot be created here.
+            </p>
+          )}
         </div>
       )}
 

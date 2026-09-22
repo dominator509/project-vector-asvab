@@ -48,6 +48,12 @@ pub struct NewContentItem<'a> {
     pub subtest: &'a str,
     pub objective_id: &'a str,
     pub stem: &'a str,
+    /// The passage the item is about, for subtests that have one.
+    ///
+    /// `None` for every subtest but Paragraph Comprehension, and the schema refuses
+    /// a PC item without it, so "this item has no passage" and "this item's passage
+    /// was forgotten" are not the same state.
+    pub passage: Option<&'a str>,
     pub options: &'a [String],
     pub correct_index: usize,
     pub explanation: &'a str,
@@ -70,6 +76,7 @@ pub struct StoredItem {
     pub objective_id: String,
     pub state: String,
     pub stem: String,
+    pub passage: Option<String>,
     pub options: Vec<String>,
     pub correct_index: usize,
     pub explanation: String,
@@ -119,11 +126,12 @@ impl<'a> ContentItemRepo<'a> {
         let timestamp = now();
         self.db.connection().execute(
             "INSERT INTO content_items (
-                 id, subtest, objective_id, state, stem, options_json, correct_index,
-                 explanation, distractors_json, difficulty, proof_kind, proof_json,
-                 reviewer, content_hash, generator_hash, created_at, updated_at
+                 id, subtest, objective_id, state, stem, passage, options_json,
+                 correct_index, explanation, distractors_json, difficulty, proof_kind,
+                 proof_json, reviewer, content_hash, generator_hash, created_at,
+                 updated_at
              ) VALUES (
-                 ?1, ?2, ?3, 'draft', ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11,
+                 ?1, ?2, ?3, 'draft', ?4, ?15, ?5, ?6, ?7, ?8, ?9, ?10, ?11,
                  '', ?12, ?13, ?14, ?14
              )",
             params![
@@ -141,6 +149,7 @@ impl<'a> ContentItemRepo<'a> {
                 item.content_hash,
                 item.generator_hash,
                 timestamp,
+                item.passage,
             ],
         )?;
         Ok(())
@@ -234,7 +243,7 @@ impl<'a> ContentItemRepo<'a> {
                 "SELECT id, subtest, objective_id, state, stem, options_json,
                         correct_index, explanation, distractors_json, difficulty,
                         proof_kind, proof_json, reviewer, content_hash,
-                        generator_hash, verifier_hash
+                        generator_hash, verifier_hash, passage
                  FROM content_items WHERE id = ?1",
                 params![id],
                 read_item,
@@ -253,7 +262,7 @@ impl<'a> ContentItemRepo<'a> {
             "SELECT id, subtest, objective_id, state, stem, options_json,
                     correct_index, explanation, distractors_json, difficulty,
                     proof_kind, proof_json, reviewer, content_hash,
-                    generator_hash, verifier_hash
+                    generator_hash, verifier_hash, passage
              FROM content_items
              WHERE state = 'active' AND subtest = ?1
              ORDER BY id",
@@ -266,7 +275,7 @@ impl<'a> ContentItemRepo<'a> {
             "SELECT id, subtest, objective_id, state, stem, options_json,
                     correct_index, explanation, distractors_json, difficulty,
                     proof_kind, proof_json, reviewer, content_hash,
-                    generator_hash, verifier_hash
+                    generator_hash, verifier_hash, passage
              FROM content_items ORDER BY subtest, id",
             [],
         )
@@ -359,6 +368,7 @@ fn read_item(row: &rusqlite::Row<'_>) -> rusqlite::Result<Result<StoredItem, any
             content_hash: row.get(13)?,
             generator_hash: row.get(14)?,
             verifier_hash: row.get(15)?,
+            passage: row.get(16)?,
         })
     })();
 

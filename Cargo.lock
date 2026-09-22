@@ -4948,6 +4948,7 @@ dependencies = [
  "vector-domain",
  "vector-observability",
  "vector-persistence",
+ "vector-questions",
 ]
 
 [[package]]

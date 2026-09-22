@@ -1,0 +1,53 @@
+Paragraph Comprehension: passage store, 1,047 sourced items, and four defects
+
+REQ-020, REQ-022, REQ-023, REQ-048, REQ-053, REQ-056.
+
+Corpus
+- `content ingest-pc` (tools/vector-tools) ingests Project Gutenberg works: one
+  vault row per work, the title read from the file's own header, the URL built
+  from the ebook number so a reviewer can re-download and get the same digest.
+- 1,047 active PC items from 17 works, each citing the work it quotes. The
+  application database now holds 2,000 WK + 3,668 EI + 1,047 PC = 6,715 items,
+  with 8,715 citations and 26,860 review rows.
+
+The passage the store was missing
+- `migrations/005_content_passage.sql` adds `content_items.passage` and refuses,
+  by trigger, a Paragraph Comprehension item without one. Before this a PC item
+  could be stored and served with nothing to read: the question asks about a
+  text and the text had nowhere to live.
+- `ItemDto` and the interface carry it; `PracticeView` renders it before the
+  question; the reader refuses a response that omits the field rather than
+  treating absence as "no passage".
+
+Defects found, each by a check that did not exist before
+1. The passage builder split a paragraph into sentences and rejoined them with a
+   space, so wherever the split was not at a space the item quoted text the work
+   does not contain (`the cap of liberty.” An ancient` came back `night? ” “Where`).
+   Passages are now cut from the paragraph by character span (`sentence_spans`),
+   so they are the source's own text by construction.
+2. Terminators inside initials and abbreviations split tokens in half (`R.R.`).
+3. A list of illustrations became a passage, with index entries as its options.
+4. `darwin-origin.txt` was cited as Project Gutenberg #2009 while the file is
+   #1228: a false provenance claim that only a re-download could reveal. The 13
+   affected items were deleted and re-ingested; 17/17 works now re-download to
+   the bytes they are cited as.
+
+Reachability
+- The practice surface offered only the two generatable subtests, so the ingested
+  corpus could not be practised. It now offers every subtest the device can
+  serve, and never offers to generate one the factory cannot produce.
+
+Tests
+- `passages` 24, `pc_ingestion` 10, `content_lifecycle` 16, `content_commands` 22;
+  new probes for corpus counts, ingestion reports and source provenance.
+- Mutation proof: removing the source-containment check fails
+  `storing_refuses_an_item_whose_passage_is_not_in_the_source`.
+- Four E2E tests had been failing since the corpus replaced the sample literals,
+  asserting option text from `sample.ts`. Proven pre-existing by running the same
+  specs at 1ae9dce in a worktree, then fixed with a shared stub of the Tauri
+  bridge and by reading the correct option and item id from the page.
+
+Gates: format-check, lint, typecheck, unit, integration, e2e (34), generated-pack
+and anti-gaming all exit 0; 817 Rust tests across 66 binaries, 205 frontend tests;
+packaged build and live-fire pass. Evidence:
+`.agent/evidence/EP-007/content-corpus/ROUND-13-REPORT.md`.
