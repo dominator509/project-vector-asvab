@@ -106,6 +106,73 @@ enum Commands {
         #[arg(long)]
         summary_out: Option<PathBuf>,
     },
+    /// Generate an Ed25519 key for signing content packs.
+    ///
+    /// Refuses to overwrite an existing key: a signing key that was quietly replaced
+    /// is a key whose packs nobody can identify.
+    #[command(name = "pack-keygen")]
+    PackKeygen {
+        /// Where to write the 64-hex-character key.
+        #[arg(long)]
+        key: PathBuf,
+    },
+    /// Build a signed pack from everything a store currently serves.
+    #[command(name = "pack-build")]
+    PackBuild {
+        /// Database to read from.
+        #[arg(long)]
+        db: PathBuf,
+        /// Where to write the pack file.
+        #[arg(long)]
+        out: PathBuf,
+        #[arg(long, default_value = "core-asvab")]
+        name: String,
+        #[arg(long, default_value_t = 1)]
+        version: i64,
+        /// The oldest application version that can install this pack.
+        #[arg(long, default_value = "0.1.0")]
+        app_min: String,
+        /// The newest, when the pack is known not to work past a version.
+        #[arg(long)]
+        app_max: Option<String>,
+        /// The Ed25519 signing key, as 64 hex characters. See `pack-keygen`.
+        #[arg(long)]
+        key: PathBuf,
+    },
+    /// Verify and install a pack file.
+    ///
+    /// The trusted signer is required: a signature only proves that *someone*
+    /// attested the pack, so an installation that accepted any signer would accept a
+    /// pack its own author signed.
+    #[command(name = "pack-install")]
+    PackInstall {
+        /// Database to install into.
+        #[arg(long)]
+        db: PathBuf,
+        /// The pack file.
+        #[arg(long)]
+        pack: PathBuf,
+        /// The public key this installation trusts, as 64 hex characters.
+        #[arg(long)]
+        trusted_signer: String,
+        /// The running application version, for the compatibility check.
+        #[arg(long, default_value = "0.1.0")]
+        app_version: String,
+    },
+    /// List the packs a store has installed.
+    #[command(name = "pack-list")]
+    PackList {
+        #[arg(long)]
+        db: PathBuf,
+    },
+    /// Roll a pack back to its previous version.
+    #[command(name = "pack-rollback")]
+    PackRollback {
+        #[arg(long)]
+        db: PathBuf,
+        #[arg(long)]
+        name: String,
+    },
 }
 
 #[derive(Subcommand)]
@@ -585,6 +652,80 @@ fn main() -> Result<()> {
                 }
             }
         },
+        Commands::PackKeygen { key } => {
+            let public = content::generate_signing_key(&key)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "key": key.display().to_string(),
+                    "public_key": public,
+                    "note": "the public key is what an installation passes as --trusted-signer",
+                }))?
+            );
+        }
+        Commands::PackBuild {
+            db,
+            out,
+            name,
+            version,
+            app_min,
+            app_max,
+            key,
+        } => {
+            let outcome = content::build_pack(
+                &db,
+                &out,
+                &name,
+                version,
+                &app_min,
+                app_max.as_deref(),
+                &key,
+            )?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "pack": outcome.path,
+                    "name": outcome.name,
+                    "version": outcome.version,
+                    "content_hash": outcome.content_hash,
+                    "signer": outcome.signer,
+                    "items": outcome.items,
+                    "sources": outcome.sources,
+                    "licences": outcome.licences,
+                    "bytes": outcome.bytes,
+                }))?
+            );
+        }
+        Commands::PackInstall {
+            db,
+            pack,
+            trusted_signer,
+            app_version,
+        } => {
+            let report = content::install_pack(&db, &pack, &trusted_signer, &app_version)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "database": db.display().to_string(),
+                    "name": report.name,
+                    "version": report.version,
+                    "content_hash": report.content_hash,
+                    "items": report.items,
+                    "installed": report.installed,
+                    "already_present": report.already_present,
+                    "sources_added": report.sources_added,
+                    "sources_reused": report.sources_reused,
+                }))?
+            );
+        }
+        Commands::PackList { db } => {
+            let packs = content::list_packs(&db)?;
+            println!("{}", serde_json::to_string_pretty(&packs)?);
+        }
+        Commands::PackRollback { db, name } => {
+            let rolled = content::rollback_pack(&db, &name)?;
+            println!("{}", serde_json::to_string_pretty(&rolled)?);
+        }
         Commands::Provider { action } => match action {
             ProviderCommands::Probe {
                 all_configured,

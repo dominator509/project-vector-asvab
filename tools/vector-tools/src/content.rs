@@ -678,3 +678,171 @@ pub fn ingest_facts(
         works: outcomes,
     })
 }
+
+// ---------------------------------------------------------------------------
+// Content packs (REQ-023, REQ-032)
+// ---------------------------------------------------------------------------
+
+/// Read or create the Ed25519 key a pack is signed with.
+///
+/// The key lives in a file of 64 hex characters, which is the shape `openssl` and
+/// most key tools print. It is never generated silently: a caller that asks to build
+/// a pack and has no key is told to make one, because a key created behind their back
+/// would be a key nobody can find later.
+pub fn read_signing_key(path: &Path) -> Result<ed25519_dalek::SigningKey> {
+    let text = std::fs::read_to_string(path)
+        .with_context(|| format!("cannot read the signing key at {}", path.display()))?;
+    let bytes = decode_hex(text.trim())
+        .with_context(|| format!("{} is not 64 hex characters", path.display()))?;
+    let seed: [u8; 32] = bytes
+        .as_slice()
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("{} is not 32 bytes of hex", path.display()))?;
+    Ok(ed25519_dalek::SigningKey::from_bytes(&seed))
+}
+
+/// Write a new signing key, refusing to overwrite one that exists.
+pub fn generate_signing_key(path: &Path) -> Result<String> {
+    if path.exists() {
+        anyhow::bail!(
+            "{} already exists; refusing to overwrite a signing key",
+            path.display()
+        );
+    }
+    let mut seed = [0_u8; 32];
+    // `getrandom` is not a dependency of this crate, so the key is derived from the
+    // OS entropy source through `uuid`, which is: two v4 UUIDs are 256 bits of
+    // entropy drawn from the platform's generator.
+    let first = uuid::Uuid::new_v4();
+    let second = uuid::Uuid::new_v4();
+    seed[..16].copy_from_slice(first.as_bytes());
+    seed[16..].copy_from_slice(second.as_bytes());
+    let key = ed25519_dalek::SigningKey::from_bytes(&seed);
+    if let Some(parent) = path.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
+    std::fs::write(path, format!("{}\n", encode_hex(&key.to_bytes())))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mut permissions = std::fs::metadata(path)?.permissions();
+        permissions.set_mode(0o600);
+        std::fs::set_permissions(path, permissions)?;
+    }
+    Ok(encode_hex(&key.verifying_key().to_bytes()))
+}
+
+fn encode_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn decode_hex(text: &str) -> Option<Vec<u8>> {
+    if !text.len().is_multiple_of(2) {
+        return None;
+    }
+    let bytes = text.as_bytes();
+    let mut out = Vec::with_capacity(text.len() / 2);
+    for pair in bytes.chunks(2) {
+        let high = (pair[0] as char).to_digit(16)?;
+        let low = (pair[1] as char).to_digit(16)?;
+        out.push((high * 16 + low) as u8);
+    }
+    Some(out)
+}
+
+/// What building a pack produced.
+pub struct PackBuildOutcome {
+    pub path: String,
+    pub name: String,
+    pub version: i64,
+    pub content_hash: String,
+    pub signer: String,
+    pub items: usize,
+    pub sources: usize,
+    pub licences: Vec<String>,
+    pub bytes: usize,
+}
+
+/// Build a signed pack from everything a store serves.
+pub fn build_pack(
+    db_path: &Path,
+    out: &Path,
+    name: &str,
+    version: i64,
+    app_min: &str,
+    app_max: Option<&str>,
+    key_path: &Path,
+) -> Result<PackBuildOutcome> {
+    let db = Database::open(db_path)
+        .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
+    let key = read_signing_key(key_path)?;
+    let document = vector_application::packs::build_pack(
+        &db,
+        &vector_application::packs::BuildPackRequest {
+            name,
+            version,
+            app_min,
+            app_max,
+        },
+        &key,
+    )?;
+    let bytes = vector_application::packs::pack_bytes(&document)?;
+    if let Some(parent) = out.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
+    std::fs::write(out, &bytes)?;
+
+    Ok(PackBuildOutcome {
+        path: out.display().to_string(),
+        name: document.name().to_string(),
+        version: document.version(),
+        content_hash: document.content_hash.clone(),
+        signer: document.signer.clone(),
+        items: document.items().len(),
+        sources: document.sources().len(),
+        licences: document.licences().to_vec(),
+        bytes: bytes.len(),
+    })
+}
+
+/// Install a pack file into a store.
+pub fn install_pack(
+    db_path: &Path,
+    pack_path: &Path,
+    trusted_signer: &str,
+    running_version: &str,
+) -> Result<vector_application::packs::InstallReport> {
+    let mut db = Database::open(db_path)
+        .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
+    let migrations = MigrationManager::load_from_dir(
+        &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../migrations"),
+    )?;
+    MigrationManager::apply(&mut db, &migrations)?;
+
+    let bytes = std::fs::read(pack_path)
+        .with_context(|| format!("cannot read the pack at {}", pack_path.display()))?;
+    let signer = decode_hex(trusted_signer.trim())
+        .ok_or_else(|| anyhow::anyhow!("the trusted signer is not hex"))?;
+    vector_application::packs::install_pack(&db, &bytes, &signer, running_version)
+}
+
+/// The packs a store has installed.
+pub fn list_packs(db_path: &Path) -> Result<Vec<vector_application::packs::InstalledPackDto>> {
+    let db = Database::open(db_path)
+        .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
+    vector_application::packs::installed_packs(&db)
+}
+
+/// Roll a pack back to its previous version.
+pub fn rollback_pack(
+    db_path: &Path,
+    name: &str,
+) -> Result<vector_application::packs::InstalledPackDto> {
+    let db = Database::open(db_path)
+        .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
+    vector_application::packs::rollback_pack(&db, name)
+}

@@ -20,6 +20,12 @@ thiserror.workspace = true
 anyhow.workspace = true
 chrono.workspace = true
 rusqlite.workspace = true
+sha2.workspace = true
+# The same version the domain layer signs a pack identity with, declared the same
+# way that crate declares it. The pack engine loads a received signature into
+# `vector_domain::content::ContentPack` and asks that type to verify it, so the
+# signing payload has exactly one definition in the workspace.
+ed25519-dalek = "2"
 uuid.workspace = true
 
 [dev-dependencies]
@@ -28,3 +34,5 @@ uuid.workspace = true
 # not local copies.
 vector-observability = { path = "../vector-observability" }
 vector-platform = { path = "../vector-platform" }
+
+

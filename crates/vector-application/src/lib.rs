@@ -11,6 +11,7 @@
 pub mod content;
 pub mod egress;
 pub mod offline;
+pub mod packs;
 pub mod privacy;
 pub mod safe_mode;
 pub mod service;

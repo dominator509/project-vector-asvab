@@ -1,0 +1,11 @@
+{
+  "already_present": 0,
+  "content_hash": "sha256:9a2f20fd68400da9cf8d9a40f79f7a341b64c51c9c1657acef1287c630f4eb71",
+  "database": "C:\\tmp\\vector-pack-install-test\\vector.db",
+  "installed": 7016,
+  "items": 7016,
+  "name": "core-asvab",
+  "sources_added": 28,
+  "sources_reused": 0,
+  "version": 1
+}

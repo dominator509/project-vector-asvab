@@ -127,3 +127,24 @@ Still open after round 14, with the reconnaissance recorded rather than repeated
 Shop Information has a source whose 30 purpose sentences have not been mined yet, and
 Auto Information has no public-domain source with usable structure. Content packs
 remain unpopulated: quarantine is exercised, install is not.
+
+### Round 15
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| Signed content packs | `crates/vector-application/src/packs.rs` builds a pack from everything a store serves, verifies a received pack (schema, compatibility, content hash, Ed25519 signature against a trusted key, provenance completeness, prohibited-source scan, answer consistency, reviewer state) and installs it in one transaction. `migrations/006` gives the registry the identity installation verifies; `migrations/007` makes pack membership its own relation. Five tool commands, all in `COMMANDS.md`. | `.agent/evidence/EP-007/content-corpus/ROUND-15-REPORT.md`, `packs/pack-e2e.log`, `packs/pack-digests.json` |
+
+The pack built from the real corpus carries 7,016 items and 28 sources; installed into
+an empty store it delivers all of them and the serving path offers every one. Three
+defects were found by exercising it against the real corpus rather than an empty one: a
+new version that repackaged content withdrew it, a pack overlapping the corpus failed
+on a foreign key, and rollback could reinstate a deliberately quarantined version.
+
+The signing key is deliberately outside the repository
+(`%APPDATA%\com.vector.app\keys\content-pack-signing.key`); the first attempt wrote it
+under `.agent/evidence/` and would have committed a private key.
+
+Still open after round 15: packs are not reachable from the interface or from a Tauri
+command, Shop and Auto Information still have no items, and the pack schema carries
+neither the curriculum graph nor the calibration metadata that `CONTENT_PACK_SPEC.md`
+lists.

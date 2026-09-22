@@ -1,0 +1,22 @@
+[
+  {
+    "name": "core-asvab-additions.vpack",
+    "bytes": 80428,
+    "sha256": "a541702c5058a4d84052608061f7eb77e023f4a9e499f4b8d332c4d5281526c0"
+  },
+  {
+    "name": "core-asvab-v1.vpack",
+    "bytes": 13741945,
+    "sha256": "3c0664a8568e29ab2ebae29effe8ea34e01496f50f299c09a8b65387de4afbda"
+  },
+  {
+    "name": "core-asvab-v2.vpack",
+    "bytes": 13741942,
+    "sha256": "c5503e15086c5ee8e830d335ffc8e975d0cc099d7bad49717d29c368a73c2104"
+  },
+  {
+    "name": "core-asvab-v3.vpack",
+    "bytes": 120016,
+    "sha256": "43a2df3550d8c0a7fe15673588eb1829f477bc47a27464d90387658785cbc53f"
+  }
+]

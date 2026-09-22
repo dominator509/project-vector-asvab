@@ -118,6 +118,45 @@ impl ContentPack {
         })
     }
 
+    /// Create a pack from a signature that arrived with it.
+    ///
+    /// This is the receiving half of [`ContentPack::sign`]: a pack that travelled as
+    /// a file carries its signature and signer, and installation has to be able to
+    /// load them before it can check them. Constructing the pack does not verify it;
+    /// [`ContentPack::verify`] does, and installation must call it before acting.
+    ///
+    /// The signature and signer are taken as bytes rather than trusted as text so
+    /// that a caller decoding them from a file has to have decoded them successfully
+    /// first. A malformed length is refused here rather than at verification time, so
+    /// the error names the field that is wrong.
+    pub fn from_signed(
+        name: &str,
+        version: u32,
+        content_hash: &str,
+        signature: Vec<u8>,
+        signer: Vec<u8>,
+    ) -> Result<Self, SignatureError> {
+        if content_hash.trim().is_empty() {
+            return Err(SignatureError::EmptyContentHash);
+        }
+        if signature.len() != 64 {
+            return Err(SignatureError::MalformedSignature);
+        }
+        if signer.len() != 32 {
+            return Err(SignatureError::MalformedKey);
+        }
+        Ok(Self {
+            name: name.to_string(),
+            version,
+            content_hash: content_hash.to_string(),
+            // A pack that has just been received is not serving anyone yet.
+            status: ContentStatus::Quarantined,
+            freshness_timestamp: Utc::now(),
+            signature: Some(signature),
+            signer: Some(signer),
+        })
+    }
+
     /// Move an active pack back to quarantine for review.
     ///
     /// Does not invalidate the signature: quarantine is a lifecycle decision,
@@ -159,6 +198,14 @@ impl ContentPack {
 
     pub fn signature(&self) -> Option<&[u8]> {
         self.signature.as_deref()
+    }
+
+    /// The public key that produced the signature, when the pack carries one.
+    ///
+    /// Symmetric with [`ContentPack::signature`]: a caller storing a signed pack has
+    /// to record which key attested it, or the signature cannot be checked later.
+    pub fn signer(&self) -> Option<&[u8]> {
+        self.signer.as_deref()
     }
 
     pub fn is_signed(&self) -> bool {

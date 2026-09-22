@@ -252,7 +252,14 @@ impl<'a> ContentItemRepo<'a> {
         row.transpose()
     }
 
-    /// Items a learner may be served: `active`, with complete provenance.
+    /// Items a learner may be served: `active`, with complete provenance, and not
+    /// withdrawn by a pack rollback.
+    ///
+    /// An item delivered by a pack is served only while that pack is the active one
+    /// for its name. Rolling a pack back therefore withdraws its items in one
+    /// statement, without touching the items themselves -- which is what keeps a
+    /// rollback atomic and reversible. Items ingested outside any pack have no pack
+    /// and are always eligible.
     ///
     /// The predicate mirrors `ContentItem::is_servable`. The schema already
     /// guarantees active implies complete, so this is a belt-and-braces read
@@ -265,6 +272,17 @@ impl<'a> ContentItemRepo<'a> {
                     generator_hash, verifier_hash, passage
              FROM content_items
              WHERE state = 'active' AND subtest = ?1
+               AND (
+                     NOT EXISTS (
+                         SELECT 1 FROM content_pack_items m
+                         WHERE m.item_id = content_items.id
+                     )
+                     OR EXISTS (
+                         SELECT 1 FROM content_pack_items m
+                         JOIN content_packs p ON p.id = m.pack_id
+                         WHERE m.item_id = content_items.id AND p.status = 'active'
+                     )
+                   )
              ORDER BY id",
             params![subtest],
         )

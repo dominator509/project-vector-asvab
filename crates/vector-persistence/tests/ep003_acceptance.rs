@@ -624,22 +624,87 @@ fn content_pack_rollback_restores_previous_active_pack() {
     MigrationManager::apply(&mut db, &migrations()).expect("migrate");
     let packs = vector_persistence::repo::ContentPackRepo::new(&db);
 
+    // A registry row now has to record the identity installation verifies: which key
+    // signed it, what content the signature covers, and what the pack holds. A row
+    // carrying only a signature string could not answer any of those questions, so
+    // the schema refuses it as `active`.
+    fn publish<'a>(
+        name: &'a str,
+        version: i64,
+        signature: &'a str,
+        content_hash: &'a str,
+    ) -> vector_persistence::repo::NewPackRecord<'a> {
+        vector_persistence::repo::NewPackRecord {
+            name,
+            version,
+            signature,
+            signer: "dGVzdC1rZXk=",
+            content_hash,
+            schema_version: 1,
+            manifest_json: "{}",
+            item_count: 1,
+        }
+    }
+
     packs
-        .publish("core-asvab", 1, "sha256:v1")
+        .publish(&publish(
+            "core-asvab",
+            1,
+            "sha256:v1-signature",
+            "sha256:v1",
+        ))
         .expect("publish v1");
     packs
-        .publish("core-asvab", 2, "sha256:v2")
+        .publish(&publish(
+            "core-asvab",
+            2,
+            "sha256:v2-signature",
+            "sha256:v2",
+        ))
         .expect("publish v2");
 
     let active = packs.active("core-asvab").expect("active").expect("some");
     assert_eq!(active.version, 2, "newest published pack is active");
+    assert_eq!(active.content_hash, "sha256:v2");
 
     let rolled = packs.rollback("core-asvab").expect("rollback");
     assert_eq!(rolled.version, 1, "rollback restores prior version");
 
     let active = packs.active("core-asvab").expect("active").expect("some");
     assert_eq!(active.version, 1, "prior version is active after rollback");
-    assert_eq!(active.signature, "sha256:v1");
+    assert_eq!(active.signature, "sha256:v1-signature");
+    assert_eq!(active.content_hash, "sha256:v1");
+}
+
+/// A registry row that is serving learners must record what was verified about it.
+#[test]
+fn an_active_pack_without_an_identity_is_refused() {
+    let dir = tempdir::TempDir::new("packidentity");
+    let mut db = open_db(&dir);
+    MigrationManager::apply(&mut db, &migrations()).expect("migrate");
+    let packs = vector_persistence::repo::ContentPackRepo::new(&db);
+
+    let anonymous = vector_persistence::repo::NewPackRecord {
+        name: "core-asvab",
+        version: 1,
+        signature: "sha256:v1-signature",
+        signer: "",
+        content_hash: "",
+        schema_version: 1,
+        manifest_json: "{}",
+        item_count: 0,
+    };
+    let error = packs
+        .publish(&anonymous)
+        .expect_err("an active pack with no signer, hash or item count must be refused");
+    assert!(
+        error.to_string().contains("signer"),
+        "the refusal should name what is missing: {error}"
+    );
+    assert!(
+        packs.active("core-asvab").expect("active").is_none(),
+        "nothing may be left active by a refused publish"
+    );
 }
 
 // ---------------------------------------------------------------------------

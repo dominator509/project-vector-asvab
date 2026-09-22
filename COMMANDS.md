@@ -64,6 +64,11 @@ export RUST_BACKTRACE=1
 | Passage containment audit | `cargo run -p vector-questions --example pc_passage_audit -- <label>=<work.txt> [...] [limit]` |
 | Apparatus survey of a work | `python3 scripts/probes/survey-apparatus.py <work.txt> [...]` |
 | Rebuild a corpus subtest | `python3 scripts/probes/rebuild-pc-corpus.py <db> --subtest PC` (refuses to delete an item a learner has attempted) |
+| Generate a pack signing key | `cargo run -p vector-tools -- pack-keygen --key <key file>` (refuses to overwrite; keep it out of the repository) |
+| Build a signed content pack | `cargo run -p vector-tools -- pack-build --db <db> --out <pack file> --name core-asvab --version 1 --key <key file>` |
+| Install a signed content pack | `cargo run -p vector-tools -- pack-install --db <db> --pack <pack file> --trusted-signer <public key hex> --app-version 0.1.0` |
+| List installed packs | `cargo run -p vector-tools -- pack-list --db <db>` |
+| Roll a pack back | `cargo run -p vector-tools -- pack-rollback --db <db> --name core-asvab` |
 | OCR residue check | `python3 scripts/probes/check-ocr-residue.py <db>` |
 | OCR detector probe | `cargo run -p vector-questions --example ocr_probe -- <webster pg29765.txt> <token>` |
 

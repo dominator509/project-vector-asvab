@@ -110,9 +110,18 @@ impl<'a> ContentPipeline<'a> {
         };
 
         if items.is_empty() {
+            // The message lists what the factory can actually serve rather than a
+            // hard-coded pair: it still said "AR and MK" after MC was added, which
+            // sends a caller looking for a template that is right there.
+            let generatable: Vec<String> = ["AR", "MK", "MC"]
+                .iter()
+                .filter(|subtest| !factory::templates_for(subtest).is_empty())
+                .map(|subtest| subtest.to_string())
+                .collect();
             anyhow::bail!(
-                "the factory produced nothing for subtest {:?}; templates exist for AR and MK",
-                request.subtest
+                "the factory produced nothing for subtest {:?}; templates exist for {}",
+                request.subtest,
+                generatable.join(", ")
             );
         }
 

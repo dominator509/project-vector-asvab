@@ -1,0 +1,59 @@
+Signed content packs: build, verify, install, roll back
+
+REQ-023, REQ-032, REQ-048, REQ-056.
+
+CONTENT_PACK_SPEC.md requires a pack to carry a manifest, a schema version, a
+compatible application range, a source ledger, licences, the items and a detached
+signature, and it requires installation to verify all of that before atomic
+activation with the previous signed pack left available for rollback. The registry
+table existed and nothing ever wrote to it: no pack was ever built, installed or
+rolled back in the product. Now one is.
+
+- `crates/vector-application/src/packs.rs`: assemble a pack from everything a store
+  serves; verify a received pack (format, schema, app range, content hash, Ed25519
+  signature against a trusted signer, provenance completeness, prohibited-source
+  scan over the licences, answer consistency, reviewer state, duplicate content,
+  proof kind); install it in one transaction; roll it back.
+- `migrations/006_content_pack_manifest.sql`: the registry records the signer,
+  content hash, schema version, manifest as received and item count, and a trigger
+  refuses an `active` row that carries none of them.
+- `migrations/007_content_pack_items.sql`: pack membership is its own relation.
+- Rows walk the documented lifecycle on install (draft to active, with audit rows),
+  because the schema refuses an item that skips it and an installer is not exempt.
+- `pack-keygen`, `pack-build`, `pack-install`, `pack-list`, `pack-rollback` in
+  `vector-tools`, all documented in COMMANDS.md.
+
+The pack built from the real corpus: 7,016 items, 28 sources, 13,741,945 bytes,
+Ed25519-signed. Installed into an empty store it delivered every item, 28 vault rows
+and 9,016 citations, and the serving path offered all 7,016. Pack digests are recorded
+in evidence; the pack files are not committed, because they are derived from the store
+and rebuildable with one command.
+
+Three defects, all found by exercising packs against the real corpus rather than an
+empty store:
+
+1. A second version that repackaged the same content withdrew it. Serving keyed off
+   `content_items.pack_id`, so v2 either stole v1's items or left them behind, and
+   either way the corpus went from 7,016 servable items to none. Membership is now a
+   relation of its own; `pack_id` stays the provenance fact it always was.
+2. A pack that overlapped the corpus failed on a foreign key: two packs built
+   independently carry the same content under different item ids, and membership was
+   recorded against ids that did not exist locally. Membership and citations now name
+   the local row, mapped by content hash.
+3. Rollback could reinstate a deliberately quarantined version; it now considers
+   superseded versions only.
+
+The signing key is not in the repository. The first attempt wrote it under
+`.agent/evidence/`, which would have committed a private key to a public repository;
+it was removed and regenerated at `%APPDATA%\com.vector.app\keys\`.
+
+Tests: 15 unit tests for the refusals that need a pack whose stored fields disagree
+with its signature, 16 integration tests for the public path including overlap,
+repackage, rollback, and that a refused pack writes nothing at all.
+
+Gates: all eight exit 0. 875 Rust tests across 69 binaries, 205 frontend tests, 34 E2E.
+Evidence: `.agent/evidence/EP-007/content-corpus/ROUND-15-REPORT.md`.
+
+Not done, and named rather than implied: packs are reachable from no interface and no
+Tauri command yet, Shop and Auto Information still have no items, and the pack schema
+carries neither the curriculum graph nor the calibration metadata the spec lists.
