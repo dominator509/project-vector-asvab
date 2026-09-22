@@ -275,6 +275,75 @@ fn verification_refuses_an_out_of_range_correct_index() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// The caller's quality filter
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a_filter_that_accepts_nothing_yields_no_items() {
+    let t = fixture();
+    let items = t.build_items_filtered(5, 1, |_, _| false);
+    assert!(
+        items.is_empty(),
+        "a rejecting filter must produce an empty corpus rather than falling \
+         back to unfiltered pairs: {} item(s)",
+        items.len()
+    );
+}
+
+#[test]
+fn the_filter_is_consulted_with_the_headword_and_the_candidate() {
+    let t = fixture();
+    let mut seen: Vec<(String, String)> = Vec::new();
+    let items = t.build_items_filtered(4, 2, |headword, candidate| {
+        seen.push((headword.to_string(), candidate.to_string()));
+        true
+    });
+    assert!(!items.is_empty());
+    assert!(!seen.is_empty(), "the filter must actually be consulted");
+    for item in &items {
+        let correct = item.options[item.correct_index].clone();
+        assert!(
+            seen.iter()
+                .any(|(head, candidate)| head == &item.headword && candidate == &correct),
+            "{} -> {correct} was built without the filter seeing the pair",
+            item.headword
+        );
+    }
+}
+
+#[test]
+fn a_selective_filter_changes_which_pairs_are_used() {
+    let t = fixture();
+    let items = t.build_items_filtered(6, 3, |_, candidate| {
+        candidate.to_lowercase().starts_with('b')
+    });
+    assert!(
+        !items.is_empty(),
+        "the filter should still admit some pairs"
+    );
+    for item in &items {
+        let correct = &item.options[item.correct_index];
+        assert!(
+            correct.to_lowercase().starts_with('b'),
+            "{} -> {correct} slipped past the filter",
+            item.headword
+        );
+    }
+}
+
+#[test]
+fn filtered_items_still_verify_against_the_source() {
+    let t = fixture();
+    let items = t.build_items_filtered(5, 4, |_, candidate| {
+        candidate.to_lowercase().starts_with('b')
+    });
+    for item in &items {
+        verify(item, &t)
+            .unwrap_or_else(|failure| panic!("{} failed verification: {failure}", item.headword));
+    }
+}
+
 /// The verifier must not depend on the builder having produced the item.
 #[test]
 fn a_hand_built_item_with_a_wrong_answer_is_rejected() {

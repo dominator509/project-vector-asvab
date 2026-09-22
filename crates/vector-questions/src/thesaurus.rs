@@ -363,6 +363,22 @@ impl Thesaurus {
     /// Deterministic from `seed`: the same seed yields the same items, so a pack
     /// can be regenerated and its hashes re-derived rather than trusted.
     pub fn build_items(&self, count: usize, seed: u64) -> Vec<WkItem> {
+        self.build_items_filtered(count, seed, |_, _| true)
+    }
+
+    /// Build items, keeping only headword/synonym pairs the caller accepts.
+    ///
+    /// The filter is how the dictionary layer tightens quality without this
+    /// module needing to know that a dictionary exists. It receives the headword
+    /// and the candidate synonym; returning `false` rejects the pair.
+    ///
+    /// `FnMut` rather than `Fn` so a caller can accumulate statistics while
+    /// filtering, which is what makes a filter's decisions assertable in a test
+    /// instead of merely observable through which items appear.
+    pub fn build_items_filtered<F>(&self, count: usize, seed: u64, mut accept: F) -> Vec<WkItem>
+    where
+        F: FnMut(&str, &str) -> bool,
+    {
         let mut rng = Rng::new(seed);
         let mut items: Vec<WkItem> = Vec::new();
         let mut seen_hashes: std::collections::HashSet<String> = std::collections::HashSet::new();
@@ -373,7 +389,7 @@ impl Thesaurus {
             if items.len() >= count {
                 break;
             }
-            let Some(item) = self.build_one(&mut rng, seed) else {
+            let Some(item) = self.build_one(&mut rng, seed, &mut accept) else {
                 continue;
             };
             if seen_hashes.insert(item.content_hash()) {
@@ -383,7 +399,10 @@ impl Thesaurus {
         items
     }
 
-    fn build_one(&self, rng: &mut Rng, seed: u64) -> Option<WkItem> {
+    fn build_one<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<WkItem>
+    where
+        F: FnMut(&str, &str) -> bool,
+    {
         let entry = &self.entries[(rng.range(0, self.entries.len() as i64 - 1)) as usize];
 
         // A headword that is a phrase or a proper noun does not make a vocabulary
@@ -398,8 +417,11 @@ impl Thesaurus {
             // Mutual listing, so the item teaches a real synonym pair rather than
             // one of Moby's loose associations. See `is_mutual`.
             .filter(|word| self.is_mutual(&entry.headword, word))
+            // The caller's own quality bar, applied last so it only ever sees
+            // pairs that already cleared the source-derived checks.
+            .filter(|word| accept(&entry.headword, word))
             .collect();
-        if candidates.len() < 3 {
+        if candidates.is_empty() {
             return None;
         }
 

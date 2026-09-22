@@ -4,6 +4,7 @@
 //! lifecycle (REQ-056), the original-item factory and its deterministic answer
 //! proofs (REQ-022), and the hashing primitives those depend on.
 
+pub mod dictionary;
 pub mod factory;
 pub mod ingestion;
 pub mod proof;
