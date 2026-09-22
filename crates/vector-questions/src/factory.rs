@@ -67,7 +67,7 @@ impl Rng {
 
     /// Fisher-Yates shuffle, so option order varies with the seed and a learner
     /// cannot memorise "the answer is always B".
-    fn shuffle<T>(&mut self, items: &mut [T]) {
+    pub(crate) fn shuffle<T>(&mut self, items: &mut [T]) {
         for i in (1..items.len()).rev() {
             let j = (self.next_u64() % (i as u64 + 1)) as usize;
             items.swap(i, j);

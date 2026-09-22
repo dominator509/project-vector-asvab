@@ -8,6 +8,7 @@ pub mod factory;
 pub mod ingestion;
 pub mod proof;
 pub mod provenance;
+pub mod thesaurus;
 
 pub fn name() -> &'static str {
     "vector-questions"
