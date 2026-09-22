@@ -1,0 +1,898 @@
+//! The original-item factory (REQ-022, `QUESTION_FACTORY.md`).
+//!
+//! This is the half of REQ-022 that was never built. `crates/vector-questions`
+//! could decide what content was *permitted* to enter the corpus, but nothing
+//! produced content, so the product shipped three literal questions.
+//!
+//! ## Why generation rather than authoring
+//!
+//! Arithmetic Reasoning and Mathematics Knowledge are computable, and a
+//! generated item can carry a proof that a machine can check without trusting
+//! the generator: the item declares an arithmetic expression, and
+//! [`crate::proof::verify_answer`] re-evaluates that expression text through a
+//! separate parser. An authored item can only carry a reviewer's assertion.
+//!
+//! ## Sourcing
+//!
+//! Templates here are **original**. They encode the *problem types* that
+//! Arithmetic Reasoning and Mathematics Knowledge assess -- rate, proportion,
+//! percentage, simple interest, perimeter, work rate, linear equations, slope,
+//! exponent rules, volume -- which are mathematical methods and therefore not
+//! protected expression. No template reproduces a published question, and none
+//! may: see `reference/asvab-test-specification.md` for the sourcing rules and
+//! the programme's own statement that third parties do not hold real items.
+//!
+//! ## Determinism
+//!
+//! Generation is seeded and reproducible. The same seed yields a byte-identical
+//! item, so a pack can be regenerated and its hashes re-derived rather than
+//! trusted -- which is what makes a generated corpus auditable.
+
+use std::collections::BTreeMap;
+
+use crate::proof;
+
+/// SplitMix64. Small, fast, and fully deterministic from a `u64` seed, which is
+/// what reproducibility requires; a cryptographic generator would be slower and,
+/// worse, not reproducible across platforms without pinning an algorithm anyway.
+pub struct Rng(u64);
+
+impl Rng {
+    pub fn new(seed: u64) -> Self {
+        Self(seed)
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
+        let mut z = self.0;
+        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+        z ^ (z >> 31)
+    }
+
+    /// Uniform-ish integer in `low..=high`. Panics if the range is empty, which
+    /// is a programming error in a template rather than a runtime condition.
+    pub fn range(&mut self, low: i64, high: i64) -> i64 {
+        assert!(low <= high, "empty range {low}..={high}");
+        let span = (high - low) as u64 + 1;
+        low + (self.next_u64() % span) as i64
+    }
+
+    /// Pick one element. Panics on an empty slice for the same reason.
+    pub fn pick<'a, T>(&mut self, items: &'a [T]) -> &'a T {
+        assert!(!items.is_empty(), "cannot pick from an empty slice");
+        let index = (self.next_u64() % items.len() as u64) as usize;
+        &items[index]
+    }
+
+    /// Fisher-Yates shuffle, so option order varies with the seed and a learner
+    /// cannot memorise "the answer is always B".
+    fn shuffle<T>(&mut self, items: &mut [T]) {
+        for i in (1..items.len()).rev() {
+            let j = (self.next_u64() % (i as u64 + 1)) as usize;
+            items.swap(i, j);
+        }
+    }
+}
+
+/// One generated item, before it is given provenance and a lifecycle state.
+#[derive(Debug, Clone, PartialEq)]
+pub struct GeneratedItem {
+    pub subtest: String,
+    pub objective_id: String,
+    pub template_id: &'static str,
+    pub stem: String,
+    /// Options in presentation order.
+    pub options: Vec<String>,
+    pub correct_index: usize,
+    /// The deterministic proof: an expression and the answer it must evaluate to.
+    pub expression: String,
+    pub answer: String,
+    /// Rationale per wrong option index, naming the misconception it represents
+    /// (`QUESTION_FACTORY.md` step 5).
+    pub distractor_rationales: BTreeMap<usize, String>,
+    pub difficulty: f64,
+    pub seed: u64,
+}
+
+impl GeneratedItem {
+    /// A stable content hash over the item's answerable content.
+    ///
+    /// Deliberately excludes `seed` and `difficulty`: two items that ask the
+    /// same question with the same options are the same item for deduplication
+    /// purposes even if they were reached from different seeds.
+    pub fn content_hash(&self) -> String {
+        let mut canonical = String::new();
+        canonical.push_str(&self.subtest);
+        canonical.push('\u{1}');
+        canonical.push_str(&self.stem);
+        canonical.push('\u{1}');
+        for option in &self.options {
+            canonical.push_str(option);
+            canonical.push('\u{2}');
+        }
+        canonical.push('\u{1}');
+        canonical.push_str(&self.correct_index.to_string());
+        crate::provenance::ContentHash::of_text(&canonical)
+            .as_str()
+            .to_string()
+    }
+}
+
+/// Why a generated item is not acceptable.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VerificationFailure {
+    /// The proof expression did not evaluate to the declared answer.
+    ProofRejected(String),
+    /// Fewer than two options, so it is not a question.
+    TooFewOptions(usize),
+    /// `correct_index` is outside the option list.
+    CorrectIndexOutOfRange { index: usize, options: usize },
+    /// The option at `correct_index` is not the proven answer.
+    CorrectOptionDisagreesWithProof { option: String, answer: String },
+    /// Two options are the same, so the item has no unique answer.
+    DuplicateOption(String),
+    /// A wrong option is numerically equal to the correct answer.
+    DistractorEqualsAnswer { index: usize, value: String },
+    /// Rationales do not cover exactly the wrong options.
+    RationaleCoverage {
+        missing: Vec<usize>,
+        extra: Vec<usize>,
+    },
+    /// The stem or an option is blank.
+    Blank(String),
+}
+
+impl std::fmt::Display for VerificationFailure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            VerificationFailure::ProofRejected(reason) => {
+                write!(f, "proof rejected: {reason}")
+            }
+            VerificationFailure::TooFewOptions(n) => {
+                write!(f, "an item needs at least 2 options, found {n}")
+            }
+            VerificationFailure::CorrectIndexOutOfRange { index, options } => {
+                write!(f, "correct_index {index} is outside {options} options")
+            }
+            VerificationFailure::CorrectOptionDisagreesWithProof { option, answer } => write!(
+                f,
+                "the option at correct_index is {option:?} but the proof gives {answer:?}"
+            ),
+            VerificationFailure::DuplicateOption(option) => {
+                write!(f, "option {option:?} appears more than once")
+            }
+            VerificationFailure::DistractorEqualsAnswer { index, value } => write!(
+                f,
+                "distractor at index {index} is {value:?}, equal to the answer"
+            ),
+            VerificationFailure::RationaleCoverage { missing, extra } => write!(
+                f,
+                "rationales missing for {missing:?} and unexpected for {extra:?}"
+            ),
+            VerificationFailure::Blank(what) => write!(f, "{what} is blank"),
+        }
+    }
+}
+
+impl std::error::Error for VerificationFailure {}
+
+/// A candidate item as a template produces it, before option assembly.
+struct Candidate {
+    stem: String,
+    expression: String,
+    correct: i64,
+    /// Wrong answers paired with the misconception each one represents.
+    distractors: Vec<(i64, String)>,
+    difficulty: f64,
+}
+
+struct Template {
+    id: &'static str,
+    subtest: &'static str,
+    objective_id: &'static str,
+    build: fn(&mut Rng) -> Option<Candidate>,
+}
+
+/// One misconception: a wrong value and why a learner arrives at it.
+///
+/// `i64` rather than `i128`: template parameters are drawn from small ranges, so
+/// the largest intermediate value here is a few thousand. The proof evaluator
+/// still works in `i128` because it accepts expression text from anywhere.
+fn misconception(value: i64, why: &str) -> (i64, String) {
+    (value, why.to_string())
+}
+
+fn ar_rate_pages(rng: &mut Rng) -> Option<Candidate> {
+    let rate = rng.range(6, 40);
+    let hours = rng.range(2, 12);
+    let correct = rate * hours * 60;
+    Some(Candidate {
+        stem: format!(
+            "A printer produces {rate} pages per minute. How many pages does it \
+             produce in {hours} hours?"
+        ),
+        expression: format!("{rate} * {hours} * 60"),
+        correct,
+        distractors: vec![
+            misconception(
+                rate * hours,
+                "Multiplied by the number of hours without converting hours to minutes.",
+            ),
+            misconception(
+                rate * 60,
+                "Used one hour instead of the stated number of hours.",
+            ),
+            misconception(
+                rate * hours * 100,
+                "Treated each hour as 100 minutes instead of 60.",
+            ),
+        ],
+        difficulty: -0.5,
+    })
+}
+
+fn ar_percent_of(rng: &mut Rng) -> Option<Candidate> {
+    let percent = *rng.pick(&[5_i64, 10, 15, 20, 25, 40, 50, 60, 75]);
+    let number = rng.range(2, 40) * 20;
+    if (number * percent) % 100 != 0 {
+        return None;
+    }
+    let correct = number * percent / 100;
+    Some(Candidate {
+        stem: format!("What is {percent}% of {number}?"),
+        expression: format!("({number} * {percent}) / 100"),
+        correct,
+        distractors: vec![
+            misconception(
+                number * percent / 10,
+                "Shifted the decimal point one place too few.",
+            ),
+            misconception(
+                number + percent,
+                "Added the percentage instead of taking a part of it.",
+            ),
+            misconception(
+                number - correct,
+                "Subtracted the part from the whole instead of reporting the part.",
+            ),
+        ],
+        difficulty: -0.8,
+    })
+}
+
+fn ar_unit_price(rng: &mut Rng) -> Option<Candidate> {
+    let count = rng.range(2, 12);
+    let unit = rng.range(3, 25);
+    let wanted = count + rng.range(1, 9);
+    let given_cost = count * unit;
+    let correct = wanted * unit;
+    Some(Candidate {
+        stem: format!(
+            "If {count} identical items cost {given_cost} dollars, how much do \
+             {wanted} of the same items cost?"
+        ),
+        expression: format!("{given_cost} / {count} * {wanted}"),
+        correct,
+        distractors: vec![
+            misconception(
+                given_cost * wanted,
+                "Multiplied by the new quantity without first finding the unit price.",
+            ),
+            misconception(
+                given_cost + wanted,
+                "Added the two quantities instead of scaling.",
+            ),
+            misconception(unit, "Reported the price of one item instead of the total."),
+        ],
+        difficulty: 0.0,
+    })
+}
+
+fn ar_average_sum(rng: &mut Rng) -> Option<Candidate> {
+    let count = rng.range(4, 9);
+    let average = rng.range(12, 95);
+    let correct = count * average;
+    Some(Candidate {
+        stem: format!(
+            "The average of {count} numbers is {average}. What is the sum of the \
+             numbers?"
+        ),
+        expression: format!("{count} * {average}"),
+        correct,
+        distractors: vec![
+            misconception(average, "Reported the average rather than the sum."),
+            misconception(
+                count + average,
+                "Added the count to the average instead of multiplying.",
+            ),
+            misconception(correct * 2, "Multiplied by twice the count."),
+        ],
+        difficulty: -0.3,
+    })
+}
+
+fn ar_simple_interest(rng: &mut Rng) -> Option<Candidate> {
+    let principal = rng.range(2, 50) * 100;
+    let rate = *rng.pick(&[2_i64, 3, 4, 5, 6, 8]);
+    let years = rng.range(2, 7);
+    let correct = principal * rate * years / 100;
+    // The "shifted the decimal" distractor must be exactly one tenth of the
+    // answer. Computing it as `principal * rate * years / 1000` would truncate
+    // whenever the numerator is not a multiple of 1000, and the option would then
+    // not be the value its own rationale describes.
+    if correct % 10 != 0 {
+        return None;
+    }
+    Some(Candidate {
+        stem: format!(
+            "A savings account holds {principal} dollars at {rate}% simple \
+             interest per year. How much interest is earned in {years} years?"
+        ),
+        expression: format!("({principal} * {rate} * {years}) / 100"),
+        correct,
+        distractors: vec![
+            misconception(
+                principal * rate / 100,
+                "Computed one year of interest instead of the full term.",
+            ),
+            misconception(correct / 10, "Shifted the decimal point one place too far."),
+            misconception(
+                principal + correct,
+                "Reported the balance including the principal rather than the interest.",
+            ),
+        ],
+        difficulty: 0.4,
+    })
+}
+
+fn ar_rectangle_perimeter(rng: &mut Rng) -> Option<Candidate> {
+    let length = rng.range(5, 40);
+    let width = rng.range(3, length - 1);
+    let correct = 2 * (length + width);
+    Some(Candidate {
+        stem: format!(
+            "A rectangle is {length} centimetres long and {width} centimetres \
+             wide. What is its perimeter?"
+        ),
+        expression: format!("2 * ({length} + {width})"),
+        correct,
+        distractors: vec![
+            misconception(
+                length * width,
+                "Computed the area instead of the perimeter.",
+            ),
+            misconception(length + width, "Found half the perimeter."),
+            misconception(2 * length + width, "Doubled only one of the two sides."),
+        ],
+        difficulty: -1.0,
+    })
+}
+
+fn ar_triangle_area(rng: &mut Rng) -> Option<Candidate> {
+    // Both even, so the product is divisible by 4 and the "halved twice"
+    // misconception is an integer rather than a fraction.
+    let base = rng.range(3, 20) * 2;
+    let height = rng.range(3, 20) * 2;
+    let correct = base * height / 2;
+    Some(Candidate {
+        stem: format!(
+            "A triangle has a base of {base} metres and a height of {height} \
+             metres. What is its area in square metres?"
+        ),
+        expression: format!("({base} * {height}) / 2"),
+        correct,
+        distractors: vec![
+            misconception(base * height, "Forgot to halve the product."),
+            misconception(
+                base + height,
+                "Added the dimensions instead of multiplying them.",
+            ),
+            misconception(base * height / 4, "Halved the product twice."),
+        ],
+        difficulty: -0.6,
+    })
+}
+
+fn ar_work_rate(rng: &mut Rng) -> Option<Candidate> {
+    // a*b/(a+b) is the combined time; it is only an integer for some pairs, and
+    // a fractional answer would not survive an exact-integer proof.
+    let first = rng.range(2, 12);
+    let second = rng.range(2, 12);
+    if first == second {
+        return None;
+    }
+    let numerator = first * second;
+    let denominator = first + second;
+    if numerator % denominator != 0 {
+        return None;
+    }
+    let correct = numerator / denominator;
+    if correct == 0 {
+        return None;
+    }
+    // "Averaged the two times" is only an integer when the sum is even; an odd
+    // sum would truncate and the option would not be the average it claims.
+    if denominator % 2 != 0 {
+        return None;
+    }
+    Some(Candidate {
+        stem: format!(
+            "One worker can finish a job in {first} days and another can finish \
+             the same job in {second} days. Working together at those rates, how \
+             many days do they take?"
+        ),
+        expression: format!("({first} * {second}) / ({first} + {second})"),
+        correct,
+        distractors: vec![
+            misconception(
+                first + second,
+                "Added the two times instead of combining rates.",
+            ),
+            misconception(
+                denominator / 2,
+                "Averaged the two times rather than combining the rates.",
+            ),
+            misconception(
+                numerator,
+                "Multiplied the times instead of combining rates.",
+            ),
+        ],
+        difficulty: 1.4,
+    })
+}
+
+fn mk_linear_solve(rng: &mut Rng) -> Option<Candidate> {
+    let coefficient = rng.range(2, 9);
+    let solution = rng.range(2, 12);
+    // The constant is a multiple of the coefficient so that "divided without
+    // subtracting first" is an exact integer. Choosing them independently made
+    // that distractor a truncated value that no longer matched its rationale.
+    let constant = coefficient * rng.range(1, 4);
+    let total = coefficient * solution + constant;
+    Some(Candidate {
+        stem: format!("If {coefficient}x + {constant} = {total}, what is the value of x?"),
+        expression: format!("({total} - {constant}) / {coefficient}"),
+        correct: solution,
+        distractors: vec![
+            misconception(
+                total - constant,
+                "Found the value of the term containing x rather than x itself.",
+            ),
+            misconception(
+                total / coefficient,
+                "Divided by the coefficient before subtracting the constant.",
+            ),
+            misconception(
+                total - constant - coefficient,
+                "Subtracted the coefficient as well as the constant.",
+            ),
+        ],
+        difficulty: 0.2,
+    })
+}
+
+fn mk_evaluate_expression(rng: &mut Rng) -> Option<Candidate> {
+    let coefficient = rng.range(2, 9);
+    let mut x = rng.range(2, 10);
+    if x == coefficient {
+        // "9x" evaluated at x = 9 reads like a misprint rather than a question.
+        // x is at most 9 here, because the coefficient is at most 9.
+        x += 1;
+    }
+    let constant = rng.range(1, 15);
+    let correct = coefficient * x + constant;
+    Some(Candidate {
+        stem: format!("If x = {x}, what is the value of {coefficient}x + {constant}?"),
+        expression: format!("{coefficient} * {x} + {constant}"),
+        correct,
+        distractors: vec![
+            misconception(
+                coefficient * (x + constant),
+                "Added the constant to x before multiplying.",
+            ),
+            misconception(coefficient * x, "Ignored the constant term."),
+            misconception(
+                coefficient + x + constant,
+                "Added the terms instead of multiplying.",
+            ),
+        ],
+        difficulty: -0.4,
+    })
+}
+
+fn mk_slope(rng: &mut Rng) -> Option<Candidate> {
+    let slope = rng.range(1, 5);
+    let run = rng.range(2, 6);
+    let rise = slope * run;
+    let x1 = rng.range(1, 9);
+    let y1 = rng.range(1, 9);
+    let (x2, y2) = (x1 + run, y1 + rise);
+    Some(Candidate {
+        stem: format!("A line passes through ({x1}, {y1}) and ({x2}, {y2}). What is its slope?"),
+        expression: format!("({y2} - {y1}) / ({x2} - {x1})"),
+        correct: slope,
+        distractors: vec![
+            misconception(rise, "Used the vertical change alone."),
+            misconception(run, "Used the horizontal change alone."),
+            misconception(rise + run, "Added the two changes together."),
+        ],
+        difficulty: 0.6,
+    })
+}
+
+fn mk_exponent_power(rng: &mut Rng) -> Option<Candidate> {
+    let base = *rng.pick(&[2_i64, 3, 5]);
+    let inner = rng.range(2, 4);
+    let outer = rng.range(2, 4);
+    let correct = inner * outer;
+    let mut raised = 1_i64;
+    for _ in 0..outer {
+        raised *= inner;
+    }
+    let mut reversed = 1_i64;
+    for _ in 0..inner {
+        reversed *= outer;
+    }
+    Some(Candidate {
+        stem: format!(
+            "The expression ({base}^{inner})^{outer} can be written as {base} raised \
+             to what power?"
+        ),
+        expression: format!("{inner} * {outer}"),
+        correct,
+        distractors: vec![
+            misconception(
+                inner + outer,
+                "Added the exponents instead of multiplying them.",
+            ),
+            misconception(
+                raised,
+                "Raised one exponent to the other instead of multiplying.",
+            ),
+            misconception(reversed, "Raised the outer exponent to the inner one."),
+        ],
+        difficulty: 0.8,
+    })
+}
+
+fn mk_volume_box(rng: &mut Rng) -> Option<Candidate> {
+    let length = rng.range(2, 12);
+    let width = rng.range(2, 12);
+    let height = rng.range(2, 12);
+    let correct = length * width * height;
+    Some(Candidate {
+        stem: format!(
+            "A rectangular box measures {length} by {width} by {height} \
+             centimetres. What is its volume in cubic centimetres?"
+        ),
+        expression: format!("{length} * {width} * {height}"),
+        correct,
+        distractors: vec![
+            misconception(
+                length * width + height,
+                "Added the third dimension instead of multiplying.",
+            ),
+            // Total edge length is 4(l + w + h); the previous 2(l + w + h) was
+            // neither the edge sum nor anything else a learner would compute.
+            misconception(
+                4 * (length + width + height),
+                "Summed the twelve edges instead of multiplying the dimensions.",
+            ),
+            misconception(length + width + height, "Added all three dimensions."),
+        ],
+        difficulty: -0.7,
+    })
+}
+
+fn mk_fraction_of(rng: &mut Rng) -> Option<Candidate> {
+    let denominator = *rng.pick(&[2_i64, 3, 4, 5, 8]);
+    let numerator = rng.range(1, denominator - 1);
+    let total = denominator * rng.range(4, 40);
+    let correct = total * numerator / denominator;
+    // "Inverted the fraction" is `total * denominator / numerator`; it is only
+    // an integer when numerator divides the product, so reject otherwise rather
+    // than truncating and mislabelling the result.
+    let inverted_numerator = total * denominator;
+    if inverted_numerator % numerator != 0 {
+        return None;
+    }
+    Some(Candidate {
+        stem: format!("What is {numerator}/{denominator} of {total}?"),
+        expression: format!("({total} * {numerator}) / {denominator}"),
+        correct,
+        distractors: vec![
+            misconception(
+                total / denominator,
+                "Found one part rather than the stated number of parts.",
+            ),
+            misconception(inverted_numerator / numerator, "Inverted the fraction."),
+            misconception(total - correct, "Subtracted the part from the whole."),
+        ],
+        difficulty: -0.2,
+    })
+}
+
+const TEMPLATES: &[Template] = &[
+    Template {
+        id: "ar.rate_pages",
+        subtest: "AR",
+        objective_id: "OBJ-AR-RATE-01",
+        build: ar_rate_pages,
+    },
+    Template {
+        id: "ar.percent_of",
+        subtest: "AR",
+        objective_id: "OBJ-AR-PERCENT-01",
+        build: ar_percent_of,
+    },
+    Template {
+        id: "ar.unit_price",
+        subtest: "AR",
+        objective_id: "OBJ-AR-PROPORTION-01",
+        build: ar_unit_price,
+    },
+    Template {
+        id: "ar.average_sum",
+        subtest: "AR",
+        objective_id: "OBJ-AR-AVERAGE-01",
+        build: ar_average_sum,
+    },
+    Template {
+        id: "ar.simple_interest",
+        subtest: "AR",
+        objective_id: "OBJ-AR-INTEREST-01",
+        build: ar_simple_interest,
+    },
+    Template {
+        id: "ar.rectangle_perimeter",
+        subtest: "AR",
+        objective_id: "OBJ-AR-GEOMETRY-01",
+        build: ar_rectangle_perimeter,
+    },
+    Template {
+        id: "ar.triangle_area",
+        subtest: "AR",
+        objective_id: "OBJ-AR-GEOMETRY-02",
+        build: ar_triangle_area,
+    },
+    Template {
+        id: "ar.work_rate",
+        subtest: "AR",
+        objective_id: "OBJ-AR-RATE-02",
+        build: ar_work_rate,
+    },
+    Template {
+        id: "mk.linear_solve",
+        subtest: "MK",
+        objective_id: "OBJ-MK-ALGEBRA-01",
+        build: mk_linear_solve,
+    },
+    Template {
+        id: "mk.evaluate_expression",
+        subtest: "MK",
+        objective_id: "OBJ-MK-ALGEBRA-02",
+        build: mk_evaluate_expression,
+    },
+    Template {
+        id: "mk.slope",
+        subtest: "MK",
+        objective_id: "OBJ-MK-COORDINATE-01",
+        build: mk_slope,
+    },
+    Template {
+        id: "mk.exponent_power",
+        subtest: "MK",
+        objective_id: "OBJ-MK-EXPONENT-01",
+        build: mk_exponent_power,
+    },
+    Template {
+        id: "mk.volume_box",
+        subtest: "MK",
+        objective_id: "OBJ-MK-GEOMETRY-01",
+        build: mk_volume_box,
+    },
+    Template {
+        id: "mk.fraction_of",
+        subtest: "MK",
+        objective_id: "OBJ-MK-FRACTION-01",
+        build: mk_fraction_of,
+    },
+];
+
+/// Templates available for a subtest.
+pub fn templates_for(subtest: &str) -> Vec<&'static str> {
+    TEMPLATES
+        .iter()
+        .filter(|t| t.subtest == subtest)
+        .map(|t| t.id)
+        .collect()
+}
+
+/// Assemble a candidate into an item, or reject it.
+///
+/// Rejection is normal and expected: a template can draw parameters whose
+/// distractors collide with the answer or with each other, and an item with a
+/// duplicate option has no unique answer. The caller retries with a new seed.
+fn assemble(
+    template: &Template,
+    candidate: Candidate,
+    mut rng: Rng,
+    seed: u64,
+) -> Option<GeneratedItem> {
+    let mut entries: Vec<(i64, Option<String>)> = Vec::new();
+    entries.push((candidate.correct, None));
+    for (value, why) in candidate.distractors {
+        // A distractor equal to the answer, or repeated, would make the item
+        // ambiguous. Dropping it here keeps generation total rather than making
+        // every template responsible for arithmetic collisions.
+        if entries.iter().any(|(existing, _)| *existing == value) {
+            continue;
+        }
+        entries.push((value, Some(why)));
+    }
+    if entries.len() != 4 {
+        return None;
+    }
+
+    rng.shuffle(&mut entries);
+
+    let options: Vec<String> = entries.iter().map(|(v, _)| v.to_string()).collect();
+    let correct_index = entries
+        .iter()
+        .position(|(_, why)| why.is_none())
+        .expect("the correct entry is present and unlabelled");
+    let mut distractor_rationales = BTreeMap::new();
+    for (index, (_, why)) in entries.iter().enumerate() {
+        if let Some(why) = why {
+            distractor_rationales.insert(index, why.clone());
+        }
+    }
+
+    Some(GeneratedItem {
+        subtest: template.subtest.to_string(),
+        objective_id: template.objective_id.to_string(),
+        template_id: template.id,
+        stem: candidate.stem,
+        options,
+        correct_index,
+        expression: candidate.expression,
+        answer: candidate.correct.to_string(),
+        distractor_rationales,
+        difficulty: candidate.difficulty,
+        seed,
+    })
+}
+
+/// Generate one item for a subtest, or `None` if every attempt was rejected.
+///
+/// Attempts derive new seeds from the original, so a seed that cannot produce an
+/// item for one template can still succeed overall, and the whole call remains
+/// reproducible.
+pub fn generate_one(subtest: &str, seed: u64) -> Option<GeneratedItem> {
+    let choices: Vec<&Template> = TEMPLATES.iter().filter(|t| t.subtest == subtest).collect();
+    if choices.is_empty() {
+        return None;
+    }
+    for attempt in 0..64_u64 {
+        let attempt_seed = seed ^ attempt.wrapping_mul(0x9E37_79B9_7F4A_7C15);
+        let mut rng = Rng::new(attempt_seed);
+        let template = choices[(rng.next_u64() % choices.len() as u64) as usize];
+        let mut build_rng = Rng::new(attempt_seed ^ 0xA5A5_5A5A_1234_5678);
+        if let Some(candidate) = (template.build)(&mut build_rng) {
+            let shuffle_rng = Rng::new(attempt_seed ^ 0x0F0F_F0F0_DEAD_BEEF);
+            if let Some(item) = assemble(template, candidate, shuffle_rng, seed) {
+                return Some(item);
+            }
+        }
+    }
+    None
+}
+
+/// Generate `count` items for a subtest from a base seed.
+///
+/// Items whose content hash repeats an earlier one are skipped rather than
+/// returned, so a batch contains no duplicate questions.
+pub fn generate_many(subtest: &str, count: usize, base_seed: u64) -> Vec<GeneratedItem> {
+    let mut out: Vec<GeneratedItem> = Vec::with_capacity(count);
+    let mut seen = std::collections::HashSet::new();
+    let mut seed = base_seed;
+    let mut attempts = 0;
+    while out.len() < count && attempts < count.saturating_mul(64).max(64) {
+        attempts += 1;
+        seed = seed.wrapping_add(0x9E37_79B9_7F4A_7C15);
+        if let Some(item) = generate_one(subtest, seed) {
+            if seen.insert(item.content_hash()) {
+                out.push(item);
+            }
+        }
+    }
+    out
+}
+
+/// Independently verify a generated item.
+///
+/// The proof is re-derived from the expression text by [`crate::proof`]; this
+/// function never consumes a value the generator computed, so a generator bug
+/// cannot validate itself.
+pub fn verify(item: &GeneratedItem) -> Result<(), VerificationFailure> {
+    if item.stem.trim().is_empty() {
+        return Err(VerificationFailure::Blank("stem".to_string()));
+    }
+    if item.options.len() < 2 {
+        return Err(VerificationFailure::TooFewOptions(item.options.len()));
+    }
+    if item.correct_index >= item.options.len() {
+        return Err(VerificationFailure::CorrectIndexOutOfRange {
+            index: item.correct_index,
+            options: item.options.len(),
+        });
+    }
+
+    let recomputed = proof::verify_answer(&item.expression, &item.answer)
+        .map_err(|e| VerificationFailure::ProofRejected(e.to_string()))?;
+
+    let correct_option = &item.options[item.correct_index];
+    let option_value = correct_option.trim().parse::<i128>().map_err(|_| {
+        VerificationFailure::CorrectOptionDisagreesWithProof {
+            option: correct_option.clone(),
+            answer: recomputed.to_string(),
+        }
+    })?;
+    if option_value != recomputed {
+        return Err(VerificationFailure::CorrectOptionDisagreesWithProof {
+            option: correct_option.clone(),
+            answer: recomputed.to_string(),
+        });
+    }
+
+    for (index, option) in item.options.iter().enumerate() {
+        if option.trim().is_empty() {
+            return Err(VerificationFailure::Blank(format!("option {index}")));
+        }
+        if item.options[..index]
+            .iter()
+            .any(|earlier| earlier == option)
+        {
+            return Err(VerificationFailure::DuplicateOption(option.clone()));
+        }
+        if index != item.correct_index {
+            if let Ok(value) = option.trim().parse::<i128>() {
+                if value == recomputed {
+                    return Err(VerificationFailure::DistractorEqualsAnswer {
+                        index,
+                        value: option.clone(),
+                    });
+                }
+            }
+        }
+    }
+
+    let expected: Vec<usize> = (0..item.options.len())
+        .filter(|i| *i != item.correct_index)
+        .collect();
+    let present: Vec<usize> = item.distractor_rationales.keys().copied().collect();
+    let missing: Vec<usize> = expected
+        .iter()
+        .copied()
+        .filter(|i| !present.contains(i))
+        .collect();
+    let extra: Vec<usize> = present
+        .iter()
+        .copied()
+        .filter(|i| !expected.contains(i))
+        .collect();
+    if !missing.is_empty() || !extra.is_empty() {
+        return Err(VerificationFailure::RationaleCoverage { missing, extra });
+    }
+
+    for (index, rationale) in &item.distractor_rationales {
+        if rationale.trim().is_empty() {
+            return Err(VerificationFailure::Blank(format!(
+                "rationale for option {index}"
+            )));
+        }
+    }
+
+    Ok(())
+}
