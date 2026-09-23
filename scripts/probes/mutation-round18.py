@@ -311,6 +311,39 @@ MUTATIONS = [
         "a manual the reader finds no tools in does not end the run",
     ),
     (
+        "no-measurement-head-rule",
+        PURPOSES,
+        (
+            "    !NOT_A_TOOL_HEAD.contains(&words[words.len() - 1].to_lowercase().as_str())",
+            "    true || !NOT_A_TOOL_HEAD.contains(&words[words.len() - 1].to_lowercase().as_str())",
+        ),
+        "vector-questions",
+        "a_measurement_or_a_reference_back_is_not_a_name",
+        "a measurement or a reference back is not a name",
+    ),
+    (
+        "no-figure-label-rule",
+        PURPOSES,
+        (
+            "        if bare.chars().count() == 1 && bare.chars().all(|c| c.is_lowercase()) && bare != \"a\" && bare != \"i\"",
+            "        if false",
+        ),
+        "vector-questions",
+        "a_measurement_or_a_reference_back_is_not_a_name",
+        "a single letter in a sentence is a figure's label",
+    ),
+    (
+        "no-new-relation-shapes",
+        PURPOSES,
+        (
+            "        \" are arranged to \",\n        \" is arranged to \",",
+            "        \" are arranged to \",",
+        ),
+        "vector-questions",
+        "the_relation_shapes_the_sources_state_are_read",
+        "the shapes the manuals state are read",
+    ),
+    (
         "no-prerequisite-ordering",
         SERVICE,
         (

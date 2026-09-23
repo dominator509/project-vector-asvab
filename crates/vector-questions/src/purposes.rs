@@ -306,10 +306,65 @@ fn names_a_tool(tool: &str) -> bool {
     !NOT_A_TOOL_HEAD.contains(&words[words.len() - 1].to_lowercase().as_str())
 }
 
-/// Head nouns that mean a "name" describes a class or a method rather than an object.
-const NOT_A_TOOL_HEAD: [&str; 16] = [
-    "type", "types", "kind", "kinds", "method", "methods", "means", "way", "ways", "manner",
-    "purpose", "purposes", "sort", "example", "examples", "instance",
+/// Head nouns that mean a "name" describes a class, a method or a measurement rather than an
+/// object.
+///
+/// The measurement words are here for the same reason as the class nouns: *Modern Machine-Shop
+/// Practice* writes `softened sheet copper about 1/32 inch thick is used to make joints on
+/// surfaces that have been planed`, whose subject ends in the thickness of the copper rather
+/// than in a thing, and the reader named `about inch thick` -- an option no learner can pick
+/// as a tool.
+const NOT_A_TOOL_HEAD: [&str; 46] = [
+    "type",
+    "types",
+    "kind",
+    "kinds",
+    "method",
+    "methods",
+    "means",
+    "way",
+    "ways",
+    "manner",
+    "purpose",
+    "purposes",
+    "sort",
+    "example",
+    "examples",
+    "instance",
+    "class",
+    "classes",
+    // Measurements: `softened sheet copper about 1/32 inch thick` named `about inch thick`.
+    "thick",
+    "thickness",
+    "wide",
+    "width",
+    "deep",
+    "depth",
+    "long",
+    "high",
+    "broad",
+    "diameter",
+    "inch",
+    "inches",
+    "foot",
+    "feet",
+    "yard",
+    "yards",
+    "pound",
+    "pounds",
+    "gallon",
+    "gallons",
+    // Not things: a treatise's own words. `the work is designed to form a complete manual of
+    // reference` named `work`, and `prevent radiation, as, for example, felt, mineral wool,
+    // asbestos` named `non conducting substances`.
+    "work",
+    "works",
+    "substance",
+    "substances",
+    "material",
+    "materials",
+    "tool",
+    "tools",
 ];
 
 /// Words that mean a run of text is a clause or a generalisation rather than a tool's name.
@@ -368,6 +423,14 @@ const NAME_STOP_WORDS: &[&str] = &[
     // `as` leads the same kind of fragment: `The differential, as explained in the preceding
     // paragraph, is to provide for differences in speed` named `as explained`.
     "as",
+    // A qualifier before a measurement: `about 1/32 inch thick`.
+    "about",
+    // `the same device`, `in connection with`, `third class`: the subject is a reference back
+    // into the paragraph rather than a name.
+    "same",
+    "third",
+    "second",
+    "first",
     // The connectives. A name containing one is the tail of a clause the scanner ran
     // together: `catch trough then is used to collect the oil and return it to the sump` names
     // `catch trough then`, and the word `then` is what says so.
@@ -820,11 +883,20 @@ fn describe_named_relation(sentence: &str) -> Option<(String, String)> {
 /// see is content already in the corpus that never becomes an item. `scripts/probes/
 /// description-shapes.py` counts them: in TM 9-8000 alone, beside the 134 sentences written
 /// as `is used to`, the manual writes `is designed to` 66 times, `serves to` 23 times and
-/// `is intended to` three times. The three that are read here all put a bare verb after the
-/// phrase, which is the form the question frame needs -- `The governor serves to control
-/// engine speed` asks and answers exactly as `is used to control engine speed` does.
-/// `serves as` is deliberately not read: its complement is a noun (`the relay serves as a
-/// switch`), and the frames this module builds take a purpose clause.
+/// `is intended to` three times.
+///
+/// Every shape read here puts a bare verb after the phrase, which is the form the question
+/// frame needs -- `The governor serves to control engine speed` asks and answers exactly as
+/// `is used to control engine speed` does. `scripts/probes/relation-shapes.py` counts the ones
+/// that do not, and this list is what survived it: `is employed to` appears 52 times across the
+/// Shop and Auto sources, `is made to` 43 and `is adapted to` 11, while `serves as` (94),
+/// `acts as` (139) and `is provided with` (87) take a *noun* complement and are deliberately
+/// not read -- the frames this module builds take a purpose clause.
+///
+/// `is made to` is deliberately absent despite its count: the manuals also write
+/// `A provision usually is made to install a fuel gage`, whose subject is a provision rather
+/// than a tool, and the reader has no noun test that separates them. A shape that produces
+/// "Which tool is used to install a fuel gage? -- a provision" is worse than an unread one.
 fn describe_by_verb(sentence: &str) -> Option<(String, String)> {
     const VERBS: &[&str] = &[
         " are used for ",
@@ -839,6 +911,18 @@ fn describe_by_verb(sentence: &str) -> Option<(String, String)> {
         " is intended to ",
         " serve to ",
         " serves to ",
+        " are employed to ",
+        " is employed to ",
+        " are employed for ",
+        " is employed for ",
+        " are utilized to ",
+        " is utilized to ",
+        " are adapted to ",
+        " is adapted to ",
+        " are adapted for ",
+        " is adapted for ",
+        " are arranged to ",
+        " is arranged to ",
     ];
     let lower = sentence.to_lowercase();
     let (position, verb) = VERBS
@@ -1031,6 +1115,21 @@ fn carries_scan_damage(text: &str) -> bool {
             && window[1] == '-'
             && window[2].is_whitespace()
             && window[3].is_lowercase()
+        {
+            return true;
+        }
+    }
+
+    // A figure's label: a lower-case letter standing on its own. The manuals number the parts
+    // of a drawing and then refer to them -- `the tool e would cut the [V]-shaped groove i` --
+    // and a sentence that names its own parts that way is describing a picture, not the tool.
+    // `a` and `i` are words, so they are not counted.
+    for word in text.split_whitespace() {
+        let bare = word.trim_matches(|c: char| !c.is_alphabetic());
+        if bare.chars().count() == 1
+            && bare.chars().all(|c| c.is_lowercase())
+            && bare != "a"
+            && bare != "i"
         {
             return true;
         }
@@ -2336,6 +2435,99 @@ The battery is used to store electrical energy for the starting motor.
         // it the subject reads as `idle system`.
         assert!(names.iter().all(|name| *name != "idle system"), "{names:?}");
         assert!(source.purpose_of("diesel fuel").is_none(), "{names:?}");
+    }
+
+    #[test]
+    fn a_measurement_or_a_reference_back_is_not_a_name() {
+        // Verbatim from *Modern Machine-Shop Practice*, the source this round measured and
+        // refused. Each sentence reached a learner-facing option before these rules.
+        let source = parse_purposes(
+            "Softened sheet copper about 1/32 inch thick is used to make joints on surfaces that have been planed.\n\
+             The same device is used to test if the cross slide of the carriage is at a right angle.\n\
+             The work is designed to form a complete manual of reference for all who handle tools.\n\
+             A tool which would be used to cut a thread, the tool e would cut the [V]-shaped groove i.\n\
+             Steel rings are used to line the cylinder openings.\n",
+            "A Test Manual",
+        );
+        let names: Vec<&str> = source
+            .entries()
+            .iter()
+            .map(|entry| entry.tool.as_str())
+            .collect();
+        // A measurement is not a thing: the copper's *thickness* was named.
+        assert!(
+            names.iter().all(|name| !name.ends_with("thick")),
+            "{names:?}"
+        );
+        // A reference back into the paragraph is not a name.
+        assert!(
+            names.iter().all(|name| !name.starts_with("same")),
+            "{names:?}"
+        );
+        // A treatise's own words are not a thing either.
+        assert!(names.iter().all(|name| *name != "work"), "{names:?}");
+        // A sentence that labels the parts of a drawing is describing a picture.
+        assert!(
+            source
+                .entries()
+                .iter()
+                .all(|entry| !entry.purpose.contains("would cut")),
+            "{:?}",
+            source.entries()
+        );
+        // The positive control: the description that names a tool still parses.
+        assert!(source.purpose_of("Steel rings").is_some(), "{names:?}");
+
+        // The rules themselves, asserted where they live, because a sentence can be refused
+        // for more than one reason and a test that only parses sentences cannot say which rule
+        // did the refusing.
+        assert!(
+            !names_a_tool("about inch thick"),
+            "a measurement is not a name"
+        );
+        assert!(
+            !names_a_tool("the same device"),
+            "a reference back is not a name"
+        );
+        assert!(
+            !names_a_tool("steel work"),
+            "a treatise's own word is not a name"
+        );
+        assert!(
+            carries_scan_damage("hold the work at an angle g"),
+            "a single letter is a figure's label"
+        );
+        assert!(
+            !carries_scan_damage("hold the work at an angle"),
+            "a sentence with no label is not damaged"
+        );
+    }
+
+    #[test]
+    fn the_relation_shapes_the_sources_state_are_read() {
+        // Verbatim from TM 9-8000 and *Farm Mechanics*. `is employed to` and `is utilized to`
+        // are how the older manuals state the same relation as `is used to`.
+        let source = parse_purposes(
+            "As the cutting edges are diagonally offset approximately degrees, diagonal pliers are adapted to cutting small objects flush with a surface.\n\
+             A tractor is arranged to pull its load in two different ways, first by the draw bar.\n\
+             Extension bits are used for boring holes larger than one inch.\n\
+             Steel rings are used to line the cylinder openings.\n\
+             Reamers are used to finish the holes after drilling.\n",
+            "A Test Manual",
+        );
+        let names: Vec<&str> = source
+            .entries()
+            .iter()
+            .map(|entry| entry.tool.as_str())
+            .collect();
+        assert!(
+            source.purpose_of("diagonal pliers").is_some(),
+            "`are adapted to` states a purpose: {names:?}"
+        );
+        assert!(
+            source.purpose_of("tractor").is_some(),
+            "`is arranged to` states a purpose: {names:?}"
+        );
     }
 
     #[test]

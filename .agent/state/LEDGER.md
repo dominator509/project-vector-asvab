@@ -317,3 +317,33 @@ track mastery per objective** -- attempts are recorded per item and items carry 
 so per-objective mastery is derivable, and the plan still reasons about subtests while the
 curriculum's finer grain is used only for ordering; GS is one work; the noun-head check and the
 Word Knowledge rare-distractor gap are unchanged.
+
+### Round 23
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| Four more shapes read | `scripts/probes/relation-shapes.py` counts every way the sources state the relation; beside the shapes already read they write `is employed to` 52 times, `is made to` 43, `is adapted to` 11, `is arranged to` 13. Reading `employed`, `utilized`, `adapted` and `arranged` produced real items (*diagonal pliers are adapted to cutting small objects flush with a surface*; *a tractor is arranged to pull its load in two different ways*). `is made to` is deliberately **not** read: `A provision usually is made to install a fuel gage` has a provision for a subject, and a shape that produces "Which tool ...? -- a provision" is worse than an unread one. | `.agent/evidence/EP-007/content-corpus/ROUND-23-REPORT.md` |
+| Three precision rules | A measurement cannot head a name (`about inch thick` from `softened sheet copper about 1/32 inch thick`); a reference back into the paragraph is not a name (`the same device`, `in connection`, `third class`); a figure's label is not part of a sentence (a standalone lower-case letter, as in `the tool e would cut the [V]-shaped groove i`). `work`, `substance`, `class` and `tool` join the head nouns that mean a name describes something other than an object. | `purposes.rs`, `mutation-round18.py` |
+| A source refused, and the count that went down | *Modern Machine-Shop Practice* (Rose, PG #39225, 4.9 MB) was fetched, measured and **refused**: 21 descriptions, 16 items, four still wrong after every rule (`in connection`, `in rods`, `tension`, `Rubber joints` as the answer to "Which tool is used to ...?"). Lower precision than the seven manuals refused in round 18 and the ten in round 20. **Shop Information goes 55 -> 42**: 16 mixed items out, 3 good ones in -- the first round that had to apply the refusal standard to a source already in the corpus. | `ROUND-23-REPORT.md`, `rebuild-corpus.py` |
+| A local vein measured and refused | Webster's 1913 defines 1,463 things by what they are for, which looked like a large Shop Information source already in the repository. The useful subset -- headword in the manuals' vocabulary and a definition opening with a tool-class noun -- is 49 entries, contaminated by etymology (`brake ... an instrument for breaking flax` is about the word's German origin) and by arcana (`odontograph`, `mangle`, `manometer`). Items built from it would quote etymology as claims about tools. | `ROUND-23-REPORT.md` |
+
+Corpus after round 23: 1,949 WK, 1,565 EI, 1,676 PC, 301 GS, **42 SI**, **77 AI** = **5,610
+active items**, 69 evidence records, 7,559 citations, every provenance invariant a zero. Pack
+`core-asvab` was rebuilt and reinstalled at **v4** (5,610 items, 55 sources, content hash
+`sha256:844832a6...`), because a corpus rebuild changes item identities and leaves the previous
+pack's membership describing items that no longer exist.
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; 1,719 Rust tests across
+109 binaries, 211 frontend tests, 36 E2E, packaged live-fire passed against artifact
+`7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf`. **All 29 mutations caught.**
+Verdict unchanged: `CONDITIONAL_EXTERNAL_GATES`.
+
+Still open: **SI 42 and AI 77 remain thin**, and this round lowered SI to raise its precision; the
+sources that would raise both have been measured (Rose refused, the other Gutenberg mechanics
+books yield 0-6 descriptions each, the microfiche manuals stay refused), leaving the
+noun-complement family (`serves as` 94, `acts as` 139, `is provided with` 87) as the next lever --
+it needs a third question frame and a link field on the purpose. **One known bad item** survives
+every rule (`ita size` in *Tools and Their Uses*, subject the steel shank): catching it needs a
+misreading test on short tokens that the probes measured as too blunt for prose, so it is recorded
+the way the two rare Word Knowledge distractors are. The plan still orders by prerequisite without
+tracking mastery per objective, and General Science is still one work.

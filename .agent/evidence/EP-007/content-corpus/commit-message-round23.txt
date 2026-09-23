@@ -1,0 +1,94 @@
+content: four more shapes read, one source refused (REQ-022, REQ-023, REQ-048, REQ-056)
+
+The Shop and Auto manuals state the relation in more ways than the reader knew, and reading four
+more of them produced good items -- and produced four *bad* ones from a source that had no
+business being in the corpus. Shop Information goes from 55 to 42, by design.
+
+## What it adds
+
+**Four more shapes.** `scripts/probes/relation-shapes.py` counts every verb phrase these sources
+state "this is what the thing is for" with, including the ones the reader cannot see. Beside the
+shapes already read, they write `is employed to` 52 times, `is made to` 43, `is adapted to` 11 and
+`is arranged to` 13 -- all with a bare verb after the phrase, which is the form the question frame
+needs. Reading `employed`, `utilized`, `adapted` and `arranged` produced real items: *diagonal
+pliers are adapted to cutting small objects flush with a surface* (*Tools and Their Uses*), *a
+tractor is arranged to pull its load in two different ways* (Rathbun), *the series-multiple system
+is adapted for use with multiple cylinder engines*.
+
+`is made to` is deliberately **not** read despite its count: the manuals also write `A provision
+usually is made to install a fuel gage`, whose subject is a provision rather than a tool, and the
+reader has no noun test that separates the two. A shape that produces "Which tool is used to
+install a fuel gage? -- a provision" is worse than an unread one.
+
+**Three precision rules the new shapes made necessary.** Reading a treatise's prose produced
+options no learner can pick, and each became a rule:
+
+* a **measurement** cannot head a name -- `softened sheet copper about 1/32 inch thick is used to
+  make joints on surfaces that have been planed` named `about inch thick`;
+* a **reference back into the paragraph** is not a name -- `the same device`, `in connection`,
+  `third class`;
+* a **figure's label** is not part of a sentence -- `the tool e would cut the [V]-shaped groove i`
+  is a description of a drawing, and a standalone lower-case letter is how it says so.
+
+`work`, `substance`, `class` and `tool` join the head nouns that mean a name describes something
+other than an object, because a treatise writes `the work is designed to form a complete manual
+of reference` and means itself.
+
+## The source this round refused
+
+*Modern Machine-Shop Practice* (Rose, Project Gutenberg #39225, 4.9 MB) was fetched, measured and
+refused. It yields 21 descriptions, 16 of which became items, and after every rule above four of
+the survivors are still wrong -- `in connection`, `in rods`, `tension` and `Rubber joints` as the
+correct answer to "Which tool is used to ...?" -- because the miner reads mid-paragraph clauses
+(`... and are usually made from what is known as combination rubber`, `... they are fitted to the
+ash-pits or to the funnel`). That is lower precision than the seven manuals refused in round 18
+and the ten refused in round 20, and a source refused at higher precision cannot be kept at this
+one.
+
+**Shop Information therefore goes from 55 to 42**: sixteen mixed items out, three good ones in.
+The three earlier rounds that refused sources all said the same thing; this is the first that had
+to apply it to a source already in the corpus.
+
+## The local vein measured and refused
+
+Webster's 1913 defines 1,463 things by what they are for (`An instrument for measuring ...`),
+which looked like a large Shop Information source already sitting in the repository. Measured, it
+is not: the useful subset -- entries whose headword appears in the manuals' own vocabulary *and*
+whose definition opens with a tool-class noun -- is 49 entries, and even those are contaminated by
+etymology (`brake ... an instrument for breaking flax` is a line about the word's German origin,
+not about brakes) and by arcana (`odontograph`, `mangle`, `manometer`). Items built from it would
+have quoted etymology as claims about tools. The probe and the measurement are recorded.
+
+## Corpus
+
+| Subtest | Round 22 | Round 23 | Sources |
+|---|---|---|---|
+| WK | 1,949 | 1,949 | Moby Thesaurus corroborated by Webster's 1913 |
+| EI | 1,565 | 1,565 | NEETS glossaries, all 24 modules |
+| PC | 1,676 | 1,676 | 25 public-domain works, passage quoted |
+| GS | 301 | 301 | *The book of wonders* |
+| SI | 55 | 42 | *Tools and Their Uses*, *TM 11-453*, *Farm Mechanics* |
+| AI | 75 | 77 | *TM 9-8000*, *TM 9-2700*, Rathbun's engine handbook |
+| **Total** | **5,621** | **5,610** | |
+
+Pack `core-asvab` was rebuilt and reinstalled at **v4** (5,610 items, 55 sources, 11.5 MB,
+content hash `sha256:844832a6...`), because a corpus rebuild changes item identities and leaves
+the previous pack's membership describing items that no longer exist.
+
+## Verification
+
+`sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0: 1,719 Rust tests across 109
+binaries, 211 frontend tests, 36 E2E, packaged live-fire passed. `mutation-round18.py` proves 29
+rules, including this round's three -- the measurement-head rule, the figure-label rule and the
+shape list.
+
+## Still open
+
+SI 42 and AI 77 are the thin banks, and this round lowered SI to raise its precision. The sources
+that would raise both have been measured: Rose refused, the other Gutenberg mechanics books yield
+0-6 descriptions each, the microfiche NAVEDTRA manuals stay refused. The next lever is the
+noun-complement family (`serves as` 94, `acts as` 139, `is provided with` 87), which needs a third
+question frame and a link field on the purpose. One known bad item survives every rule (`ita size`
+in *Tools and Their Uses*), recorded the way the two rare Word Knowledge distractors are. The plan
+still orders by prerequisite without tracking mastery per objective, and General Science is still
+one work.

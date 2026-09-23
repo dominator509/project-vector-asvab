@@ -1,40 +1,40 @@
 requirement_id,requirement,status,outcome,entrypoint,evidence_path,artifact_digest
-REQ-001,local privacy-minimal learner profile,DONE,OUTCOME-01 Complete onboarding and set enlistment/test goals,UI Getting started,.agent/evidence/EP-001/desktop-live-fire.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
-REQ-002,cross-domain diagnostic and mastery uncertainty,DONE,OUTCOME-02 Receive diagnostic mastery map,API only (diagnostic view is still a placeholder),.agent/evidence/EP-010/verify-transports.log,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
-REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",DONE_IMPLEMENTED_IN_VECTOR_STUDY_SELECTION,OUTCOME-03 Follow an adaptive daily study plan,UI Today's plan,.agent/evidence/EP-010/verify-transports.log,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
-REQ-004,GS AR WK PC MK EI AI SI MC AO modeled separately,DONE,OUTCOME-04 Practise original questions with explanations,UI Practice,.agent/evidence/EP-010/verify-transports.log,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-001,local privacy-minimal learner profile,DONE,OUTCOME-01 Complete onboarding and set enlistment/test goals,UI Getting started,.agent/evidence/EP-001/desktop-live-fire.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
+REQ-002,cross-domain diagnostic and mastery uncertainty,DONE,OUTCOME-02 Receive diagnostic mastery map,API only (diagnostic view is still a placeholder),.agent/evidence/EP-010/verify-transports.log,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
+REQ-003,"daily plan from weakness, due review, AFQT/job goals, time",DONE_IMPLEMENTED_IN_VECTOR_STUDY_SELECTION,OUTCOME-03 Follow an adaptive daily study plan,UI Today's plan,.agent/evidence/EP-010/verify-transports.log,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
+REQ-004,GS AR WK PC MK EI AI SI MC AO modeled separately,DONE,OUTCOME-04 Practise original questions with explanations,UI Practice,.agent/evidence/EP-010/verify-transports.log,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-005,"custom drills, worked solutions, distractors, confidence, error notebook",DONE_PRACTICE_VIEW_AND_NOTEBOOK,,,,
-REQ-006,no-backtracking and versioned public timing profiles,DONE_CAT_CONSTRAINT_AND_TIMING_PROFILES,OUTCOME-05 Take realistic CAT and paper-style simulations,UI CAT simulator and Paper simulator,.agent/evidence/EP-010/verify-transports.log,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-006,no-backtracking and versioned public timing profiles,DONE_CAT_CONSTRAINT_AND_TIMING_PROFILES,OUTCOME-05 Take realistic CAT and paper-style simulations,UI CAT simulator and Paper simulator,.agent/evidence/EP-010/verify-transports.log,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-007,paper-style navigation/timing,DONE,,,,
-REQ-008,source-grounded explanations and original variants,DONE_GROUNDING_RETRIEVAL,OUTCOME-06 Get source-grounded tutor help and safe variants,API only (tutor view is still a placeholder),.agent/evidence/EP-004/provider-probe.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-008,source-grounded explanations and original variants,DONE_GROUNDING_RETRIEVAL,OUTCOME-06 Get source-grounded tutor help and safe variants,API only (tutor view is still a placeholder),.agent/evidence/EP-004/provider-probe.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-009,reject controlled/leaked official question ingestion,DONE,,,,
-REQ-010,offline mastery/speed/confidence/trends,DONE_ANALYTICS_RENDERED_FROM_STORED_ATTEMPTS,OUTCOME-07 Understand readiness with calibrated uncertainty,UI Readiness,.agent/evidence/EP-010/verify-transports.log,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-010,offline mastery/speed/confidence/trends,DONE_ANALYTICS_RENDERED_FROM_STORED_ATTEMPTS,OUTCOME-07 Understand readiness with calibrated uncertainty,UI Readiness,.agent/evidence/EP-010/verify-transports.log,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-011,uncertainty/calibration; never official-score claim,DONE_BAND_NO_SCORE_CLAIM,,,,
-REQ-012,versioned sourced formulas/job targets/freshness,DONE_VERSIONED_SOURCED_FRESHNESS_ENFORCED,OUTCOME-08 Explore current branch/job composites and retest guidance,API only (jobs explorer is still a placeholder),.agent/evidence/EP-010/verify-transports.log,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-012,versioned sourced formulas/job targets/freshness,DONE_VERSIONED_SOURCED_FRESHNESS_ENFORCED,OUTCOME-08 Explore current branch/job composites and retest guidance,API only (jobs explorer is still a placeholder),.agent/evidence/EP-010/verify-transports.log,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-013,versioned policy data,DONE_RETEST_PLANNER_ON_VERSIONED_POLICY,,,,
-REQ-014,llama.cpp GGUF with optional user-selected unfiltered model,PARTIAL_TRANSPORT_REGISTERED_MODEL_NOT_LAUNCHED,OUTCOME-09 Use a local user-selected GGUF model,Provider settings,.agent/evidence/EP-004/provider-probe.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
-REQ-015,provider-neutral capabilities/auth/billing/terms contract,DONE,OUTCOME-10 Use permitted provider-native subscription transports,Provider settings,.agent/evidence/EP-004/provider-probe-live.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-014,llama.cpp GGUF with optional user-selected unfiltered model,PARTIAL_TRANSPORT_REGISTERED_MODEL_NOT_LAUNCHED,OUTCOME-09 Use a local user-selected GGUF model,Provider settings,.agent/evidence/EP-004/provider-probe.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
+REQ-015,provider-neutral capabilities/auth/billing/terms contract,DONE,OUTCOME-10 Use permitted provider-native subscription transports,Provider settings,.agent/evidence/EP-004/provider-probe-live.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-016,Grok native official CLI headless/ACP without credential access,DONE_ADAPTER_AND_CREDENTIAL_ISOLATION_SIGNIN_EXTERNAL_GATE,,,,
 REQ-017,Codex native official codex exec with ChatGPT login,DONE_LIVEFIRED_CODEX_EXEC_ANSWERED,,,,
 REQ-018,Claude native conditional official-client adapter terms-gated,DONE_ADAPTER_AND_CREDENTIAL_ISOLATION_SIGNIN_EXTERNAL_GATE,,,,
 REQ-019,disable Gemini CLI OAuth bridge,DONE_BRIDGE_DISABLED_AND_UNREACHABLE,,,,
-REQ-020,hash/url/license/retrieval/effective/trust/source snapshots,DONE_VAULT_READABLE_IN_SOURCES_VIEW,OUTCOME-11 Trust evidence-governed signed content,UI Sources,.agent/evidence/EP-004/mcp-loopback.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-020,hash/url/license/retrieval/effective/trust/source snapshots,DONE_VAULT_READABLE_IN_SOURCES_VIEW,OUTCOME-11 Trust evidence-governed signed content,UI Sources,.agent/evidence/EP-004/mcp-loopback.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-021,diff/quarantine/rollback/freshness,DONE,,,,
 REQ-022,original item + deterministic proof + independent verification,DONE_IMPLEMENTED_IN_VECTOR_QUESTIONS_INGESTION,,,,
 REQ-023,signed/versioned/reviewed packs,DONE_REAL_ED25519_SIGNING,,,,
 REQ-024,manual export; enterprise connector separate,DONE_MANUAL_EXPORT_CONNECTOR_SEPARATE,,,,
-REQ-025,MCP server scoped read-only-default study tools/resources,DONE_STDIO_TRANSPORT_BOUND_AND_PROBED,OUTCOME-12 Connect VECTOR through MCP safely,MCP server,.agent/evidence/EP-004/mcp-loopback.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-025,MCP server scoped read-only-default study tools/resources,DONE_STDIO_TRANSPORT_BOUND_AND_PROBED,OUTCOME-12 Connect VECTOR through MCP safely,MCP server,.agent/evidence/EP-004/mcp-loopback.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-026,MCP client allowlisted peers consent/audit,DONE_PEER_TRANSPORT_OVER_REAL_PIPE,,,,
 REQ-027,MCP untrusted-content authority isolation/prompt injection defense,DONE_AUTHORITY_ISOLATION,,,,
-REQ-028,stack/minidump/log ring/build identity,DONE_CAPTURE_REDACTION_AND_BUNDLE_ASSEMBLY,OUTCOME-13 Turn crashes into reproducible gated repair PRs,UI Privacy and crashes,.agent/evidence/EP-008/worktree-lane.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-028,stack/minidump/log ring/build identity,DONE_CAPTURE_REDACTION_AND_BUNDLE_ASSEMBLY,OUTCOME-13 Turn crashes into reproducible gated repair PRs,UI Privacy and crashes,.agent/evidence/EP-008/worktree-lane.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-029,double-redaction and secret canary tests,DONE_REDACTION_VERIFIED_AND_BUNDLE_GATED,,,,
 REQ-030,deterministic diagnostics/repro/hashes/consent manifest,DONE_DETERMINISTIC_BUNDLE_WITH_CONSENT_MANIFEST,,,,
 REQ-031,isolated worktree + coding-agent + GraphLock,DONE_REAL_WORKTREE_AND_LANE_COMMAND,,,,
 REQ-032,official gh; explicit approval; no auto-merge,PARTIAL_EP003_RECORD_DONE_GH_LANE_PENDING,,,,
-REQ-033,atomic integrity-checked optional encrypted backup,DONE_EXCEPT_OPTIONAL_ENCRYPTION,"OUTCOME-14 Back up, restore, recover and export data",UI Privacy and crashes,.agent/evidence/EP-001/desktop-live-fire.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-033,atomic integrity-checked optional encrypted backup,DONE_EXCEPT_OPTIONAL_ENCRYPTION,"OUTCOME-14 Back up, restore, recover and export data",UI Privacy and crashes,.agent/evidence/EP-001/desktop-live-fire.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-034,forced termination/corruption recovery,DONE_EXPORT_RESTORE_AND_ERASE_UI_READBACK,,,,
 REQ-035,portable local export and full deletion,DONE_A11Y_SETTINGS_AND_PRIVACY_CONTROLS,,,,
-REQ-036,signed Windows artifact + clean install/upgrade/uninstall,PARTIAL_MSI_AND_NSIS_BUILT_SIGNING_EXTERNAL_GATE,OUTCOME-15 Install and run a reproducible production artifact,installer,.agent/evidence/EP-001/desktop-live-fire.json,f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38
+REQ-036,signed Windows artifact + clean install/upgrade/uninstall,PARTIAL_MSI_AND_NSIS_BUILT_SIGNING_EXTERNAL_GATE,OUTCOME-15 Install and run a reproducible production artifact,installer,.agent/evidence/EP-001/desktop-live-fire.json,7453448f971c210183e087b79726f93fee45622ec954d34a8801e1303fde45cf
 REQ-037,signature/hash/atomic stage/rollback,PARTIAL_DIGEST_VERIFY_AND_TAMPER_DETECTION_DONE_SIGNATURE_PENDING,,,,
 REQ-038,WCAG 2.2 AA + keyboard/Narrator/NVDA,PARTIAL_AUTOMATED_A11Y_DONE_MANUAL_SCREEN_READER_EXTERNAL_GATE,,,,
 REQ-039,startup/UI/DB/search/background-work SLOs,DONE_ARTIFACT_SLO_MEASURED_IN_BINARY,,,,

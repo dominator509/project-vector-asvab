@@ -71,6 +71,7 @@ export RUST_BACKTRACE=1
 | Rebuild the whole corpus | `python3 scripts/rebuild-corpus.py <db>` (deletes the items, prunes a vault record whose URL does not resolve to its bytes, then re-ingests every subtest from its sources and writes the round's reports; `--dry-run` reports first) |
 | Learner-facing damage check | `python3 scripts/probes/foreign-letters.py <db>` (letters from another alphabet and undecodable bytes) |
 | Description-shape survey | `python3 scripts/probes/description-shapes.py <text file> [...]` (counts the `X is designed to Y` shapes the reader cannot read yet) |
+| Relation-shape survey | `python3 scripts/probes/relation-shapes.py <text file> [...]` (every verb phrase the sources state the relation with, including the ones the reader cannot read) |
 | Purpose-opening survey | `python3 scripts/probes/purpose-verbs.py <text file> [...]` (every distinct word a purpose opens with, which is how the verb list was written) |
 | Download an Internet Archive text | `python3 scripts/probes/fetch-archive-text.py <archive id> [...]` (fetches the item's own `_djvu.txt` and prints its digest) |
 | Mutation proof for the content rules | `python3 scripts/probes/mutation-round18.py` (disables one rule at a time and requires its test to fail) |

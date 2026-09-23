@@ -5,7 +5,7 @@
     "path": "sources/webster-1913/pg29765.txt",
     "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
   },
-  "elapsed_ms": 12101,
+  "elapsed_ms": 16341,
   "manuals": [
     {
       "activated": 55,
@@ -36,16 +36,16 @@
       "url": "https://archive.org/details/TM9-2700"
     },
     {
-      "activated": 5,
+      "activated": 7,
       "already_present": 0,
-      "built": 5,
+      "built": 7,
       "path": "sources/gutenberg/rathbun-gas-oil-steam-engines.txt",
       "rejected": 0,
       "rejection_reasons": [],
       "sha256": "sha256:9864170960b837aaf22d0148ba7d64f00202b5f9f5602042c267fe87b53e58a5",
       "skipped": null,
       "source_id": "56776",
-      "statements": 6,
+      "statements": 8,
       "title": "Practical Hand Book of Gas, Oil and Steam Engines (John B. Rathbun)",
       "url": "https://www.gutenberg.org/ebooks/56776"
     },
@@ -152,10 +152,10 @@
   "seed": 20260922,
   "subtest": "AI",
   "totals": {
-    "activated": 75,
+    "activated": 77,
     "already_present": 2,
-    "built": 77,
+    "built": 79,
     "rejected": 0,
-    "statements": 110
+    "statements": 112
   }
 }

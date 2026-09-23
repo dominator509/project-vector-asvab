@@ -5,7 +5,7 @@
     "path": "sources/webster-1913/pg29765.txt",
     "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
   },
-  "elapsed_ms": 9529,
+  "elapsed_ms": 7936,
   "manuals": [
     {
       "activated": 27,
@@ -36,20 +36,6 @@
       "url": "https://archive.org/details/TM11-453"
     },
     {
-      "activated": 12,
-      "already_present": 0,
-      "built": 12,
-      "path": "sources/gutenberg/rose-machine-shop-practice.txt",
-      "rejected": 0,
-      "rejection_reasons": [],
-      "sha256": "sha256:d5053cfa0db2ac877427458a6b444abe4450823c286e0b355dc1ce619862f1e7",
-      "skipped": null,
-      "source_id": "39225",
-      "statements": 13,
-      "title": "Modern Machine-Shop Practice (Joshua Rose)",
-      "url": "https://www.gutenberg.org/ebooks/39225"
-    },
-    {
       "activated": 0,
       "already_present": 0,
       "built": 0,
@@ -71,9 +57,9 @@
       "rejected": 0,
       "rejection_reasons": [],
       "sha256": "sha256:3983eb7aebf4058e499fdb2092db7c1bcf6bde8dae9d8c4d41a3b462c988bfe0",
-      "skipped": "text \"The Economy of Workshop Manipulation (John Richards)\" described no tools at all; the file's shape or its scanner's habits may have changed",
+      "skipped": "no tool description survived the dictionary check on its options",
       "source_id": "57120",
-      "statements": 0,
+      "statements": 1,
       "title": "The Economy of Workshop Manipulation (John Richards)",
       "url": "https://www.gutenberg.org/ebooks/57120"
     },
@@ -92,16 +78,16 @@
       "url": "https://www.gutenberg.org/ebooks/69061"
     },
     {
-      "activated": 6,
+      "activated": 5,
       "already_present": 0,
-      "built": 6,
+      "built": 5,
       "path": "sources/gutenberg/shearer-farm-mechanics.txt",
       "rejected": 0,
       "rejection_reasons": [],
       "sha256": "sha256:b4ab3fbe55b4d669f9bed8f6c240b085a41f9d9f091e000f7b28b75033d20e16",
       "skipped": null,
       "source_id": "39791",
-      "statements": 6,
+      "statements": 5,
       "title": "Farm Mechanics: Machinery and Its Use to Save Hand Labor on the Farm (Herbert A. Shearer)",
       "url": "https://www.gutenberg.org/ebooks/39791"
     },
@@ -124,10 +110,10 @@
   "seed": 20260922,
   "subtest": "SI",
   "totals": {
-    "activated": 55,
+    "activated": 42,
     "already_present": 0,
-    "built": 55,
+    "built": 42,
     "rejected": 0,
-    "statements": 67
+    "statements": 54
   }
 }

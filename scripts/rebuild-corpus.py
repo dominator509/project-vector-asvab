@@ -56,8 +56,14 @@ SHOP_MANUALS = [
     "archive:micro_IA41153156_0308:Tools and Their Uses (US Army, 1971)"
     "=sources/federal/tools-and-uses.txt",
     "archive:TM11-453:TM 11-453 Shop Work (US Army)=sources/federal/army-shop-work.txt",
-    "gutenberg:39225:Modern Machine-Shop Practice (Joshua Rose)"
-    "=sources/gutenberg/rose-machine-shop-practice.txt",
+    # `Modern Machine-Shop Practice` (Rose) is fetched and measured and **not used**: of the 21
+    # descriptions its 4.9 MB of treatise prose yields, 10 became items and four of those are
+    # visibly wrong -- `in connection`, `in rods`, `tension`, `Rubber joints` as the correct
+    # answer to "Which tool is used to ...?" -- because the miner reads mid-paragraph clauses
+    # (`... and are usually made from what is known as combination rubber`, `... they are fitted
+    # to the ash-pits`). Its precision is lower than the seven manuals refused in round 18 and
+    # the ten refused in round 20, and a source refused at higher precision cannot be kept at
+    # this one. Round 23's measurement is in that round's report.
     "gutenberg:76925:Elementary Lathe Practice (T. J. Palmateer)"
     "=sources/gutenberg/palmateer-lathe-practice.txt",
     "gutenberg:57120:The Economy of Workshop Manipulation (John Richards)"
