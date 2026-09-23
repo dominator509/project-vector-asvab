@@ -5,19 +5,19 @@
     "path": "sources/webster-1913/pg29765.txt",
     "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
   },
-  "elapsed_ms": 6492,
+  "elapsed_ms": 5329,
   "manuals": [
     {
-      "activated": 26,
+      "activated": 27,
       "already_present": 0,
       "archive_id": "micro_IA41153156_0308",
-      "built": 26,
+      "built": 27,
       "path": "sources/federal/tools-and-uses.txt",
       "rejected": 0,
       "rejection_reasons": [],
       "sha256": "sha256:ec5c10f87471deae564d5bad632db9fb4e1dc3a362190a2d9456c5938d6324c9",
       "skipped": null,
-      "statements": 33,
+      "statements": 34,
       "title": "Tools and Their Uses (US Army, 1971)"
     },
     {
@@ -38,10 +38,10 @@
   "seed": 20260922,
   "subtest": "SI",
   "totals": {
-    "activated": 36,
+    "activated": 37,
     "already_present": 0,
-    "built": 36,
+    "built": 37,
     "rejected": 0,
-    "statements": 44
+    "statements": 45
   }
 }

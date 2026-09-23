@@ -1,4 +1,4 @@
-"""Rebuild the whole study corpus from its sources, in one reproducible run.
+"""Rebuild the study corpus from its sources, in one reproducible run.
 
 The corpus is ingested, not authored: every item is built from a public-domain source and
 cited to it, and the evidence vault records each source's URL, licence and digest. Rebuilding
@@ -6,27 +6,31 @@ is therefore a defined operation -- delete the items, ingest each subtest from i
 a fixed order with a fixed seed, and write the same reports the round logs carry -- and one
 command that does it is worth more than six commands remembered.
 
-It exists because two things about the ingestions are easy to get wrong by hand:
+It exists because three things about the ingestions are easy to get wrong by hand:
 
-* the sources. The Paragraph Comprehension manifest is the *same file* the provenance check
-  re-downloads from, so the citation and the check cannot drift apart; the Electronics
+* **the sources.** The Paragraph Comprehension manifest is the *same file* the provenance
+  check re-downloads from, so the citation and the check cannot drift apart; the Electronics
   Information modules and the Shop and Auto manuals are listed here in the order they were
   measured;
-* the vault. A record whose URL does not resolve to the bytes it was recorded for is not
+* **the order.** A builder's draws depend on the order its sources are ingested in, because
+  each module is seeded with its index. Two orders produce two corpora -- the same 24 modules
+  came out as 1,566 Electronics Information questions under one shell's ordering and 1,508
+  under another's -- so the order lives here, sorted, rather than in whatever the caller's
+  glob happened to return;
+* **the vault.** A record whose URL does not resolve to the bytes it was recorded for is not
   evidence, and this script removes the one the corpus had: `darwin-origin.txt` is Project
   Gutenberg #1228, and ten Paragraph Comprehension items cited #2009, which is a different
-  file of the same book. `verify-gutenberg-provenance.py` re-downloads every work and
-  reports OK, MISMATCH or MISSING per work; run it after this script.
+  file of the same book. `verify-gutenberg-provenance.py` re-downloads every work and reports
+  OK, MISMATCH or MISSING per work; run it after this script.
 
-An item a learner has attempted is never deleted: attempts are the learner's own record. If
-any exist, the script stops.
+An item a learner has attempted is never deleted: attempts are the learner's own record, and a
+rebuild that would touch one stops instead.
 
 Usage:
-    python3 scripts/rebuild-corpus.py <database> [--dry-run]
+    python3 scripts/rebuild-corpus.py <database> [--only WK,EI,PC] [--dry-run]
 """
 
 import argparse
-import json
 import os
 import sqlite3
 import subprocess
@@ -41,6 +45,8 @@ REVIEWER = "content-reviewer"
 DICTIONARY = "sources/webster-1913/pg29765.txt"
 THESAURUS = "sources/moby-thesaurus/words.txt"
 MANIFEST = EVIDENCE / "gutenberg-manifest.txt"
+
+SUBTESTS = ("WK", "EI", "PC", "GS", "SI", "AI")
 
 # The Shop Information manuals, as `<archive-id>:<title>=<path>`.
 SHOP_MANUALS = [
@@ -57,16 +63,9 @@ AUTO_MANUALS = [
     "=sources/federal/tm9-2700.txt",
 ]
 
-EI_MODULES = sorted(
-    f"sources/neets/{name}"
-    for name in os.listdir(ROOT / "sources/neets")
-    if name.startswith("NEETS_MOD_") and name.endswith(".txt")
-)
-
 GENERAL_SCIENCE = "75948=sources/gutenberg/book-of-wonders.txt"
 
-# A vault record whose URL does not resolve to the bytes recorded for it. The entry is the
-# corrected form: (superseded URL, why, what replaces it).
+# Vault records whose URL does not resolve to the bytes recorded for them, and why.
 SUPERSEDED_SOURCES = [
     (
         "https://www.gutenberg.org/ebooks/2009",
@@ -75,14 +74,21 @@ SUPERSEDED_SOURCES = [
 ]
 
 
-def run(command: list[str]) -> None:
-    print(f"\n$ {' '.join(command)}")
-    result = subprocess.run(command, cwd=ROOT, text=True, encoding="utf-8", errors="replace")
-    if result.returncode != 0:
-        raise SystemExit(f"failed with exit {result.returncode}: {' '.join(command)}")
+def neets_modules() -> list[str]:
+    """Every NEETS module, in a fixed order.
+
+    Sorted, and sorted here rather than by the caller: a module's seed is the run's seed plus
+    the module's index, so the order decides which questions the builder's attempt budget
+    reaches.
+    """
+    return sorted(
+        f"sources/neets/{name}"
+        for name in os.listdir(ROOT / "sources/neets")
+        if name.startswith("NEETS_MOD_") and name.endswith(".txt")
+    )
 
 
-def works_from_manifest() -> list[str]:
+def gutenberg_works() -> list[str]:
     lines = [
         line.strip()
         for line in MANIFEST.read_text(encoding="utf-8").splitlines()
@@ -93,12 +99,132 @@ def works_from_manifest() -> list[str]:
     return lines
 
 
+def repeated(flag: str, values: list[str]) -> list[str]:
+    return [item for value in values for item in (flag, value)]
+
+
+def steps(tools: list[str], db: str) -> list[tuple[str, list[str]]]:
+    """The ingestion commands, one per subtest, in the order they must run."""
+    word_knowledge = tools + [
+        "ingest-wk",
+        "--db", db,
+        "--thesaurus", THESAURUS,
+        "--dictionary", DICTIONARY,
+        "--count", "2000",
+        "--seed", SEED,
+        "--reviewer", REVIEWER,
+        "--out", str(EVIDENCE / "ingest-wk.json"),
+    ]
+
+    # The count is attempts, not items, and it is deliberately far larger than the bank. The
+    # builder draws a definition per attempt, and at the 400 the earlier rounds used it built
+    # 3,668 items that asked 409 distinct questions between them -- the same definition up to
+    # seven times with its wrong answers shuffled. The store asks each question once, and the
+    # attempts are what find the rest: 3,000 per module covers the whole of what these
+    # glossaries state in a shape an item can be built from.
+    electronics = tools + [
+        "ingest-ei",
+        "--db", db,
+        "--dictionary", DICTIONARY,
+        "--count", "3000",
+        "--min-definition-words", "5",
+        "--seed", SEED,
+        "--reviewer", REVIEWER,
+        "--out", str(EVIDENCE / "ingest-ei.json"),
+    ] + repeated("--module", neets_modules())
+
+    paragraphs = tools + [
+        "ingest-pc",
+        "--db", db,
+        "--count", "400",
+        "--seed", SEED,
+        "--reviewer", REVIEWER,
+        "--out", str(EVIDENCE / "ingest-pc.json"),
+    ] + repeated("--work", gutenberg_works())
+
+    science = tools + [
+        "ingest-facts",
+        "--db", db,
+        "--subtest", "GS",
+        "--work", GENERAL_SCIENCE,
+        "--count", "500",
+        "--seed", SEED,
+        "--reviewer", REVIEWER,
+        "--out", str(EVIDENCE / "ingest-facts-gs.json"),
+    ]
+
+    # The counts are the ones the rounds that introduced them recorded: 200 attempts per shop
+    # manual, 300 per automotive manual, which is more attempts than either manual has
+    # descriptions.
+    shop = tools + [
+        "ingest-tools",
+        "--db", db,
+        "--subtest", "SI",
+        "--ask", "tools",
+        "--dictionary", DICTIONARY,
+        "--count", "200",
+        "--seed", SEED,
+        "--reviewer", REVIEWER,
+        "--out", str(EVIDENCE / "ingest-tools-si.json"),
+    ] + repeated("--work", SHOP_MANUALS)
+
+    auto = tools + [
+        "ingest-tools",
+        "--db", db,
+        "--subtest", "AI",
+        "--ask", "functions",
+        "--dictionary", DICTIONARY,
+        "--count", "300",
+        "--seed", SEED,
+        "--reviewer", REVIEWER,
+        "--out", str(EVIDENCE / "ingest-tools-ai.json"),
+    ] + repeated("--work", AUTO_MANUALS)
+
+    return [
+        ("WK", word_knowledge),
+        ("EI", electronics),
+        ("PC", paragraphs),
+        ("GS", science),
+        ("SI", shop),
+        ("AI", auto),
+    ]
+
+
+def run(command: list[str]) -> None:
+    print(f"\n$ {' '.join(command)}")
+    result = subprocess.run(command, cwd=ROOT, text=True, encoding="utf-8", errors="replace")
+    if result.returncode != 0:
+        raise SystemExit(f"failed with exit {result.returncode}: {' '.join(command)}")
+
+
+def counts(connection: sqlite3.Connection, subtests: tuple[str, ...]) -> dict[str, int]:
+    placeholders = ",".join("?" for _ in subtests)
+    rows = connection.execute(
+        "SELECT subtest, COUNT(*) FROM content_items WHERE state = 'active' "
+        f"AND subtest IN ({placeholders}) GROUP BY subtest ORDER BY subtest",
+        subtests,
+    ).fetchall()
+    return dict(rows)
+
+
 def main(argv: list[str]) -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("database")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--only",
+        default="",
+        help="rebuild only these subtests, comma-separated: " + ", ".join(SUBTESTS),
+    )
     arguments = parser.parse_args(argv)
+
+    only = tuple(name.strip().upper() for name in arguments.only.split(",") if name.strip())
+    unknown = [name for name in only if name not in SUBTESTS]
+    if unknown:
+        print(f"--only names unknown subtest(s): {', '.join(unknown)}")
+        return 2
+    selected = only or SUBTESTS
 
     database = Path(arguments.database)
     if not database.exists():
@@ -107,20 +233,32 @@ def main(argv: list[str]) -> int:
 
     connection = sqlite3.connect(database)
     connection.execute("PRAGMA foreign_keys = ON")
-    attempts = connection.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
-    if attempts:
-        print(f"{attempts} attempt(s) reference items; rebuilding would delete a learner's record")
+    placeholders = ",".join("?" for _ in selected)
+    attempted = connection.execute(
+        "SELECT COUNT(*) FROM attempts a JOIN content_items i ON i.id = a.question_id "
+        f"WHERE i.subtest IN ({placeholders})",
+        selected,
+    ).fetchone()[0]
+    if attempted:
+        print(
+            f"{attempted} attempt(s) reference items in {', '.join(selected)}; the rebuild "
+            "would delete a learner's own record"
+        )
         return 1
-    before = connection.execute("SELECT COUNT(*) FROM content_items").fetchone()[0]
+
+    before = counts(connection, selected)
     print(f"database: {database}")
+    print(f"subtests: {', '.join(selected)}")
     print(f"items before: {before}")
 
     if arguments.dry_run:
         print("dry run: nothing deleted, nothing ingested")
         return 0
 
-    # 1. The items, and the vault records that are not evidence.
-    connection.execute("DELETE FROM content_items")
+    # 1. The selected items, and the vault records that are not evidence.
+    connection.execute(
+        f"DELETE FROM content_items WHERE subtest IN ({placeholders})", selected
+    )
     for url, why in SUPERSEDED_SOURCES:
         removed = connection.execute(
             "DELETE FROM evidence_records WHERE url = ?", (url,)
@@ -128,121 +266,32 @@ def main(argv: list[str]) -> int:
         if removed:
             print(f"removed {removed} vault record(s) for {url}: {why}")
     connection.commit()
-    left = connection.execute("SELECT COUNT(*) FROM content_items").fetchone()[0]
-    print(f"items after delete: {left}")
+    print(f"items after delete: {counts(connection, selected)}")
     connection.close()
 
+    # 2. Ingest, in the fixed order.
     tools = ["cargo", "run", "-q", "-p", "vector-tools", "--", "content"]
-    db = str(database)
+    for subtest, command in steps(tools, str(database)):
+        if subtest in selected:
+            run(command)
 
-    # 2. Word Knowledge: the thesaurus, corroborated by the dictionary.
-    run(
-        tools
-        + [
-            "ingest-wk",
-            "--db", db,
-            "--thesaurus", THESAURUS,
-            "--dictionary", DICTIONARY,
-            "--count", "2000",
-            "--seed", SEED,
-            "--reviewer", REVIEWER,
-            "--out", str(EVIDENCE / "ingest-wk.json"),
-        ]
-    )
-
-    # 3. Electronics Information: the NEETS module glossaries.
-    #
-    # The count is attempts, not items, and it is deliberately far larger than the bank: the
-    # builder draws a definition per attempt, and at the 400 the earlier rounds used it built
-    # 3,668 items that asked 409 distinct questions between them -- the same definition up to
-    # seven times with its wrong answers shuffled. The store now asks each question once, and
-    # the attempts are what find the rest: 3,000 per module builds about 10,000 items, asks 414
-    # questions across the ten modules, and then saturates, which is the whole of what these
-    # glossaries state in the shape an item can be built from.
-    run(
-        tools
-        + [
-            "ingest-ei",
-            "--db", db,
-            "--dictionary", DICTIONARY,
-            "--count", "3000",
-            "--min-definition-words", "5",
-            "--seed", SEED,
-            "--reviewer", REVIEWER,
-            "--out", str(EVIDENCE / "ingest-ei.json"),
-        ]
-        + [item for module in EI_MODULES for item in ("--module", module)]
-    )
-
-    # 4. Paragraph Comprehension: every work in the manifest, one run for all of them.
-    run(
-        tools
-        + [
-            "ingest-pc",
-            "--db", db,
-            "--count", "400",
-            "--seed", SEED,
-            "--reviewer", REVIEWER,
-            "--out", str(EVIDENCE / "ingest-pc.json"),
-        ]
-        + [item for work in works_from_manifest() for item in ("--work", work)]
-    )
-
-    # 5. General Science: the question-and-answer work.
-    run(
-        tools
-        + [
-            "ingest-facts",
-            "--db", db,
-            "--subtest", "GS",
-            "--work", GENERAL_SCIENCE,
-            "--count", "500",
-            "--seed", SEED,
-            "--reviewer", REVIEWER,
-            "--out", str(EVIDENCE / "ingest-facts-gs.json"),
-        ]
-    )
-
-    # 6. Shop Information, then Auto Information, from the component manuals. The counts are
-    # the ones the rounds that introduced them recorded: 200 attempts per shop manual, 300 per
-    # automotive manual, which is more attempts than either manual has descriptions.
-    for subtest, ask, manuals, count, report in (
-        ("SI", "tools", SHOP_MANUALS, "200", "ingest-tools-si.json"),
-        ("AI", "functions", AUTO_MANUALS, "300", "ingest-tools-ai.json"),
-    ):
-        run(
-            tools
-            + [
-                "ingest-tools",
-                "--db", db,
-                "--subtest", subtest,
-                "--ask", ask,
-                "--dictionary", DICTIONARY,
-                "--count", count,
-                "--seed", SEED,
-                "--reviewer", REVIEWER,
-                "--out", str(EVIDENCE / report),
-            ]
-            + [item for manual in manuals for item in ("--work", manual)]
-        )
-
-    # 7. Read the result back out of the store rather than out of the reports.
+    # 3. Read the result back out of the store rather than out of the reports.
     connection = sqlite3.connect(database)
-    after = connection.execute(
-        "SELECT subtest, COUNT(*) FROM content_items WHERE state = 'active' "
-        "GROUP BY subtest ORDER BY subtest"
-    ).fetchall()
+    after = counts(connection, selected)
     connection.close()
-    total = sum(count for _, count in after)
+    total = sum(after.values())
     print("\nitems after rebuild:")
-    for subtest, count in after:
-        print(f"  {subtest:<4} {count}")
+    for subtest in selected:
+        print(f"  {subtest:<4} {after.get(subtest, 0)}")
     print(f"  total {total}")
     if total == 0:
         print("the rebuild stored nothing")
         return 1
-    if total > before:
-        print(f"note: the rebuild stored more than before ({before}), because the reader was widened")
+    if any(after.get(name, 0) < before.get(name, 0) for name in selected):
+        print(
+            "note: a subtest stores fewer items than before, which is what the question "
+            "identity does when a bank was asking the same question repeatedly"
+        )
     return 0
 
 

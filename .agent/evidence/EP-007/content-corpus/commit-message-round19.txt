@@ -1,0 +1,112 @@
+content: the rest of NEETS, eight more works, and a run that could be ended by one thin module (REQ-022, REQ-023, REQ-056)
+
+The Electronics Information bank goes from 414 to 1,565 questions and the corpus from 3,809 to
+5,598, and two defects fell out of doing it: a single thin module could end a twenty-four-module
+ingestion after it had already stored 1,152 items, and the question check had made ingestion
+quadratic.
+
+## What it adds
+
+**The rest of NEETS.** The Electronics Information bank was built from ten of the Navy
+Electricity and Electronics Training Series' twenty-four modules, because ten were what an
+earlier round happened to download. The collection is one Internet Archive item with
+twenty-four text files; `scripts/probes/fetch-archive-text.py` gained `--list` (and a file-name
+form) to show that, the other fourteen modules are fetched, and ingesting all twenty-four
+produces **1,565 questions** where ten produced 414.
+
+**Eight more Paragraph Comprehension works.** The manifest holds seventeen Project Gutenberg
+works and now holds twenty-five: Agricola's *De Re Metallica*, Whewell's *History of the
+Inductive Sciences*, Candolle's *Origin of Cultivated Plants*, Thorndike's *A History of Magic
+and Experimental Science*, two volumes of Kirby and Spence's *Introduction to Entomology*, and
+two of Pliny's *Natural History*. They add **626 questions** (1,050 -> 1,676), all of them
+passages quoted verbatim from the work they cite.
+
+`scripts/probes/fetch-gutenberg.py` fetches them in the one URL form the provenance check
+re-derives, and it reads each file's own Gutenberg header before writing it: a download whose
+`[eBook #...]` disagrees with the number it was asked for is refused. That check exists because
+round 18 found ten items citing #2009 for a file that is #1228 -- a citation that looked
+authoritative and could not be re-checked.
+
+**The relation these manuals name instead of stating.** `The purpose of the piston skirt is to
+keep the piston from rocking in the cylinder` puts the subject *after* the phrase, so reading
+what precedes the verb names `purpose`. `scripts/probes/description-shapes.py` counted the shape
+before it was read -- nineteen sentences in TM 9-8000 -- and reading `function of X is to Y` and
+`purpose of X is to Y` takes the two automotive manuals from 78 descriptions to 97 and the Auto
+Information bank from 59 to **70 questions**: `hair spring`, `engine lubrication`, `piston
+skirt`, `air-over-hydraulic suspension system`.
+
+The shape needs one guard the verb-before shapes do not: a subject that opens with a gerund is
+an action, not a thing. `The purpose of burning fuel in the priming cup is to thoroughly heat
+the vaporizing chamber` describes burning fuel, and reading the noun phrase out of it named
+`burning fuel`, then `idle system` from `The purpose of shutting off the idle system with the
+engine is to help eliminate engine dieseling`. Both are refused, and both refusals are asserted
+with the sentences verbatim from the sources.
+
+`as` joins the words that mean a name is a clause, because `The differential, as explained in
+the preceding paragraph, is to provide for differences in speed` named `as explained`.
+
+## The defect: a thin module ended the run
+
+Ingesting the twenty-four modules in one command **failed**. The pipeline refuses a module that
+builds no items -- correctly, because a caller who asked for one module and got nothing must be
+told -- and the loop propagated that refusal with `?`. Module 24's glossary holds eight entries
+and none survives the filters, so the run aborted on the last module **after storing 1,152 items
+from the other twenty-three**, and never wrote its report: the work was done and the evidence
+for it was lost.
+
+The Paragraph Comprehension path learned this in round 15 ("a work that parses badly cannot take
+the rest down with it"), and this loop carried the same promise in its own doc comment while
+breaking it. A module that contributes nothing is now recorded as `skipped` with its reason and
+the run continues; a run in which *no* module produced an item still fails, which is the guard
+that keeps a broken scan from reporting a successful empty ingestion. Both behaviours have
+tests, and both mutations are caught.
+
+## The defect: ingestion had become quadratic
+
+Round 18's question identity runs once per *built candidate*, and a builder produces far more
+candidates than items -- the Electronics path builds about 10,000 candidates per run to find a
+few hundred questions. Without an index that predicate scanned `content_items` every time, and
+ingesting twenty-four modules had not finished after ten minutes where the same work without the
+check took about three. `migrations/008_content_question_index.sql` adds
+`(subtest, LOWER(TRIM(stem)))`: the expression rather than `stem`, because the comparison is
+case- and space-insensitive by design, and a plain index would not be used. The application
+embeds it with the other seven migrations, so a user's corpus gets it too.
+
+## A third fix, in the rebuild script
+
+`scripts/rebuild-corpus.py` takes `--only <subtests>` and now holds the source order itself:
+sorted module paths, the manifest for the works. The order is not cosmetic -- each module's seed
+is the run's seed plus its index, so the same twenty-four modules came out as 1,566 questions
+under one shell's glob order and 1,508 under another's.
+
+## Corpus
+
+| Subtest | Round 18 | Round 19 | Source |
+|---|---|---|---|
+| WK | 1,949 | 1,949 | Moby Thesaurus corroborated by Webster's 1913 |
+| EI | 414 | 1,565 | NEETS glossaries, all 24 modules |
+| PC | 1,050 | 1,676 | 25 public-domain works, passage quoted |
+| GS | 301 | 301 | *The book of wonders* |
+| SI | 36 | 37 | *Tools and Their Uses*, *TM 11-453 Shop Work* |
+| AI | 59 | 70 | *TM 9-8000*, *TM 9-2700* |
+| **Total** | **3,809** | **5,598** | |
+
+Every stored item is still a distinct question: `check-corpus.py` reports 0 duplicate questions
+per subtest, 0 items with scan damage, and 0 offenders against any provenance invariant.
+`verify-gutenberg-provenance.py` reports 25/25 works re-downloading to the bytes they are cited
+as.
+
+## Sources surveyed and refused
+
+Ten Army ordnance maintenance manuals were downloaded and measured for the Auto Information
+shape and refused: TM 9-1765B, TM 9-1828A, TM 9-1829A, TM 9-1729A, TM 9-1750, TM 9-1765A,
+TM 9-1727C, TM 9-1868, TM 9-1710C and TM 9-1803B. Between them they hold **two** sentences of
+that shape, because they are repair procedures (`Remove the four bolts`, `Install the gasket`)
+and the relation `X is used to Y` belongs to the principles manuals. *Machinery's Reference*
+booklets 1 and 7 hold three descriptions each. The ERIC microfiche manuals refused in round 18
+stay refused.
+
+## Tooling
+
+`fetch-archive-text.py --list`, `fetch-gutenberg.py`, `rebuild-corpus.py --only`, and the
+mutation harness now proves 20 rules instead of 18.

@@ -224,3 +224,37 @@ questions in a sitting, with no better source found than the ones measured); a n
 for the six residual generic names, which needs Webster's part-of-speech markers exposed through
 `Dictionary`; the Word Knowledge rare-distractor gap; the curriculum graph and calibration
 metadata the pack schema still lacks.
+
+### Round 19
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The rest of NEETS | The Electronics Information bank was built from ten of the series' twenty-four modules, because ten were what an earlier round had downloaded. The whole collection is one Internet Archive item; `fetch-archive-text.py --list` lists it, the other fourteen modules are downloaded, and the bank goes from **414 to 1,565 questions**. | `.agent/evidence/EP-007/content-corpus/ROUND-19-REPORT.md`, `ingest-ei.json` |
+| Eight more Gutenberg works | Agricola's *De Re Metallica*, Whewell's *History of the Inductive Sciences*, Candolle's *Origin of Cultivated Plants*, Thorndike's *A History of Magic and Experimental Science*, two volumes of Kirby and Spence's *Introduction to Entomology*, two of Pliny's *Natural History*: Paragraph Comprehension goes from **1,050 to 1,676 questions**. The new `fetch-gutenberg.py` reads each file's own Gutenberg header and refuses a download whose number disagrees with the one asked for. | `gutenberg-manifest.txt`, `gutenberg-provenance.log` |
+| The relation the manuals name | `The purpose of the piston skirt is to keep the piston from rocking in the cylinder` puts the subject *after* the phrase, so reading what precedes the verb names `purpose`. Reading `function of X is to Y` and `purpose of X is to Y` takes the automotive manuals from 78 descriptions to 97 and Auto Information from **59 to 70 questions** (`hair spring`, `engine lubrication`, `piston skirt`, `air-over-hydraulic suspension system`). A gerund subject is refused: `The purpose of burning fuel in the priming cup is to ...` describes an action, not a thing. | `description-shapes.py`, `ROUND-19-REPORT.md` |
+| A thin module could end the run | Ingesting all twenty-four modules **failed**: the pipeline refuses a module that builds nothing (correctly, for a one-module caller) and the loop propagated the refusal, so the run aborted on module 24 after storing 1,152 items from the other twenty-three and never wrote its report. A module that contributes nothing is now recorded as `skipped` and the run continues; a run in which *no* module produced an item still fails. Both are mutation-proved. | `ROUND-19-REPORT.md`, `mutation-round18.py` |
+| Ingestion had become quadratic | The question check runs once per built candidate, and a builder produces about 10,000 candidates to find a few hundred questions; without an index the predicate scanned the table every time and the 24-module ingestion had not finished after ten minutes. `migrations/008_content_question_index.sql` adds `(subtest, LOWER(TRIM(stem)))` — the expression, because the comparison is case- and space-insensitive — and the application embeds it with the other seven. | `migrations/008_content_question_index.sql` |
+
+Corpus as stored after round 19: 1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 37 SI, 70 AI = **5,598
+active items**, 55 evidence records, 7,547 citations, every provenance invariant a zero
+(including no question asked twice within a subtest, and no option that is not the shape its
+subtest asks for). **25/25 Gutenberg works re-download to the bytes they are cited as.**
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; 1,703 Rust tests across
+109 binaries, 210 frontend tests, 36 E2E, packaged live-fire passed against artifact
+`36c47ec7d18a55dfe11eef7dc975604a38dcdc8d4cfd65c523f37e07c4709c7e`. Verdict unchanged:
+`CONDITIONAL_EXTERNAL_GATES` (27 PASS, 11 PARTIAL, 2 PENDING, 1 EXTERNAL_REQUIRED, 1
+DEFERRED_LONG_RUNNING, 0 FAIL).
+
+Ten Army ordnance maintenance manuals were downloaded and measured for the Auto Information
+shape and **refused**: they hold two sentences of that shape between them, because they are
+repair *procedures* (`Remove the four bolts`) and the relation `X is used to Y` belongs to the
+principles manuals. Two *Machinery's Reference* booklets hold three descriptions each.
+
+Still open: **SI 37 and AI 70 are thin**, and every source measured for them across two rounds
+has been refused with numbers rather than shipped; **GS is one work** (301), because only *The
+book of wonders* in the corpus has the question-and-answer shape `ingest-facts` reads, so the
+next step there is finding works of that shape rather than more prose; the noun-head check for
+the residual generic names still needs Webster's part-of-speech markers exposed through
+`Dictionary`; the Word Knowledge rare-distractor gap; the curriculum graph and calibration
+metadata the pack schema still lacks.

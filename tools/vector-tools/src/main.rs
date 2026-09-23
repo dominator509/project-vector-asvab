@@ -528,6 +528,7 @@ fn main() -> Result<()> {
                         "activated": m.activated,
                         "already_present": m.already_present,
                         "rejected": m.rejected,
+                        "skipped": m.skipped,
                     })).collect::<Vec<_>>(),
                     "totals": {
                         "glossary_entries": outcome.total_entries,
@@ -535,6 +536,11 @@ fn main() -> Result<()> {
                         "activated": outcome.total_activated,
                         "already_present": outcome.total_already_present,
                         "rejected": outcome.total_rejected,
+                        "skipped_modules": outcome
+                            .modules
+                            .iter()
+                            .filter(|m| m.skipped.is_some())
+                            .count(),
                     },
                     "elapsed_ms": started.elapsed().as_millis(),
                 });

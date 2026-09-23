@@ -1,13 +1,13 @@
 {
   "database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
-  "elapsed_ms": 215877,
+  "elapsed_ms": 342795,
   "requested_per_work": 400,
   "seed": 20260922,
   "totals": {
-    "activated": 1050,
+    "activated": 1676,
     "already_present": 3,
-    "built": 1053,
-    "paragraphs": 17491,
+    "built": 1679,
+    "paragraphs": 30406,
     "rejected": 0
   },
   "works": [
@@ -231,6 +231,110 @@
       "sha256": "sha256:7706458b733a223a04a2eb2e4d5ff780f73d50339af9b6fc11a6541664252ae9",
       "skipped": null,
       "title": "The book of wonders"
+    },
+    {
+      "activated": 126,
+      "already_present": 0,
+      "built": 126,
+      "ebook": "38015",
+      "paragraphs": 1554,
+      "path": "sources/gutenberg/agricola-de-re-metallica.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:fa7b8a2a7aa42a4a2c571595664d63748ddec98cf262ec3ab5ceabd75f075971",
+      "skipped": null,
+      "title": "De Re Metallica, Translated from the First Latin Edition of 1556"
+    },
+    {
+      "activated": 213,
+      "already_present": 0,
+      "built": 213,
+      "ebook": "68693",
+      "paragraphs": 2774,
+      "path": "sources/gutenberg/whewell-inductive-sciences.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:f6a4c75efe6b613d667dc9f815b05d61099217b79307413b8a6a71f196fe4851",
+      "skipped": null,
+      "title": "History of the inductive sciences, from the earliest to the present time"
+    },
+    {
+      "activated": 85,
+      "already_present": 0,
+      "built": 85,
+      "ebook": "45917",
+      "paragraphs": 1257,
+      "path": "sources/gutenberg/candolle-cultivated-plants.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:14523950032bbe77f1acd5c8da306ce3481d35ba3d81d443b05b4fc8d119c374",
+      "skipped": null,
+      "title": "Origin of Cultivated Plants"
+    },
+    {
+      "activated": 58,
+      "already_present": 0,
+      "built": 58,
+      "ebook": "67792",
+      "paragraphs": 1662,
+      "path": "sources/gutenberg/thorndike-magic-science-1.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:2127813f27eb4e9b6f577800521baaded241528aacec0f12f747c48648d1181b",
+      "skipped": null,
+      "title": "A History of Magic and Experimental Science, Volume 1 (of 2)"
+    },
+    {
+      "activated": 50,
+      "already_present": 0,
+      "built": 50,
+      "ebook": "43578",
+      "paragraphs": 1117,
+      "path": "sources/gutenberg/kirby-entomology-3.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:6b54672749cbb04e9399b519fdc51b53ba3a811ec92ce47140a73a0c71de83b7",
+      "skipped": null,
+      "title": "An Introduction to Entomology: Vol. 3"
+    },
+    {
+      "activated": 24,
+      "already_present": 0,
+      "built": 24,
+      "ebook": "43579",
+      "paragraphs": 2552,
+      "path": "sources/gutenberg/kirby-entomology-4.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:521522a7c80a0a2ebd05566267aacbc8e8cd084cc1460c182f151b1113372c92",
+      "skipped": null,
+      "title": "An Introduction to Entomology: Vol. 4"
+    },
+    {
+      "activated": 55,
+      "already_present": 0,
+      "built": 55,
+      "ebook": "59131",
+      "paragraphs": 1114,
+      "path": "sources/gutenberg/pliny-natural-history-3.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:697bf75aa517edc38c47d6d181233f55f526604467077bf95cbe7c809cc51406",
+      "skipped": null,
+      "title": "The Natural History of Pliny, Volume 3 (of 6)"
+    },
+    {
+      "activated": 15,
+      "already_present": 0,
+      "built": 15,
+      "ebook": "60230",
+      "paragraphs": 885,
+      "path": "sources/gutenberg/pliny-natural-history-2.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:a2b16e7a491062b59a27d1ae5b84d3f2269e5e7824a07833d58a7889b2549bfe",
+      "skipped": null,
+      "title": "The Natural History of Pliny, Volume 2 (of 6)"
     }
   ]
 }

@@ -5,48 +5,206 @@
     "path": "sources/webster-1913/pg29765.txt",
     "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
   },
-  "elapsed_ms": 297347,
+  "elapsed_ms": 616237,
   "min_definition_words": 5,
   "modules": [
     {
-      "activated": 74,
-      "already_present": 1700,
-      "built": 1774,
-      "glossary_entries": 162,
-      "module": "NEETS MOD 1",
-      "path": "sources/neets/NEETS_MOD_1_NAVEDTRA_14173A_djvu.txt",
-      "rejected": 0,
-      "sha256": "sha256:cee401fa412484c326809b4ab528568f03f75e8a0b3b3d6b2fcf0af0e822c7c2"
-    },
-    {
       "activated": 109,
-      "already_present": 2460,
-      "built": 2569,
+      "already_present": 2465,
+      "built": 2574,
       "glossary_entries": 248,
       "module": "NEETS MOD 10",
       "path": "sources/neets/NEETS_MOD_10_NAVEDTRA_14182A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:bd9da68f943f267854b0028e55d21e95e20941539cd7b6aa67393245271738d6"
+      "sha256": "sha256:bd9da68f943f267854b0028e55d21e95e20941539cd7b6aa67393245271738d6",
+      "skipped": null
+    },
+    {
+      "activated": 40,
+      "already_present": 968,
+      "built": 1008,
+      "glossary_entries": 120,
+      "module": "NEETS MOD 11",
+      "path": "sources/neets/NEETS_MOD_11_NAVEDTRA_14183A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:693b22eec1d4ebb44e2d895c90314eeb2920be2d633cad1e5e755bd95240c49d",
+      "skipped": null
+    },
+    {
+      "activated": 35,
+      "already_present": 801,
+      "built": 836,
+      "glossary_entries": 146,
+      "module": "NEETS MOD 12",
+      "path": "sources/neets/NEETS_MOD_12_NAVEDTRA_14184A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:347176e3ab889e6c710f7e9a65252b5e89feed75d541f44c27a163c88db8dc6f",
+      "skipped": null
+    },
+    {
+      "activated": 66,
+      "already_present": 1542,
+      "built": 1608,
+      "glossary_entries": 100,
+      "module": "NEETS MOD 13",
+      "path": "sources/neets/NEETS_MOD_13_NAVEDTRA_14185A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:51acdf92639c5aa040949c2c63eb30093e9472efc802be3aa133d68216325163",
+      "skipped": null
+    },
+    {
+      "activated": 18,
+      "already_present": 414,
+      "built": 432,
+      "glossary_entries": 92,
+      "module": "NEETS MOD 14",
+      "path": "sources/neets/NEETS_MOD_14_NAVEDTRA_14186_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:1cf7c6ecf54d47e17b0c4855d3b2484d57bb4d6e14f91dbacb886145ccc64ea7",
+      "skipped": null
+    },
+    {
+      "activated": 28,
+      "already_present": 644,
+      "built": 672,
+      "glossary_entries": 87,
+      "module": "NEETS MOD 15",
+      "path": "sources/neets/NEETS_MOD_15_NAVEDTRA_14187A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:d67b846cad09ba0bc7242e54cf544393656eb516e5526fe5344883f1174c02ec",
+      "skipped": null
+    },
+    {
+      "activated": 15,
+      "already_present": 345,
+      "built": 360,
+      "glossary_entries": 95,
+      "module": "NEETS MOD 16",
+      "path": "sources/neets/NEETS_MOD_16_NAVEDTRA_14188A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:21fd92a42a429224293d1ad95575c97b3e84a6a638c2312bd5440b531f6d3a72",
+      "skipped": null
+    },
+    {
+      "activated": 63,
+      "already_present": 1442,
+      "built": 1505,
+      "glossary_entries": 180,
+      "module": "NEETS MOD 17",
+      "path": "sources/neets/NEETS_MOD_17_NAVEDTRA_14189A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:7583a8d36103dcc862558b6051991ed0a4f3bd1538b059ebd5987444150e1a65",
+      "skipped": null
+    },
+    {
+      "activated": 92,
+      "already_present": 2057,
+      "built": 2149,
+      "glossary_entries": 277,
+      "module": "NEETS MOD 18",
+      "path": "sources/neets/NEETS_MOD_18_NAVEDTRA_14190A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:2db6d607a694eba63c7c5beed683253f00bbd1a6459479e61c41f671170148b4",
+      "skipped": null
+    },
+    {
+      "activated": 18,
+      "already_present": 414,
+      "built": 432,
+      "glossary_entries": 93,
+      "module": "NEETS MOD 19",
+      "path": "sources/neets/NEETS_MOD_19_NAVEDTRA_14191_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:bbe389797c35cfc58de1557a39ebe9a31be710e1bcce92c16701d8a4a8da4c21",
+      "skipped": null
+    },
+    {
+      "activated": 74,
+      "already_present": 1699,
+      "built": 1773,
+      "glossary_entries": 162,
+      "module": "NEETS MOD 1",
+      "path": "sources/neets/NEETS_MOD_1_NAVEDTRA_14173A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:cee401fa412484c326809b4ab528568f03f75e8a0b3b3d6b2fcf0af0e822c7c2",
+      "skipped": null
+    },
+    {
+      "activated": 653,
+      "already_present": 2347,
+      "built": 3000,
+      "glossary_entries": 1565,
+      "module": "NEETS MOD 20",
+      "path": "sources/neets/NEETS_MOD_20_NAVEDTRA_14192_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:838cca61f6cc509fec8b3b9a316ac835a8dfb7f37448b9877c4c90bf111095f2",
+      "skipped": null
+    },
+    {
+      "activated": 6,
+      "already_present": 138,
+      "built": 144,
+      "glossary_entries": 57,
+      "module": "NEETS MOD 21",
+      "path": "sources/neets/NEETS_MOD_21_NAVEDTRA_14193A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:2c21cf2bde7731504431e6c2ff0d8cd6e1c2a1fca5dce86253ae08f037d8fee2",
+      "skipped": null
+    },
+    {
+      "activated": 64,
+      "already_present": 1465,
+      "built": 1529,
+      "glossary_entries": 175,
+      "module": "NEETS MOD 22",
+      "path": "sources/neets/NEETS_MOD_22_NAVEDTRA_14194A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:1c7a2c27d01cc62adf98105edb1e57d91ceb975db240b1608d03720598faf289",
+      "skipped": null
+    },
+    {
+      "activated": 55,
+      "already_present": 1283,
+      "built": 1338,
+      "glossary_entries": 183,
+      "module": "NEETS MOD 23",
+      "path": "sources/neets/NEETS_MOD_23_NAVEDTRA_14195A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:d491f2e16f6a21ac184ac24e39ca737f22f96178e4e541cd1f062b9065893fc0",
+      "skipped": null
+    },
+    {
+      "activated": 0,
+      "already_present": 0,
+      "built": 0,
+      "glossary_entries": 8,
+      "module": "NEETS MOD 24",
+      "path": "sources/neets/NEETS_MOD_24_NAVEDTRA_14196A_djvu.txt",
+      "rejected": 0,
+      "sha256": "sha256:91090db482f47b69aa51180853c6493f3d255995758bdf0545f8d0e29afbe7d3",
+      "skipped": "module \"NEETS MOD 24\" produced no Electronics Information items from 8 entries; either the glossary shape changed or every definition was rejected"
     },
     {
       "activated": 58,
-      "already_present": 1333,
-      "built": 1391,
+      "already_present": 1331,
+      "built": 1389,
       "glossary_entries": 151,
       "module": "NEETS MOD 2",
       "path": "sources/neets/NEETS_MOD_2_NAVEDTRA_14174A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:9a3c4aca4b2f0d29180c94b4cceca3e0fe2159bf740bd5a346e361f170815db6"
+      "sha256": "sha256:9a3c4aca4b2f0d29180c94b4cceca3e0fe2159bf740bd5a346e361f170815db6",
+      "skipped": null
     },
     {
-      "activated": 34,
-      "already_present": 782,
+      "activated": 32,
+      "already_present": 784,
       "built": 816,
       "glossary_entries": 60,
       "module": "NEETS MOD 3",
       "path": "sources/neets/NEETS_MOD_3_NAVEDTRA_14175A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:e71efded0c61f23e882091a4a949736d23c8b97328d498d98f8a55a9d98f7ee3"
+      "sha256": "sha256:e71efded0c61f23e882091a4a949736d23c8b97328d498d98f8a55a9d98f7ee3",
+      "skipped": null
     },
     {
       "activated": 47,
@@ -56,7 +214,8 @@
       "module": "NEETS MOD 4",
       "path": "sources/neets/NEETS_MOD_4_NAVEDTRA_14176A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:3a584296368bd9e3c4512f587efb294cd9753f169d71d6bd903beee00fed1bcf"
+      "sha256": "sha256:3a584296368bd9e3c4512f587efb294cd9753f169d71d6bd903beee00fed1bcf",
+      "skipped": null
     },
     {
       "activated": 7,
@@ -66,7 +225,8 @@
       "module": "NEETS MOD 5",
       "path": "sources/neets/NEETS_MOD_5_NAVEDTRA_14177A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:881eac1ddbe19ed0f58f2aed81b6b260cd03bcc098e2d5d84175dd09f9b32b70"
+      "sha256": "sha256:881eac1ddbe19ed0f58f2aed81b6b260cd03bcc098e2d5d84175dd09f9b32b70",
+      "skipped": null
     },
     {
       "activated": 27,
@@ -76,7 +236,8 @@
       "module": "NEETS MOD 6",
       "path": "sources/neets/NEETS_MOD_6_NAVEDTRA_14178A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:a63d9a853227dcd5225ae3a35a744e5b533d768a1701dba2d03d26ded453b8cf"
+      "sha256": "sha256:a63d9a853227dcd5225ae3a35a744e5b533d768a1701dba2d03d26ded453b8cf",
+      "skipped": null
     },
     {
       "activated": 20,
@@ -86,7 +247,8 @@
       "module": "NEETS MOD 7",
       "path": "sources/neets/NEETS_MOD_7_NAVEDTRA_14179A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:ee503cb71fb7ee5476b858a11c8e4c405ed00f415e068b840e40ad90905407b9"
+      "sha256": "sha256:ee503cb71fb7ee5476b858a11c8e4c405ed00f415e068b840e40ad90905407b9",
+      "skipped": null
     },
     {
       "activated": 17,
@@ -96,7 +258,8 @@
       "module": "NEETS MOD 8",
       "path": "sources/neets/NEETS_MOD_8_NAVEDTRA_14180A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:e2b0e693b5079ab68011fc3a6297ba87f5215e84d0f642f383d40b1f49a7d60b"
+      "sha256": "sha256:e2b0e693b5079ab68011fc3a6297ba87f5215e84d0f642f383d40b1f49a7d60b",
+      "skipped": null
     },
     {
       "activated": 21,
@@ -106,16 +269,18 @@
       "module": "NEETS MOD 9",
       "path": "sources/neets/NEETS_MOD_9_NAVEDTRA_14181A_djvu.txt",
       "rejected": 0,
-      "sha256": "sha256:34a2793c00c906b03a00eda99307c3862945a543b16d3478a90cf8cf7a344072"
+      "sha256": "sha256:34a2793c00c906b03a00eda99307c3862945a543b16d3478a90cf8cf7a344072",
+      "skipped": null
     }
   ],
   "requested_per_module": 3000,
   "seed": 20260922,
   "totals": {
-    "activated": 414,
-    "already_present": 9592,
-    "built": 10006,
-    "glossary_entries": 1104,
-    "rejected": 0
+    "activated": 1565,
+    "already_present": 23456,
+    "built": 25021,
+    "glossary_entries": 4282,
+    "rejected": 0,
+    "skipped_modules": 1
   }
 }

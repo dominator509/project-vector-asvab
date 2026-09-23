@@ -23,3 +23,15 @@
 56795=sources/gutenberg/fabre-story-science.txt
 55390=sources/gutenberg/triumphs-wonders.txt
 75948=sources/gutenberg/book-of-wonders.txt
+# Round 19. Eight works of technical and natural-history prose, fetched with
+# scripts/probes/fetch-gutenberg.py, which reads the ebook number out of the file's own
+# Gutenberg header and refuses the download when the two disagree -- the check that #2009
+# for `darwin-origin.txt` was missing. They add 733 Paragraph Comprehension items.
+38015=sources/gutenberg/agricola-de-re-metallica.txt
+68693=sources/gutenberg/whewell-inductive-sciences.txt
+45917=sources/gutenberg/candolle-cultivated-plants.txt
+67792=sources/gutenberg/thorndike-magic-science-1.txt
+43578=sources/gutenberg/kirby-entomology-3.txt
+43579=sources/gutenberg/kirby-entomology-4.txt
+59131=sources/gutenberg/pliny-natural-history-3.txt
+60230=sources/gutenberg/pliny-natural-history-2.txt

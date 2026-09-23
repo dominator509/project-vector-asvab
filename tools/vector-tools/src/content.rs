@@ -112,6 +112,7 @@ const NEETS: SourceSpec = SourceSpec {
 };
 
 /// What one module yielded.
+#[derive(Debug)]
 pub struct EiModuleOutcome {
     pub module: String,
     pub path: String,
@@ -121,9 +122,15 @@ pub struct EiModuleOutcome {
     pub activated: usize,
     pub already_present: usize,
     pub rejected: usize,
+    /// Why this module contributed nothing, when it contributed nothing.
+    ///
+    /// Recorded rather than raised: a module whose glossary is too thin is a fact about the
+    /// collection, not a failure of the run that also ingested the other twenty-three.
+    pub skipped: Option<String>,
 }
 
 /// What an Electronics Information ingestion run produced.
+#[derive(Debug)]
 pub struct EiOutcome {
     pub modules: Vec<EiModuleOutcome>,
     pub dictionary_entries: usize,
@@ -161,6 +168,15 @@ fn module_label(path: &Path) -> String {
 /// One module per vault row and one ingestion run per module, so a module that
 /// parses badly cannot take the rest of the collection down with it, and an item's
 /// citation names the module it came from.
+///
+/// "Cannot take the rest down with it" has to hold at *this* level, and it did not: the
+/// pipeline refuses a module that yields no items -- which is right, because a caller who
+/// asked for one module and got nothing must be told -- and the loop propagated that refusal
+/// with `?`, so ingesting the whole twenty-four-module collection aborted on module 24, whose
+/// glossary holds eight entries and none that survives the filters. The run had already stored
+/// 1,152 items from the other twenty-three and lost its report. A module that contributes
+/// nothing is now recorded as skipped and the run continues; the run fails only if *no* module
+/// contributed anything, which is the same guard the Paragraph Comprehension loop uses.
 #[allow(clippy::too_many_arguments)]
 pub fn ingest_ei(
     db_path: &Path,
@@ -203,12 +219,27 @@ pub fn ingest_ei(
         let module = module_label(path);
         let text = String::from_utf8(bytes)
             .with_context(|| format!("{} is not valid UTF-8", path.display()))?;
+        let sha256 = digest(text.as_bytes());
         let glossary = parse_neets_glossary(&text, &module);
         if glossary.is_empty() {
-            anyhow::bail!(
-                "{} yielded no glossary entries; the scan's separator or layout has changed",
+            let reason = format!(
+                "no glossary entries in {}; either the module has none or the scan's layout \
+                 has changed",
                 path.display()
             );
+            eprintln!("content ingest-ei: {module} contributed nothing: {reason}");
+            modules.push(EiModuleOutcome {
+                module,
+                path: path.display().to_string(),
+                sha256,
+                entries: 0,
+                built: 0,
+                activated: 0,
+                already_present: 0,
+                rejected: 0,
+                skipped: Some(reason),
+            });
+            continue;
         }
         let source_id = record_titled(&db, &NEETS, &module, path, text.as_bytes())?;
 
@@ -222,25 +253,57 @@ pub fn ingest_ei(
             reviewer,
             generator: "ei-ingester",
         };
-        let report = pipeline.ingest_ei(&glossary, &dictionary, &request)?;
+        // The pipeline refuses a module that builds nothing, and that refusal is the fact this
+        // loop records rather than the end of the run.
+        match pipeline.ingest_ei(&glossary, &dictionary, &request) {
+            Ok(report) => modules.push(EiModuleOutcome {
+                module,
+                path: path.display().to_string(),
+                sha256,
+                entries: report.entries,
+                built: report.built,
+                activated: report.activated,
+                already_present: report.already_present,
+                rejected: report.rejected.len(),
+                skipped: None,
+            }),
+            Err(error) => {
+                let reason = error.to_string();
+                eprintln!("content ingest-ei: {module} contributed nothing: {reason}");
+                modules.push(EiModuleOutcome {
+                    module,
+                    path: path.display().to_string(),
+                    sha256,
+                    entries: glossary.entry_count(),
+                    built: 0,
+                    activated: 0,
+                    already_present: 0,
+                    rejected: 0,
+                    skipped: Some(reason),
+                });
+            }
+        }
+    }
 
-        modules.push(EiModuleOutcome {
-            module,
-            path: path.display().to_string(),
-            sha256: digest(text.as_bytes()),
-            entries: report.entries,
-            built: report.built,
-            activated: report.activated,
-            already_present: report.already_present,
-            rejected: report.rejected.len(),
-        });
+    let total_activated: usize = modules.iter().map(|m| m.activated).sum();
+    let total_already_present: usize = modules.iter().map(|m| m.already_present).sum();
+    if total_activated == 0 && total_already_present == 0 {
+        let first = modules
+            .iter()
+            .find_map(|module| module.skipped.as_deref())
+            .unwrap_or("no reason recorded");
+        anyhow::bail!(
+            "no module in this run produced an item: {} module(s) were skipped or refused; \
+             first reason: {first}",
+            modules.iter().filter(|m| m.skipped.is_some()).count()
+        );
     }
 
     Ok(EiOutcome {
         total_entries: modules.iter().map(|m| m.entries).sum(),
         total_built: modules.iter().map(|m| m.built).sum(),
-        total_activated: modules.iter().map(|m| m.activated).sum(),
-        total_already_present: modules.iter().map(|m| m.already_present).sum(),
+        total_activated,
+        total_already_present,
         total_rejected: modules.iter().map(|m| m.rejected).sum(),
         dictionary_entries: dictionary.len(),
         dictionary_hash,
@@ -1040,4 +1103,177 @@ pub fn ingest_tools(
         total_rejected: outcomes.iter().map(|work| work.rejected).sum(),
         works: outcomes,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A miniature Webster's, because the EI pipeline checks every term and definition word
+    /// against the dictionary and would refuse a fixture it does not carry.
+    const DICTIONARY: &str = "\
+*** START OF THE PROJECT GUTENBERG EBOOK ***
+
+Resistor
+
+Resistor, n. A device that resists.
+
+Capacitor
+
+Capacitor, n. A device that stores charge.
+
+Voltage
+
+Voltage, n. Electric potential.
+
+Current
+
+Current, n. A flow of charge.
+
+Circuit
+
+Circuit, n. A closed path.
+
+Conductor
+
+Conductor, n. A material that carries current.
+
+Insulator
+
+Insulator, n. A material that blocks current.
+";
+
+    /// One usable glossary, in the shape a NEETS module prints it: a term in capitals, then the
+    /// spaced separator the parser accepts.
+    const USABLE_MODULE: &str = "\
+GLOSSARY
+
+RESISTOR - A device that resists the flow of current in a circuit.
+
+CAPACITOR - A device that stores charge between two plates.
+
+VOLTAGE - Electric potential measured between two points.
+
+CURRENT - A flow of charge through a conductor.
+
+CIRCUIT - A closed path for current to follow.
+
+CONDUCTOR - A material that carries current easily.
+";
+
+    /// A module with no glossary at all, which is what module 24 of the real collection is
+    /// close to: eight entries, none of which survives the filters.
+    const EMPTY_MODULE: &str = "\
+CHAPTER 1
+
+This module has no glossary section at all.
+";
+
+    mod tempdir {
+        use std::path::{Path, PathBuf};
+        use std::sync::atomic::{AtomicU64, Ordering};
+
+        static SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+        pub struct TempDir {
+            path: PathBuf,
+        }
+
+        impl TempDir {
+            pub fn new(tag: &str) -> Self {
+                let sequence = SEQUENCE.fetch_add(1, Ordering::SeqCst);
+                let path = std::env::temp_dir().join(format!(
+                    "vector-tools-{tag}-{}-{sequence}",
+                    std::process::id()
+                ));
+                std::fs::create_dir_all(&path).expect("create temp dir");
+                Self { path }
+            }
+
+            pub fn path(&self) -> &Path {
+                &self.path
+            }
+        }
+
+        impl Drop for TempDir {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.path);
+            }
+        }
+    }
+
+    /// One run over two modules: one that yields items and one that yields none.
+    ///
+    /// The regression this pins down is the shape of the failure. The pipeline refuses a
+    /// module that builds nothing -- correctly, because a caller who asked for one module and
+    /// got nothing must be told -- and the loop used to propagate that refusal, so ingesting
+    /// the real twenty-four-module collection aborted on module 24 *after* storing 1,152 items
+    /// and without writing its report. A thin module is a fact about the collection, not the
+    /// end of the run.
+    #[test]
+    fn a_module_that_yields_nothing_does_not_take_the_run_down() {
+        let dir = tempdir::TempDir::new("ei-thin-module");
+        let dictionary = dir.path().join("dictionary.txt");
+        let usable = dir.path().join("NEETS_MOD_1_NAVEDTRA_14173A_djvu.txt");
+        let empty = dir.path().join("NEETS_MOD_24_NAVEDTRA_14196A_djvu.txt");
+        std::fs::write(&dictionary, DICTIONARY).expect("write the dictionary");
+        std::fs::write(&usable, USABLE_MODULE).expect("write the usable module");
+        std::fs::write(&empty, EMPTY_MODULE).expect("write the empty module");
+
+        let outcome = ingest_ei(
+            &dir.path().join("vector.db"),
+            &dictionary,
+            &[usable, empty],
+            50,
+            20_260_922,
+            "content-reviewer",
+            5,
+        )
+        .expect("a thin module must not fail the run");
+
+        assert_eq!(outcome.modules.len(), 2);
+        assert!(
+            outcome.total_activated > 0,
+            "the usable module should have produced items: {outcome:?}",
+        );
+        let skipped: Vec<&str> = outcome
+            .modules
+            .iter()
+            .filter_map(|module| module.skipped.as_deref())
+            .collect();
+        assert_eq!(skipped.len(), 1, "one module should be recorded as skipped");
+        assert_eq!(outcome.modules[0].skipped, None);
+        assert!(
+            outcome.modules[1].skipped.is_some(),
+            "the module with no glossary is the one skipped: {:?}",
+            outcome.modules[1].module
+        );
+    }
+
+    /// A run in which nothing at all was produced is still a failure.
+    #[test]
+    fn a_run_in_which_no_module_produced_an_item_fails() {
+        let dir = tempdir::TempDir::new("ei-no-items");
+        let dictionary = dir.path().join("dictionary.txt");
+        let empty = dir.path().join("NEETS_MOD_24_NAVEDTRA_14196A_djvu.txt");
+        std::fs::write(&dictionary, DICTIONARY).expect("write the dictionary");
+        std::fs::write(&empty, EMPTY_MODULE).expect("write the empty module");
+
+        let error = ingest_ei(
+            &dir.path().join("vector.db"),
+            &dictionary,
+            &[empty],
+            50,
+            20_260_922,
+            "content-reviewer",
+            5,
+        )
+        .expect_err("a run that stored nothing must be refused");
+        assert!(
+            error
+                .to_string()
+                .contains("no module in this run produced an item"),
+            "the refusal should say what happened: {error}"
+        );
+    }
 }

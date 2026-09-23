@@ -365,6 +365,9 @@ const NAME_STOP_WORDS: &[&str] = &[
     "which",
     "what",
     "who",
+    // `as` leads the same kind of fragment: `The differential, as explained in the preceding
+    // paragraph, is to provide for differences in speed` named `as explained`.
+    "as",
     // The connectives. A name containing one is the tail of a clause the scanner ran
     // together: `catch trough then is used to collect the oil and return it to the sump` names
     // `catch trough then`, and the word `then` is what says so.
@@ -758,6 +761,57 @@ fn split_sentences(text: &str) -> Vec<String> {
 
 /// The tool and the purpose a sentence states, when it states one.
 ///
+/// Two shapes are read, and the shape decides only *where* the subject is written, not what
+/// counts as a tool or as a purpose: both end in `finish`, which is where the guards live.
+fn describe(sentence: &str) -> Option<(String, String)> {
+    // A sentence that names the relation puts the subject after the phrase -- `The function of
+    // the carburetor is to provide an air-fuel mixture` -- and reading what precedes the verb
+    // would name `function`.
+    describe_named_relation(sentence).or_else(|| describe_by_verb(sentence))
+}
+
+/// The tool and the purpose when the sentence names the relation instead of the verb.
+///
+/// These manuals write the relation both ways, and this one is common: `The function of the
+/// recouperator is to transfer heat from the exhaust gases to the air entering the engine`,
+/// `One important function of the power train is to transmit the power of the engine to the
+/// wheels`, `The basic function of a suspension lockout system is to bypass the suspension
+/// system`. `scripts/probes/description-shapes.py` counts them before they are read, and in
+/// TM 9-8000 the shape appears nineteen times against 134 sentences written `is used to`.
+///
+/// `purpose of` is read for the same reason, and the same two link words: these manuals write
+/// `is to` and, less often, `is for`.
+fn describe_named_relation(sentence: &str) -> Option<(String, String)> {
+    const NAMED: &[&str] = &["function of ", "purpose of "];
+    const LINK: &[&str] = &[" is to ", " is for "];
+    let lower = sentence.to_lowercase();
+    let (after, _) = NAMED
+        .iter()
+        .filter_map(|phrase| lower.find(phrase).map(|at| (at + phrase.len(), *phrase)))
+        .min_by_key(|(after, _)| *after)?;
+    // The link has to come after the phrase: `... is a function of the pressure, temperature,
+    // and time` states no purpose, and reading the phrase's position alone would cut the
+    // sentence in the wrong place.
+    let (link_at, link) = LINK
+        .iter()
+        .filter_map(|link| lower[after..].find(link).map(|at| (after + at, *link)))
+        .min_by_key(|(at, _)| *at)?;
+    let subject = sentence[after..link_at].trim();
+    let purpose = sentence[link_at + link.len()..].trim();
+    // A subject that opens with a gerund is an action, not a thing: `The purpose of burning
+    // fuel in the priming cup is to thoroughly heat the vaporizing chamber` describes burning
+    // fuel, and reading the noun phrase out of it named `burning fuel`, then `idle system` from
+    // `The purpose of shutting off the idle system with the engine is to ...`. The verb-before
+    // shapes cannot make this mistake, because they ask what stands before the verb rather
+    // than what stands after the phrase.
+    if opens_with_a_gerund(subject) {
+        return None;
+    }
+    finish(subject, purpose)
+}
+
+/// The tool and the purpose a sentence states about its subject, from the verb that follows it.
+///
 /// The subject is taken from *before* the verb, so a heading absorbed into the
 /// sentence (`HACKSAWS Hacksaws are used to cut metal`) leaves the last word before the
 /// verb as the tool rather than the whole run.
@@ -771,7 +825,7 @@ fn split_sentences(text: &str) -> Vec<String> {
 /// engine speed` asks and answers exactly as `is used to control engine speed` does.
 /// `serves as` is deliberately not read: its complement is a noun (`the relay serves as a
 /// switch`), and the frames this module builds take a purpose clause.
-fn describe(sentence: &str) -> Option<(String, String)> {
+fn describe_by_verb(sentence: &str) -> Option<(String, String)> {
     const VERBS: &[&str] = &[
         " are used for ",
         " are used to ",
@@ -793,10 +847,15 @@ fn describe(sentence: &str) -> Option<(String, String)> {
         .min_by_key(|(position, _)| *position)?;
 
     let subject = sentence[..position].trim();
+    let purpose = sentence[position + verb.len()..].trim();
+    finish(subject, purpose)
+}
+
+/// The guards both shapes share, and the reading of the purpose itself.
+fn finish(subject: &str, purpose: &str) -> Option<(String, String)> {
     if subject.split_whitespace().count() > MAX_SUBJECT_WORDS {
         return None;
     }
-    let purpose = sentence[position + verb.len()..].trim();
     // A relative clause makes the match belong to the wrong subject. In
     // `The yardstick that is used to measure the ignition quality of a diesel fuel is
     // the cetane-number scale`, the thing being used is the yardstick and the answer is
@@ -2221,6 +2280,62 @@ The battery is used to store electrical energy for the starting motor.
         // The prepositions still end a name where they should: `Nails with large flat heads`
         // names nails rather than "large flat heads".
         assert!(source.purpose_of("Nails").is_some(), "{names:?}");
+    }
+
+    #[test]
+    fn a_relation_the_sentence_names_is_read_the_other_way_round() {
+        // Every sentence here is verbatim from TM 9-8000, TM 9-2700 or *Tools and Their Uses*.
+        // These sentences put the subject *after* the phrase, so reading what precedes the verb
+        // would name `function`, `purpose` or `system`.
+        let source = parse_purposes(
+            "The purpose of the piston skirt is to keep the piston from rocking in the cylinder.\n\
+             The primary function of engine lubrication is to reduce the friction between moving parts.\n\
+             An additional function of the hair spring is to pull the pointer back to zero when the engine stops.\n\
+             The purpose of the suspension system of a vehicle is to support the weight of that vehicle.\n\
+             The primary purpose of this system is to provide the necessary oxygen to the catalytic converter.\n\
+             The purpose of burning fuel in the priming cup is to thoroughly heat the vaporizing chamber.\n\
+             The purpose of shutting off the idle system with the engine is to help eliminate engine dieseling.\n\
+             The spontaneous-ignition point of a diesel fuel is a function of the pressure and time.\n",
+            "A Test Manual",
+        );
+        let names: Vec<&str> = source
+            .entries()
+            .iter()
+            .map(|entry| entry.tool.as_str())
+            .collect();
+        assert!(
+            source.purpose_of("piston skirt").is_some(),
+            "the shape names its subject after the phrase: {names:?}"
+        );
+        assert!(
+            source.purpose_of("engine lubrication").is_some(),
+            "{names:?}"
+        );
+        assert!(source.purpose_of("hair spring").is_some(), "{names:?}");
+        assert!(
+            source.purpose_of("suspension system").is_some(),
+            "{names:?}"
+        );
+        // The refusals: the phrase's own word is not a tool; a pronoun is not a name; a
+        // gerund subject is an action rather than a thing; and a sentence that merely uses
+        // `function of` states no purpose at all.
+        assert!(source.purpose_of("function").is_none(), "{names:?}");
+        assert!(source.purpose_of("purpose").is_none(), "{names:?}");
+        assert!(
+            names.iter().all(|name| !name.starts_with("this")),
+            "{names:?}"
+        );
+        assert!(
+            names.iter().all(|name| !name.contains("burning")),
+            "the gerund subject is an action: {names:?}"
+        );
+        // The second gerund: `The purpose of shutting off the idle system with the engine is to
+        // help eliminate engine dieseling` (the page header the scan ran into the middle of the
+        // sentence is dropped here, which is what `clean_scan` does). Its purpose does open
+        // with a verb the manuals use, so this is the case the gerund rule exists for -- without
+        // it the subject reads as `idle system`.
+        assert!(names.iter().all(|name| *name != "idle system"), "{names:?}");
+        assert!(source.purpose_of("diesel fuel").is_none(), "{names:?}");
     }
 
     #[test]

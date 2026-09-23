@@ -1,9 +1,14 @@
-"""Prove the round-18 reading rules are load-bearing.
+"""Prove the content-reading rules are load-bearing.
 
 A rule that no test notices is a rule that can be deleted in the next refactor. This script
 disables one rule at a time in the source, runs the test that is supposed to catch it, and
 requires that test to fail. A mutation whose test still passes is reported as NOT CAUGHT,
 which means the rule is decoration.
+
+The rules are the ones the corpus reader and the ingestion loops were given: the nineteen in
+round 18 (what a purpose is, what a tool's name is, what damage is refused, one question asked
+once, a refused item leaving no draft) and the two in round 19 (a thin module not taking a run
+down, and a run that produces nothing still failing).
 
 A rule enforced in two places is one rule: the mutation disables *every* site of it, because
 disabling one site and watching the test still pass would say nothing about the rule.
@@ -23,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PURPOSES = ROOT / "crates/vector-questions/src/purposes.rs"
 CONTENT = ROOT / "crates/vector-application/src/content.rs"
 PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
+TOOLS = ROOT / "tools/vector-tools/src/content.rs"
 
 NAME_STOP_WORDS_IN_THE_NAME = """    if words
         .iter()
@@ -268,6 +274,60 @@ MUTATIONS = [
         "vector-application",
         "a_purpose_with_a_lost_space_is_refused",
         "two words run together are refused",
+    ),
+    (
+        "no-named-relation",
+        PURPOSES,
+        (
+            "    describe_named_relation(sentence).or_else(|| describe_by_verb(sentence))",
+            "    describe_by_verb(sentence)",
+        ),
+        "vector-questions",
+        "a_relation_the_sentence_names_is_read_the_other_way_round",
+        "a sentence that names the relation puts its subject after the phrase",
+    ),
+    (
+        "no-gerund-subject-guard",
+        PURPOSES,
+        (
+            "    if opens_with_a_gerund(subject) {\n        return None;\n    }",
+            "    if false && opens_with_a_gerund(subject) {\n        return None;\n    }",
+        ),
+        "vector-questions",
+        "a_relation_the_sentence_names_is_read_the_other_way_round",
+        "a subject that opens with a gerund is an action, not a thing",
+    ),
+    (
+        "no-per-module-tolerance",
+        TOOLS,
+        (
+            "        if glossary.is_empty() {\n            let reason = format!(",
+            "        if glossary.is_empty() {\n            anyhow::bail!(\"no glossary entries\");\n            #[allow(unreachable_code)]\n            let reason = format!(",
+        ),
+        "vector-tools",
+        "a_module_that_yields_nothing_does_not_take_the_run_down",
+        "a module that contributes nothing does not end the run",
+    ),
+    (
+        "no-run-level-guard",
+        TOOLS,
+        (
+            """    if total_activated == 0 && total_already_present == 0 {
+        let first = modules
+            .iter()
+            .find_map(|module| module.skipped.as_deref())
+            .unwrap_or("no reason recorded");
+        anyhow::bail!(
+            "no module in this run produced an item: {} module(s) were skipped or refused; \\
+             first reason: {first}",
+            modules.iter().filter(|m| m.skipped.is_some()).count()
+        );
+    }""",
+            """    let _ = (total_activated, total_already_present);""",
+        ),
+        "vector-tools",
+        "a_run_in_which_no_module_produced_an_item_fails",
+        "a run that produced nothing at all is still a failure",
     ),
 ]
 

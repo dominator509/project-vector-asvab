@@ -66,6 +66,10 @@ const EMBEDDED_MIGRATIONS: &[(i64, &str)] = &[
         7,
         include_str!("../../../../migrations/007_content_pack_items.sql"),
     ),
+    (
+        8,
+        include_str!("../../../../migrations/008_content_question_index.sql"),
+    ),
 ];
 
 /// The migration set the application ships with.
