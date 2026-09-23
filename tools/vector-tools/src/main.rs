@@ -138,6 +138,14 @@ enum Commands {
         /// The Ed25519 signing key, as 64 hex characters. See `pack-keygen`.
         #[arg(long)]
         key: PathBuf,
+        /// A JSON array of curriculum nodes. Without it the pack declares one node per
+        /// objective its items teach, with no prerequisites.
+        #[arg(long)]
+        curriculum: Option<PathBuf>,
+        /// A JSON array of calibration entries. Without it every objective is declared from
+        /// the items' difficulty scale, resting on no responses.
+        #[arg(long)]
+        calibration: Option<PathBuf>,
     },
     /// Verify and install a pack file.
     ///
@@ -688,7 +696,7 @@ fn main() -> Result<()> {
                 let started = std::time::Instant::now();
                 let parsed = works
                     .iter()
-                    .map(|work| content::parse_archive_work(work))
+                    .map(|work| content::parse_tool_source(work))
                     .collect::<Result<Vec<_>>>()?;
                 let kind = match ask.as_str() {
                     "functions" => vector_questions::purposes::ItemKind::Function,
@@ -719,7 +727,8 @@ fn main() -> Result<()> {
                     "requested_per_manual": count,
                     "seed": seed,
                     "manuals": outcome.works.iter().map(|w| serde_json::json!({
-                        "archive_id": w.archive_id,
+                        "source_id": w.source_id,
+                        "url": w.url,
                         "title": w.title,
                         "path": w.path,
                         "sha256": w.sha256,
@@ -775,15 +784,21 @@ fn main() -> Result<()> {
             app_min,
             app_max,
             key,
+            curriculum,
+            calibration,
         } => {
             let outcome = content::build_pack(
                 &db,
                 &out,
-                &name,
-                version,
-                &app_min,
-                app_max.as_deref(),
-                &key,
+                &content::PackBuildOptions {
+                    name: &name,
+                    version,
+                    app_min: &app_min,
+                    app_max: app_max.as_deref(),
+                    key_path: &key,
+                    curriculum_path: curriculum.as_deref(),
+                    calibration_path: calibration.as_deref(),
+                },
             )?;
             println!(
                 "{}",

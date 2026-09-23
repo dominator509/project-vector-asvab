@@ -1,0 +1,38 @@
+[
+  {
+    "objective_id": "OBJ-AI-FUNCTION-01",
+    "expected_correct": 0.525,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 75 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-EI-TERMINOLOGY-01",
+    "expected_correct": 0.5744,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 1565 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-GS-EXPLAIN-01",
+    "expected_correct": 0.5498,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 301 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-PC-DETAIL-01",
+    "expected_correct": 0.5987,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 1676 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-SI-TOOLS-01",
+    "expected_correct": 0.525,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 55 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-WK-SYNONYM-01",
+    "expected_correct": 0.5498,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 1949 item(s); no learner responses recorded"
+  }
+]

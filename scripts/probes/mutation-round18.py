@@ -29,6 +29,7 @@ PURPOSES = ROOT / "crates/vector-questions/src/purposes.rs"
 CONTENT = ROOT / "crates/vector-application/src/content.rs"
 PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
 TOOLS = ROOT / "tools/vector-tools/src/content.rs"
+PACKS = ROOT / "crates/vector-application/src/packs.rs"
 
 NAME_STOP_WORDS_IN_THE_NAME = """    if words
         .iter()
@@ -296,6 +297,50 @@ MUTATIONS = [
         "vector-questions",
         "a_relation_the_sentence_names_is_read_the_other_way_round",
         "a subject that opens with a gerund is an action, not a thing",
+    ),
+    (
+        "no-per-manual-tolerance",
+        TOOLS,
+        (
+            "        let report = match pipeline.ingest_purposes(&source, &request) {",
+            "        let report = match Ok::<_, anyhow::Error>(pipeline.ingest_purposes(&source, &request)?) {",
+        ),
+        "vector-tools",
+        "a_manual_that_describes_no_tool_does_not_take_the_run_down",
+        "a manual the reader finds no tools in does not end the run",
+    ),
+    (
+        "no-curriculum-check",
+        PACKS,
+        (
+            "    verify_curriculum(document)?;",
+            "    let _ = verify_curriculum(document);",
+        ),
+        "vector-application",
+        "a_pack_whose_item_teaches_an_undeclared_objective_is_refused",
+        "an item's objective has to be declared in the curriculum",
+    ),
+    (
+        "no-centred-derivation",
+        PACKS,
+        (
+            "                expected_correct: 1.0 / (1.0 + (-mean).exp()),",
+            "                expected_correct: -1.0,",
+        ),
+        "vector-application",
+        "a_pack_built_without_a_curriculum_declares_what_it_teaches",
+        "a derived calibration is a share between 0 and 1",
+    ),
+    (
+        "no-source-kind",
+        TOOLS,
+        (
+            "    let (url, licence) = match source.trim().to_lowercase().as_str() {",
+            "    let (url, licence) = match \"archive\" {",
+        ),
+        "vector-tools",
+        "a_tool_source_cites_the_page_its_bytes_came_from",
+        "a source's kind decides the page its citation names",
     ),
     (
         "no-per-module-tolerance",

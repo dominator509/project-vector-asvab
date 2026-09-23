@@ -1,0 +1,88 @@
+content: more sources for the thin banks, and the curriculum a pack declares (REQ-022, REQ-023, REQ-032, REQ-056)
+
+Shop Information goes from 37 to 55 and Auto Information from 70 to 75, from pre-1929 technical
+books the corpus had not tried; a pack now carries the curriculum graph and calibration
+metadata `CONTENT_PACK_SPEC.md` has listed since the format was written; and a third ingest path
+turned out to have the defect round 19 fixed in the second.
+
+## What it adds
+
+**Sources for the two thin banks.** Project Gutenberg holds the trade and technical books of the
+period, which are public domain and write the relation this reader reads. *Modern Machine-Shop
+Practice* (Rose), *Farm Mechanics: Machinery and Its Use to Save Hand Labor on the Farm*
+(Shearer), *How it Works* (Williams), *Elementary Lathe Practice*, *The Economy of Workshop
+Manipulation*, *Precision Locating and Dividing Methods*, *Practical Hand Book of Gas, Oil and
+Steam Engines* (Rathbun), *Gas-Engines and Producer-Gas Plants* (Mathot), *Gas and Petroleum
+Engines* (de Graffigny), *The Romance of Modern Mechanism*, *The Romance of Modern Invention*,
+*The Boy's Book of New Inventions* and *Machines at Work* were fetched and measured. The ones
+that yield descriptions became sources; the ones that do not are recorded as measured and
+unused rather than shipped to make a count look better.
+
+**A citation that would have been wrong.** `content ingest-tools` cited every source as
+`https://archive.org/details/<id>`, so ingesting a Project Gutenberg work through it would have
+recorded a URL that does not resolve to the bytes -- the class of defect that cost ten items two
+rounds of citing #2009 for the file that is #1228. The work argument is now
+`<source>:<id>:<title>=<path>` with `archive` or `gutenberg`, and the kind decides the page the
+citation names. It is written down rather than guessed from the id's shape, because an
+all-digit id is a Gutenberg ebook number *and* a plausible Internet Archive identifier; a
+two-part argument in the old shape is refused for naming no source at all.
+
+**The pack's curriculum and calibration.** A pack carries `curriculum` -- nodes of objective,
+subtest, title and prerequisites -- and `calibration` -- entries of expected-correct share,
+responses and basis. Installation verifies three relations a pack full of real questions can
+still get wrong: every item's objective is declared *and* the node's subtest matches the item's;
+every prerequisite names a node and the relation is acyclic, since a cycle means no learning
+order satisfies the curriculum; and every objective with items carries exactly one in-range
+calibration entry.
+
+Building without either declares them rather than omitting them: one node per objective the
+items teach, and a calibration derived from the items' own difficulty scale carrying
+`responses: 0`. That field is the point -- it separates a declaration from a measurement, and
+`scripts/probes/build-curriculum.py` writes the corpus's own with zero on every entry because
+no learner has answered any of these items. A pack carrying both was built and installed:
+5,621 items, 56 sources, 11.5 MB, `signature_valid: true`.
+
+## The defect: the third path where one bad source ends the run
+
+Adding *Elementary Lathe Practice* -- which describes no tool -- to the Shop Information sources
+failed the run. The pipeline refuses a source it finds nothing in, correctly, because a caller
+who asked for one manual and got nothing must be told; and `ingest_tools` propagated that
+refusal with `?`. The run aborted after storing **49 items**, and the Auto Information subtest
+was never ingested: one empty source took out both banks.
+
+A source that contributes nothing is now recorded as `skipped` with its reason and the run
+continues; a run in which no source produced an item still fails. Paragraph Comprehension
+learned this in round 15, Electronics Information in round 19, Shop and Auto Information now.
+The pattern is the same mistake three times: a per-source guard written for a one-source
+caller, propagated by a loop built to be resilient -- and each time it surfaced only when a
+source that yields nothing was added to a run that was otherwise working.
+
+## Corpus
+
+| Subtest | Round 19 | Round 20 | Sources |
+|---|---|---|---|
+| WK | 1,949 | 1,949 | Moby Thesaurus corroborated by Webster's 1913 |
+| EI | 1,565 | 1,565 | NEETS glossaries, all 24 modules |
+| PC | 1,676 | 1,676 | 25 public-domain works, passage quoted |
+| GS | 301 | 301 | *The book of wonders* |
+| SI | 37 | 55 | *Tools and Their Uses*, *TM 11-453*, *Modern Machine-Shop Practice*, *Farm Mechanics*, *How it Works* |
+| AI | 70 | 75 | *TM 9-8000*, *TM 9-2700*, four engine manuals |
+| **Total** | **5,598** | **5,621** | |
+
+69 evidence records, 7,570 citations, every provenance invariant zero, and 25/25 Gutenberg works
+re-downloading to the bytes they are cited as.
+
+## Tooling
+
+`fetch-gutenberg.py` (fetches in the form the provenance check re-derives, and refuses a
+download whose own header names a different ebook number), `fetch-archive-text.py --list`,
+`build-curriculum.py`, `rebuild-corpus.py --only <subtests>` with the source order fixed in the
+script, and `pack-build --curriculum/--calibration`. The mutation harness proves 24 rules.
+
+## Still open
+
+SI 55 and AI 75 are thin for a subtest that asks sixteen questions in a sitting, and every
+source measured across three rounds is either in the corpus or refused with numbers. The
+curriculum and calibration travel in the pack and the installer verifies them, but the content
+manager does not yet show what a pack teaches and the study planner does not order work by the
+prerequisites -- that is the next round's natural work. General Science is still one work.

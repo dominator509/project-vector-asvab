@@ -817,19 +817,59 @@ pub struct PackBuildOutcome {
     pub bytes: usize,
 }
 
+/// What a pack build is asked for.
+///
+/// One value rather than seven parameters because they describe one decision -- which pack of
+/// what, signed by whom, declaring what -- and because a caller that has to name them in order
+/// is a caller that can put the curriculum where the calibration goes.
+pub struct PackBuildOptions<'a> {
+    pub name: &'a str,
+    pub version: i64,
+    pub app_min: &'a str,
+    pub app_max: Option<&'a str>,
+    pub key_path: &'a Path,
+    pub curriculum_path: Option<&'a Path>,
+    pub calibration_path: Option<&'a Path>,
+}
+
 /// Build a signed pack from everything a store serves.
+///
+/// `curriculum_path` and `calibration_path` are optional JSON files. Without them the pack
+/// declares one node per objective its items teach, with no prerequisites, and one calibration
+/// entry per objective derived from the items' own difficulty scale -- a declaration that the
+/// pack says plainly rests on no responses. `pack-curriculum.json` in the evidence directory is
+/// the richer form: a real graph with prerequisites and measured calibration.
 pub fn build_pack(
     db_path: &Path,
     out: &Path,
-    name: &str,
-    version: i64,
-    app_min: &str,
-    app_max: Option<&str>,
-    key_path: &Path,
+    options: &PackBuildOptions<'_>,
 ) -> Result<PackBuildOutcome> {
+    let PackBuildOptions {
+        name,
+        version,
+        app_min,
+        app_max,
+        key_path,
+        curriculum_path,
+        calibration_path,
+    } = *options;
     let db = Database::open(db_path)
         .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
     let key = read_signing_key(key_path)?;
+    let curriculum = match curriculum_path {
+        Some(path) => serde_json::from_slice::<Vec<vector_application::packs::CurriculumNode>>(
+            &read_source(path, "a curriculum graph")?,
+        )
+        .with_context(|| format!("cannot read a curriculum graph from {}", path.display()))?,
+        None => Vec::new(),
+    };
+    let calibration = match calibration_path {
+        Some(path) => serde_json::from_slice::<Vec<vector_application::packs::CalibrationEntry>>(
+            &read_source(path, "calibration metadata")?,
+        )
+        .with_context(|| format!("cannot read calibration metadata from {}", path.display()))?,
+        None => Vec::new(),
+    };
     let document = vector_application::packs::build_pack(
         &db,
         &vector_application::packs::BuildPackRequest {
@@ -837,6 +877,8 @@ pub fn build_pack(
             version,
             app_min,
             app_max,
+            curriculum,
+            calibration,
         },
         &key,
     )?;
@@ -899,32 +941,72 @@ pub fn rollback_pack(
     vector_application::packs::rollback_pack(&db, name)
 }
 
-/// Parse a `--work` argument for an Internet Archive manual.
+/// One manual or book to read descriptions out of, and where it came from.
 ///
-/// The archive id is not optional, for the same reason the ebook number is not: the vault
-/// records a URL, and a reviewer has to be able to fetch the bytes again and get the same
-/// digest. These manuals have no Gutenberg header to read a title from, so the title is
-/// given alongside the id.
-pub fn parse_archive_work(argument: &str) -> Result<(String, String, PathBuf)> {
+/// The URL is carried rather than derived later, and the source kind is written down rather
+/// than guessed from the id's shape. Both matter for the same reason: the vault records a URL,
+/// and a reviewer has to be able to fetch the bytes again and get the same digest. Ten
+/// Paragraph Comprehension items spent two rounds citing Project Gutenberg #2009 for a file
+/// that is #1228, because the id was assumed rather than checked -- and an id that is all
+/// digits is a Gutenberg number *and* a plausible Internet Archive identifier.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ToolSource {
+    /// The identifier as the source names it: an Internet Archive item id, or an ebook number.
+    pub id: String,
+    pub title: String,
+    /// The page the bytes came from, which is what the vault records.
+    pub url: String,
+    pub licence: &'static str,
+    pub path: PathBuf,
+}
+
+/// Parse a `--work` argument: `<source>:<id>:<title>=<path>`.
+///
+/// `source` is `archive` (an Internet Archive scan, cited at its details page) or `gutenberg`
+/// (a Project Gutenberg work, cited at its ebook page). These manuals have no Gutenberg header
+/// to read a title from, so the title is given alongside the id.
+pub fn parse_tool_source(argument: &str) -> Result<ToolSource> {
+    let shape = "<source>:<id>:<title>=<path>, where source is archive or gutenberg";
     let (naming, path) = argument
         .split_once('=')
-        .with_context(|| format!("--work must be <archive-id>:<title>=<path>, not {argument:?}"))?;
-    let (archive_id, title) = naming
-        .split_once(':')
-        .with_context(|| format!("--work must be <archive-id>:<title>=<path>, not {argument:?}"))?;
-    if archive_id.trim().is_empty() || title.trim().is_empty() || path.trim().is_empty() {
+        .with_context(|| format!("--work must be {shape}, not {argument:?}"))?;
+    let mut parts = naming.splitn(3, ':');
+    let (Some(source), Some(id), Some(title)) = (parts.next(), parts.next(), parts.next()) else {
+        anyhow::bail!("--work must be {shape}, not {argument:?}");
+    };
+    if id.trim().is_empty() || title.trim().is_empty() || path.trim().is_empty() {
         anyhow::bail!("--work {argument:?} is missing an id, a title or a path");
     }
-    Ok((
-        archive_id.trim().to_string(),
-        title.trim().to_string(),
-        PathBuf::from(path),
-    ))
+    let (url, licence) = match source.trim().to_lowercase().as_str() {
+        "archive" => (
+            format!("https://archive.org/details/{id}"),
+            "Public domain (US government work)",
+        ),
+        "gutenberg" => (
+            format!("https://www.gutenberg.org/ebooks/{id}"),
+            "Public domain in the USA",
+        ),
+        other => anyhow::bail!(
+            "--work {argument:?} names source {other:?}; the sources this ingester cites are \
+             archive and gutenberg"
+        ),
+    };
+    Ok(ToolSource {
+        id: id.trim().to_string(),
+        title: title.trim().to_string(),
+        url,
+        licence,
+        path: PathBuf::from(path.trim()),
+    })
 }
 
 /// What one tool manual yielded.
+#[derive(Debug)]
 pub struct ToolWorkOutcome {
-    pub archive_id: String,
+    /// The identifier the source uses: an Internet Archive item id or an ebook number.
+    pub source_id: String,
+    /// The page the bytes came from, which is what the citation records.
+    pub url: String,
     pub title: String,
     pub path: String,
     pub sha256: String,
@@ -938,6 +1020,7 @@ pub struct ToolWorkOutcome {
 }
 
 /// What a Shop Information ingestion run produced.
+#[derive(Debug)]
 pub struct ToolOutcome {
     pub subtest: String,
     pub works: Vec<ToolWorkOutcome>,
@@ -954,32 +1037,45 @@ pub struct ToolOutcome {
     pub total_rejected: usize,
 }
 
-/// Record an Internet Archive item in the vault, returning its id.
+/// Record a source in the vault, returning its id.
 ///
-/// These manuals have no Project Gutenberg header, so the title is passed in and the URL
-/// is the item's own page. The digest is computed from the bytes, so the record can be
-/// checked by re-downloading the item.
-fn record_archive_work(
+/// The URL is the page the bytes came from, and the digest is computed from those bytes, so
+/// the record can be checked by re-downloading the item. The licence travels with the source
+/// rather than being assumed: a US government manual and a Project Gutenberg work are both
+/// public domain, and for different reasons.
+fn record_tool_source(
     db: &Database,
-    archive_id: &str,
-    title: &str,
+    source: &ToolSource,
     path: &Path,
     text: &str,
 ) -> Result<String> {
-    let url = format!("https://archive.org/details/{archive_id}");
-    let titled = format!("{title} (Internet Archive {archive_id})");
+    let titled = format!(
+        "{} ({} {})",
+        source.title,
+        source_kind(&source.url),
+        source.id
+    );
     let content_hash = digest(text.as_bytes());
     EvidenceRepo::new(db)
         .put(&NewEvidence::new(
-            &url,
+            &source.url,
             &titled,
             &content_hash,
-            "Public domain (US government work)",
+            source.licence,
             &chrono::Utc::now().format("%Y-%m-%d").to_string(),
             0.90,
             "retrieved",
         ))
         .with_context(|| format!("cannot record {} in the evidence vault", path.display()))
+}
+
+/// The word a citation uses for where a source came from.
+fn source_kind(url: &str) -> &'static str {
+    if url.contains("gutenberg.org") {
+        "Project Gutenberg"
+    } else {
+        "Internet Archive"
+    }
 }
 
 /// What one Shop or Auto Information ingestion run is asked for.
@@ -1003,7 +1099,7 @@ pub struct ToolIngestOptions<'a> {
 /// take the rest down with it and an item's citation names the manual it came from.
 pub fn ingest_tools(
     db_path: &Path,
-    works: &[(String, String, PathBuf)],
+    works: &[ToolSource],
     options: &ToolIngestOptions<'_>,
 ) -> Result<ToolOutcome> {
     let ToolIngestOptions {
@@ -1041,12 +1137,20 @@ pub fn ingest_tools(
 
     let pipeline = ContentPipeline::new(&db);
     let mut outcomes = Vec::new();
-    for (index, (archive_id, title, path)) in works.iter().enumerate() {
-        let text = std::fs::read_to_string(path)
-            .with_context(|| format!("cannot read {} as UTF-8", path.display()))?;
+    for (index, work) in works.iter().enumerate() {
+        let text = std::fs::read_to_string(&work.path)
+            .with_context(|| format!("cannot read {} as UTF-8", work.path.display()))?;
+        let title = work.title.as_str();
         let source = parse_purposes(&text, title);
-        let source_id = record_archive_work(&db, archive_id, title, path, &text)?;
 
+        // A source the reader finds nothing in is a fact about the source, not the end of the
+        // run. The pipeline refuses it -- correctly, because a caller who asked for one manual
+        // and got nothing must be told -- and this loop used to propagate that refusal with
+        // `?`, which is the same defect the Electronics Information loop had: adding
+        // *Elementary Lathe Practice* to the Shop Information sources, where it describes no
+        // tool, aborted a run that had already stored forty-nine items and left the next
+        // subtest un-ingested.
+        let source_id = record_tool_source(&db, work, &work.path, &text)?;
         let request = PurposeIngestRequest {
             subtest,
             kind,
@@ -1058,12 +1162,34 @@ pub fn ingest_tools(
             reviewer,
             generator: "tool-ingester",
         };
-        let report = pipeline.ingest_purposes(&source, &request)?;
+        let report = match pipeline.ingest_purposes(&source, &request) {
+            Ok(report) => report,
+            Err(error) => {
+                let reason = error.to_string();
+                eprintln!("content ingest-tools: {title:?} contributed nothing: {reason}");
+                outcomes.push(ToolWorkOutcome {
+                    source_id: work.id.clone(),
+                    url: work.url.clone(),
+                    title: title.to_string(),
+                    path: work.path.display().to_string(),
+                    sha256: digest(text.as_bytes()),
+                    statements: source.entry_count(),
+                    built: 0,
+                    activated: 0,
+                    already_present: 0,
+                    rejected: 0,
+                    rejection_reasons: Vec::new(),
+                    skipped: Some(reason),
+                });
+                continue;
+            }
+        };
 
         outcomes.push(ToolWorkOutcome {
-            archive_id: archive_id.clone(),
-            title: title.clone(),
-            path: path.display().to_string(),
+            source_id: work.id.clone(),
+            url: work.url.clone(),
+            title: title.to_string(),
+            path: work.path.display().to_string(),
             sha256: digest(text.as_bytes()),
             statements: report.statements,
             built: report.built,
@@ -1141,6 +1267,34 @@ Conductor, n. A material that carries current.
 Insulator
 
 Insulator, n. A material that blocks current.
+
+Micrometer
+
+Micrometer, n. An instrument for measuring small distances.
+
+Vise
+
+Vise, n. A clamping device.
+
+Wrench
+
+Wrench, n. A tool for turning nuts.
+
+Open
+
+Open, a. Not closed.
+
+Long
+
+Long, a. Extended in length.
+
+Nose
+
+Nose, n. The prominent part of the face.
+
+Pliers
+
+Pliers, n. A gripping tool.
 ";
 
     /// One usable glossary, in the shape a NEETS module prints it: a term in capitals, then the
@@ -1200,6 +1354,123 @@ This module has no glossary section at all.
                 let _ = std::fs::remove_dir_all(&self.path);
             }
         }
+    }
+
+    /// The citation a source is recorded under, which is the whole point of writing the
+    /// source kind down instead of guessing it from the id.
+    #[test]
+    fn a_tool_source_cites_the_page_its_bytes_came_from() {
+        let archive = parse_tool_source(
+            "archive:micro_IA41153156_0308:Tools and Their Uses (US Army, 1971)\
+             =sources/federal/tools-and-uses.txt",
+        )
+        .expect("an archive source parses");
+        assert_eq!(archive.id, "micro_IA41153156_0308");
+        assert_eq!(
+            archive.url,
+            "https://archive.org/details/micro_IA41153156_0308"
+        );
+        assert_eq!(archive.licence, "Public domain (US government work)");
+
+        let gutenberg = parse_tool_source(
+            "gutenberg:39225:Modern Machine-Shop Practice=sources/gutenberg/rose-machine-shop.txt",
+        )
+        .expect("a Gutenberg source parses");
+        assert_eq!(gutenberg.id, "39225");
+        assert_eq!(gutenberg.url, "https://www.gutenberg.org/ebooks/39225");
+        assert_eq!(gutenberg.licence, "Public domain in the USA");
+        // The title carries a colon of its own, and the path an equals sign: only the first
+        // separator of each kind belongs to the argument's shape.
+        let titled =
+            parse_tool_source("gutenberg:1:A title: with a colon=sources/gutenberg/odd=name.txt")
+                .expect("the title may contain a colon");
+        assert_eq!(titled.title, "A title: with a colon");
+        assert_eq!(titled.path, PathBuf::from("sources/gutenberg/odd=name.txt"));
+    }
+
+    /// An id whose shape could be either source must not decide the citation.
+    #[test]
+    fn a_source_that_names_no_known_kind_is_refused() {
+        // An all-digit id is a Gutenberg ebook number *and* a plausible Internet Archive
+        // identifier, which is exactly the ambiguity that let ten items cite the wrong file.
+        let error = parse_tool_source("internetarchive:39225:Modern Machine-Shop Practice=x.txt")
+            .expect_err("a source with no known kind must be refused");
+        assert!(
+            error.to_string().contains("archive and gutenberg"),
+            "the refusal should name the sources: {error}"
+        );
+        // An argument in the older two-part shape -- the one that assumed the archive -- names
+        // no source at all, and is refused for that.
+        assert!(parse_tool_source("39225:Modern Machine-Shop Practice=somewhere.txt").is_err());
+        assert!(parse_tool_source("gutenberg:39225:=somewhere.txt").is_err());
+        assert!(parse_tool_source("gutenberg::Title=somewhere.txt").is_err());
+    }
+
+    /// One usable manual and one that describes no tool.
+    ///
+    /// The same regression as the module loop above, in the Shop and Auto Information path:
+    /// adding *Elementary Lathe Practice* to the sources aborted a run that had already stored
+    /// forty-nine items, because the pipeline refused a source it found no tools in and the
+    /// loop propagated that refusal.
+    #[test]
+    fn a_manual_that_describes_no_tool_does_not_take_the_run_down() {
+        let dir = tempdir::TempDir::new("tools-thin-manual");
+        let dictionary = dir.path().join("dictionary.txt");
+        let usable = dir.path().join("tools-and-their-uses.txt");
+        let empty = dir.path().join("elementary-lathe-practice.txt");
+        std::fs::write(&dictionary, DICTIONARY).expect("write the dictionary");
+        std::fs::write(
+            &usable,
+            "MICROMETERS\n\
+             Micrometers are used to measure distances to the nearest one thousandth of an inch.\n\
+             VISES\n\
+             Vises are used for holding work when it is being planed, sawed, or drilled.\n\
+             WRENCHES\n\
+             Open-end wrenches are used to turn nuts and bolts in places where a socket will not fit.\n\
+             PLIERS\n\
+             Long-nose pliers are used for gripping, reaching places not readily accessible to the hand.\n",
+        )
+        .expect("write the usable manual");
+        std::fs::write(&empty, "CHAPTER 1\nThis manual describes no tool at all.\n")
+            .expect("write the empty manual");
+
+        let outcome = ingest_tools(
+            &dir.path().join("vector.db"),
+            &[
+                parse_tool_source(&format!(
+                    "archive:tools-and-their-uses:Tools and Their Uses={}",
+                    usable.display()
+                ))
+                .expect("the first source parses"),
+                parse_tool_source(&format!(
+                    "gutenberg:76925:Elementary Lathe Practice={}",
+                    empty.display()
+                ))
+                .expect("the second source parses"),
+            ],
+            &ToolIngestOptions {
+                subtest: "SI",
+                kind: vector_questions::purposes::ItemKind::Tool,
+                count: 20,
+                seed: 20_260_922,
+                dictionary_path: &dictionary,
+                reviewer: "content-reviewer",
+            },
+        )
+        .expect("a manual that describes no tool must not fail the run");
+
+        assert!(outcome.total_activated > 0, "{outcome:?}");
+        assert_eq!(outcome.works.len(), 2);
+        assert_eq!(outcome.works[0].skipped, None);
+        assert!(
+            outcome.works[1].skipped.is_some(),
+            "the empty manual is the one skipped"
+        );
+        // The Gutenberg source's citation names its own page, not an archive item.
+        assert_eq!(
+            outcome.works[1].url,
+            "https://www.gutenberg.org/ebooks/76925"
+        );
     }
 
     /// One run over two modules: one that yields items and one that yields none.

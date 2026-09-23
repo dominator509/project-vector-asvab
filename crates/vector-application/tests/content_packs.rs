@@ -132,6 +132,8 @@ fn pack_file(db: &Database, version: i64, signing: &SigningKey) -> Vec<u8> {
             version,
             app_min: RUNNING_VERSION,
             app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
         },
         signing,
     )
@@ -153,6 +155,8 @@ fn named_pack_file(db: &Database, name: &str, version: i64) -> Vec<u8> {
             version,
             app_min: RUNNING_VERSION,
             app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
         },
         &key(),
     )
@@ -174,6 +178,8 @@ fn a_built_pack_carries_its_items_its_ledger_and_a_signature() {
             version: 1,
             app_min: RUNNING_VERSION,
             app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
         },
         &key(),
     )
@@ -237,6 +243,8 @@ fn building_a_pack_from_an_empty_store_is_refused() {
             version: 1,
             app_min: RUNNING_VERSION,
             app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
         },
         &key(),
     )
@@ -275,6 +283,8 @@ fn a_pack_that_requires_a_newer_application_is_refused() {
             version: 1,
             app_min: "9.0.0",
             app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
         },
         &key(),
     )
@@ -502,6 +512,8 @@ fn installed_items_are_the_ones_the_pack_carried() {
             version: 1,
             app_min: RUNNING_VERSION,
             app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
         },
         &key(),
     )

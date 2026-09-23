@@ -48,19 +48,49 @@ MANIFEST = EVIDENCE / "gutenberg-manifest.txt"
 
 SUBTESTS = ("WK", "EI", "PC", "GS", "SI", "AI")
 
-# The Shop Information manuals, as `<archive-id>:<title>=<path>`.
+# The Shop Information sources, as `<source>:<id>:<title>=<path>`, where `<source>` is
+# `archive` or `gutenberg`. Written down rather than guessed from the id, because an all-digit
+# id is a Gutenberg ebook number *and* a plausible Internet Archive identifier -- the ambiguity
+# that let ten Paragraph Comprehension items cite #2009 for the file that is #1228.
 SHOP_MANUALS = [
-    "micro_IA41153156_0308:Tools and Their Uses (US Army, 1971)"
+    "archive:micro_IA41153156_0308:Tools and Their Uses (US Army, 1971)"
     "=sources/federal/tools-and-uses.txt",
-    "TM11-453:TM 11-453 Shop Work (US Army)=sources/federal/army-shop-work.txt",
+    "archive:TM11-453:TM 11-453 Shop Work (US Army)=sources/federal/army-shop-work.txt",
+    "gutenberg:39225:Modern Machine-Shop Practice (Joshua Rose)"
+    "=sources/gutenberg/rose-machine-shop-practice.txt",
+    "gutenberg:76925:Elementary Lathe Practice (T. J. Palmateer)"
+    "=sources/gutenberg/palmateer-lathe-practice.txt",
+    "gutenberg:57120:The Economy of Workshop Manipulation (John Richards)"
+    "=sources/gutenberg/richards-workshop-manipulation.txt",
+    "gutenberg:69061:Precision Locating and Dividing Methods (Anonymous)"
+    "=sources/gutenberg/precision-locating-dividing.txt",
+    "gutenberg:39791:Farm Mechanics: Machinery and Its Use to Save Hand Labor on the Farm"
+    " (Herbert A. Shearer)=sources/gutenberg/shearer-farm-mechanics.txt",
+    "gutenberg:28553:How it Works (Archibald Williams)"
+    "=sources/gutenberg/williams-how-it-works.txt",
 ]
 
-# The Auto Information manuals.
+# The Auto Information sources, in the same form.
 AUTO_MANUALS = [
-    "TM9-8000:TM 9-8000 Principles of Automotive Vehicles (US Army, 1985)"
+    "archive:TM9-8000:TM 9-8000 Principles of Automotive Vehicles (US Army, 1985)"
     "=sources/federal/tm9-8000.txt",
-    "TM9-2700:TM 9-2700 Principles of Automotive Vehicles (US Army)"
+    "archive:TM9-2700:TM 9-2700 Principles of Automotive Vehicles (US Army)"
     "=sources/federal/tm9-2700.txt",
+    "gutenberg:56776:Practical Hand Book of Gas, Oil and Steam Engines (John B. Rathbun)"
+    "=sources/gutenberg/rathbun-gas-oil-steam-engines.txt",
+    "gutenberg:38415:Gas-Engines and Producer-Gas Plants (R. E. Mathot)"
+    "=sources/gutenberg/mathot-gas-engines.txt",
+    "gutenberg:27286:Gas and Oil Engines, Simply Explained (Walter C. Runciman)"
+    "=sources/gutenberg/runciman-gas-oil-engines.txt",
+    "gutenberg:59311:Gas and Petroleum Engines (H. de Graffigny)"
+    "=sources/gutenberg/graffigny-gas-petroleum-engines.txt",
+    "gutenberg:46094:The Romance of Modern Mechanism (Archibald Williams)"
+    "=sources/gutenberg/williams-modern-mechanism.txt",
+    "gutenberg:41160:The Romance of Modern Invention (Archibald Williams)"
+    "=sources/gutenberg/williams-modern-invention.txt",
+    "gutenberg:46232:The Boy's Book of New Inventions (Harry E. Maule)"
+    "=sources/gutenberg/maule-boys-book-inventions.txt",
+    "gutenberg:55482:Machines at Work (Mary Elting)=sources/gutenberg/elting-machines-at-work.txt",
 ]
 
 GENERAL_SCIENCE = "75948=sources/gutenberg/book-of-wonders.txt"

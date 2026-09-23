@@ -258,3 +258,34 @@ next step there is finding works of that shape rather than more prose; the noun-
 the residual generic names still needs Webster's part-of-speech markers exposed through
 `Dictionary`; the Word Knowledge rare-distractor gap; the curriculum graph and calibration
 metadata the pack schema still lacks.
+
+### Round 20
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| More sources for the thin banks | Pre-1929 technical books on Project Gutenberg, a vein the corpus had not tried: *Modern Machine-Shop Practice*, *Farm Mechanics*, *How it Works*, *Elementary Lathe Practice*, *The Economy of Workshop Manipulation*, *Precision Locating and Dividing Methods*, four engine manuals and three invention books were fetched and measured. Shop Information goes 37 -> **55**, Auto Information 70 -> **75**. | `.agent/evidence/EP-007/content-corpus/ROUND-20-REPORT.md` |
+| A citation that would have been wrong | `ingest-tools` cited every source as an Internet Archive page. Ingesting a Gutenberg work through that form would have recorded a URL that does not resolve to the bytes -- the defect class round 18 found in the vault. The work argument is now `<source>:<id>:<title>=<path>` with `archive` or `gutenberg`, written down rather than guessed from the id's shape, because an all-digit id is a valid id in both systems. | `ROUND-20-REPORT.md`, `mutation-round18.py` |
+| The third instance of one bad source ending a run | Adding *Elementary Lathe Practice* (which describes no tool) to the Shop sources aborted a run that had stored 49 items **and left Auto Information un-ingested**. The pipeline's per-source refusal was propagated by a loop built to be resilient, exactly as in Electronics Information before round 19. A source that contributes nothing is now `skipped` and the run continues; a run in which nothing was produced still fails. | `ROUND-20-REPORT.md`, `content.rs` tests |
+| The pack's curriculum and calibration | `CONTENT_PACK_SPEC.md` lists both and rounds 15-19 recorded them missing. A pack now carries `curriculum` (objective, subtest, title, prerequisites) and `calibration` (expected-correct share, responses, basis). Installation verifies that every item's objective is declared with a matching subtest, that prerequisites exist and are acyclic, and that every taught objective has exactly one in-range calibration entry. `build-curriculum.py` writes the corpus's own; a pack carrying both was built and installed: 5,621 items, 56 sources, 11.5 MB, `signature_valid: true`. | `packs.rs`, `pack-curriculum.json`, `pack-calibration.json`, `packs/pack-build-v3.json` |
+
+Corpus as stored after round 20: 1,949 WK, 1,565 EI, 1,676 PC, 301 GS, **55 SI**, **75 AI** =
+**5,621 active items**, 69 evidence records, 7,570 citations, every provenance invariant a zero.
+**25/25 Gutenberg works re-download to the bytes they are cited as.**
+
+Gates: `sh scripts/verify.sh` exits 0; all 24 mutations caught by `mutation-round18.py` (the
+nineteen reading rules of round 18, round 19's run-level and named-relation rules, and this
+round's per-source tolerance, source-kind citation and two pack rules).
+
+**The calibration is honestly empty of measurements.** No learner has answered these items, so
+every entry carries `responses: 0` and a basis that says so; the number it carries is derived
+from the items' own difficulty scale. The field that separates a declaration from a measurement
+is `responses`, and it is zero on purpose -- a pack claiming measured difficulty it had never
+measured would be the same class of lie as a citation nobody can re-check.
+
+Still open: **SI 55 and AI 75 remain thin** for a subtest that asks sixteen questions in a
+sitting, and every source measured across three rounds is either in the corpus or refused with
+numbers; **the curriculum and calibration are not yet visible in the product** -- they travel in
+the pack and the installer verifies them, but the content manager does not show what a pack
+teaches and the study planner does not order work by the prerequisites, which is the next
+round's natural work; GS is still one work; the noun-head check and the Word Knowledge
+rare-distractor gap are unchanged.

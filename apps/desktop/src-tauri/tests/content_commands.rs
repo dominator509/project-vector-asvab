@@ -638,6 +638,8 @@ fn a_signed_pack(db: &Database, signing: &ed25519_dalek::SigningKey) -> Vec<u8> 
             version: 1,
             app_min: "0.1.0",
             app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
         },
         signing,
     )

@@ -34,7 +34,7 @@
 //! ledger carries, every source carries a licence the corpus permits, and the whole
 //! document is signed.
 
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet};
 
 use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
@@ -68,6 +68,41 @@ pub const PERMITTED_LICENCES: [&str; 4] = [
 /// Subtests whose answers are computable, and therefore must arrive with an
 /// executable proof rather than a source-backed rubric.
 const COMPUTABLE_SUBTESTS: [&str; 3] = ["AR", "MK", "MC"];
+
+/// One node of a pack's curriculum graph.
+///
+/// A pack of items with objective ids is a bag: it says what it contains and not what it
+/// teaches. The graph is what makes an objective more than a label -- it names the objective,
+/// says which subtest it belongs to, and says what has to come first. A study planner needs
+/// that to order a learner's work, and an installer needs it to refuse a pack whose items
+/// teach objectives the pack never declared.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CurriculumNode {
+    pub objective_id: String,
+    pub subtest: String,
+    pub title: String,
+    /// Objective ids in this same graph that should be learned first. Empty for a root.
+    #[serde(default)]
+    pub prerequisites: Vec<String>,
+}
+
+/// What a pack claims about how hard its objectives are.
+///
+/// Per objective rather than per item, and carrying the evidence it rests on: an item's
+/// `difficulty` field is what the *generator* believed when it wrote the question, while this
+/// is what the pack asserts about the objective after looking at responses. `responses` is
+/// what makes that distinction checkable -- an estimate resting on zero responses is a
+/// declaration, not a measurement, and the field is what lets a reader tell them apart.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CalibrationEntry {
+    pub objective_id: String,
+    /// The share of the target population expected to answer correctly, 0.0 to 1.0.
+    pub expected_correct: f64,
+    /// How many recorded responses the estimate rests on. Zero means "declared".
+    pub responses: u64,
+    /// Where the estimate came from, in the pack author's words.
+    pub basis: String,
+}
 
 /// A source in a pack's ledger.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -131,6 +166,12 @@ struct PackPayload {
     /// Every licence the pack's ledger uses, so a reader can see the terms without
     /// walking the sources.
     licences: Vec<String>,
+    /// What the pack teaches, as a graph rather than a set of labels.
+    #[serde(default)]
+    curriculum: Vec<CurriculumNode>,
+    /// What the pack claims about how hard each objective is, and on what evidence.
+    #[serde(default)]
+    calibration: Vec<CalibrationEntry>,
 }
 
 /// A pack file.
@@ -200,6 +241,39 @@ pub enum PackRefusal {
         item: String,
         subtest: String,
     },
+    /// An item teaches an objective the curriculum graph does not carry.
+    ObjectiveNotInCurriculum {
+        item: String,
+        objective_id: String,
+    },
+    /// An item's subtest disagrees with the subtest its objective belongs to.
+    ObjectiveSubtestMismatch {
+        objective_id: String,
+        curriculum: String,
+        item: String,
+    },
+    /// A node requires an objective the graph does not carry.
+    UnknownPrerequisite {
+        objective_id: String,
+        prerequisite: String,
+    },
+    /// The prerequisite relation has a cycle, so no order satisfies it.
+    CurriculumCycle {
+        objective_id: String,
+    },
+    /// An objective that items teach has no calibration entry.
+    CalibrationMissing {
+        objective_id: String,
+    },
+    /// A calibration entry names an objective the graph does not carry.
+    CalibrationUnknownObjective {
+        objective_id: String,
+    },
+    /// An expected-correct share outside 0.0 to 1.0, which is not a share at all.
+    CalibrationOutOfRange {
+        objective_id: String,
+        expected_correct: f64,
+    },
 }
 
 impl std::fmt::Display for PackRefusal {
@@ -254,6 +328,47 @@ impl std::fmt::Display for PackRefusal {
                 f,
                 "item {item} serves {subtest}, which is computable, but arrives with a \
                  source-backed rubric instead of an executable proof"
+            ),
+            PackRefusal::ObjectiveNotInCurriculum { item, objective_id } => write!(
+                f,
+                "item {item} teaches {objective_id}, which the curriculum graph does not carry"
+            ),
+            PackRefusal::ObjectiveSubtestMismatch {
+                objective_id,
+                curriculum,
+                item,
+            } => write!(
+                f,
+                "item {item} belongs to objective {objective_id}, which the curriculum assigns \
+                 to {curriculum}, not to {item}"
+            ),
+            PackRefusal::UnknownPrerequisite {
+                objective_id,
+                prerequisite,
+            } => write!(
+                f,
+                "{objective_id} requires {prerequisite}, which the curriculum graph does not carry"
+            ),
+            PackRefusal::CurriculumCycle { objective_id } => write!(
+                f,
+                "the curriculum's prerequisites form a cycle through {objective_id}, so no \
+                 learning order satisfies them"
+            ),
+            PackRefusal::CalibrationMissing { objective_id } => write!(
+                f,
+                "objective {objective_id} has items and no calibration entry"
+            ),
+            PackRefusal::CalibrationUnknownObjective { objective_id } => write!(
+                f,
+                "the calibration names {objective_id}, which the curriculum graph does not carry"
+            ),
+            PackRefusal::CalibrationOutOfRange {
+                objective_id,
+                expected_correct,
+            } => write!(
+                f,
+                "objective {objective_id} claims an expected-correct share of \
+                 {expected_correct}, which is not a share between 0 and 1"
             ),
         }
     }
@@ -334,6 +449,16 @@ impl PackDocument {
         &self.payload.licences
     }
 
+    /// What the pack teaches, as the graph it declares.
+    pub fn curriculum(&self) -> &[CurriculumNode] {
+        &self.payload.curriculum
+    }
+
+    /// What the pack claims about how hard each objective is, and on what evidence.
+    pub fn calibration(&self) -> &[CalibrationEntry] {
+        &self.payload.calibration
+    }
+
     pub fn app_min(&self) -> &str {
         &self.payload.app_min
     }
@@ -352,6 +477,13 @@ pub struct BuildPackRequest<'a> {
     pub app_min: &'a str,
     /// The newest, when the pack is known not to work past a version.
     pub app_max: Option<&'a str>,
+    /// What the pack teaches. Empty means "derive one node per objective the items use",
+    /// which produces a graph with no prerequisites -- honest, and less useful than a real
+    /// curriculum, which is why the caller can supply one.
+    pub curriculum: Vec<CurriculumNode>,
+    /// What the pack claims about difficulty. Empty means "declare one entry per taught
+    /// objective from the items' own difficulty scale, with no responses behind it".
+    pub calibration: Vec<CalibrationEntry>,
 }
 
 /// Assemble a pack from everything the store currently serves.
@@ -439,6 +571,63 @@ pub fn build_pack(
         .collect();
     licences.sort();
 
+    // What the pack teaches. A caller that supplies a graph gets the one it supplied; a caller
+    // that does not gets one node per objective the items use, with no prerequisites. The
+    // second is not a curriculum -- it is a declaration of what the pack touches, and it is
+    // what makes the "every item's objective is declared" check meaningful for a pack built
+    // before anyone wrote a curriculum.
+    let curriculum = if request.curriculum.is_empty() {
+        let mut nodes: Vec<CurriculumNode> = packed
+            .iter()
+            .map(|item| (item.objective_id.clone(), item.subtest.clone()))
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .map(|(objective_id, subtest)| CurriculumNode {
+                title: objective_id.clone(),
+                objective_id,
+                subtest,
+                prerequisites: Vec::new(),
+            })
+            .collect();
+        nodes.sort_by(|a, b| a.objective_id.cmp(&b.objective_id));
+        nodes
+    } else {
+        let mut nodes = request.curriculum.clone();
+        nodes.sort_by(|a, b| a.objective_id.cmp(&b.objective_id));
+        nodes
+    };
+
+    // What the pack claims about difficulty. The default reads the items' own difficulty
+    // scale, which is a logit-like value centred on zero, and converts it to an
+    // expected-correct share. `responses: 0` and the basis string say plainly that this is a
+    // declaration rather than a measurement.
+    let calibration = if request.calibration.is_empty() {
+        let mut by_objective: BTreeMap<String, Vec<f64>> = BTreeMap::new();
+        for item in &packed {
+            by_objective
+                .entry(item.objective_id.clone())
+                .or_default()
+                .push(item.difficulty);
+        }
+        by_objective
+            .into_iter()
+            .map(|(objective_id, difficulties)| {
+                let mean = difficulties.iter().sum::<f64>() / difficulties.len() as f64;
+                CalibrationEntry {
+                    objective_id,
+                    expected_correct: 1.0 / (1.0 + (-mean).exp()),
+                    responses: 0,
+                    basis: "declared from the items' difficulty scale; no responses recorded"
+                        .to_string(),
+                }
+            })
+            .collect()
+    } else {
+        let mut entries = request.calibration.clone();
+        entries.sort_by(|a, b| a.objective_id.cmp(&b.objective_id));
+        entries
+    };
+
     let payload = PackPayload {
         format: PACK_FORMAT.to_string(),
         schema_version: PACK_SCHEMA_VERSION,
@@ -450,6 +639,8 @@ pub fn build_pack(
         sources,
         items: packed,
         licences,
+        curriculum,
+        calibration,
     };
 
     let mut document = PackDocument {
@@ -665,6 +856,126 @@ pub fn verify_pack(
         }
     }
 
+    verify_curriculum(document)?;
+    Ok(())
+}
+
+/// Whether the pack's curriculum graph and calibration agree with its items.
+///
+/// Three relations, each of which a pack full of real questions can still get wrong:
+///
+/// * **every item's objective is a node**, with the node's subtest matching the item's. An
+///   item that teaches an objective the graph never declared is content a study planner cannot
+///   place, which is the reason for having a graph at all;
+/// * **the prerequisites form a graph, not a wish list**: each names a node that exists, and
+///   the relation is acyclic. A cycle means no order satisfies the curriculum, and a planner
+///   that trusted it would either loop or silently pick one;
+/// * **every objective with items carries exactly one calibration entry**, in range. An
+///   objective with items and no estimate is a claim about difficulty that was never made.
+fn verify_curriculum(document: &PackDocument) -> Result<(), PackRefusal> {
+    let by_objective: BTreeMap<&str, &CurriculumNode> = document
+        .payload
+        .curriculum
+        .iter()
+        .map(|node| (node.objective_id.as_str(), node))
+        .collect();
+
+    let mut taught: BTreeSet<&str> = BTreeSet::new();
+    for item in &document.payload.items {
+        let Some(node) = by_objective.get(item.objective_id.as_str()) else {
+            return Err(PackRefusal::ObjectiveNotInCurriculum {
+                item: item.id.clone(),
+                objective_id: item.objective_id.clone(),
+            });
+        };
+        if node.subtest != item.subtest {
+            return Err(PackRefusal::ObjectiveSubtestMismatch {
+                objective_id: item.objective_id.clone(),
+                curriculum: node.subtest.clone(),
+                item: item.subtest.clone(),
+            });
+        }
+        taught.insert(item.objective_id.as_str());
+    }
+
+    for node in &document.payload.curriculum {
+        for prerequisite in &node.prerequisites {
+            if !by_objective.contains_key(prerequisite.as_str()) {
+                return Err(PackRefusal::UnknownPrerequisite {
+                    objective_id: node.objective_id.clone(),
+                    prerequisite: prerequisite.clone(),
+                });
+            }
+        }
+    }
+
+    // Depth-first from every node: a prerequisite chain that returns to where it started is a
+    // cycle, and naming the node it closed on is what makes the refusal actionable.
+    let mut settled: BTreeSet<&str> = BTreeSet::new();
+    for start in by_objective.keys().copied() {
+        let mut path: Vec<&str> = Vec::new();
+        let mut stack: Vec<(&str, usize)> = vec![(start, 0)];
+        let mut visiting: BTreeSet<&str> = BTreeSet::new();
+        while let Some((node_id, next)) = stack.pop() {
+            if next == 0 {
+                if settled.contains(node_id) {
+                    continue;
+                }
+                if !visiting.insert(node_id) {
+                    return Err(PackRefusal::CurriculumCycle {
+                        objective_id: node_id.to_string(),
+                    });
+                }
+                path.push(node_id);
+            }
+            let prerequisites = by_objective
+                .get(node_id)
+                .map(|node| node.prerequisites.as_slice())
+                .unwrap_or(&[]);
+            if next < prerequisites.len() {
+                stack.push((node_id, next + 1));
+                let prerequisite = prerequisites[next].as_str();
+                if visiting.contains(prerequisite) {
+                    return Err(PackRefusal::CurriculumCycle {
+                        objective_id: prerequisite.to_string(),
+                    });
+                }
+                stack.push((prerequisite, 0));
+                continue;
+            }
+            visiting.remove(node_id);
+            settled.insert(node_id);
+            path.pop();
+        }
+    }
+
+    let mut calibrated: BTreeSet<&str> = BTreeSet::new();
+    for entry in &document.payload.calibration {
+        if !by_objective.contains_key(entry.objective_id.as_str()) {
+            return Err(PackRefusal::CalibrationUnknownObjective {
+                objective_id: entry.objective_id.clone(),
+            });
+        }
+        if !(0.0..=1.0).contains(&entry.expected_correct) {
+            return Err(PackRefusal::CalibrationOutOfRange {
+                objective_id: entry.objective_id.clone(),
+                expected_correct: entry.expected_correct,
+            });
+        }
+        if !calibrated.insert(entry.objective_id.as_str()) {
+            return Err(PackRefusal::CalibrationUnknownObjective {
+                objective_id: entry.objective_id.clone(),
+            });
+        }
+    }
+    for objective_id in &taught {
+        if !calibrated.contains(objective_id) {
+            return Err(PackRefusal::CalibrationMissing {
+                objective_id: (*objective_id).to_string(),
+            });
+        }
+    }
+
     Ok(())
 }
 
@@ -871,6 +1182,14 @@ impl PackDocument {
         self.payload.schema_version = version;
     }
 
+    fn set_curriculum_for_test(&mut self, nodes: Vec<CurriculumNode>) {
+        self.payload.curriculum = nodes;
+    }
+
+    fn set_calibration_for_test(&mut self, entries: Vec<CalibrationEntry>) {
+        self.payload.calibration = entries;
+    }
+
     fn set_item_sources_for_test(&mut self, index: usize, sources: Vec<String>) {
         self.payload.items[index].sources = sources;
     }
@@ -999,6 +1318,8 @@ mod tests {
                 version: 1,
                 app_min: "0.1.0",
                 app_max: None,
+                curriculum: Vec::new(),
+                calibration: Vec::new(),
             },
             &key(),
         )
@@ -1010,6 +1331,206 @@ mod tests {
     fn a_freshly_built_pack_verifies() {
         let (_dir, document) = good("unit-fresh");
         verify_pack(&document, &trusted(), RUNNING).expect("a fresh pack must verify");
+    }
+
+    /// The graph and the calibration a pack was built with are the ones it carries.
+    ///
+    /// The graph has to cover every objective the items teach -- a curriculum that declares
+    /// only some of them is refused, which is the point of declaring one -- so the nodes are
+    /// derived from what the store built and then given titles, prerequisites and calibration
+    /// of their own.
+    #[test]
+    fn a_pack_carries_the_curriculum_and_calibration_it_was_built_with() {
+        let (dir, db) = store("unit-curriculum");
+        let base = build_pack(
+            &db,
+            &BuildPackRequest {
+                name: "core-asvab",
+                version: 1,
+                app_min: "0.1.0",
+                app_max: None,
+                curriculum: Vec::new(),
+                calibration: Vec::new(),
+            },
+            &key(),
+        )
+        .expect("build");
+        let mut objectives: Vec<(String, String)> = base
+            .curriculum()
+            .iter()
+            .map(|node| (node.objective_id.clone(), node.subtest.clone()))
+            .collect();
+        objectives.sort();
+        assert!(
+            objectives.len() >= 2,
+            "the store should build several objectives"
+        );
+
+        // A chain: each objective requires the one before it, which is the shape a study
+        // planner reads.
+        let nodes: Vec<CurriculumNode> = objectives
+            .iter()
+            .enumerate()
+            .map(|(index, (objective_id, subtest))| CurriculumNode {
+                objective_id: objective_id.clone(),
+                subtest: subtest.clone(),
+                title: format!("Objective {objective_id}"),
+                prerequisites: if index == 0 {
+                    Vec::new()
+                } else {
+                    vec![objectives[index - 1].0.clone()]
+                },
+            })
+            .collect();
+        let entries: Vec<CalibrationEntry> = objectives
+            .iter()
+            .enumerate()
+            .map(|(index, (objective_id, _))| CalibrationEntry {
+                objective_id: objective_id.clone(),
+                expected_correct: if index == 0 { 0.62 } else { 0.5 },
+                responses: if index == 0 { 1840 } else { 0 },
+                basis: if index == 0 {
+                    "trial of 1,840 responses from the 2026 field study".to_string()
+                } else {
+                    "declared; no responses recorded".to_string()
+                },
+            })
+            .collect();
+
+        let document = build_pack(
+            &db,
+            &BuildPackRequest {
+                name: "core-asvab",
+                version: 1,
+                app_min: "0.1.0",
+                app_max: None,
+                curriculum: nodes.clone(),
+                calibration: entries.clone(),
+            },
+            &key(),
+        )
+        .expect("build");
+        assert_eq!(document.curriculum(), nodes.as_slice());
+        assert_eq!(document.calibration(), entries.as_slice());
+        verify_pack(&document, &trusted(), RUNNING).expect("a pack with a curriculum verifies");
+
+        // It survives the round trip through the bytes, which is how it reaches a reviewer.
+        let bytes = pack_bytes(&document).expect("serialize");
+        let parsed = parse_pack(&bytes).expect("parse");
+        assert_eq!(parsed.curriculum(), nodes.as_slice());
+        assert_eq!(parsed.calibration(), entries.as_slice());
+        let _ = dir;
+    }
+
+    /// A pack built without a curriculum still declares one: a node per objective it teaches.
+    #[test]
+    fn a_pack_built_without_a_curriculum_declares_what_it_teaches() {
+        let (_dir, document) = good("unit-derived-curriculum");
+        assert!(!document.curriculum().is_empty());
+        for item in document.items() {
+            assert!(
+                document
+                    .curriculum()
+                    .iter()
+                    .any(|node| node.objective_id == item.objective_id
+                        && node.subtest == item.subtest),
+                "the derived graph must carry every objective the items use"
+            );
+        }
+        // And every taught objective carries a calibration entry, which says plainly that it
+        // rests on no responses.
+        for node in document.curriculum() {
+            let entry = document
+                .calibration()
+                .iter()
+                .find(|entry| entry.objective_id == node.objective_id)
+                .expect("every node is calibrated");
+            assert_eq!(entry.responses, 0);
+            assert!((0.0..=1.0).contains(&entry.expected_correct));
+        }
+    }
+
+    #[test]
+    fn a_pack_whose_item_teaches_an_undeclared_objective_is_refused() {
+        let (_dir, mut document) = good("unit-undeclared-objective");
+        let graph = document
+            .curriculum()
+            .iter()
+            .filter(|node| node.objective_id != document.items()[0].objective_id)
+            .cloned()
+            .collect::<Vec<_>>();
+        assert!(
+            !graph.is_empty(),
+            "the store builds more than one objective"
+        );
+        document.set_curriculum_for_test(graph);
+        document.reseal_for_test(&key());
+        match verify_pack(&document, &trusted(), RUNNING) {
+            Err(PackRefusal::ObjectiveNotInCurriculum { .. }) => {}
+            other => panic!("expected an undeclared-objective refusal, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_pack_whose_prerequisites_are_unknown_is_refused() {
+        let (_dir, mut document) = good("unit-unknown-prerequisite");
+        let mut graph = document.curriculum().to_vec();
+        graph[0].prerequisites = vec!["OBJ-NOBODY-KNOWS-01".to_string()];
+        document.set_curriculum_for_test(graph);
+        document.reseal_for_test(&key());
+        match verify_pack(&document, &trusted(), RUNNING) {
+            Err(PackRefusal::UnknownPrerequisite { .. }) => {}
+            other => panic!("expected an unknown-prerequisite refusal, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_pack_whose_prerequisites_form_a_cycle_is_refused() {
+        let (_dir, mut document) = good("unit-curriculum-cycle");
+        let mut graph = document.curriculum().to_vec();
+        assert!(
+            graph.len() >= 2,
+            "a cycle needs two nodes, and the store builds several objectives"
+        );
+        // Two nodes that each require the other: no learning order satisfies this.
+        graph[0].prerequisites = vec![graph[1].objective_id.clone()];
+        graph[1].prerequisites = vec![graph[0].objective_id.clone()];
+        document.set_curriculum_for_test(graph);
+        document.reseal_for_test(&key());
+        match verify_pack(&document, &trusted(), RUNNING) {
+            Err(PackRefusal::CurriculumCycle { .. }) => {}
+            other => panic!("expected a cycle refusal, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_pack_whose_objective_has_no_calibration_is_refused() {
+        let (_dir, mut document) = good("unit-calibration-missing");
+        let kept = document.calibration()[0].objective_id.clone();
+        document.set_calibration_for_test(vec![CalibrationEntry {
+            objective_id: kept,
+            expected_correct: 0.5,
+            responses: 10,
+            basis: "one entry, so the others are missing".to_string(),
+        }]);
+        document.reseal_for_test(&key());
+        match verify_pack(&document, &trusted(), RUNNING) {
+            Err(PackRefusal::CalibrationMissing { .. }) => {}
+            other => panic!("expected a missing-calibration refusal, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_pack_whose_calibration_is_out_of_range_is_refused() {
+        let (_dir, mut document) = good("unit-calibration-range");
+        let mut entries = document.calibration().to_vec();
+        entries[0].expected_correct = 1.4;
+        document.set_calibration_for_test(entries);
+        document.reseal_for_test(&key());
+        match verify_pack(&document, &trusted(), RUNNING) {
+            Err(PackRefusal::CalibrationOutOfRange { .. }) => {}
+            other => panic!("expected an out-of-range refusal, got {other:?}"),
+        }
     }
 
     #[test]

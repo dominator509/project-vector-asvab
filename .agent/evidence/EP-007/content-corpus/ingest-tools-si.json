@@ -5,43 +5,129 @@
     "path": "sources/webster-1913/pg29765.txt",
     "sha256": "sha256:86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3"
   },
-  "elapsed_ms": 5329,
+  "elapsed_ms": 9529,
   "manuals": [
     {
       "activated": 27,
       "already_present": 0,
-      "archive_id": "micro_IA41153156_0308",
       "built": 27,
       "path": "sources/federal/tools-and-uses.txt",
       "rejected": 0,
       "rejection_reasons": [],
       "sha256": "sha256:ec5c10f87471deae564d5bad632db9fb4e1dc3a362190a2d9456c5938d6324c9",
       "skipped": null,
+      "source_id": "micro_IA41153156_0308",
       "statements": 34,
-      "title": "Tools and Their Uses (US Army, 1971)"
+      "title": "Tools and Their Uses (US Army, 1971)",
+      "url": "https://archive.org/details/micro_IA41153156_0308"
     },
     {
       "activated": 10,
       "already_present": 0,
-      "archive_id": "TM11-453",
       "built": 10,
       "path": "sources/federal/army-shop-work.txt",
       "rejected": 0,
       "rejection_reasons": [],
       "sha256": "sha256:e0e982d35aacfc0b90248219e207b4b0455446fdf183666f156782cae2d6a339",
       "skipped": null,
+      "source_id": "TM11-453",
       "statements": 11,
-      "title": "TM 11-453 Shop Work (US Army)"
+      "title": "TM 11-453 Shop Work (US Army)",
+      "url": "https://archive.org/details/TM11-453"
+    },
+    {
+      "activated": 12,
+      "already_present": 0,
+      "built": 12,
+      "path": "sources/gutenberg/rose-machine-shop-practice.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:d5053cfa0db2ac877427458a6b444abe4450823c286e0b355dc1ce619862f1e7",
+      "skipped": null,
+      "source_id": "39225",
+      "statements": 13,
+      "title": "Modern Machine-Shop Practice (Joshua Rose)",
+      "url": "https://www.gutenberg.org/ebooks/39225"
+    },
+    {
+      "activated": 0,
+      "already_present": 0,
+      "built": 0,
+      "path": "sources/gutenberg/palmateer-lathe-practice.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:f0ca1baaee0efacffbe9da408fdc1e48667f47a27bca24d8d24eaa3fdc8407f1",
+      "skipped": "text \"Elementary Lathe Practice (T. J. Palmateer)\" described no tools at all; the file's shape or its scanner's habits may have changed",
+      "source_id": "76925",
+      "statements": 0,
+      "title": "Elementary Lathe Practice (T. J. Palmateer)",
+      "url": "https://www.gutenberg.org/ebooks/76925"
+    },
+    {
+      "activated": 0,
+      "already_present": 0,
+      "built": 0,
+      "path": "sources/gutenberg/richards-workshop-manipulation.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:3983eb7aebf4058e499fdb2092db7c1bcf6bde8dae9d8c4d41a3b462c988bfe0",
+      "skipped": "text \"The Economy of Workshop Manipulation (John Richards)\" described no tools at all; the file's shape or its scanner's habits may have changed",
+      "source_id": "57120",
+      "statements": 0,
+      "title": "The Economy of Workshop Manipulation (John Richards)",
+      "url": "https://www.gutenberg.org/ebooks/57120"
+    },
+    {
+      "activated": 0,
+      "already_present": 0,
+      "built": 0,
+      "path": "sources/gutenberg/precision-locating-dividing.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:e8a5f563848141da971d0ee0554b48822d31af4ea36b2b57e540c38fc4ce3c1e",
+      "skipped": "text \"Precision Locating and Dividing Methods (Anonymous)\" described no tools at all; the file's shape or its scanner's habits may have changed",
+      "source_id": "69061",
+      "statements": 0,
+      "title": "Precision Locating and Dividing Methods (Anonymous)",
+      "url": "https://www.gutenberg.org/ebooks/69061"
+    },
+    {
+      "activated": 6,
+      "already_present": 0,
+      "built": 6,
+      "path": "sources/gutenberg/shearer-farm-mechanics.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:b4ab3fbe55b4d669f9bed8f6c240b085a41f9d9f091e000f7b28b75033d20e16",
+      "skipped": null,
+      "source_id": "39791",
+      "statements": 6,
+      "title": "Farm Mechanics: Machinery and Its Use to Save Hand Labor on the Farm (Herbert A. Shearer)",
+      "url": "https://www.gutenberg.org/ebooks/39791"
+    },
+    {
+      "activated": 0,
+      "already_present": 0,
+      "built": 0,
+      "path": "sources/gutenberg/williams-how-it-works.txt",
+      "rejected": 0,
+      "rejection_reasons": [],
+      "sha256": "sha256:f87350280ed9f5c7dff3b85d377082f4c2c3456bcb05361c2ce6115c5259298a",
+      "skipped": "no tool description survived the dictionary check on its options",
+      "source_id": "28553",
+      "statements": 3,
+      "title": "How it Works (Archibald Williams)",
+      "url": "https://www.gutenberg.org/ebooks/28553"
     }
   ],
   "requested_per_manual": 200,
   "seed": 20260922,
   "subtest": "SI",
   "totals": {
-    "activated": 37,
+    "activated": 55,
     "already_present": 0,
-    "built": 37,
+    "built": 55,
     "rejected": 0,
-    "statements": 45
+    "statements": 67
   }
 }

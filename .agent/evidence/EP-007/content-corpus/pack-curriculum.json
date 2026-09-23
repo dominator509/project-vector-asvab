@@ -1,0 +1,40 @@
+[
+  {
+    "objective_id": "OBJ-AI-FUNCTION-01",
+    "subtest": "AI",
+    "title": "Auto Information: what a component is for",
+    "prerequisites": [
+      "OBJ-SI-TOOLS-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-EI-TERMINOLOGY-01",
+    "subtest": "EI",
+    "title": "Electronics Information: the term a definition names",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-GS-EXPLAIN-01",
+    "subtest": "GS",
+    "title": "General Science: the explanation a scientific work gives",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-PC-DETAIL-01",
+    "subtest": "PC",
+    "title": "Paragraph Comprehension: the detail the passage states",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-SI-TOOLS-01",
+    "subtest": "SI",
+    "title": "Shop Information: which tool performs a purpose",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-WK-SYNONYM-01",
+    "subtest": "WK",
+    "title": "Word Knowledge: the word that means the same",
+    "prerequisites": []
+  }
+]

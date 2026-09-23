@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T00:06:11.523265+00:00",
+  "generated_at": "2026-09-23T01:21:28.766381+00:00",
   "root": ".agent/evidence",
-  "count": 594,
+  "count": 603,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -215,8 +215,8 @@
     },
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
-      "bytes": 1245,
-      "sha256": "6a2b93698ee8c4160b8e3d5a70dfc61050cfcee65cb82aa7de026d3b1d71feda"
+      "bytes": 1248,
+      "sha256": "b73b79b7beeb48ca36edce2e1d34d0c1ae07722c64ff4ea2990f1eb918fcda69"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -641,7 +641,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "4e056306f7b56a8107b325fee4164f6e5af2eb4607949cfdf8d9b3bb101cb94e"
+      "sha256": "d219b7e67ae2930e2b62c5fefb262c463975d5f503df851e2ae0cb1c1c2a4db4"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -1041,12 +1041,12 @@
     {
       "path": ".agent/evidence/EP-007/content-corpus/check-corpus.log",
       "bytes": 4769,
-      "sha256": "629f9cefc4f1baf7db91357619e4d82f4e6f6cc6c59aa9ea02a9010f3cb9a1e0"
+      "sha256": "38aa28d7a1b879304163bb12261bdf152ed2d8d85ad959a04735ebc7152ea25b"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/check-options.log",
       "bytes": 270,
-      "sha256": "baffa797398c94a95ba1340df5205f809a55e851a56f8b852e3663d5617e4ba3"
+      "sha256": "4e1810a5a09cb8db499d481c12cc12e043318a723b3187ad58324d1708d6e28d"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/commit-message-round14.txt",
@@ -1074,14 +1074,19 @@
       "sha256": "81a1efac9ccc63a5aa7c3017cdc3c62baa7fcc4a2d4ebf60ed5e98969c19a060"
     },
     {
+      "path": ".agent/evidence/EP-007/content-corpus/commit-message-round19.txt",
+      "bytes": 6884,
+      "sha256": "9c0591ac6f30757f9ae2c5ac56ef556b3b230d244234a57e091780e2dd41f5a7"
+    },
+    {
       "path": ".agent/evidence/EP-007/content-corpus/commit-message.txt",
       "bytes": 3069,
       "sha256": "822e55c0ec24a720d9b73ce531565cd88fe8ba43b4ba96c659d74d55de154eb2"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/count-items.log",
-      "bytes": 405,
-      "sha256": "65625ef3017ed02fcb4b30cee9008ce03e9ae9c4afbe000188392d052e07960b"
+      "bytes": 450,
+      "sha256": "6aada5d8547e862ef5db20be0a52060c9ecc432c76dff9383be26a9173af63a3"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/facts-scan-wonders.log",
@@ -1091,7 +1096,7 @@
     {
       "path": ".agent/evidence/EP-007/content-corpus/foreign-letters.log",
       "bytes": 760,
-      "sha256": "d8a67d11c128785336183f5bc12c7a0d1094b360bf44e7045bb5bd01ae344c09"
+      "sha256": "bd51dcee5a9c25d1e28cde30221e85195ce9bd5f45dcb33022648d8888767f53"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/gates/anti-gaming.exitcode",
@@ -1215,13 +1220,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ingest-tools-ai.json",
-      "bytes": 1347,
-      "sha256": "620aedb6014911ec3586a898e1295f8ee0a4fcb596ee23b06f761b5986f2613c"
+      "bytes": 6086,
+      "sha256": "67e5d930d716b7bd36a0a244c54f9d5160ae327b19c9d17f3fa2db977139f829"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ingest-tools-si.json",
-      "bytes": 1325,
-      "sha256": "e7f8c5b611f189a97bd9678fb65b261a4f5784b45b4f6acc0b2570eb2c6af3b2"
+      "bytes": 4855,
+      "sha256": "e2f077c70e9c566dfa4fdb2f53b90127266b7645f1f6e283fd567f932ad1a03d"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ingest-wk.json",
@@ -1232,6 +1237,21 @@
       "path": ".agent/evidence/EP-007/content-corpus/mutation-proofs.md",
       "bytes": 2997,
       "sha256": "b3755d009d389e899d59d4aff62a3a5fef90666bc78004a8154e0a9c43ec2beb"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/pack-calibration.json",
+      "bytes": 1230,
+      "sha256": "a4480ef12654fa6911b703fd5660043bebe1c679c3681741e465478f12d55280"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/pack-curriculum.json",
+      "bytes": 1040,
+      "sha256": "959101f578ae243e9e01eb58d8331116724f3081296ca89648f917e11bf285df"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/packs/pack-build-v3.json",
+      "bytes": 449,
+      "sha256": "e66f6071754e76822278c5f9b06749a61e30f89d00ac23ab2ac9cb766f7020bf"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/packs/pack-build.json",
@@ -1249,6 +1269,11 @@
       "sha256": "5d5e3eba82cf9eb651421513c7b0cd72cd8741ccf517b7f977136faab10a1dc0"
     },
     {
+      "path": ".agent/evidence/EP-007/content-corpus/packs/pack-install-v3.json",
+      "bytes": 334,
+      "sha256": "9075527f3df7c378286da0530d98739f4175f0f12b4178bc92789a2fee4463a0"
+    },
+    {
       "path": ".agent/evidence/EP-007/content-corpus/packs/pack-install.json",
       "bytes": 317,
       "sha256": "c61045754abb533a10ff1dd21b2ea74ac0583bcb971408f882a066ca8bedf0a9"
@@ -1262,6 +1287,11 @@
       "path": ".agent/evidence/EP-007/content-corpus/packs/pack-rollback.log",
       "bytes": 2016,
       "sha256": "35ba503dfcb993186dc0a3c4abc80fa9cae2ca0bca6a7dc7deb6d66b4b1fcd75"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/packs/pack-v3.json",
+      "bytes": 11478571,
+      "sha256": "cce4d5eb5cd2f33ff155a4b80296cf4ecdf451ca65d810057aef5ccc00e1dffd"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/pc-corpus-scan-before-passage-fix.txt",
@@ -1309,6 +1339,11 @@
       "sha256": "b84b229d8002a2e54dbab2bb5876ec672d39a89b7015e06036f571482e5f84bb"
     },
     {
+      "path": ".agent/evidence/EP-007/content-corpus/rebuild-si-ai-round20.log",
+      "bytes": 16535,
+      "sha256": "6bba18cd3600c6af68cf542495faef78bc7c4b22045f83d770f6633b23d7925b"
+    },
+    {
       "path": ".agent/evidence/EP-007/content-corpus/ROUND-13-REPORT.md",
       "bytes": 7170,
       "sha256": "47757ea9a99484097f92d7e4654d9e50c21b09f1889177505c731d78c7500f0f"
@@ -1340,8 +1375,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ROUND-19-REPORT.md",
-      "bytes": 8038,
-      "sha256": "abc8343ae5c36142190c7f8b4410ac7a8883573cb9b014a99a0c380c81dc8c02"
+      "bytes": 9026,
+      "sha256": "f6d596fd68bca6e84bc3a7d6d9cba1cd754b57a4876fa264b2ea65ee4fae78e2"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/ROUND-20-REPORT.md",
+      "bytes": 6712,
+      "sha256": "a22d4392713ca12d11846af285d00c81b059f1abcf52b4961c39559383398888"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/tools-report.txt",
@@ -1355,8 +1395,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/verify-round19.log",
-      "bytes": 994178,
-      "sha256": "41180f3d08f881fd78566ae8b8209c475684abf3d56db613deba1cd935de3442"
+      "bytes": 994550,
+      "sha256": "1b4b0b6c7bc576a85fe5c1c6bf7efb51a2df29761d7fb7485fb44b698d5bd9f3"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/verify-round20.log",
+      "bytes": 1010222,
+      "sha256": "60dfc2d7710d2d539a3eb91decc188a02a793b5fa84e1cdfb920f587c3248d02"
     },
     {
       "path": ".agent/evidence/EP-007/diagnose-fuzz-hang.py",
@@ -1746,7 +1791,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1025,
-      "sha256": "02dc14ff08d8dbd5e5a4c735328c76a1df51117b20b86ec9ccaba7e4bc3bdee6"
+      "sha256": "6539ea91a35cc30b2ba41fd528b8497af77dd2198f6af966cd553334fc679d8b"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",
