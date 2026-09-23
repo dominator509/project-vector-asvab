@@ -164,6 +164,20 @@ describe("onboarding", () => {
 // ---------------------------------------------------------------------------
 
 describe("today's plan", () => {
+  it("shows the objective the plan chose, and nothing when no pack declares one", async () => {
+    const h = harness();
+    h.storage.setItem("vector.activeProfileId", "");
+    const profile = await h.fake.client.createProfile("Ada", 60);
+    h.storage.setItem("vector.activeProfileId", profile.id);
+    // The stub's plan names no objective, which is what a device with no pack gets: the view
+    // must render no objective label rather than an empty one.
+    mount(<TodayView />, h);
+    await waitFor(() =>
+      expect(screen.getByTestId("today-drills")).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId("drill-objective-AR")).not.toBeInTheDocument();
+  });
+
   it("asks for a plan once a learner exists and renders the stored analytics", async () => {
     const h = harness();
     h.storage.setItem("vector.activeProfileId", "");

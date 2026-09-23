@@ -49,6 +49,11 @@ export interface DrillDto {
   subtest: string;
   minutes: number;
   reason: string;
+  /**
+   * The objective inside that subtest to work on, when the installed pack declares one whose
+   * prerequisites are met. Null on a device with no pack: it has no curriculum to name one from.
+   */
+  objective_id: string | null;
 }
 
 export interface PlanDto {

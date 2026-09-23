@@ -147,6 +147,18 @@ function PlanSection({ plan, minutes }: { plan: PlanDto; minutes: number }) {
           <li key={drill.subtest}>
             <strong>{drill.subtest}</strong> — {drill.minutes} minutes{" "}
             <span className="reason">({drill.reason})</span>
+            {/* The objective comes from the installed pack's curriculum, and the reason says
+                why it was chosen; a plan with no pack names none, and this renders nothing
+                rather than an empty label. */}
+            {drill.objective_id !== null && (
+              <span
+                className="objective"
+                data-testid={`drill-objective-${drill.subtest}`}
+              >
+                {" "}
+                {drill.objective_id}
+              </span>
+            )}
           </li>
         ))}
       </ol>

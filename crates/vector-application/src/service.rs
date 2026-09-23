@@ -26,6 +26,7 @@
 use serde::{Deserialize, Serialize};
 
 use vector_persistence::backup::{BackupManager, BackupManifest};
+use vector_persistence::content::ContentItemRepo;
 use vector_persistence::repo::{
     AttemptRepo, AttemptStats, EvidenceRecord, EvidenceRepo, MasteryRecord, MasteryRepo,
 };
@@ -89,6 +90,36 @@ pub struct MasteryDto {
     pub uncertainty: f64,
 }
 
+/// The estimate at which a prerequisite counts as met.
+///
+/// 0.6 against a Laplace estimate: no attempts gives 0.5, one correct answer out of one gives
+/// 0.67, one wrong out of one gives 0.33. So an untouched prerequisite is unmet, a single
+/// correct answer is enough to move past it, and a single wrong one is not -- which is the
+/// least a threshold can mean when it is drawn on this little evidence. The number is here, in
+/// one place, so that a reader can disagree with it.
+const PREREQUISITE_MET: f64 = 0.6;
+
+/// The objective to work on inside a subtest: the weakest whose prerequisites are met.
+///
+/// Weakest by estimate, and ties broken by fewer attempts and then by id so two plans from the
+/// same evidence agree. An objective whose prerequisites are unmet is not offered at all: the
+/// curriculum says it comes later, and drilling it now is the thing the graph exists to prevent.
+fn focus_for<'a>(
+    subtest: &str,
+    mastery: &'a [ObjectiveMasteryDto],
+) -> Option<&'a ObjectiveMasteryDto> {
+    mastery
+        .iter()
+        .filter(|objective| objective.subtest == subtest && objective.waiting_on.is_empty())
+        .min_by(|a, b| {
+            a.score
+                .partial_cmp(&b.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then(a.attempts.cmp(&b.attempts))
+                .then(a.objective_id.cmp(&b.objective_id))
+        })
+}
+
 /// Move a drill that teaches a prerequisite ahead of the drill that requires it.
 ///
 /// The move is stable and conservative: it only ever pulls a prerequisite earlier, never
@@ -135,6 +166,26 @@ pub struct DrillDto {
     pub subtest: String,
     pub minutes: u32,
     pub reason: String,
+    /// The objective inside that subtest to work on, when the installed pack declares one whose
+    /// prerequisites are met. `None` on a device with no pack, which has no curriculum to name
+    /// an objective from.
+    #[serde(default)]
+    pub objective_id: Option<String>,
+}
+
+/// What a learner has done on one objective of the installed pack's curriculum.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ObjectiveMasteryDto {
+    pub objective_id: String,
+    pub subtest: String,
+    pub title: String,
+    pub attempts: i64,
+    pub correct: i64,
+    /// The same Laplace estimate the subtest mastery uses: `(correct + 1) / (attempts + 2)`.
+    /// With no attempts it is 0.5 rather than 0, because "no evidence" is not failure.
+    pub score: f64,
+    /// Prerequisites this learner has not yet met, from the pack's own graph.
+    pub waiting_on: Vec<String>,
 }
 
 /// A study plan as the UI sees it.
@@ -645,6 +696,20 @@ impl<'a> Services<'a> {
         self.get_profile(learner_id)?;
 
         let estimates = self.skill_estimates(learner_id)?;
+        // A drill in a subtest with nothing to serve is a promise the installation cannot keep.
+        // The planner ranks what it is given, so the filter is here rather than on its output:
+        // filtering afterwards would leave the freed minutes allocated to a drill that is not
+        // in the plan, and the interface checks that a plan's total equals its drills.
+        let estimates: Vec<SkillEstimate> = estimates
+            .into_iter()
+            .filter(|estimate| self.can_serve(&estimate.subtest))
+            .collect();
+        if estimates.is_empty() {
+            return Ok(PlanDto {
+                drills: Vec::new(),
+                total_minutes: 0,
+            });
+        }
         let plan: StudyPlan =
             generate_plan(&estimates, &PlanGoal::Afqt(target_score), available_minutes)
                 .map_err(ServiceError::Invalid)?;
@@ -656,6 +721,7 @@ impl<'a> Services<'a> {
                 subtest: d.subtest.clone(),
                 minutes: d.minutes,
                 reason: format!("{:?}", d.reason).to_lowercase(),
+                objective_id: None,
             })
             .collect();
 
@@ -666,10 +732,99 @@ impl<'a> Services<'a> {
         let prerequisites = self.taught_prerequisites()?;
         order_by_prerequisites(&mut drills, &prerequisites);
 
+        // Which objective inside each subtest to work on. The planner knows the subtest; the
+        // pack's curriculum knows the objectives, and the attempts say which of them is weakest.
+        let mastery = self.objective_mastery(learner_id)?;
+        for drill in drills.iter_mut() {
+            let Some(objective) = focus_for(&drill.subtest, &mastery) else {
+                continue;
+            };
+            drill.reason.push_str(&format!(
+                "; weakest objective with its prerequisites met is {} ({:.2} over {} attempt(s))",
+                objective.objective_id, objective.score, objective.attempts
+            ));
+            drill.objective_id = Some(objective.objective_id.clone());
+        }
+
         Ok(PlanDto {
             drills,
             total_minutes: plan.total_minutes,
         })
+    }
+
+    /// Whether a subtest has anything to serve: stored items, or templates to generate from.
+    ///
+    /// Assembling Objects is the case that made this necessary. The subtest exists in the
+    /// domain, the planner ranks every subtest in the domain, and this installation has neither
+    /// items nor templates for it -- so the plan sent a learner to a drill that could not start.
+    /// Read from the store rather than from a list, because which subtests have content is a
+    /// fact about what was ingested into *this* database.
+    fn can_serve(&self, subtest: &str) -> bool {
+        if !vector_questions::factory::templates_for(subtest).is_empty() {
+            return true;
+        }
+        ContentItemRepo::new(self.db)
+            .servable(subtest)
+            .map(|items| !items.is_empty())
+            .unwrap_or(false)
+    }
+
+    /// What a learner has done on each objective the installed pack declares.
+    ///
+    /// The evidence is the attempts themselves: an attempt records the question and the question
+    /// records the objective, so this is read rather than maintained. The estimate is the same
+    /// Laplace prior the subtest mastery uses -- `(correct + 1) / (attempts + 2)` -- because two
+    /// different estimators for the same question would report different numbers on the same
+    /// evidence.
+    ///
+    /// `waiting_on` comes from the pack's own graph: a prerequisite counts as unmet while its
+    /// estimate is below `PREREQUISITE_MET`, and an objective nobody has attempted has an
+    /// estimate of 0.5, so an untouched prerequisite is unmet rather than assumed known.
+    pub fn objective_mastery(
+        &self,
+        learner_id: &str,
+    ) -> Result<Vec<ObjectiveMasteryDto>, ServiceError> {
+        self.get_profile(learner_id)?;
+        let packs = crate::packs::installed_packs(self.db)?;
+        let Some(active) = packs.iter().find(|pack| pack.status == "active") else {
+            return Ok(Vec::new());
+        };
+        let stats: std::collections::HashMap<String, (i64, i64)> = AttemptRepo::new(self.db)
+            .objective_stats(learner_id)?
+            .into_iter()
+            .map(|stat| (stat.objective_id, (stat.attempts, stat.correct)))
+            .collect();
+        let score = |objective_id: &str| {
+            let (attempts, correct) = stats.get(objective_id).copied().unwrap_or((0, 0));
+            (correct as f64 + 1.0) / (attempts as f64 + 2.0)
+        };
+
+        let mut out: Vec<ObjectiveMasteryDto> = active
+            .objectives
+            .iter()
+            .map(|objective| {
+                let (attempts, correct) = stats
+                    .get(&objective.objective_id)
+                    .copied()
+                    .unwrap_or((0, 0));
+                ObjectiveMasteryDto {
+                    objective_id: objective.objective_id.clone(),
+                    subtest: objective.subtest.clone(),
+                    title: objective.title.clone(),
+                    attempts,
+                    correct,
+                    score: score(&objective.objective_id),
+                    waiting_on: objective
+                        .prerequisites
+                        .iter()
+                        .filter(|prerequisite| score(prerequisite) < PREREQUISITE_MET)
+                        .cloned()
+                        .collect(),
+                }
+            })
+            .collect();
+        out.sort_by(|a, b| a.objective_id.cmp(&b.objective_id));
+        Ok(out)
     }
 
     /// Which planned subtests unlock which, from the curriculum of the active pack.

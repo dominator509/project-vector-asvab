@@ -322,6 +322,9 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
             ? availableMinutes - each * (codes.length - 1)
             : each,
         reason: index === 0 ? "weakness" : "due review",
+        // The stub names no objective: an objective comes from an installed pack's curriculum,
+        // and a stub that invented one would let the view render a reading nothing produced.
+        objective_id: null,
       }));
       return { drills, total_minutes: availableMinutes };
     },

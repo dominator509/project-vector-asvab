@@ -267,6 +267,9 @@ function readPlan(command: string, value: unknown): PlanDto {
       subtest: r.string(row, "subtest"),
       minutes: r.number(row, "minutes"),
       reason: r.string(row, "reason"),
+      // Null is a real answer here -- a device with no pack has no curriculum -- so the field
+      // is read as nullable rather than defaulted to a made-up objective.
+      objective_id: r.nullableString(row, "objective_id"),
     };
   });
   return { drills, total_minutes: r.number(o, "total_minutes") };

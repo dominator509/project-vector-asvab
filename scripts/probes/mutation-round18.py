@@ -377,6 +377,39 @@ MUTATIONS = [
         "the shapes the manuals state are read",
     ),
     (
+        "no-servable-filter",
+        SERVICE,
+        (
+            "            .filter(|estimate| self.can_serve(&estimate.subtest))",
+            "            .filter(|_| true)",
+        ),
+        "vector-application",
+        "a_plan_does_not_send_a_learner_to_an_empty_subtest",
+        "a plan only schedules subtests the installation can serve",
+    ),
+    (
+        "no-prerequisite-threshold",
+        SERVICE,
+        (
+            "                        .filter(|prerequisite| score(prerequisite) < PREREQUISITE_MET)",
+            "                        .filter(|_| false)",
+        ),
+        "vector-application",
+        "objective_mastery_comes_from_the_attempts_on_that_objective",
+        "an unmet prerequisite is named, so the objective it unlocks waits",
+    ),
+    (
+        "no-objective-focus",
+        SERVICE,
+        (
+            "    mastery\n        .iter()\n        .filter(|objective| objective.subtest == subtest && objective.waiting_on.is_empty())",
+            "    mastery\n        .iter()\n        .filter(|objective| objective.subtest == subtest)",
+        ),
+        "vector-application",
+        "a_plan_names_the_objective_to_work_on",
+        "an objective whose prerequisite is unmet is not offered",
+    ),
+    (
         "no-prerequisite-ordering",
         SERVICE,
         (

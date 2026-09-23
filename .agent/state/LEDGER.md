@@ -374,3 +374,28 @@ the Hangers frame members serve as?` (a heading run-in) reached the bank and are
 known, the way the steel-shank item is. The plan orders by prerequisite without tracking mastery
 per objective, General Science is still one work, and the Word Knowledge rare-distractor gap is
 unchanged.
+
+### Rounds 26-27
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| Mastery at the curriculum's grain | `AttemptRepo::objective_stats` joins each attempt through the item it was on to the objective that item teaches -- an attempt records the question, the question records the objective, so it is read rather than maintained. `Services::objective_mastery` reports attempts, correct, the same Laplace estimate the subtest mastery uses (no evidence is 0.5, not 0), and `waiting_on`: the prerequisites this learner has not met. | `.agent/evidence/EP-007/content-corpus/ROUND-26-27-REPORT.md` |
+| A threshold in one place, and a plan that names an objective | `PREREQUISITE_MET = 0.6`: no attempts gives 0.5, one correct out of one gives 0.67, one wrong gives 0.33 -- so an untouched prerequisite is unmet rather than assumed known. Each drill carries the weakest objective whose prerequisites are met (ties broken by fewer attempts, then id) and its reason says which and why. An objective whose prerequisite is unmet is not offered. Read end to end from the installed pack; no pack, no objective. | `service.rs`, `TodayView.tsx` |
+| The defect the live readback found | `examples/plan_report.rs` opens a *copy* of the installation's own database and prints the plan. Its first run sent the learner to `AO` -- Assembling Objects -- for which this installation has neither items nor templates: a drill that could not start. Unit, view and E2E tests all passed; only reading a real store showed it. Only servable subtests are now handed to the planner, and the filter is in the service rather than on the planner's output so the freed minutes are not left allocated to a drill that is not in the plan. | `plan_report.rs`, `service.rs` |
+
+Corpus unchanged at **5,627 active items** (1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 42 SI, 94 AI);
+pack `core-asvab v5` active; every provenance invariant a zero.
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; **all 35 mutations
+caught**, including this round's three (the prerequisite threshold, the objective focus and the
+servable filter). Verdict unchanged: `CONDITIONAL_EXTERNAL_GATES`.
+
+Two service tests failed when the servable filter landed, and that was the filter working: they
+wanted a plan with SI and AI in it while their fixture store held nothing but factory-generated AR
+items -- the same assumption, in miniature, that the readback caught in the product. The fixture
+now ingests a Shop and an Auto Information manual through the real pipeline.
+
+Still open: **the curriculum's grain stops at the plan** -- mastery is read per objective and the
+practice surface still chooses items by subtest, so selecting the next item from the objective the
+plan named is the next step; SI 42 remains the thin bank; AI's noun frame carries a known noise
+floor; General Science is one work; the Word Knowledge rare-distractor gap is unchanged.

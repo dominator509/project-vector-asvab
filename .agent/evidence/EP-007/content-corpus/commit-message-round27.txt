@@ -1,0 +1,71 @@
+content: mastery at the curriculum's grain, and a plan that promised an empty drill (REQ-003, REQ-023, REQ-048, REQ-056)
+
+Rounds 20 and 21 gave the pack a curriculum graph and made the plan follow its ordering. The
+graph's grain was still unused -- the plan reasoned about subtests, and "Shop Information" is not
+one skill. This reads it at the grain the content declares, and the live readback that came with
+it found a drill the installation could not start.
+
+## What it adds
+
+**Mastery per objective.** `AttemptRepo::objective_stats` joins each attempt through the item it
+was on to the objective that item teaches: an attempt records the question, the question records
+the objective, so this is read rather than maintained. `Services::objective_mastery` reports, per
+objective the installed pack declares, the attempts, the correct count, the same Laplace estimate
+the subtest mastery uses (`(correct + 1) / (attempts + 2)`, so no evidence is 0.5 rather than 0),
+and `waiting_on` -- the prerequisites this learner has not met.
+
+**A threshold, in one place.** `PREREQUISITE_MET = 0.6` against that estimate: no attempts gives
+0.5, one correct out of one gives 0.67, one wrong out of one gives 0.33. An untouched prerequisite
+is therefore *unmet* rather than assumed known, one correct answer is enough to pass it, and one
+wrong answer is not. The number sits in a named constant with that reasoning attached, because it
+is a judgement and a reader should be able to disagree with it.
+
+**The plan names the objective.** Each drill carries the objective to work on -- the weakest whose
+prerequisites are met, ties broken by fewer attempts and then by id so two plans from the same
+evidence agree -- and its reason says which and why. An objective whose prerequisite is unmet is
+not offered at all: the curriculum says it comes later, and offering it now is what the graph
+exists to prevent. Objectives, subtests and prerequisites all come from the installed manifest; a
+device with no pack names no objective.
+
+## The defect the live readback found
+
+The service tests prove behaviour against a fixture. `crates/vector-application/examples/
+plan_report.rs` opens a *copy* of the installation's own database -- the pack it installed, the
+corpus ingested into it -- creates a learner and prints the plan. Its first run included:
+
+```
+  AO     4 min  objective -   weakness
+```
+
+AO is Assembling Objects, and this installation has neither items nor templates for it. The
+subtest exists in the domain, the planner ranks every subtest in the domain, and the plan sent the
+learner to a drill that could not start. Unit tests, view tests and E2E all passed; it was visible
+only by reading what a real store produces.
+
+Only subtests this installation can serve are now handed to the planner (templates to generate
+from, or items already stored). The filter is in the service rather than on the planner's output,
+because filtering afterwards would leave the freed minutes allocated to a drill that is not in the
+plan and the interface checks that a plan's total equals its drills.
+
+Two service tests then failed, and that was the filter working: they wanted a plan with SI and AI
+in it while their fixture store held nothing but factory-generated Arithmetic Reasoning items --
+the same assumption, in miniature, that the readback caught in the product. The fixture now ingests
+a Shop and an Auto Information manual through the real pipeline, dictionary check and all.
+
+## Corpus
+
+Unchanged at 5,627 active items (1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 42 SI, 94 AI), pack
+`core-asvab v5` active. This round reads the corpus at a finer grain rather than adding to it.
+
+## Verification
+
+`sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0: 1,721+ Rust tests, 211 frontend
+tests, 36 E2E, packaged live-fire passed. `mutation-round18.py` now proves 35 rules, including
+this round's three -- the prerequisite threshold, the objective focus and the servable filter.
+
+## Still open
+
+SI 42 remains the thin bank, and AI's noun frame carries a known noise floor. The curriculum's
+grain stops at the plan: mastery is read per objective, and the practice surface still chooses
+items by subtest -- selecting the next item from the objective the plan named is the next step.
+General Science is one work, and the Word Knowledge rare-distractor gap is unchanged.

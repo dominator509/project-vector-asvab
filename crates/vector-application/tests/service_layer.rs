@@ -8,6 +8,8 @@
 use std::path::Path;
 
 use vector_application::service::{NewEvidenceDto, ServiceError, Services};
+use vector_persistence::content::ContentItemRepo;
+use vector_persistence::repo::AttemptRepo;
 use vector_persistence::{Database, Migration, MigrationManager};
 
 /// A disposable database directory.
@@ -378,6 +380,314 @@ fn pack_with_curriculum(
 // ---------------------------------------------------------------------------
 // Planning
 // ---------------------------------------------------------------------------
+/// A plan never sends a learner to a subtest this installation cannot serve.
+///
+/// Assembling Objects is the case that made this necessary: the subtest exists in the domain,
+/// the planner ranks every subtest in the domain, and a store with neither items nor templates
+/// for it produced a drill that could not start. The live-fire readback found it; this keeps it
+/// found.
+#[test]
+fn a_plan_does_not_send_a_learner_to_an_empty_subtest() {
+    let tmp = TempDb::new("plan-servable");
+    let db = tmp.open();
+    let services = Services::new(&db);
+    let profile = services.create_profile("Ada", 70).expect("create");
+
+    // This store has the factory's items and nothing else: Assembling Objects has neither
+    // stored items nor templates.
+    let plan = services.study_plan(&profile.id, 70, 60).expect("plan");
+    assert!(!plan.drills.is_empty(), "an unstudied learner needs a plan");
+    assert!(
+        plan.drills.iter().all(|drill| drill.subtest != "AO"),
+        "Assembling Objects has nothing to serve here: {:?}",
+        plan.drills
+    );
+    // The plan is still a plan: its total is its drills.
+    let allocated: u32 = plan.drills.iter().map(|drill| drill.minutes).sum();
+    assert_eq!(allocated, plan.total_minutes, "{:?}", plan.drills);
+    // And every planned subtest is one this store can actually answer in: it has templates to
+    // generate from, or items already stored.
+    for drill in &plan.drills {
+        let has_templates = !vector_questions::factory::templates_for(&drill.subtest).is_empty();
+        let has_items = !ContentItemRepo::new(&db)
+            .servable(&drill.subtest)
+            .expect("servable")
+            .is_empty();
+        assert!(
+            has_templates || has_items,
+            "{} is planned with nothing to serve it",
+            drill.subtest
+        );
+    }
+}
+
+/// A dictionary and two manuals, so the store has Shop and Auto Information items to serve.
+///
+/// The planner only plans subtests it can serve, which is correct and which those two tests
+/// discovered the hard way: they wanted a plan with SI and AI in it, and the fixture store held
+/// nothing but factory-generated Arithmetic Reasoning items. These are real ingestions through
+/// the real pipeline -- the dictionary is what the Shop Information path checks its options
+/// against -- because a fixture that bypassed the pipeline would not be exercising it.
+const TOOL_DICTIONARY: &str = "\
+*** START OF THE PROJECT GUTENBERG EBOOK ***
+
+Micrometer
+
+Micrometer, n. An instrument for measuring small distances.
+
+Vise
+
+Vise, n. A clamping device.
+
+Wrench
+
+Wrench, n. A tool for turning nuts.
+
+Pliers
+
+Pliers, n. A gripping tool.
+
+Open
+
+Open, a. Not closed.
+
+Long
+
+Long, a. Extended in length.
+
+Nose
+
+Nose, n. The prominent part of the face.
+
+Relay
+
+Relay, n. An electrical switch.
+
+Armature
+
+Armature, n. The rotating part of a machine.
+
+Bearing
+
+Bearing, n. A part that carries a load.
+
+Spring
+
+Spring, n. An elastic body.
+";
+
+const TOOL_MANUAL: &str = "\
+MICROMETERS
+Micrometers are used to measure distances to the nearest one thousandth of an inch.
+VISES
+Vises are used for holding work when it is being planed, sawed, or drilled.
+WRENCHES
+Open-end wrenches are used to turn nuts and bolts in places where a socket will not fit.
+PLIERS
+Long-nose pliers are used for gripping, reaching places not readily accessible to the hand.
+";
+
+const COMPONENT_MANUAL: &str = "\
+The relay is used to control the current in the circuit.
+The armature is used to rotate inside the field coils.
+The bearing is used to carry the load of the shaft.
+The spring is used to hold the valve closed.
+";
+
+/// Ingest one Shop and one Auto Information manual into a store, returning their source ids.
+fn with_tool_items(db: &Database) -> (String, String) {
+    use vector_application::content::{ContentPipeline, PurposeIngestRequest};
+    use vector_questions::dictionary::parse_webster;
+    use vector_questions::purposes::{parse_purposes, ItemKind};
+
+    let dictionary = parse_webster(TOOL_DICTIONARY);
+    let pipeline = ContentPipeline::new(db);
+    let mut ids = Vec::new();
+    for (subtest, kind, label, manual, hash) in [
+        (
+            "SI",
+            ItemKind::Tool,
+            "A tool manual",
+            TOOL_MANUAL,
+            "sha256:tools-fixture",
+        ),
+        (
+            "AI",
+            ItemKind::Function,
+            "A component manual",
+            COMPONENT_MANUAL,
+            "sha256:components-fixture",
+        ),
+    ] {
+        let source = vector_persistence::repo::EvidenceRepo::new(db)
+            .put(&vector_persistence::repo::NewEvidence::new(
+                "https://archive.org/details/fixture",
+                label,
+                hash,
+                "Public domain (US government work)",
+                "2026-09-22",
+                0.90,
+                "retrieved",
+            ))
+            .expect("record the source");
+        let parsed = parse_purposes(manual, label);
+        let report = pipeline
+            .ingest_purposes(
+                &parsed,
+                &PurposeIngestRequest {
+                    subtest,
+                    kind,
+                    label,
+                    source_id: &source,
+                    count: 20,
+                    seed: 20_260_922,
+                    dictionary: &dictionary,
+                    reviewer: "content-reviewer",
+                    generator: "fixture",
+                },
+            )
+            .expect("ingest");
+        assert!(report.activated > 0, "{label} produced no items");
+        ids.push(source);
+    }
+    (ids[0].clone(), ids[1].clone())
+}
+
+// ---------------------------------------------------------------------------
+// Objective mastery
+// ---------------------------------------------------------------------------
+
+/// Mastery is read from the attempts themselves, at the grain the curriculum is written at.
+///
+/// A subtest average cannot say that a learner has mastered one objective and is failing
+/// another, and the objective's prerequisites are what decides whether it should be offered.
+#[test]
+fn objective_mastery_comes_from_the_attempts_on_that_objective() {
+    let tmp = TempDb::new("objective-mastery");
+    let db = tmp.open();
+    let services = Services::new(&db);
+    let profile = services.create_profile("Ada", 70).expect("create");
+    let (document, key) = pack_with_curriculum(&db, "SI", "AI");
+    let bytes = vector_application::packs::pack_bytes(&document).expect("serialize");
+    let signer = key.verifying_key().to_bytes().to_vec();
+    vector_application::packs::install_pack(&db, &bytes, &signer, "0.1.0").expect("install");
+
+    // Nothing attempted: every objective is present with the honest 0.5 and no evidence.
+    let before = services
+        .objective_mastery(&profile.id)
+        .expect("objective mastery");
+    assert!(!before.is_empty(), "the installed pack declares objectives");
+    assert!(
+        before.iter().all(
+            |objective| objective.attempts == 0 && (objective.score - 0.5).abs() < f64::EPSILON
+        ),
+        "no evidence is 0.5, not 0: {before:?}"
+    );
+    // An untouched prerequisite is unmet, so the objective it unlocks waits on it.
+    let dependent = before
+        .iter()
+        .find(|objective| objective.objective_id == "OBJ-AI-FUNCTION-01")
+        .expect("the fixture declares the dependent objective");
+    assert_eq!(dependent.waiting_on, vec!["OBJ-SI-TOOLS-01".to_string()]);
+
+    // Answer two of the prerequisite's items correctly and one of the dependent's wrongly.
+    let items = ContentItemRepo::new(&db).servable("AR").expect("servable");
+    assert!(!items.is_empty(), "the pack attests some items");
+    for (index, item) in items.iter().enumerate() {
+        AttemptRepo::new(&db)
+            .record(&profile.id, &item.subtest, &item.id, index % 3 != 2, 1000)
+            .expect("record an attempt");
+    }
+
+    let after = services
+        .objective_mastery(&profile.id)
+        .expect("objective mastery");
+    let counted: Vec<&vector_application::service::ObjectiveMasteryDto> = after
+        .iter()
+        .filter(|objective| objective.attempts > 0)
+        .collect();
+    assert!(
+        !counted.is_empty(),
+        "the attempts have to land on an objective the pack declares: {after:?}"
+    );
+    for objective in &counted {
+        let expected = (objective.correct as f64 + 1.0) / (objective.attempts as f64 + 2.0);
+        assert!(
+            (objective.score - expected).abs() < 1e-9,
+            "the estimate is the same Laplace prior the subtest mastery uses: {objective:?}"
+        );
+    }
+}
+
+/// The plan names the objective to work on, and it is the weakest whose prerequisites are met.
+#[test]
+fn a_plan_names_the_objective_to_work_on() {
+    let tmp = TempDb::new("plan-objective");
+    let db = tmp.open();
+    let services = Services::new(&db);
+    let profile = services.create_profile("Ada", 70).expect("create");
+    with_tool_items(&db);
+    let (document, key) = pack_with_curriculum(&db, "SI", "AI");
+    let bytes = vector_application::packs::pack_bytes(&document).expect("serialize");
+    let signer = key.verifying_key().to_bytes().to_vec();
+    vector_application::packs::install_pack(&db, &bytes, &signer, "0.1.0").expect("install");
+
+    // The AI objective waits on the SI one, so the AI drill must not name it yet.
+    let plan = services.study_plan(&profile.id, 70, 60).expect("plan");
+    let ai = plan.drills.iter().find(|drill| drill.subtest == "AI");
+    if let Some(drill) = ai {
+        assert_ne!(
+            drill.objective_id.as_deref(),
+            Some("OBJ-AI-FUNCTION-01"),
+            "an objective whose prerequisite is unmet must not be offered: {drill:?}"
+        );
+    }
+    let si = plan
+        .drills
+        .iter()
+        .find(|drill| drill.subtest == "SI")
+        .expect("SI is planned");
+    assert_eq!(
+        si.objective_id.as_deref(),
+        Some("OBJ-SI-TOOLS-01"),
+        "the prerequisite itself is offered, and named: {si:?}"
+    );
+    assert!(
+        si.reason
+            .contains("weakest objective with its prerequisites met"),
+        "the reason says why this objective: {si:?}"
+    );
+
+    // Answering the store's items moves the objective those items teach, and leaves the SI
+    // objective untouched: the join runs through the item the attempt was on, not through the
+    // subtest, which is the whole point of reading mastery at this grain.
+    let items = ContentItemRepo::new(&db).servable("AR").expect("servable");
+    for item in &items {
+        AttemptRepo::new(&db)
+            .record(&profile.id, &item.subtest, &item.id, true, 800)
+            .expect("record");
+    }
+    let mastery = services
+        .objective_mastery(&profile.id)
+        .expect("objective mastery");
+    let answered = mastery
+        .iter()
+        .find(|objective| objective.attempts > 0)
+        .expect("the attempts landed on an objective the pack declares");
+    assert!(
+        answered.correct > 0 && answered.score > 0.5,
+        "correct answers raise the estimate above the no-evidence 0.5: {answered:?}"
+    );
+    let untouched = mastery
+        .iter()
+        .find(|objective| objective.objective_id == "OBJ-SI-TOOLS-01")
+        .expect("the prerequisite is declared");
+    assert_eq!(
+        untouched.attempts, 0,
+        "an objective nobody answered has no evidence, whoever else answered: {untouched:?}"
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Planning against the pack's curriculum
 // ---------------------------------------------------------------------------
@@ -394,6 +704,9 @@ fn a_plan_follows_the_curriculum_the_installed_pack_declares() {
     let db = tmp.open();
     let services = Services::new(&db);
     let profile = services.create_profile("Ada", 70).expect("create");
+    // The store needs Shop and Auto Information items before a plan can have them in it: the
+    // planner only schedules what the installation can serve.
+    with_tool_items(&db);
 
     // Both subtests are unstudied, so the planner wants to drill them; which comes first is
     // what the pack decides.

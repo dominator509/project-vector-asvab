@@ -42,6 +42,20 @@ pub struct AttemptStats {
     pub mean_latency_ms: i64,
 }
 
+/// What a learner has done on one objective, read from the attempts themselves.
+///
+/// Per *objective* rather than per subtest, which is the grain the curriculum graph is written
+/// at: a subtest average cannot say that a learner has mastered rate problems and is failing
+/// interest ones, and an objective's prerequisites are what decides whether the harder
+/// objective should be offered at all.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ObjectiveStats {
+    pub objective_id: String,
+    pub subtest: String,
+    pub attempts: i64,
+    pub correct: i64,
+}
+
 pub struct AttemptRepo<'a> {
     db: &'a Database,
 }
@@ -95,6 +109,32 @@ impl<'a> AttemptRepo<'a> {
             ],
         )?;
         Ok(changed == 1)
+    }
+
+    /// Attempts per objective for one learner, joined through the items they answered.
+    ///
+    /// The join is the point: an attempt records the question it was on, and the question
+    /// records the objective it teaches, so this is the evidence the curriculum's own grain is
+    /// read from rather than a second thing a caller has to keep in step.
+    pub fn objective_stats(&self, learner_id: &str) -> anyhow::Result<Vec<ObjectiveStats>> {
+        let conn = self.db.connection();
+        let mut statement = conn.prepare(
+            "SELECT i.objective_id, i.subtest, COUNT(a.id), SUM(a.correct)
+             FROM attempts a
+             JOIN content_items i ON i.id = a.question_id
+             WHERE a.learner_id = ?1
+             GROUP BY i.objective_id, i.subtest
+             ORDER BY i.objective_id",
+        )?;
+        let rows = statement.query_map(params![learner_id], |row| {
+            Ok(ObjectiveStats {
+                objective_id: row.get(0)?,
+                subtest: row.get(1)?,
+                attempts: row.get(2)?,
+                correct: row.get(3)?,
+            })
+        })?;
+        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
     }
 
     fn record_with_id(
