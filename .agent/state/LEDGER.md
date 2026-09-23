@@ -550,4 +550,30 @@ DoD unchanged at 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates exit 0; ver
 Every in-repo requirement is now done. What remains is the external residue, and the closure
 accounting that states it.
 
+## Goal closure: the corpus and the content domain
+
+The session goal was an extensive, sourced study corpus and the content domain that serves it, with
+a hard exclusion on leaked, controlled, recalled or copyrighted third-party prep content. All six
+components are delivered, and this is the evidence for each, read from the installation's own store
+and the repository's own generated state.
+
+| Goal component | Evidence |
+|---|---|
+| (1) Item store schema and persistence | Seven migrations; `content_items` carries the objective, proof, reviewer and both hashes per item; lifecycle states with a review trail of **27,844** rows; **6,961** active items |
+| (2) Tauri serving API replacing `sample.ts` | `content_next`, `content_stats`, `content_manager`, quarantine and reinstate; the practice view loads from the corpus, and `sample.ts` survives only as the review-queue fixture |
+| (3) REQ-022 factory with deterministic proofs and misconception-derived distractors | 1,334 generated items in the active pack, each with an executable proof; `check-corpus.py` re-derives **1,334 of 1,334** independently (0 unreadable, 0 disagreements), and 0 active items have agreeing generator and verifier hashes |
+| (4) Ingestion of permitted public-domain sources | **70** vault records and **8,910** citations across NEETS, Project Gutenberg, Webster's 1913, Moby, and federal science and technical works; every licence is "Public domain in the USA" (41), "Public domain (US government work)" (28) or the project's own construct record (1). Four source families were refused with measurements recorded rather than used |
+| (5) Content manager with pack install and quarantine | Signed packs carrying a curriculum graph and calibration; `core-asvab v6` active with 6,961 items and 56 sources, after an install/rollback/activate transition recorded with its state hash at each step |
+| (6) Per-item provenance | **0** active items without a citation; every corpus invariant in the readback is zero, including duplicate questions, scan damage, and items without an objective |
+
+Hard exclusion: no licence outside public domain, US government work, or the project's own original
+text appears anywhere in the vault, which is the record the pack verifier refuses on.
+
+Programme-wide at closure: **57 of 60 requirements done** (three open, all external); DoD **34 PASS /
+7 PARTIAL / 1 EXTERNAL_REQUIRED**; **21 gates exit 0**; **46 mutations caught**; artifact digest
+`b33833c5…`, epoch 27, verdict `CONDITIONAL_EXTERNAL_GATES`. The owner of every open item, and what
+this repository deliberately does not claim, is in
+`.agent/evidence/EP-009/CLOSURE-REPORT.md` and in the generated
+`RESIDUAL_RISK_AND_EXTERNAL_GATES.md`.
+
 
