@@ -41,6 +41,41 @@ pub struct Purpose {
     pub purpose: String,
     /// The whole sentence, for a reviewer.
     pub sentence: String,
+    /// Which of the relation's forms the source used, because the question has to be asked in
+    /// the same one: a manual that writes `the relay serves as a switch` states a complement
+    /// that is a noun, and "Which tool is used to a switch?" is not a question.
+    pub link: Link,
+}
+
+/// The form a description states its relation in.
+///
+/// The manuals use three, and they take different complements -- which is why the frame cannot
+/// be imposed by the reader:
+///
+/// * `is used to cut`, `serves to control`, `is employed to bind`, `is arranged to pull`: an
+///   infinitive;
+/// * `is used for cutting`, `is employed for facing`: a gerund;
+/// * `serves as a switch`, `acts as a thrust bearing`, `is used as a wedge`: a noun phrase.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Link {
+    /// `is used to <verb>`.
+    To,
+    /// `is used for <gerund>`.
+    For,
+    /// `serves as <noun>`, `acts as <noun>`.
+    As,
+}
+
+impl Link {
+    /// The words a purpose in this form is written after, as a question.
+    fn tool_question(self, purpose: &str) -> String {
+        match self {
+            // A gerund after `to` is not English, and a bare verb after `for` is not either.
+            Link::To => format!("Which tool is used to {purpose}"),
+            Link::For => format!("Which tool is used for {purpose}"),
+            Link::As => format!("Which tool serves as {purpose}"),
+        }
+    }
 }
 
 /// A parsed tool manual.
@@ -130,6 +165,10 @@ pub enum PurposeVerificationFailure {
     MissingRationale(usize),
     /// The prompt does not ask what a tool is for.
     NotAPurposeQuestion(String),
+    /// An option is written in a different form from the one the prompt asks in.
+    OptionFormMismatch {
+        prompt: String,
+    },
 }
 
 impl std::fmt::Display for PurposeVerificationFailure {
@@ -167,6 +206,10 @@ impl std::fmt::Display for PurposeVerificationFailure {
             PurposeVerificationFailure::NotAPurposeQuestion(prompt) => {
                 write!(f, "the prompt does not ask what a tool is for: {prompt:?}")
             }
+            PurposeVerificationFailure::OptionFormMismatch { prompt } => write!(
+                f,
+                "the options are not written in the form the prompt asks in: {prompt:?}"
+            ),
         }
     }
 }
@@ -456,10 +499,34 @@ const NAME_STOP_WORDS: &[&str] = &[
 ];
 
 /// Whether a candidate purpose reads as a thing a tool does.
-fn reads_as_a_purpose(purpose: &str) -> bool {
+fn reads_as_a_purpose(purpose: &str, link: Link) -> bool {
     let words: Vec<&str> = purpose.split_whitespace().collect();
     if words.len() < 4 {
         return false;
+    }
+    // A noun complement is a different kind of phrase, and the verb test below would refuse
+    // every one of them: `the relay serves as a switch` states `a switch`, which is what the
+    // relay *is*, not what it does. What makes such a complement readable is the opposite
+    // test -- it must not open with a verb from the list, and it must be a noun phrase rather
+    // than a bare word: `serves as a switch` and `acts as a thrust bearing` are descriptions,
+    // while `serves as good` and `serves as the following` are not.
+    if link == Link::As {
+        let first = words[0]
+            .trim_matches(|c: char| !c.is_alphabetic())
+            .to_lowercase();
+        if PURPOSE_VERBS.contains(&first.as_str())
+            || NAME_STOP_WORDS.contains(&first.as_str())
+            || words.len() < 2
+        {
+            return false;
+        }
+        return !contains_full_stop(purpose)
+            && !purpose.contains(';')
+            && uses_only_latin(purpose)
+            && !carries_scan_damage(purpose)
+            && !purpose.contains("(fig")
+            && !purpose.contains("figure ")
+            && !purpose.contains("Fig.");
     }
     // A purpose starts with a verb: `to cut ...`, `cutting ...`, `regulate ...`. Punctuation
     // around the word is the sentence's, not the word's -- `gripping, reaching places not
@@ -484,8 +551,12 @@ fn reads_as_a_purpose(purpose: &str) -> bool {
     if !PURPOSE_VERBS.contains(&first.as_str()) {
         return false;
     }
-    // A purpose is a clause, and a clause holds no full stop: see `contains_full_stop`.
-    if contains_full_stop(purpose) {
+    // A purpose is a clause, and a clause holds no full stop: see `contains_full_stop`. It
+    // holds no semicolon either, and that one matters more since the noun-complement forms were
+    // read: `the pressure valve also serves as a safety valve to relieve extra pressure within
+    // the system; the vacuum valve opens only when the pressure drops` is two sentences, and
+    // the first half is the item while the second is the next one.
+    if contains_full_stop(purpose) || purpose.contains(';') {
         return false;
     }
     // A purpose containing a letter from another alphabet is a scan this reader cannot
@@ -731,10 +802,10 @@ pub fn parse_purposes(text: &str, label: &str) -> Purposes {
         if sentence.trim_end().ends_with('?') {
             continue;
         }
-        let Some((tool, purpose)) = describe(&sentence) else {
+        let Some((tool, purpose, link)) = describe(&sentence) else {
             continue;
         };
-        if !names_a_tool(&tool) || !reads_as_a_purpose(&purpose) {
+        if !names_a_tool(&tool) || !reads_as_a_purpose(&purpose, link) {
             continue;
         }
         let lower_tool = tool.to_lowercase();
@@ -749,6 +820,7 @@ pub fn parse_purposes(text: &str, label: &str) -> Purposes {
             tool,
             purpose,
             sentence: sentence.trim().to_string(),
+            link,
         });
     }
 
@@ -826,7 +898,7 @@ fn split_sentences(text: &str) -> Vec<String> {
 ///
 /// Two shapes are read, and the shape decides only *where* the subject is written, not what
 /// counts as a tool or as a purpose: both end in `finish`, which is where the guards live.
-fn describe(sentence: &str) -> Option<(String, String)> {
+fn describe(sentence: &str) -> Option<(String, String, Link)> {
     // A sentence that names the relation puts the subject after the phrase -- `The function of
     // the carburetor is to provide an air-fuel mixture` -- and reading what precedes the verb
     // would name `function`.
@@ -844,7 +916,7 @@ fn describe(sentence: &str) -> Option<(String, String)> {
 ///
 /// `purpose of` is read for the same reason, and the same two link words: these manuals write
 /// `is to` and, less often, `is for`.
-fn describe_named_relation(sentence: &str) -> Option<(String, String)> {
+fn describe_named_relation(sentence: &str) -> Option<(String, String, Link)> {
     const NAMED: &[&str] = &["function of ", "purpose of "];
     const LINK: &[&str] = &[" is to ", " is for "];
     let lower = sentence.to_lowercase();
@@ -870,7 +942,14 @@ fn describe_named_relation(sentence: &str) -> Option<(String, String)> {
     if opens_with_a_gerund(subject) {
         return None;
     }
-    finish(subject, purpose)
+    // `The function of the X is to Y` and `The purpose of the X is for Y`: the complement is
+    // the clause the link announces, so the form is `to` unless the source wrote `for`.
+    let link = if sentence[..link_at].to_lowercase().ends_with(" is for") {
+        Link::For
+    } else {
+        Link::To
+    };
+    finish(subject, purpose, link)
 }
 
 /// The tool and the purpose a sentence states about its subject, from the verb that follows it.
@@ -897,46 +976,56 @@ fn describe_named_relation(sentence: &str) -> Option<(String, String)> {
 /// `A provision usually is made to install a fuel gage`, whose subject is a provision rather
 /// than a tool, and the reader has no noun test that separates them. A shape that produces
 /// "Which tool is used to install a fuel gage? -- a provision" is worse than an unread one.
-fn describe_by_verb(sentence: &str) -> Option<(String, String)> {
-    const VERBS: &[&str] = &[
-        " are used for ",
-        " are used to ",
-        " is used for ",
-        " is used to ",
-        " are used as ",
-        " is used as ",
-        " are designed to ",
-        " is designed to ",
-        " are intended to ",
-        " is intended to ",
-        " serve to ",
-        " serves to ",
-        " are employed to ",
-        " is employed to ",
-        " are employed for ",
-        " is employed for ",
-        " are utilized to ",
-        " is utilized to ",
-        " are adapted to ",
-        " is adapted to ",
-        " are adapted for ",
-        " is adapted for ",
-        " are arranged to ",
-        " is arranged to ",
+fn describe_by_verb(sentence: &str) -> Option<(String, String, Link)> {
+    /// The phrases the manuals state the relation with, and the form each one takes.
+    const VERBS: &[(&str, Link)] = &[
+        (" are used for ", Link::For),
+        (" are used to ", Link::To),
+        (" is used for ", Link::For),
+        (" is used to ", Link::To),
+        (" are used as ", Link::As),
+        (" is used as ", Link::As),
+        (" are designed to ", Link::To),
+        (" is designed to ", Link::To),
+        (" are intended to ", Link::To),
+        (" is intended to ", Link::To),
+        (" serve to ", Link::To),
+        (" serves to ", Link::To),
+        (" are employed to ", Link::To),
+        (" is employed to ", Link::To),
+        (" are employed for ", Link::For),
+        (" is employed for ", Link::For),
+        (" are utilized to ", Link::To),
+        (" is utilized to ", Link::To),
+        (" are adapted to ", Link::To),
+        (" is adapted to ", Link::To),
+        (" are adapted for ", Link::For),
+        (" is adapted for ", Link::For),
+        (" are arranged to ", Link::To),
+        (" is arranged to ", Link::To),
+        // The noun-complement forms. `scripts/probes/relation-shapes.py` counts 94 `serves as`,
+        // 139 `acts as` and 33 `is used as` across the Shop and Auto sources -- more than any
+        // other single form -- and none of them was readable before the link was recorded.
+        (" serve as ", Link::As),
+        (" serves as ", Link::As),
+        (" act as ", Link::As),
+        (" acts as ", Link::As),
+        (" function as ", Link::As),
+        (" functions as ", Link::As),
     ];
     let lower = sentence.to_lowercase();
-    let (position, verb) = VERBS
+    let (position, verb, link) = VERBS
         .iter()
-        .filter_map(|verb| lower.find(verb).map(|position| (position, *verb)))
-        .min_by_key(|(position, _)| *position)?;
+        .filter_map(|(verb, link)| lower.find(verb).map(|position| (position, *verb, *link)))
+        .min_by_key(|(position, _, _)| *position)?;
 
     let subject = sentence[..position].trim();
     let purpose = sentence[position + verb.len()..].trim();
-    finish(subject, purpose)
+    finish(subject, purpose, link)
 }
 
 /// The guards both shapes share, and the reading of the purpose itself.
-fn finish(subject: &str, purpose: &str) -> Option<(String, String)> {
+fn finish(subject: &str, purpose: &str, link: Link) -> Option<(String, String, Link)> {
     if subject.split_whitespace().count() > MAX_SUBJECT_WORDS {
         return None;
     }
@@ -961,7 +1050,7 @@ fn finish(subject: &str, purpose: &str) -> Option<(String, String)> {
     if purpose.is_empty() {
         return None;
     }
-    Some((tool, purpose))
+    Some((tool, purpose, link))
 }
 
 /// Repair the scan's habit of setting ordinary words in capitals.
@@ -1442,18 +1531,52 @@ fn singular(word: &str) -> String {
     lower.strip_suffix('s').map(str::to_string).unwrap_or(lower)
 }
 
+/// A function as an Auto Information option states it.
+///
+/// The frame follows the source: `is used to prevent leakage` becomes the option "to prevent
+/// leakage", and `serves as a thrust bearing` becomes "a thrust bearing", because the question
+/// it answers is "What does the X serve as?".
+fn function_option(entry: &Purpose) -> String {
+    match entry.link {
+        Link::As => entry.purpose.clone(),
+        _ => format!("to {}", entry.purpose),
+    }
+}
+
+/// The question an Auto Information item asks about a component.
+fn function_question(component: &str, link: Link) -> String {
+    match link {
+        Link::As if is_plural(component) => format!("What do the {component} serve as?"),
+        Link::As => format!("What does the {component} serve as?"),
+        _ => component_question(component),
+    }
+}
+
+/// Whether a component's name is plural, which decides whether its question says do or does.
+fn is_plural(component: &str) -> bool {
+    component.split_whitespace().last().is_some_and(|word| {
+        let lower = word.to_lowercase();
+        lower.ends_with('s') && !lower.ends_with("ss")
+    })
+}
+
 /// The question a purpose clause answers.
 ///
 /// The source writes purposes two ways -- `used to cut metal` and `used for cutting
 /// metal` -- and the question has to follow the source rather than impose one form on
 /// it, or the item asks which tool is "used to laying out angles".
-fn question_for(purpose: &str) -> String {
-    // A gerund after `to` is not English; a bare verb after `for` is not either.
-    if opens_with_a_gerund(purpose) {
-        format!("Which tool is used for {purpose}")
-    } else {
-        format!("Which tool is used to {purpose}")
-    }
+fn question_for(purpose: &str, link: Link) -> String {
+    // The link the source used decides the frame, and `For` is inferred from the purpose's own
+    // form when the source did not state one: a purpose read from a description that named the
+    // relation (`The function of the X is to Y`) carries its link, and one whose sentence was
+    // split by the scanner may not match the table.
+    let link = match link {
+        Link::For => Link::For,
+        Link::As => Link::As,
+        Link::To if opens_with_a_gerund(purpose) => Link::For,
+        Link::To => Link::To,
+    };
+    link.tool_question(purpose)
 }
 
 /// Whether a purpose opens with a gerund, which is the form `is used for cutting` states.
@@ -1473,12 +1596,32 @@ fn opens_with_a_gerund(purpose: &str) -> bool {
 
 /// The purpose clause a prompt asks about, whichever form it was written in.
 fn purpose_in_prompt(prompt: &str) -> Option<String> {
-    for prefix in ["Which tool is used to ", "Which tool is used for "] {
+    for prefix in [
+        "Which tool is used to ",
+        "Which tool is used for ",
+        "Which tool serves as ",
+    ] {
         if let Some(rest) = prompt.strip_prefix(prefix) {
             return Some(rest.trim_end_matches('?').trim().to_string());
         }
     }
     None
+}
+
+/// The link a prompt was written with, recovered from the prompt itself.
+///
+/// The frame is in the question, so a verifier reading the question needs nothing else -- and
+/// an item whose prompt and options disagree about the form is caught by comparing them.
+fn link_in_prompt(prompt: &str) -> Option<Link> {
+    if prompt.starts_with("Which tool serves as ") {
+        Some(Link::As)
+    } else if prompt.starts_with("Which tool is used for ") {
+        Some(Link::For)
+    } else if prompt.starts_with("Which tool is used to ") {
+        Some(Link::To)
+    } else {
+        None
+    }
 }
 
 impl Purposes {
@@ -1568,7 +1711,15 @@ impl Purposes {
         // ask the Shop Information question about them instead, which is why they are dropped
         // here and not rewritten.
         let entries: Vec<&Purpose> = match kind {
-            ItemKind::Tool => self.entries.iter().collect(),
+            // A Shop Information item asks which *tool* does something, and a description
+            // written `the relay serves as a switch` names something the tool is, not something
+            // it does: the answer would be a component offered as a tool. Those descriptions are
+            // asked the other way round, where they are exactly right.
+            ItemKind::Tool => self
+                .entries
+                .iter()
+                .filter(|entry| entry.link != Link::As)
+                .collect(),
             ItemKind::Function => self
                 .entries
                 .iter()
@@ -1593,11 +1744,11 @@ impl Purposes {
             let (correct_option, prompt) = match kind {
                 ItemKind::Tool => (
                     correct.tool.clone(),
-                    format!("{}?", question_for(&correct.purpose)),
+                    format!("{}?", question_for(&correct.purpose, correct.link)),
                 ),
                 ItemKind::Function => (
-                    format!("to {}", correct.purpose),
-                    component_question(&correct.tool),
+                    function_option(correct),
+                    function_question(&correct.tool, correct.link),
                 ),
             };
             let mut options: Vec<(String, Option<String>)> = vec![(correct_option, None)];
@@ -1614,13 +1765,21 @@ impl Purposes {
                 if options.len() == 4 {
                     break;
                 }
+                // A distractor has to be the same *kind* of answer as the correct one, or the
+                // item offers an infinitive beside a noun phrase and the form gives the answer
+                // away. This is the parallelism rule of the gerund fix, applied to the link.
+                if kind == ItemKind::Function
+                    && (other.link == Link::As) != (correct.link == Link::As)
+                {
+                    continue;
+                }
                 let (option, rationale) = match kind {
                     ItemKind::Tool => (
                         other.tool.clone(),
                         format!("{} is for {}.", other.tool, other.purpose),
                     ),
                     ItemKind::Function => (
-                        format!("to {}", other.purpose),
+                        function_option(other),
                         format!("That is what {} is for.", other.tool),
                     ),
                 };
@@ -1694,11 +1853,7 @@ pub fn verify(item: &PurposeItem, source: &Purposes) -> Result<(), PurposeVerifi
 /// The verb has to agree with the component: `What is the open hooks used for?` reads as a
 /// program talking, while the source's own sentence says `hooks are used for`.
 fn component_question(component: &str) -> String {
-    let plural = component.split_whitespace().last().is_some_and(|word| {
-        let lower = word.to_lowercase();
-        lower.ends_with('s') && !lower.ends_with("ss")
-    });
-    if plural {
+    if is_plural(component) {
         format!("What are the {component} used for?")
     } else {
         format!("What is the {component} used for?")
@@ -1707,10 +1862,17 @@ fn component_question(component: &str) -> String {
 
 /// The component a `What is/are the <component> used for?` prompt names.
 fn component_in_prompt(prompt: &str) -> Option<String> {
-    for prefix in ["What is the ", "What are the "] {
-        if let Some(rest) = prompt.strip_prefix(prefix) {
-            if let Some(rest) = rest.strip_suffix(" used for?") {
-                return (!rest.trim().is_empty()).then(|| rest.trim().to_string());
+    // Singular and plural, and both frames: `What is the relay used for?`, `What are the
+    // brushes used for?`, `What does the relay serve as?`, `What do the pole shoes serve as?`.
+    for (prefixes, suffix) in [
+        (["What is the ", "What are the "], " used for?"),
+        (["What does the ", "What do the "], " serve as?"),
+    ] {
+        for prefix in prefixes {
+            if let Some(rest) = prompt.strip_prefix(prefix) {
+                if let Some(rest) = rest.strip_suffix(suffix) {
+                    return (!rest.trim().is_empty()).then(|| rest.trim().to_string());
+                }
             }
         }
     }
@@ -1726,6 +1888,19 @@ fn function_in_option(option: &str) -> String {
         .to_string()
 }
 
+/// Whether an option is written in the form its question asks for.
+///
+/// A question that says `serve as` takes a noun phrase and one that says `used for` takes an
+/// infinitive; an item whose options are in the other form offers the answer's shape as a clue.
+/// The check is on the *form* only, because whether the words are right is what the rest of
+/// verification is for.
+fn option_matches_link(option: &str, link: Link) -> bool {
+    match link {
+        Link::As => !option.trim_start().starts_with("to "),
+        _ => option.trim_start().starts_with("to "),
+    }
+}
+
 fn verify_function_item(
     item: &PurposeItem,
     source: &Purposes,
@@ -1738,6 +1913,22 @@ fn verify_function_item(
             item.prompt.clone(),
         ));
     };
+    // The question says which form its answers take. An item whose prompt says `serve as` and
+    // whose options begin `to ` hands the learner the shape of the answer.
+    let link = if item.prompt.trim_end().ends_with(" serve as?") {
+        Link::As
+    } else {
+        Link::To
+    };
+    if !item
+        .options
+        .iter()
+        .all(|option| option_matches_link(option, link))
+    {
+        return Err(PurposeVerificationFailure::OptionFormMismatch {
+            prompt: item.prompt.clone(),
+        });
+    }
     if item.supporting_sentence.trim().is_empty() {
         return Err(PurposeVerificationFailure::Blank("supporting sentence"));
     }
@@ -1811,6 +2002,14 @@ fn verify_tool_item(
             item.prompt.clone(),
         ));
     };
+    // A Shop Information item asks which tool *does* something, so a noun-complement frame --
+    // `Which tool serves as a switch?` -- has no place here: the answer would be a component
+    // offered as a tool.
+    if link_in_prompt(&item.prompt) == Some(Link::As) {
+        return Err(PurposeVerificationFailure::NotAPurposeQuestion(
+            item.prompt.clone(),
+        ));
+    }
     if item.supporting_sentence.trim().is_empty() {
         return Err(PurposeVerificationFailure::Blank("supporting sentence"));
     }
@@ -2135,15 +2334,18 @@ Digitized is used to scan books.
         // the hand` reached the corpus as `Which tool is used to gripping, ...?` because the
         // comma made the first word look like a bare verb.
         assert_eq!(
-            question_for("gripping, reaching places not readily accessible"),
+            question_for("gripping, reaching places not readily accessible", Link::To),
             "Which tool is used for gripping, reaching places not readily accessible"
         );
         assert_eq!(
-            question_for("honing, which brings the cutting edge to keenness"),
+            question_for(
+                "honing, which brings the cutting edge to keenness",
+                Link::To
+            ),
             "Which tool is used for honing, which brings the cutting edge to keenness"
         );
         assert_eq!(
-            question_for("cut metal that is too heavy for snips"),
+            question_for("cut metal that is too heavy for snips", Link::To),
             "Which tool is used to cut metal that is too heavy for snips"
         );
     }
@@ -2175,6 +2377,22 @@ Digitized is used to scan books.
             source.purpose_of("Micrometers").is_some(),
             "{:?}",
             source.entries()
+        );
+
+        // A semicolon joins two clauses, so a purpose that holds one is two sentences. TM 9-2700
+        // writes `the pressure valve also serves as a safety valve to relieve extra pressure
+        // within the system; the vacuum valve opens only when the pressure drops`.
+        assert!(
+            !reads_as_a_purpose(
+                "a safety valve to relieve extra pressure within the system; the vacuum valve \
+                 opens only when the pressure drops",
+                Link::As
+            ),
+            "a purpose holds no semicolon"
+        );
+        assert!(
+            !reads_as_a_purpose("cut the thread; the die is turned back", Link::To),
+            "a purpose holds no semicolon, whichever link it came in by"
         );
     }
 
@@ -2478,6 +2696,16 @@ The battery is used to store electrical energy for the starting motor.
         // The positive control: the description that names a tool still parses.
         assert!(source.purpose_of("Steel rings").is_some(), "{names:?}");
 
+        // A semicolon joins two clauses, so a purpose that holds one is two sentences.
+        assert!(
+            !reads_as_a_purpose(
+                "a safety valve to relieve extra pressure within the system; the vacuum valve \
+                 opens only when the pressure drops",
+                Link::As
+            ),
+            "a purpose holds no semicolon"
+        );
+
         // The rules themselves, asserted where they live, because a sentence can be refused
         // for more than one reason and a test that only parses sentences cannot say which rule
         // did the refusing.
@@ -2528,6 +2756,95 @@ The battery is used to store electrical energy for the starting motor.
             source.purpose_of("tractor").is_some(),
             "`is arranged to` states a purpose: {names:?}"
         );
+    }
+
+    /// The noun-complement frame: `the relay serves as a switch` is a description of what a
+    /// component *is*, and it is asked the other way round from a purpose.
+    ///
+    /// The frame has to follow the source. Asking "Which tool is used to a switch?" is not a
+    /// question, and offering "a thrust bearing" beside "to prevent leakage" as options tells
+    /// the learner which one is the odd answer out.
+    #[test]
+    fn a_noun_complement_is_asked_what_the_component_serves_as() {
+        let source = parse_purposes(
+            "The bimetallic strip serves as one of the contact points.\n\
+             A one-way valve acts as a check against return flow.\n\
+             The pole shoes serve as a core for the field coils to increase permeability.\n\
+             The relay is used to switch the current.\n\
+             The drive spring serves as a cushion while the engine is cranked.\n",
+            "A Test Manual",
+        );
+        let links: Vec<(&str, Link)> = source
+            .entries()
+            .iter()
+            .map(|entry| (entry.tool.as_str(), entry.link))
+            .collect();
+        assert!(
+            links.contains(&("bimetallic strip", Link::As)),
+            "a `serves as` description carries the noun link: {links:?}"
+        );
+        assert!(links.contains(&("pole shoes", Link::As)), "{links:?}");
+
+        let items = source.build_function_items("AI", 8, 11, |_| true);
+        assert!(!items.is_empty(), "the fixture should yield items");
+        for item in &items {
+            let noun_frame = item.prompt.ends_with(" serve as?");
+            for option in &item.options {
+                assert_eq!(
+                    option.starts_with("to "),
+                    !noun_frame,
+                    "every option must be written in the form the question asks in: {} / {option}",
+                    item.prompt
+                );
+            }
+        }
+        // At least one item is asked in the noun frame, and every one verifies.
+        assert!(
+            items.iter().any(|item| item.prompt.ends_with(" serve as?")),
+            "{:?}",
+            items.iter().map(|item| &item.prompt).collect::<Vec<_>>()
+        );
+        for item in &items {
+            verify(item, &source)
+                .unwrap_or_else(|failure| panic!("{} failed: {failure}", item.prompt));
+        }
+
+        // A Shop Information item asks which tool *does* something, so a component offered as
+        // the answer is refused.
+        let tool_items = source.build_items("SI", 8, 11, |_| true);
+        assert!(
+            tool_items
+                .iter()
+                .all(|item| !item.prompt.contains(" serves as ")),
+            "{:?}",
+            tool_items
+                .iter()
+                .map(|item| &item.prompt)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    /// An item whose options are in the wrong form is refused rather than served.
+    #[test]
+    fn verification_refuses_options_in_the_wrong_form() {
+        let source = parse_purposes(
+            "The bimetallic strip serves as one of the contact points.\n\
+             A one-way valve acts as a check against return flow.\n\
+             The pole shoes serve as a core for the field coils to increase permeability.\n\
+             The drive spring serves as a cushion while the engine is cranked.\n\
+             The throttle return dashpot serves as a damper.\n",
+            "A Test Manual",
+        );
+        let mut item = source.build_function_items("AI", 4, 5, |_| true).remove(0);
+        item.prompt = "What does the bimetallic strip serve as?".to_string();
+        // The options are the infinitive form the *other* frame uses.
+        for option in item.options.iter_mut() {
+            *option = format!("to {option}");
+        }
+        match verify(&item, &source) {
+            Err(PurposeVerificationFailure::OptionFormMismatch { .. }) => {}
+            other => panic!("expected an option-form refusal, got {other:?}"),
+        }
     }
 
     #[test]

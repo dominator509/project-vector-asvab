@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T05:49:03.276306+00:00",
+  "generated_at": "2026-09-23T09:19:34.211944+00:00",
   "root": ".agent/evidence",
-  "count": 614,
+  "count": 622,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -216,7 +216,7 @@
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
       "bytes": 1248,
-      "sha256": "0b5d37a69ad854680b94854cd5b7215ed051b0d0543acd129ed01c4c86452ca0"
+      "sha256": "07e7462ea4eb229e054442def8b640c0709ea40cf26c6481a93e03f8fdfb3fdb"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -641,7 +641,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "1c08cc5b23e6ba81a85a114c58f484e4751a24c51a08bce397d2cb85033a99fb"
+      "sha256": "ee44e014f62357dea1c6c05856b8b2afc481eace8d46467e4218566db628cde4"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -1040,13 +1040,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/check-corpus.log",
-      "bytes": 4769,
-      "sha256": "b5e85dd26d3a0a66fc62b1c760bc99484e228c4b124584cd731c20c89c31777d"
+      "bytes": 4784,
+      "sha256": "10e63d8792af679d24c624b5acc28ce7ae02286b6146b47d5a64be51c951e4b7"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/check-options.log",
       "bytes": 270,
-      "sha256": "98165358a6301e8350b2982337ff90dc4bd8bac705c1a3c324dbf82d5b597e02"
+      "sha256": "8775b16b0ca258e3a184754b75c1c5a506a67a7c3504206d7542ebe3c14a9308"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/commit-message-round14.txt",
@@ -1089,14 +1089,19 @@
       "sha256": "fcf91d0c09be89668ce1fcad0a2ba9f363b7e1ba0a98badd6904bd6fde56f7e3"
     },
     {
+      "path": ".agent/evidence/EP-007/content-corpus/commit-message-round23.txt",
+      "bytes": 5758,
+      "sha256": "def302dad5e95250285d71acd22ce7ccf7b32d2728aff265f76b45008606e0b0"
+    },
+    {
       "path": ".agent/evidence/EP-007/content-corpus/commit-message.txt",
       "bytes": 3069,
       "sha256": "822e55c0ec24a720d9b73ce531565cd88fe8ba43b4ba96c659d74d55de154eb2"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/count-items.log",
-      "bytes": 450,
-      "sha256": "6bc4411f3de4d97197de914f83373383eea8e58efed0530a296aad951eb2acbf"
+      "bytes": 499,
+      "sha256": "1853a72b07ef19b472bc6ce9181c21f37c771b8bb45415c0ddd524f0d7dcac62"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/facts-scan-wonders.log",
@@ -1106,7 +1111,7 @@
     {
       "path": ".agent/evidence/EP-007/content-corpus/foreign-letters.log",
       "bytes": 760,
-      "sha256": "8a7fe473e8a6f5bed6800500d3b1de9777c0a95755beab508ae8f469efffec20"
+      "sha256": "1934b3cb3270a9723431bdd5268d85173650c394787aa692bbbabd97d74bb3a5"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/gates/anti-gaming.exitcode",
@@ -1230,13 +1235,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ingest-tools-ai.json",
-      "bytes": 6086,
-      "sha256": "541f3076678e039aa5a9386a0434fa8a4b54569fb8b5f9131f7adbd679a17954"
+      "bytes": 5926,
+      "sha256": "e73bc21dfb41fbd4cfe7b37839aae4b86449ab0446ad668b36e4dcc3038781d9"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ingest-tools-si.json",
-      "bytes": 4291,
-      "sha256": "ec88687700fb392f58fda68f36e389e7f57019eba2045fd2a3cc77c5e4f8ceef"
+      "bytes": 4137,
+      "sha256": "e76a42d6da2be5d798e5d4a3e737633093e8e780c39e07328ebf20570df89509"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ingest-wk.json",
@@ -1251,7 +1256,7 @@
     {
       "path": ".agent/evidence/EP-007/content-corpus/pack-calibration.json",
       "bytes": 1230,
-      "sha256": "20fc5c7481a61620d4fc39e697034adac5e65d96c115c57fa93e54227f82774d"
+      "sha256": "0439b7b529727515c05bbd6e5b870378e5245e7fb3ffb7ca023c394caac86935"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/pack-curriculum.json",
@@ -1267,6 +1272,11 @@
       "path": ".agent/evidence/EP-007/content-corpus/packs/pack-build-v4.json",
       "bytes": 449,
       "sha256": "1820af37fd0668fa78a1bb7bf921cccb09ab4e4c6188fb78c93a13a18a80f768"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/packs/pack-build-v5.json",
+      "bytes": 449,
+      "sha256": "2b5fc8dcbea1df070bfc8e744dbd80bb47d671eb7d6c1fdfc04cbcfc724ab3b9"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/packs/pack-build.json",
@@ -1294,6 +1304,11 @@
       "sha256": "26b4699eaaef05082a33ff978c998b16217adce703f15f5f3065079f7d297cc0"
     },
     {
+      "path": ".agent/evidence/EP-007/content-corpus/packs/pack-install-v5.json",
+      "bytes": 334,
+      "sha256": "e914a9588001d239ce1032bb770e145d5ef702ca33b9b59f349a9bab17f06080"
+    },
+    {
       "path": ".agent/evidence/EP-007/content-corpus/packs/pack-install.json",
       "bytes": 317,
       "sha256": "c61045754abb533a10ff1dd21b2ea74ac0583bcb971408f882a066ca8bedf0a9"
@@ -1319,6 +1334,11 @@
       "sha256": "c8d6f4b2b5b1361ec0f6a164c7aef2cd3f16ed1acd4040eb74b6ce74dcef694c"
     },
     {
+      "path": ".agent/evidence/EP-007/content-corpus/packs/pack-v5.json",
+      "bytes": 11483314,
+      "sha256": "2210ef1dbabf5cb5d115a4f8d95b30f6b79b3ea3dcd980f8db0819d86a0bc8cf"
+    },
+    {
       "path": ".agent/evidence/EP-007/content-corpus/pc-corpus-scan-before-passage-fix.txt",
       "bytes": 3824,
       "sha256": "3b8a7b92d092300fec1eb06e435f7cf69d410783a2e0f594356e3b2c4cb1129a"
@@ -1342,6 +1362,11 @@
       "path": ".agent/evidence/EP-007/content-corpus/pc-run.txt",
       "bytes": 7380,
       "sha256": "0605395e7dcd4ce3a68141dc573b50bc5ff4e8c4d975bc755735052bdfbb714c"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/rebuild-ai-round24.log",
+      "bytes": 9068,
+      "sha256": "027a3cd37dc955c34549c3be385bd96046621d709f2a1dee3971eee02d10aa99"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/rebuild-corpus-round18.log",
@@ -1372,6 +1397,11 @@
       "path": ".agent/evidence/EP-007/content-corpus/rebuild-si-ai-round23.log",
       "bytes": 16516,
       "sha256": "455472f30e4ff63eb0ffaec9e5200b069ff3b602f089d4b3c4945a79b87bdfd0"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/rebuild-si-ai-round25.log",
+      "bytes": 15283,
+      "sha256": "74dde9de95b0cf145c582823e777472caaaef24d71445d64f75635f6a85afb31"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/rebuild-si-round23.log",
@@ -1425,8 +1455,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ROUND-23-REPORT.md",
-      "bytes": 6197,
-      "sha256": "3a9910a6d90a18961123021d7f35a230ca33e44c284efd834b61b5a021b952f9"
+      "bytes": 6739,
+      "sha256": "bc441bbd7d663aaa42fecc049e721e887b3973e538c5f391a7566ff974209796"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/ROUND-24-25-REPORT.md",
+      "bytes": 5565,
+      "sha256": "62c1224e6616d77f185b22230752f025bcddfb9cd998c74ed51c37adbbe7f811"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/tools-report.txt",
@@ -1455,8 +1490,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/verify-round23.log",
-      "bytes": 1018552,
-      "sha256": "8bb96a3f6ebe3b56edc042774436e2ae1356fbce487a3488f4b5246f9d8d5395"
+      "bytes": 1018925,
+      "sha256": "6962ada9fe720ce2d6220bbbe9c600997dd2939b9fabefe73d958b261e811245"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/verify-round25.log",
+      "bytes": 1025788,
+      "sha256": "1ef253d101a713b35f9dcd5643c85ed9b5db20a8c0bc4f881d30277dd617c25b"
     },
     {
       "path": ".agent/evidence/EP-007/diagnose-fuzz-hang.py",
@@ -1846,7 +1886,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1025,
-      "sha256": "ed8c9e2ee0b0dc15b92d6cc86782db1f3fdfe9760b4d28743d866c63a8fcfc8e"
+      "sha256": "b7c7714a61e1d79622da482e54a5a3f4d88f4c96fcdb79091210ef0b18602e89"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",

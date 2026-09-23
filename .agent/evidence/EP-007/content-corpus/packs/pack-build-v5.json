@@ -1,0 +1,14 @@
+{
+  "bytes": 11483314,
+  "content_hash": "sha256:192ec0f18cada134bb8ff72efd02bb501a06b643a6a9cb767c42b0c527fb9416",
+  "items": 5627,
+  "licences": [
+    "Public domain (US government work)",
+    "Public domain in the USA"
+  ],
+  "name": "core-asvab",
+  "pack": ".agent/evidence/EP-007/content-corpus/packs/pack-v5.json",
+  "signer": "86b0ed0e0524bd430b647b227df120f27adfedc8470ed65ee6dede641ac8df8c",
+  "sources": 55,
+  "version": 5
+}

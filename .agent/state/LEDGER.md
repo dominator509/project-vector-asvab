@@ -347,3 +347,30 @@ every rule (`ita size` in *Tools and Their Uses*, subject the steel shank): catc
 misreading test on short tokens that the probes measured as too blunt for prose, so it is recorded
 the way the two rare Word Knowledge distractors are. The plan still orders by prerequisite without
 tracking mastery per objective, and General Science is still one work.
+
+### Rounds 24-25
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The relation's third form | The manuals state the relation three ways and the reader knew two. `relation-shapes.py` counts the third -- `serves as` 94, `acts as` 139, `is used as` 33 across the Shop and Auto sources, more than any other phrase -- and none of it was readable because those complements are *nouns*: `The bimetallic strip serves as one of the contact points.` A purpose now carries the form it was stated in (`Link::To`, `Link::For`, `Link::As`) and the question follows it. **Auto Information goes 77 -> 94 items.** | `.agent/evidence/EP-007/content-corpus/ROUND-24-25-REPORT.md` |
+| Three properties that keep it honest | The frame is the source's: a `serves as` description is **not** asked as a Shop Information question ("Which tool serves as a switch?" offers a component as a tool -- the defect round 23 refused a source for), it is asked the other way round. The options match the question: a `serve as` prompt takes noun phrases and a `used for` prompt takes infinitives, and the verifier refuses an item that mixes them, because offering "a thrust bearing" beside "to prevent leakage" tells the learner which is the odd one out. And a purpose holds no semicolon: it always joins two clauses. | `purposes.rs`, `mutation-round18.py` |
+| A mutation that outlived its run | The harness disables one rule at a time and restores the file in a `finally`. A run that is **killed** never reaches it, and the mutation stays: two `if false &&` guards sat in `purposes.rs` across a round boundary, announcing themselves only as two tests failing for reasons that made no sense (`Both hands` accepted as a tool name) while the rule looked present in the file. The harness now refuses to run when a replacement is present *instead of* the text it replaced -- and the first version of that guard was wrong, because several mutations delete one line from a pair and the replacement is a substring of the original. | `mutation-round18.py` |
+| A probe that was wrong for the new frame | Two `check-corpus.py` invariants were narrower than the corpus after this round: an Auto Information stem is now either `What ... used for?` or `What ... serve as?`, and the option rule checks the options are in the form *the question asks in* rather than that they are infinitives. Third time a probe has been the thing at fault (the capitals rule of round 18, the Word Knowledge source count of round 13): a probe encodes the corpus as it was when it was written. | `check-corpus.py` |
+
+Corpus after round 25: 1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 42 SI, **94 AI** = **5,627 active
+items**, every provenance invariant a zero, 25/25 Gutenberg works re-downloading to their cited
+bytes. Pack `core-asvab` rebuilt and reinstalled at **v5** (5,627 items, 55 sources).
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; 1,721 Rust tests across
+109 binaries, 211 frontend tests, 36 E2E, packaged live-fire passed against artifact
+`028bb9240678de2a2cf2a069bb03ea4a6dfe8f99883c1d629649d078a4c793f9`. **All 32 mutations caught.**
+Verdict unchanged: `CONDITIONAL_EXTERNAL_GATES`.
+
+Still open: **SI 42 remains the thin bank**, and the noun frame did not help it by design -- the
+descriptions it reads are about components, and a Shop Information item asks which tool does
+something; sources that would raise SI have been measured and refused across four rounds. **AI's
+new frame has its own noise floor**: `What does the Slack serve as?` (a property) and `What do
+the Hangers frame members serve as?` (a heading run-in) reached the bank and are recorded as
+known, the way the steel-shank item is. The plan orders by prerequisite without tracking mastery
+per objective, General Science is still one work, and the Word Knowledge rare-distractor gap is
+unchanged.

@@ -167,18 +167,24 @@ checks = [
            )""",
     ),
     # An Auto Information item is the other way round: the stem names a component and the
-    # options are functions, so every option is written as the infinitive the manuals use
-    # (`to prevent leakage ...`) and no option is a bare noun phrase.
+    # options are what it does or what it is. The manuals state that two ways -- `is used to
+    # prevent leakage` and `serves as a thrust bearing` -- so the stem is one of two questions
+    # and the options must be written in the form that question asks in. Offering `a thrust
+    # bearing` beside `to prevent leakage` would tell the learner which option is the odd one
+    # out, which is what this pair of checks is for.
     (
-        "AI items whose stem is not a component-function question",
+        "AI items whose stem is neither of the component questions",
         """select count(*) from content_items where subtest='AI'
-           and (stem not like 'What %' or stem not like '% used for?')""",
+           and not (stem like 'What % used for?' or stem like 'What % serve as?')""",
     ),
     (
-        "AI items with an option that is not an infinitive",
+        "AI items whose options are not in the form the question asks in",
         """select count(*) from content_items where subtest='AI' and exists (
-             select 1 from json_each(content_items.options_json)
-             where value not like 'to %'
+             select 1 from json_each(content_items.options_json) as option
+             where (content_items.stem like '% serve as?'
+                    and trim(option.value) like 'to %')
+                or (content_items.stem not like '% serve as?'
+                    and trim(option.value) not like 'to %')
            )""",
     ),
     (

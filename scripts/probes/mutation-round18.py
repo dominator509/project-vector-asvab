@@ -84,8 +84,8 @@ MUTATIONS = [
         "no-full-stop-in-a-purpose",
         PURPOSES,
         (
-            "    if contains_full_stop(purpose) {\n        return false;\n    }",
-            "    if false && contains_full_stop(purpose) {\n        return false;\n    }",
+            "    if contains_full_stop(purpose) || purpose.contains(';') {\n        return false;\n    }",
+            "    if false && (contains_full_stop(purpose) || purpose.contains(';')) {\n        return false;\n    }",
         ),
         "vector-questions",
         "a_purpose_does_not_span_a_sentence_break",
@@ -311,6 +311,39 @@ MUTATIONS = [
         "a manual the reader finds no tools in does not end the run",
     ),
     (
+        "no-noun-frame",
+        PURPOSES,
+        (
+            "        (\" serve as \", Link::As),\n        (\" serves as \", Link::As),\n        (\" act as \", Link::As),\n        (\" acts as \", Link::As),\n        (\" function as \", Link::As),\n        (\" functions as \", Link::As),",
+            "        (\" serve as \", Link::To),\n        (\" serves as \", Link::To),\n        (\" act as \", Link::To),\n        (\" acts as \", Link::To),\n        (\" function as \", Link::To),\n        (\" functions as \", Link::To),",
+        ),
+        "vector-questions",
+        "a_noun_complement_is_asked_what_the_component_serves_as",
+        "a noun complement carries the noun link and is asked in its own frame",
+    ),
+    (
+        "no-option-form-check",
+        PURPOSES,
+        (
+            "    if !item\n        .options\n        .iter()\n        .all(|option| option_matches_link(option, link))\n    {",
+            "    if false\n        && !item\n            .options\n            .iter()\n            .all(|option| option_matches_link(option, link))\n    {",
+        ),
+        "vector-questions",
+        "verification_refuses_options_in_the_wrong_form",
+        "an item's options are written in the form its question asks in",
+    ),
+    (
+        "no-semicolon-rule",
+        PURPOSES,
+        (
+            "    if contains_full_stop(purpose) || purpose.contains(';') {",
+            "    if contains_full_stop(purpose) {",
+        ),
+        "vector-questions",
+        "a_purpose_does_not_span_a_sentence_break",
+        "a purpose holds no semicolon: it is one clause",
+    ),
+    (
         "no-measurement-head-rule",
         PURPOSES,
         (
@@ -325,8 +358,8 @@ MUTATIONS = [
         "no-figure-label-rule",
         PURPOSES,
         (
-            "        if bare.chars().count() == 1 && bare.chars().all(|c| c.is_lowercase()) && bare != \"a\" && bare != \"i\"",
-            "        if false",
+            "        if bare.chars().count() == 1\n            && bare.chars().all(|c| c.is_lowercase())\n            && bare != \"a\"\n            && bare != \"i\"\n        {",
+            "        if false {",
         ),
         "vector-questions",
         "a_measurement_or_a_reference_back_is_not_a_name",
@@ -336,8 +369,8 @@ MUTATIONS = [
         "no-new-relation-shapes",
         PURPOSES,
         (
-            "        \" are arranged to \",\n        \" is arranged to \",",
-            "        \" are arranged to \",",
+            "        (\" are arranged to \", Link::To),\n        (\" is arranged to \", Link::To),",
+            "        (\" are arranged to \", Link::To),",
         ),
         "vector-questions",
         "the_relation_shapes_the_sources_state_are_read",
@@ -459,8 +492,37 @@ def apply(path: Path, edits: list[tuple[str, str]]) -> str | None:
     return original
 
 
+def leftovers() -> list[str]:
+    """Mutation replacements already present in the working tree.
+
+    A run that is killed -- by a timeout, by an interrupt, by the harness ending the turn --
+    never reaches its `finally`, and the mutation it was applying stays in the source. That
+    happened: two `if false && ...` guards sat in `purposes.rs` for a round, and they did not
+    announce themselves as anything other than two tests failing for a reason that made no
+    sense. Checking before mutating turns that into a refusal with a filename in it.
+    """
+    found: list[str] = []
+    for (_name, path, edits, *_rest) in MUTATIONS:
+        if isinstance(edits, tuple):
+            edits = [edits]
+        text = path.read_text(encoding="utf-8")
+        for old, new in edits:
+            # A leftover is the replacement *instead of* the original, not merely present:
+            # several mutations delete one line from a pair, so the replacement is a substring
+            # of the text they were applied to.
+            if new and new in text and old not in text:
+                found.append(f"{path.name}: {new.strip().splitlines()[0][:60]}")
+    return found
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    stale = leftovers()
+    if stale:
+        print("a previous run left a mutation applied; restore the source before mutating:")
+        for line in stale:
+            print(f"  {line}")
+        return 2
     uncaught = 0
     for (name, path, edits, crate, test, description) in MUTATIONS:
         if isinstance(edits, tuple):

@@ -1,0 +1,95 @@
+content: the relation's third form, and a mutation that outlived its run (REQ-022, REQ-023, REQ-048, REQ-056)
+
+The manuals state the relation three ways and the reader knew two. Reading the third -- more
+common than any other single phrase -- takes Auto Information from 77 to 94 items. The round also
+found a mutation that had been sitting in the source across a round boundary, disabling a
+production rule while looking present.
+
+## What it adds
+
+**The noun-complement form.** `scripts/probes/relation-shapes.py` counts every verb phrase these
+sources state "this is what the thing is for" with. Beside the shapes already read, they write
+`serves as` 94 times, `acts as` 139 and `is used as` 33 -- more than any other single form -- and
+none of it was readable, because those complements are *nouns*:
+
+```
+The bimetallic strip serves as one of the contact points.
+The throttle return dashpot serves as a damper to keep the throttle from closing too quickly.
+A one-way valve acts as a check against return flow.
+```
+
+A purpose now carries the form it was stated in (`Link::To`, `Link::For`, `Link::As`) and the
+question follows it: `What does the bimetallic strip serve as?` with the complement as the answer,
+rather than "Which tool is used to one of the contact points?". Seventeen items are asked in the
+new frame.
+
+Three properties keep that honest rather than merely larger:
+
+* **the frame is the source's.** A `serves as` description is *not* asked as a Shop Information
+  question -- "Which tool serves as a switch?" offers a component as a tool, which is exactly what
+  round 23 refused a source for. Those descriptions are asked the other way round, where they are
+  right.
+* **the options match the question.** A `serve as` prompt takes noun-phrase options and a `used
+  for` prompt takes infinitives; the verifier refuses an item that mixes them, because offering
+  "a thrust bearing" beside "to prevent leakage" tells the learner which option is the odd one
+  out. Round 18's parallelism rule, applied to the link.
+* **a purpose holds no semicolon.** `the pressure valve also serves as a safety valve to relieve
+  extra pressure within the system; the vacuum valve opens only when the pressure drops` is two
+  sentences. A semicolon always joins two clauses, so it is refused on both paths.
+
+## The defect: a mutation that outlived its run
+
+The mutation harness disables one rule at a time and restores the file in a `finally` block. A run
+that is **killed** -- by a timeout, an interrupt, or the harness ending the turn -- never reaches
+that block, and the mutation it was applying stays in the source. That happened: two
+`if false &&` guards sat in `purposes.rs` across a round boundary, and they announced themselves
+only as two tests failing for reasons that made no sense (`Both hands` accepted as a tool name,
+`same device` accepted as a name) while the rule they disabled looked present in the file.
+
+The harness now refuses to run when a mutation's replacement is present *instead of* the text it
+was applied to. The first version of that guard was wrong in an instructive way: several
+mutations delete one line from a pair, so the replacement is a *substring* of the text they were
+applied to, and a guard that only looks for the replacement fires on a clean tree.
+
+## A probe that was wrong for the new frame
+
+Two `check-corpus.py` invariants were narrower than the corpus after this round: an Auto
+Information stem is now either `What ... used for?` or `What ... serve as?`, and the option rule
+checks that the options are in the form *the question asks in* rather than that they are
+infinitives. Both were corrected rather than left reporting the corpus as broken. It is the third
+time a probe has been the thing at fault -- the capitals rule of round 18, the Word Knowledge
+source count of round 13 -- and the pattern is worth stating: a probe encodes the corpus as it was
+when it was written.
+
+## Corpus
+
+| Subtest | Round 23 | Round 25 | Sources |
+|---|---|---|---|
+| WK | 1,949 | 1,949 | Moby Thesaurus corroborated by Webster's 1913 |
+| EI | 1,565 | 1,565 | NEETS glossaries, all 24 modules |
+| PC | 1,676 | 1,676 | 25 public-domain works, passage quoted |
+| GS | 301 | 301 | *The book of wonders* |
+| SI | 42 | 42 | *Tools and Their Uses*, *TM 11-453*, *Farm Mechanics* |
+| AI | 77 | 94 | *TM 9-8000*, *TM 9-2700*, Rathbun's engine handbook |
+| **Total** | **5,610** | **5,627** | |
+
+Pack `core-asvab` rebuilt and reinstalled at **v5** (5,627 items, 55 sources, 11.5 MB), because a
+corpus rebuild changes item identities and leaves the previous pack's membership describing items
+that no longer exist.
+
+## Verification
+
+`sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0: 1,721 Rust tests across 109
+binaries, 211 frontend tests, 36 E2E, packaged live-fire passed. `mutation-round18.py` proves 32
+rules, including this round's three -- the noun frame, the option-form check and the semicolon
+rule.
+
+## Still open
+
+SI 42 remains the thin bank, and the noun frame did not help it by design: the descriptions it
+reads are about components, and a Shop Information item asks which tool does something. AI's new
+frame has its own noise floor -- `What does the Slack serve as?` (a property) and `What do the
+Hangers frame members serve as?` (a heading run-in) reached the bank and are recorded as known,
+the way the steel-shank item is. The plan orders by prerequisite without tracking mastery per
+objective, General Science is still one work, and the Word Knowledge rare-distractor gap is
+unchanged.
