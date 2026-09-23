@@ -25,7 +25,8 @@ export RUST_BACKTRACE=1
 | E2E tests | `sh scripts/test-e2e.sh` |
 | Build production artifact | `sh scripts/build.sh` |
 | Security checks | `sh scripts/security-check.sh` |
-| Dependency audit | `sh scripts/dependency-audit.sh` |
+| Dependency audit | `sh scripts/dependency-audit.sh` (Rust advisories via `cargo deny`, npm licences via the SBOM -- both local) |
+| npm advisory check | `pnpm audit` (contacts the registry, so it is a documented manual check rather than a sweep gate; the result is recorded in `.agent/evidence/EP-009/npm-advisories.json`, which the release accounting reads) |
 | Smoke exact artifact | `sh scripts/smoke-test.sh` |
 | Live-fire | `sh scripts/live-fire.sh` |
 | Packaged desktop live-fire | `python3 scripts/desktop-live-fire.py --report .agent/evidence/EP-001/desktop-live-fire.json` |

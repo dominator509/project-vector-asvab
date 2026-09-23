@@ -474,4 +474,21 @@ critical / 2 high / 5 moderate, and the gate covers Rust advisories and npm lice
 advisories) and the three open requirements that are work here -- REQ-014 (local GGUF model),
 REQ-032 (`gh` pull-request lane), REQ-037 (signature verification for updates).
 
+### Round 31
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The last in-repo security finding | `pnpm audit` reported 1 critical / 2 high / 5 moderate, all in the frontend toolchain (esbuild's dev server accepting requests from any website; two vite path-traversal and NTLM-disclosure advisories; vitest's redirect-mock file read; playwright). None ships -- the artifact is a Rust binary with a bundled static frontend and `pnpm audit --prod` was already clean -- but the repository is public and the count was real. Upgraded vite 5.4 -> **8.3.0**, vitest 2.1.9 -> **5.0.1**, @playwright/test 1.49.1 -> **1.63.0**, @vitejs/plugin-react 4 -> **6.1.1**; esbuild is no longer installed at all, because vite 8 declares it an optional peer dependency -- which is why the critical advisory is gone rather than patched in place. | `package.json`, `apps/desktop/package.json`, `pnpm-lock.yaml`, `.agent/evidence/EP-009/npm-advisories.json` |
+| Re-verified, not assumed | Three majors of build tool and two of the test runner: `pnpm typecheck` exit 0, 217 unit tests in 12 files, 9 integration tests, vite 8.3.0 build exit 0, 37 Playwright tests on 1.63.0 (browser re-installed), and the full sweep -- 21 gates, 0 failed, 0 blocked. `pnpm audit` reports no known vulnerabilities for the full tree and for `--prod`. | `.agent/evidence/EP-009/ROUND-31-REPORT.md`, `verify-round31.log` |
+| The advisory check is now part of the accounting | The check contacts the registry, so it stays a documented manual command rather than a sweep gate (the gate covers Rust advisories and npm licences); its result is written to `.agent/evidence/EP-009/npm-advisories.json` and `release-state.py` reads that file into the DOD-021 record, so the accounting states the advisory position and the versions it was measured against. | `release-state.py`, `COMMANDS.md` |
+| A declaration that survives its prose | The dependency graph refused three rows whose rewritten reasons no longer named what blocks them -- exactly what DOD-031's graph exists to catch. A blocked reason may now name its blocker explicitly as `blocked-by: <kind>:<name>`, and `E2E-011`, `SUP-004` and `E2E-018` use it. | `dependency-graph.py`, `COMPLETE_TEST_ACCOUNTING.csv` |
+
+DoD 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates exit 0; npm advisories **0** (from 1
+critical / 2 high / 5 moderate); artifact digest `23f8c2c5…`, epoch 21. Corpus unchanged at 6,961
+active items; pack `core-asvab v6` active; verdict `CONDITIONAL_EXTERNAL_GATES`.
+
+Remaining in-repo: the three open requirements that are work here -- REQ-037 (signature verification
+for updates; the certificate is external), REQ-032 (`gh` pull-request lane), REQ-014 (local GGUF
+model).
+
 

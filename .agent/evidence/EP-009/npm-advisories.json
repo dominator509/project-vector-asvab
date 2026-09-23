@@ -1,0 +1,34 @@
+{
+  "clause": "dependency advisories (npm)",
+  "command": "pnpm audit",
+  "before": {
+    "critical": 1,
+    "high": 2,
+    "moderate": 5,
+    "note": "esbuild (critical), vite (high/moderate), vitest and @vitest/mocker (moderate), playwright (high)"
+  },
+  "after": {
+    "vulnerabilities": 0
+  },
+  "upgraded": {
+    "vite": "8.3.0 (was 5.4.x)",
+    "vitest": "5.0.1 (was 2.1.9)",
+    "@playwright/test": "1.63.0 (was 1.49.1)",
+    "@vitejs/plugin-react": "6.1.1 (was 4.x)",
+    "esbuild": "not installed: vite 8 declares it as an optional peer dependency and no longer pulls it in, which is why the critical esbuild advisory is gone rather than patched in place",
+    "jsdom": "25.0.1 (unchanged)",
+    "typescript": "5.9.3 (unchanged range)",
+    "prettier": "3.4.2 (unchanged)"
+  },
+  "networked": true,
+  "note": "the advisory check contacts the registry, so it is a documented manual check rather than a sweep gate; the local gate covers Rust advisories (cargo-deny) and npm licences (SBOM)",
+  "verification": {
+    "pnpm typecheck": 0,
+    "pnpm test:unit": "217 tests in 12 files",
+    "pnpm test:integration": "9 tests",
+    "pnpm --filter desktop build": "vite 8.3.0, exit 0",
+    "pnpm test:e2e": "37 tests on Playwright 1.63.0",
+    "pnpm audit": "0 vulnerabilities (was 1 critical / 2 high / 5 moderate)"
+  },
+  "corrected": "the first version of this file carried guessed versions for @vitejs/plugin-react and esbuild; both were replaced with resolved values after reading the lockfile and the store"
+}

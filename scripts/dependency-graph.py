@@ -34,6 +34,7 @@ Usage:
 import argparse
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -80,7 +81,17 @@ PATTERNS = [
 
 
 def classify(reason: str) -> str | None:
-    """The node a blocked row is waiting on, or None when its reason names nothing."""
+    """The node a blocked row is waiting on, or None when its reason names nothing.
+
+    A reason may name its blocker explicitly as `blocked-by: <kind>:<name>`, and that is the
+    form to prefer: the patterns below infer the node from prose, and prose changes. Three rows
+    lost their classification in round 31 when their reasons were rewritten to record what had
+    since been executed -- the graph refused them, correctly, because a blocked row that does
+    not say what blocks it is exactly what this script exists to catch.
+    """
+    explicit = re.search(r"blocked-by:\s*([a-z-]+:[a-z0-9-]+)", reason)
+    if explicit:
+        return explicit.group(1)
     lowered = reason.lower()
     for needle, node in PATTERNS:
         if needle.lower() in lowered:

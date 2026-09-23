@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T14:05:31.747676+00:00",
+  "generated_at": "2026-09-23T14:28:39.278339+00:00",
   "root": ".agent/evidence",
-  "count": 673,
+  "count": 679,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -216,7 +216,7 @@
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
       "bytes": 1248,
-      "sha256": "a15c04f272c90e704e8c913010c421f958ad9f0d199a2b49b8713e83cee3b1af"
+      "sha256": "6c1cd56b1fae6f4a603f7b98db860f206437447fbc8b65cf404c5d7ad3f66f90"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -640,8 +640,8 @@
     },
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
-      "bytes": 2684,
-      "sha256": "283d236737f17ac7c9c155a8ca2011daf028f9741a08d7f514991e08d9531c07"
+      "bytes": 2687,
+      "sha256": "863438e11b4f99621c7970e6c0f71b45762c87e58efba393c90557b13bccb9f1"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -1650,8 +1650,8 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/verify-round30.log",
-      "bytes": 1038703,
-      "sha256": "e8c07cf89d0af57250893ca42eb976ae1f106978dd94140b9565b277631f3fa5"
+      "bytes": 1041133,
+      "sha256": "12cff07de66b92ad51f37c262ed4b832a1c09eef32b32a537c335420ebbb73b1"
     },
     {
       "path": ".agent/evidence/EP-007/diagnose-fuzz-hang.py",
@@ -2041,7 +2041,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1025,
-      "sha256": "2f7673a167616387b1b9746a58f2d1a27be11ca17f13d7376dce527ebb1540dd"
+      "sha256": "d2a4019882c9e3a8c26dbacd6b8f96cb687c2a44c83d549e93bd851265bef10f"
     },
     {
       "path": ".agent/evidence/EP-009/canary/canary-proof.json",
@@ -2087,6 +2087,11 @@
       "path": ".agent/evidence/EP-009/cleanroom/verify.log",
       "bytes": 775897,
       "sha256": "0d90500dae8226a4766fe262617c533172f5cdcfda425314e4643823b318f9ce"
+    },
+    {
+      "path": ".agent/evidence/EP-009/commit-message-round30.txt",
+      "bytes": 6395,
+      "sha256": "26a73aaf31a0cfc9645acae4b9b9780fb72d28dd7c1e9f619bc50dbb2e541861"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",
@@ -2184,6 +2189,21 @@
       "sha256": "c23bff19c5501f2837a6f3afa18a0b55fd390a8d2e0ba656fb110d7e287a3e6b"
     },
     {
+      "path": ".agent/evidence/EP-009/npm-advisories.json",
+      "bytes": 1553,
+      "sha256": "efd31f132e3bd4285b19b7f26846772fcb6cf89ac3c35bc73b812e6ef89b4d6d"
+    },
+    {
+      "path": ".agent/evidence/EP-009/npm-audit-full.json",
+      "bytes": 328,
+      "sha256": "820e2437931bdd2479fba88eac7b56df01975b77ef7b6ab4ba51ed95e0a8565f"
+    },
+    {
+      "path": ".agent/evidence/EP-009/npm-audit-prod.json",
+      "bytes": 324,
+      "sha256": "6c32ded5706b13cef7738dcc84b425a1640d8aff6b4b7350450fd1410254a2ae"
+    },
+    {
       "path": ".agent/evidence/EP-009/placeholder-negative-proof.exitcode",
       "bytes": 3,
       "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
@@ -2232,6 +2252,11 @@
       "path": ".agent/evidence/EP-009/review-schema-proof.log.sha256",
       "bytes": 91,
       "sha256": "50611d8bf2c0dd7c5a30d19d56499bdb8a89a2bc83596d603d92a14c5a72cf78"
+    },
+    {
+      "path": ".agent/evidence/EP-009/ROUND-30-REPORT.md",
+      "bytes": 8784,
+      "sha256": "4264fb1330e080daec9f3a264de072a558d0446868ab933a72960c0150e4ad56"
     },
     {
       "path": ".agent/evidence/EP-009/sbom.spdx",
@@ -2287,6 +2312,11 @@
       "path": ".agent/evidence/EP-009/unit-tests.log.sha256",
       "bytes": 82,
       "sha256": "48cdbed4f21594b0a527ec261ec9ff54f2734ed87942f3df125c4c70d8505118"
+    },
+    {
+      "path": ".agent/evidence/EP-009/verify-round31.log",
+      "bytes": 1036924,
+      "sha256": "daa268bb64e96e76578b45a2bce061fd92422477e704cf9c63a37ed0fa48870c"
     },
     {
       "path": ".agent/evidence/EP-009/zero-state/artifact.sha256",
@@ -3095,8 +3125,8 @@
     },
     {
       "path": ".agent/evidence/EP-010/npm-licenses.spdx",
-      "bytes": 19132,
-      "sha256": "dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42"
+      "bytes": 16407,
+      "sha256": "685ae45ef40eb048fe02b5aff0399c4e82eca3200c044098dd99266b8b0809bb"
     },
     {
       "path": ".agent/evidence/EP-010/PARTIAL_CLOSURE_REPORT.md",

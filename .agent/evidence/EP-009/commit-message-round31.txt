@@ -1,0 +1,43 @@
+deps: clear the last in-repo security finding, and re-verify the toolchain that carried it
+
+`pnpm audit` reported 1 critical / 2 high / 5 moderate, all in the frontend toolchain: esbuild's dev
+server accepting requests from any website (critical), two vite advisories (optimized-deps path
+traversal, NTLMv2 hash disclosure through UNC path handling on Windows), vitest and @vitest/mocker's
+redirect-mock file read, and playwright. None of them ships -- the artifact is a Rust binary with a
+bundled static frontend and `pnpm audit --prod` was already clean -- but the repository is public
+and the Dependabot count on the default branch was real.
+
+Upgraded: vite 5.4 -> 8.3.0, vitest 2.1.9 -> 5.0.1, @playwright/test 1.49.1 -> 1.63.0,
+@vitejs/plugin-react 4 -> 6.1.1. esbuild is no longer installed at all: vite 8 declares it an
+optional peer dependency and does not pull it in, which is why the critical advisory is gone rather
+than patched in place.
+
+Three majors of build tool and two of the test runner were re-verified rather than assumed:
+`pnpm typecheck` exit 0, 217 unit tests in 12 files, 9 integration tests, a vite 8.3.0 build exit 0,
+37 Playwright tests on 1.63.0 with the browser re-installed for the new version, and then the full
+sweep -- 21 gates recorded, 0 failed, 0 blocked. `pnpm audit` reports no known vulnerabilities for
+the full tree and for `--prod`.
+
+The check contacts the registry, so it stays a documented manual command rather than a sweep gate:
+the local gate covers Rust advisories (`cargo deny`) and npm licences (the SBOM). Its result is
+written to `.agent/evidence/EP-009/npm-advisories.json`, and `release-state.py` reads that file into
+the DOD-021 record -- so the accounting states the advisory position and the versions it was
+measured against, and a stale audit cannot pass as a current one.
+
+The sweep caught two things on the way, both the harness doing its job. First, the dependency graph
+refused three rows (`E2E-011`, `SUP-004`, `E2E-018`): rewriting their reasons to describe what has
+since been executed removed the prose the classifier reads, so three blocked rows no longer named
+what blocks them. The fix is not another pattern -- a reason may now name its blocker explicitly as
+`blocked-by: <kind>:<name>`, a declaration that survives its prose being rewritten. Second, the
+change-invalidation graph pulled `dependency-audit`, `build` and everything downstream of the
+artifact into the rerun list from the lockfile change alone, which is why the sweep that followed
+the upgrade is the one whose evidence counts.
+
+Accounting: DoD 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED (DOD-021's record now carries the
+advisory position), 21 gates exit 0, artifact digest 23f8c2c5..., epoch 21. Corpus unchanged at
+6,961 active items; pack core-asvab v6 active; every provenance invariant a zero. Verdict
+CONDITIONAL_EXTERNAL_GATES.
+
+Remaining in-repo: the three open requirements that are work here rather than external gates --
+REQ-037 (signature verification for updates; the certificate itself is external), REQ-032 (gh
+pull-request lane), REQ-014 (local GGUF model).

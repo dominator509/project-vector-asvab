@@ -15,13 +15,13 @@ How many tests each unsatisfied node blocks. A node that blocked everything woul
 the blanket blocking this clause forbids.
 
 - `capability:binary-analysis-toolchain` blocks 2: GEN-078, GEN-079
-- `capability:cache-free-environment` blocks 1: E2E-011
 - `capability:ci-runner` blocks 1: GEN-089
 - `capability:deployment-target` blocks 6: GEN-015, GEN-019, GEN-022, GEN-023, GEN-085, SUP-013
 - `capability:external-laboratory` blocks 1: GEN-103
+- `capability:foreign-machine` blocks 1: E2E-011
 - `capability:fuzzing-toolchain` blocks 1: GEN-027
 - `capability:human-participant` blocks 7: E2E-020, GEN-011, GEN-018, GEN-020, GEN-021, SUP-010, SUP-015
-- `capability:independent-build-environment` blocks 1: SUP-004
+- `capability:reproducible-build` blocks 1: SUP-004
 - `capability:runtime-instrumentation` blocks 1: GEN-016
 - `capability:signing-certificate` blocks 1: GEN-075
 - `prerequisite:full-duration-trial` blocks 1: E2E-018

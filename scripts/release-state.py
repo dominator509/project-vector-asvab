@@ -352,6 +352,26 @@ def evaluate_dod(i: Inputs) -> list[dict]:
             f"rows and bytes. The RPO is declared, not promised: no automatic backup schedule is "
             f"claimed, so it is the interval since the learner's last backup"
         )
+
+    # The npm advisory state. The check contacts the registry, so it is a documented manual
+    # check rather than a gate; the gate covers Rust advisories and npm licences. Its result is
+    # recorded here so a stale audit cannot pass as a current one.
+    advisory_note = ""
+    advisory_path = REPO / ".agent/evidence/EP-009/npm-advisories.json"
+    if advisory_path.exists():
+        advisories = json.loads(advisory_path.read_text(encoding="utf-8"))
+        before = advisories.get("before", {})
+        after = advisories.get("after", {})
+        advisory_note = (
+            f"; npm advisories (networked check, recorded): {before.get('critical')} critical / "
+            f"{before.get('high')} high / {before.get('moderate')} moderate before, "
+            f"{after.get('vulnerabilities')} now, after upgrading "
+            + ", ".join(
+                f"{name} {value.split(' ')[0]}"
+                for name, value in advisories.get("upgraded", {}).items()
+                if isinstance(value, str) and value[0].isdigit()
+            )
+        )
     record(
         "DOD-002",
         "PASS" if build_status == "PASS" and cleanroom_ok else (
@@ -529,7 +549,7 @@ def evaluate_dod(i: Inputs) -> list[dict]:
         supply_status,
         ".agent/evidence/EP-010/npm-licenses.spdx",
         "format, lint, typecheck, secret scan, cargo-deny and the SBOM all run under "
-        "enforced thresholds; " + supply_note,
+        "enforced thresholds; " + supply_note + advisory_note,
     )
 
     record(

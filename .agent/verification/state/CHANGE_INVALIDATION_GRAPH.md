@@ -5,35 +5,35 @@ candidate's diff. DOD-040: a change to code, dependencies, schema, configuration
 build, a test oracle or the artifact invalidates every downstream result that rested
 on the old bytes.
 
-- prior epoch: 17 at `a1de4c02`
-- new epoch: 19 at `21c60697`
-- artifact: `f75d5bc89e0c1a961f2d7436b1ddad3c03bf3f51f308fec3217ded64c163e20d`
-- changed paths: 55 (49 committed, 21 uncommitted)
+- prior epoch: 19 at `21c60697`
+- new epoch: 21 at `6e7d1f16`
+- artifact: `23f8c2c5bf182ea058eff3fa18ebd75cd07a81fb6613d839bf4c180fdc5f1dad`
+- changed paths: 39 (35 committed, 22 uncommitted)
 
 ## Surfaces and what they invalidate
 
-- **accounting** (10 path(s)): gates dependency-graph, release-state
-- **application** (5 path(s)): gates lint, test-integration, test-unit
-- **desktop-shell** (1 path(s)): gates build, test-integration
+- **accounting** (14 path(s)): gates dependency-graph, release-state
+- **application** (1 path(s)): gates lint, test-integration, test-unit
+- **dependencies** (2 path(s)): gates build, dependency-audit, typecheck
 - **documentation** (1 path(s)): gates none
-- **evidence** (24 path(s)): gates none
+- **evidence** (8 path(s)): gates none
 - **harness** (7 path(s)): gates anti-gaming-scan, dependency-graph, release-state
-- **interface** (1 path(s)): gates test-e2e, test-unit, typecheck
+- **interface** (2 path(s)): gates test-e2e, test-unit, typecheck
 - **ledger** (1 path(s)): gates none
-- **persistence** (3 path(s)): gates lint, test-integration, test-unit
-- **tooling** (2 path(s)): gates generated-pack, test-unit
+- **persistence** (2 path(s)): gates lint, test-integration, test-unit
+- **tooling** (1 path(s)): gates generated-pack, test-unit
 
 ## Rerun list
 
-`anti-gaming-scan`, `artifact-identity`, `build`, `change-invalidation`, `dependency-graph`, `generated-pack`, `lint`, `live-fire`, `proof-matrix-stamp`, `release-state`, `smoke-test`, `test-e2e`, `test-integration`, `test-unit`, `typecheck`
+`anti-gaming-scan`, `artifact-identity`, `build`, `change-invalidation`, `dependency-audit`, `dependency-graph`, `generated-pack`, `lint`, `live-fire`, `proof-matrix-stamp`, `release-state`, `smoke-test`, `test-e2e`, `test-integration`, `test-unit`, `typecheck`
 
 ## Evidence hashes at this epoch
 
 - `gate-results.jsonl`: `1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6`
-- `RUN_MANIFEST.json`: `42d619263a0b0b2d4e0970cd8294cc5cfa569d60a18e454553531adfd82efd8b`
-- `DOD_STATUS.jsonl`: `bdeff7e9417604743b0852e35026fb8d4d7d7221f11a9cd5a0f6d8afefd92818`
-- `DEPENDENCY_BLOCKER_GRAPH.json`: `1d17dcc5aa110c0712e6593e1a0b358e3e8f750e4bb323a25be485a0a2d373d6`
-- `artifact_identity`: `2f7673a167616387b1b9746a58f2d1a27be11ca17f13d7376dce527ebb1540dd`
+- `RUN_MANIFEST.json`: `8439b8b76e8d7c9bec86e25fbe82c894c55993729a1e29bd6fe75928e0be4d4a`
+- `DOD_STATUS.jsonl`: `7763e2457e514ff145293baa2671f8ef4fb3f1d0d3ca1dec9bfa290542cab558`
+- `DEPENDENCY_BLOCKER_GRAPH.json`: `96d32c37e1125d60bcb5ebf7192a6c291850faecee1c310a0f6576a5a508e352`
+- `artifact_identity`: `d2a4019882c9e3a8c26dbacd6b8f96cb687c2a44c83d549e93bd851265bef10f`
 
 ## Violations
 

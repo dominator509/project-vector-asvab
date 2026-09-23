@@ -12,22 +12,22 @@ committed artifact or a recorded exit code; nothing here is written by hand.
 | Field | Value |
 |---|---|
 | Version | 0.1.0 |
-| Artifact digest | `f75d5bc89e0c1a961f2d7436b1ddad3c03bf3f51f308fec3217ded64c163e20d` |
-| Identity digest | `20331cb9508bcf0c11627e4cf1ef8563cf606fdda8736226ac355224448eba91` |
-| Candidate epoch | 19 |
-| Git commit | `21c60697bdb304c0d9f8bb22fb41f65e0e137003` |
+| Artifact digest | `23f8c2c5bf182ea058eff3fa18ebd75cd07a81fb6613d839bf4c180fdc5f1dad` |
+| Identity digest | `34660fa20937a564e99362396b061ccc398f22519e5ff7157d115921072b0199` |
+| Candidate epoch | 21 |
+| Git commit | `6e7d1f16db71949069d8146cf720dfa83984a92e` |
 | Branch | main |
 
 Each component of the identity, measured from the artifact this sweep built:
 
 | Component | Digest |
 |---|---|
-| Binary | `f75d5bc89e0c1a961f2d7436b1ddad3c03bf3f51f308fec3217ded64c163e20d` |
+| Binary | `23f8c2c5bf182ea058eff3fa18ebd75cd07a81fb6613d839bf4c180fdc5f1dad` |
 | Migrations | `3d4917b14857d46e0cdccc730ebe3d13cb7f5de52e9c5d7d17e5deacbdd51c68` |
-| Content | `ce28acfb852064c662040c8d2f61390fa804fc99deb8cb989a6cb73d1241a644` |
-| Sbom | `dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42` |
+| Content | `375a896baabb5ce4546bc2814437e688f49d5d8983b12dcc798d88f9bfa95940` |
+| Sbom | `685ae45ef40eb048fe02b5aff0399c4e82eca3200c044098dd99266b8b0809bb` |
 | Licenses | `538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8` |
-| GitSha | `c5fa464d984f63794ec3515b7b2e6e5780c794976500cbf6b2d40807422a2192` |
+| GitSha | `9dc0d097e87a50aaa8f181ad2f0eafeb52ed82c29520a9bf4c63148d1450b306` |
 
 ## Gates executed in this run
 
@@ -51,6 +51,9 @@ Each component of the identity, measured from the artifact this sweep built:
 | proof-matrix-stamp | 0 |
 | smoke-test | 0 |
 | live-fire | 0 |
+| release-state | 0 |
+| dependency-graph | 0 |
+| change-invalidation | 0 |
 
 ## Accounting
 
@@ -82,7 +85,7 @@ Definition of Done by status:
 
 ## Evidence
 
-673 evidence files, each with a recorded content hash, in
+679 evidence files, each with a recorded content hash, in
 `EVIDENCE_INDEX.json`.
 
 ## Limitations of this report

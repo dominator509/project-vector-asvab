@@ -12,13 +12,13 @@
   },
   "unsatisfied_nodes": [
     "capability:binary-analysis-toolchain",
-    "capability:cache-free-environment",
     "capability:ci-runner",
     "capability:deployment-target",
     "capability:external-laboratory",
+    "capability:foreign-machine",
     "capability:fuzzing-toolchain",
     "capability:human-participant",
-    "capability:independent-build-environment",
+    "capability:reproducible-build",
     "capability:runtime-instrumentation",
     "capability:signing-certificate",
     "prerequisite:full-duration-trial",
@@ -28,9 +28,6 @@
     "capability:binary-analysis-toolchain": [
       "test:GEN-078",
       "test:GEN-079"
-    ],
-    "capability:cache-free-environment": [
-      "test:E2E-011"
     ],
     "capability:ci-runner": [
       "test:GEN-089"
@@ -46,6 +43,9 @@
     "capability:external-laboratory": [
       "test:GEN-103"
     ],
+    "capability:foreign-machine": [
+      "test:E2E-011"
+    ],
     "capability:fuzzing-toolchain": [
       "test:GEN-027"
     ],
@@ -58,7 +58,7 @@
       "test:SUP-010",
       "test:SUP-015"
     ],
-    "capability:independent-build-environment": [
+    "capability:reproducible-build": [
       "test:SUP-004"
     ],
     "capability:runtime-instrumentation": [
@@ -82,10 +82,6 @@
       "kind": "capability"
     },
     {
-      "id": "capability:cache-free-environment",
-      "kind": "capability"
-    },
-    {
       "id": "capability:ci-runner",
       "kind": "capability"
     },
@@ -98,6 +94,10 @@
       "kind": "capability"
     },
     {
+      "id": "capability:foreign-machine",
+      "kind": "capability"
+    },
+    {
       "id": "capability:fuzzing-toolchain",
       "kind": "capability"
     },
@@ -106,7 +106,7 @@
       "kind": "capability"
     },
     {
-      "id": "capability:independent-build-environment",
+      "id": "capability:reproducible-build",
       "kind": "capability"
     },
     {
@@ -4210,9 +4210,9 @@
       "recorded_status": "BLOCKED_PREREQUISITE"
     },
     {
-      "from": "capability:cache-free-environment",
+      "from": "capability:foreign-machine",
       "to": "test:E2E-011",
-      "why": "clean-room deployment verification requires a disposable environment with no local caches (PREFLIGHT PF-014)",
+      "why": "blocked-by: capability:foreign-machine -- the cache-free half is executed: a fresh clone with no target/ and no node_modules ran the published install and the f",
       "recorded_status": "BLOCKED_CAPABILITY"
     },
     {
@@ -4230,7 +4230,7 @@
     {
       "from": "prerequisite:full-duration-trial",
       "to": "test:E2E-018",
-      "why": "soak testing requires an extended wall-clock budget beyond a single verification run",
+      "why": "blocked-by: prerequisite:full-duration-trial -- an abbreviated trial is recorded (112 iterations over 12.02 minutes, 896 attempts, 0 failures, .agent/evidence/E",
       "recorded_status": "BLOCKED_PREREQUISITE"
     },
     {
@@ -4240,9 +4240,9 @@
       "recorded_status": "BLOCKED_CAPABILITY"
     },
     {
-      "from": "capability:independent-build-environment",
+      "from": "capability:reproducible-build",
       "to": "test:SUP-004",
-      "why": "reproducible-build verification requires a second clean environment to compare digests (PREFLIGHT PF-014)",
+      "why": "blocked-by: capability:reproducible-build -- measured, and the property does not hold on this platform: two clean environments built the same source to differen",
       "recorded_status": "BLOCKED_CAPABILITY"
     },
     {

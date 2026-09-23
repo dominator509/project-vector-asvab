@@ -51,51 +51,21 @@ PackageVersion: 0.4.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: baseline-browser-mapping
-SPDXID: SPDXRef-npm-baseline-browser-mapping
-PackageVersion: 2.11.21
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: Apache-2.0
-
-PackageName: browserslist
-SPDXID: SPDXRef-npm-browserslist
-PackageVersion: 4.28.9
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: cac
-SPDXID: SPDXRef-npm-cac
-PackageVersion: 6.7.14
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: call-bind-apply-helpers
 SPDXID: SPDXRef-npm-call-bind-apply-helpers
 PackageVersion: 1.0.2
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: caniuse-lite
-SPDXID: SPDXRef-npm-caniuse-lite
-PackageVersion: 1.0.30001810
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: CC-BY-4.0
-
 PackageName: chai
 SPDXID: SPDXRef-npm-chai
-PackageVersion: 5.3.3
+PackageVersion: 6.2.2
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
 PackageName: chalk
 SPDXID: SPDXRef-npm-chalk
 PackageVersion: 3.0.0
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: check-error
-SPDXID: SPDXRef-npm-check-error
-PackageVersion: 2.1.3
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -114,12 +84,6 @@ PackageLicenseDeclared: MIT
 PackageName: combined-stream
 SPDXID: SPDXRef-npm-combined-stream
 PackageVersion: 1.0.8
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: convert-source-map
-SPDXID: SPDXRef-npm-convert-source-map
-PackageVersion: 2.0.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -159,12 +123,6 @@ PackageVersion: 10.6.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: deep-eql
-SPDXID: SPDXRef-npm-deep-eql
-PackageVersion: 5.0.2
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: delayed-stream
 SPDXID: SPDXRef-npm-delayed-stream
 PackageVersion: 1.0.0
@@ -176,6 +134,12 @@ SPDXID: SPDXRef-npm-dequal
 PackageVersion: 2.0.3
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
+
+PackageName: detect-libc
+SPDXID: SPDXRef-npm-detect-libc
+PackageVersion: 2.1.2
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: Apache-2.0
 
 PackageName: dom-accessibility-api
 SPDXID: SPDXRef-npm-dom-accessibility-api
@@ -194,12 +158,6 @@ SPDXID: SPDXRef-npm-dunder-proto
 PackageVersion: 1.0.1
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
-
-PackageName: electron-to-chromium
-SPDXID: SPDXRef-npm-electron-to-chromium
-PackageVersion: 1.5.425
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: ISC
 
 PackageName: entities
 SPDXID: SPDXRef-npm-entities
@@ -221,7 +179,7 @@ PackageLicenseDeclared: MIT
 
 PackageName: es-module-lexer
 SPDXID: SPDXRef-npm-es-module-lexer
-PackageVersion: 1.7.0
+PackageVersion: 2.3.2
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -237,18 +195,6 @@ PackageVersion: 2.1.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: esbuild
-SPDXID: SPDXRef-npm-esbuild
-PackageVersion: 0.21.5
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: escalade
-SPDXID: SPDXRef-npm-escalade
-PackageVersion: 3.2.0
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: estree-walker
 SPDXID: SPDXRef-npm-estree-walker
 PackageVersion: 3.0.3
@@ -261,6 +207,12 @@ PackageVersion: 1.4.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: Apache-2.0
 
+PackageName: fdir
+SPDXID: SPDXRef-npm-fdir
+PackageVersion: 6.5.0
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
 PackageName: form-data
 SPDXID: SPDXRef-npm-form-data
 PackageVersion: 4.0.6
@@ -270,12 +222,6 @@ PackageLicenseDeclared: MIT
 PackageName: function-bind
 SPDXID: SPDXRef-npm-function-bind
 PackageVersion: 1.1.2
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: gensync
-SPDXID: SPDXRef-npm-gensync
-PackageVersion: 1.0.0-beta.2
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -369,17 +315,17 @@ PackageVersion: 25.0.1
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: jsesc
-SPDXID: SPDXRef-npm-jsesc
-PackageVersion: 3.1.0
+PackageName: lightningcss
+SPDXID: SPDXRef-npm-lightningcss
+PackageVersion: 1.33.0
 PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
+PackageLicenseDeclared: MPL-2.0
 
-PackageName: json5
-SPDXID: SPDXRef-npm-json5
-PackageVersion: 2.2.3
+PackageName: lightningcss-win32-x64-msvc
+SPDXID: SPDXRef-npm-lightningcss-win32-x64-msvc
+PackageVersion: 1.33.0
 PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
+PackageLicenseDeclared: MPL-2.0
 
 PackageName: lodash
 SPDXID: SPDXRef-npm-lodash
@@ -393,21 +339,9 @@ PackageVersion: 1.4.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: loupe
-SPDXID: SPDXRef-npm-loupe
-PackageVersion: 3.2.1
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: lru-cache
 SPDXID: SPDXRef-npm-lru-cache
 PackageVersion: 10.4.3
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: ISC
-
-PackageName: lru-cache
-SPDXID: SPDXRef-npm-lru-cache
-PackageVersion: 5.1.1
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: ISC
 
@@ -419,7 +353,7 @@ PackageLicenseDeclared: MIT
 
 PackageName: magic-string
 SPDXID: SPDXRef-npm-magic-string
-PackageVersion: 0.30.21
+PackageVersion: 1.4.2
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -459,15 +393,15 @@ PackageVersion: 3.3.18
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: node-releases
-SPDXID: SPDXRef-npm-node-releases
-PackageVersion: 2.0.54
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: nwsapi
 SPDXID: SPDXRef-npm-nwsapi
 PackageVersion: 2.2.27
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
+PackageName: obug
+SPDXID: SPDXRef-npm-obug
+PackageVersion: 2.2.1
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -477,33 +411,27 @@ PackageVersion: 7.3.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: pathe
-SPDXID: SPDXRef-npm-pathe
-PackageVersion: 1.1.2
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: pathval
-SPDXID: SPDXRef-npm-pathval
-PackageVersion: 2.0.1
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: picocolors
 SPDXID: SPDXRef-npm-picocolors
 PackageVersion: 1.1.1
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: ISC
 
+PackageName: picomatch
+SPDXID: SPDXRef-npm-picomatch
+PackageVersion: 4.0.7
+PackageDownloadLocation: NOASSERTION
+PackageLicenseDeclared: MIT
+
 PackageName: playwright
 SPDXID: SPDXRef-npm-playwright
-PackageVersion: 1.49.1
+PackageVersion: 1.63.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: Apache-2.0
 
 PackageName: playwright-core
 SPDXID: SPDXRef-npm-playwright-core
-PackageVersion: 1.49.1
+PackageVersion: 1.63.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: Apache-2.0
 
@@ -549,21 +477,15 @@ PackageVersion: 17.0.2
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: react-refresh
-SPDXID: SPDXRef-npm-react-refresh
-PackageVersion: 0.17.0
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: redent
 SPDXID: SPDXRef-npm-redent
 PackageVersion: 3.0.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: rollup
-SPDXID: SPDXRef-npm-rollup
-PackageVersion: 4.63.1
+PackageName: rolldown
+SPDXID: SPDXRef-npm-rolldown
+PackageVersion: 1.2.10
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -597,12 +519,6 @@ PackageVersion: 0.23.2
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: semver
-SPDXID: SPDXRef-npm-semver
-PackageVersion: 6.3.1
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: ISC
-
 PackageName: siginfo
 SPDXID: SPDXRef-npm-siginfo
 PackageVersion: 2.0.0
@@ -623,7 +539,7 @@ PackageLicenseDeclared: MIT
 
 PackageName: std-env
 SPDXID: SPDXRef-npm-std-env
-PackageVersion: 3.10.0
+PackageVersion: 4.2.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -647,31 +563,19 @@ PackageLicenseDeclared: MIT
 
 PackageName: tinybench
 SPDXID: SPDXRef-npm-tinybench
-PackageVersion: 2.9.0
+PackageVersion: 6.1.4
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
 PackageName: tinyexec
 SPDXID: SPDXRef-npm-tinyexec
-PackageVersion: 0.3.2
+PackageVersion: 1.3.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
-PackageName: tinypool
-SPDXID: SPDXRef-npm-tinypool
-PackageVersion: 1.1.1
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: tinyrainbow
-SPDXID: SPDXRef-npm-tinyrainbow
-PackageVersion: 1.2.0
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: tinyspy
-SPDXID: SPDXRef-npm-tinyspy
-PackageVersion: 3.0.2
+PackageName: tinyglobby
+SPDXID: SPDXRef-npm-tinyglobby
+PackageVersion: 0.2.17
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -705,27 +609,15 @@ PackageVersion: 5.9.3
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: Apache-2.0
 
-PackageName: update-browserslist-db
-SPDXID: SPDXRef-npm-update-browserslist-db
-PackageVersion: 1.3.2
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
 PackageName: vite
 SPDXID: SPDXRef-npm-vite
-PackageVersion: 5.4.21
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: MIT
-
-PackageName: vite-node
-SPDXID: SPDXRef-npm-vite-node
-PackageVersion: 2.1.9
+PackageVersion: 8.3.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
 PackageName: vitest
 SPDXID: SPDXRef-npm-vitest
-PackageVersion: 2.1.9
+PackageVersion: 5.0.1
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
 
@@ -782,10 +674,4 @@ SPDXID: SPDXRef-npm-xmlchars
 PackageVersion: 2.2.0
 PackageDownloadLocation: NOASSERTION
 PackageLicenseDeclared: MIT
-
-PackageName: yallist
-SPDXID: SPDXRef-npm-yallist
-PackageVersion: 3.1.1
-PackageDownloadLocation: NOASSERTION
-PackageLicenseDeclared: ISC
 
