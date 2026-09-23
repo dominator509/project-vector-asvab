@@ -941,6 +941,17 @@ pub fn rollback_pack(
     vector_application::packs::rollback_pack(&db, name)
 }
 
+/// Put a registered pack version back into service, after a rollback or by mistake.
+pub fn activate_pack(
+    db_path: &Path,
+    name: &str,
+    version: i64,
+) -> Result<vector_application::packs::InstalledPackDto> {
+    let db = Database::open(db_path)
+        .with_context(|| format!("cannot open the database at {}", db_path.display()))?;
+    vector_application::packs::activate_pack(&db, name, version)
+}
+
 /// One manual or book to read descriptions out of, and where it came from.
 ///
 /// The URL is carried rather than derived later, and the source kind is written down rather

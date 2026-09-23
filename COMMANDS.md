@@ -53,6 +53,7 @@ export RUST_BACKTRACE=1
 | Content ingestion (Paragraph Comprehension) | `cargo run -p vector-tools -- content ingest-pc --db <db> --work <gutenberg ebook number>=<text file> [--work ...]` |
 | Content ingestion (Shop / Auto Information sources) | `cargo run -p vector-tools -- content ingest-tools --db <db> --subtest <SI\|AI> --ask <tools\|functions> --dictionary <webster pg29765.txt> --work <source>:<id>:<title>=<text file> [--work ...]`, where `<source>` is `archive` or `gutenberg` and decides the page the citation names |
 | Content ingestion (factual: GS, SI, AI) | `cargo run -p vector-tools -- content ingest-facts --db <db> --subtest <GS\|SI\|AI> --dictionary <webster pg29765.txt> --work <gutenberg ebook number>=<text file> [--work ...]` |
+| Generate the computable subtests into the corpus | `cargo run -p vector-application --example generate_corpus -- <db> <SUBTEST=count>... [seed]` (Arithmetic Reasoning, Mathematics Knowledge and Mechanical Comprehension have templates rather than sources; this runs the application's own verify-then-store pipeline with fixed seeds, so the pack carries them and a plan can name their objectives) |
 | Paragraph Comprehension corpus probe | `cargo run -p vector-questions --example ingest_pc -- <label>=<text file> [<label>=<text file> ...] [count]` |
 | Factual corpus probe | `cargo run -p vector-questions --example ingest_facts -- <label>=<text file> [...] [count]` |
 | Shop / Auto Information corpus probe | `cargo run -p vector-questions --example ingest_tools -- [names] [tools\|functions] <label>=<file.txt> [...] [count]` |
@@ -68,7 +69,7 @@ export RUST_BACKTRACE=1
 | Passage containment audit | `cargo run -p vector-questions --example pc_passage_audit -- <label>=<work.txt> [...] [limit]` |
 | Apparatus survey of a work | `python3 scripts/probes/survey-apparatus.py <work.txt> [...]` |
 | Rebuild a corpus subtest | `python3 scripts/probes/rebuild-pc-corpus.py <db> --subtest PC` (refuses to delete an item a learner has attempted) |
-| Rebuild the whole corpus | `python3 scripts/rebuild-corpus.py <db>` (deletes the items, prunes a vault record whose URL does not resolve to its bytes, then re-ingests every subtest from its sources and writes the round's reports; `--dry-run` reports first) |
+| Rebuild the whole corpus | `python3 scripts/rebuild-corpus.py <db>` (deletes the items, prunes a vault record whose URL does not resolve to its bytes, then re-ingests every ingested subtest from its sources, generates the computable ones, and writes the round's reports; `--dry-run` reports first) |
 | Learner-facing damage check | `python3 scripts/probes/foreign-letters.py <db>` (letters from another alphabet and undecodable bytes) |
 | Description-shape survey | `python3 scripts/probes/description-shapes.py <text file> [...]` (counts the `X is designed to Y` shapes the reader cannot read yet) |
 | Relation-shape survey | `python3 scripts/probes/relation-shapes.py <text file> [...]` (every verb phrase the sources state the relation with, including the ones the reader cannot read) |
@@ -81,6 +82,7 @@ export RUST_BACKTRACE=1
 | Install a signed content pack | `cargo run -p vector-tools -- pack-install --db <db> --pack <pack file> --trusted-signer <public key hex> --app-version 0.1.0` |
 | List installed packs | `cargo run -p vector-tools -- pack-list --db <db>` |
 | Roll a pack back | `cargo run -p vector-tools -- pack-rollback --db <db> --name core-asvab` |
+| Activate a registered pack version | `cargo run -p vector-tools -- pack-activate --db <db> --name core-asvab --version 6` (the way back from a rollback; `pack-install` deliberately never undoes a rollback, and this supersedes the active version rather than quarantining it) |
 | OCR residue check | `python3 scripts/probes/check-ocr-residue.py <db>` |
 | OCR detector probe | `cargo run -p vector-questions --example ocr_probe -- <webster pg29765.txt> <token>` |
 

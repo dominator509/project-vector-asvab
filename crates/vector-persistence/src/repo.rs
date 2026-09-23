@@ -1182,4 +1182,65 @@ impl<'a> ContentPackRepo<'a> {
             }
         }
     }
+
+    /// Put a registered pack version back into service, on purpose.
+    ///
+    /// `install` deliberately leaves a registered pack's status alone so that a stray reinstall
+    /// cannot undo a rollback somebody made. That safety property removes the forward path:
+    /// after a rollback the installation is on the older content, and the signed bytes it
+    /// already holds cannot be brought back by installing them again -- observed in round 29,
+    /// where reinstalling the same v6 pack reported success and changed nothing. A rollback that
+    /// cannot be reversed is not a rollback; it is a downgrade with no way home.
+    ///
+    /// So this is the way home, and it is a separate, deliberate act with its own command rather
+    /// than a side effect of `install`. Whatever was active for the name is *superseded*, not
+    /// quarantined: it is an intact signed pack that a later rollback or activation can return
+    /// to. Activating the version that is already active is a no-op rather than an error, so a
+    /// scripted transition can say what it wants without first asking what the state is.
+    pub fn activate(&self, name: &str, version: i64) -> anyhow::Result<ContentPackRecord> {
+        let conn = self.db.connection();
+        let target: Option<ContentPackRecord> = conn
+            .query_row(
+                "SELECT id, name, version, signature, signer, content_hash, schema_version,
+                        manifest_json, item_count, status, created_at
+                 FROM content_packs WHERE name = ?1 AND version = ?2",
+                params![name, version],
+                ContentPackRecord::from_row,
+            )
+            .optional()?;
+        let target = target.ok_or_else(|| {
+            anyhow::anyhow!("no pack named {name} is registered at version {version}")
+        })?;
+        if target.status == "active" {
+            return Ok(target);
+        }
+
+        conn.execute_batch("BEGIN IMMEDIATE")?;
+        let result = (|| -> anyhow::Result<()> {
+            conn.execute(
+                "UPDATE content_packs SET status = 'superseded'
+                 WHERE name = ?1 AND status = 'active'",
+                params![name],
+            )?;
+            conn.execute(
+                "UPDATE content_packs SET status = 'active' WHERE id = ?1",
+                params![target.id],
+            )?;
+            Ok(())
+        })();
+
+        match result {
+            Ok(()) => {
+                conn.execute_batch("COMMIT")?;
+                Ok(ContentPackRecord {
+                    status: "active".to_string(),
+                    ..target
+                })
+            }
+            Err(e) => {
+                let _ = conn.execute_batch("ROLLBACK");
+                Err(e)
+            }
+        }
+    }
 }

@@ -425,3 +425,30 @@ objectives; practising a generated subtest on a real installation still takes on
 40 ... questions" click. SI 42 remains thin, AI carries its known noise floor, General Science is one
 work, and the Word Knowledge rare-distractor gap is unchanged.
 
+### Round 29
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The computable subtests are in the pack | `examples/generate_corpus.rs` runs the application's own verify-store-activate pipeline with fixed per-subtest seeds, and `rebuild-corpus.py` calls it for AR/MK/MC after the ingested subtests, so a documented rebuild reproduces the corpus the pack is built from. The pack `core-asvab v6` now carries 6,961 items, so a plan can name an objective for every subtest it schedules and a fresh installation serves one without pressing "Prepare 40 questions". | `generate_corpus.rs`, `rebuild-corpus.py`, `packs/pack-v6.json` |
+| A defect the readback caught | `check-corpus.py` found 126 questions asked twice in one subtest: the generated path refused only a repeated *content hash*, so the same question with its wrong answers shuffled was stored again -- the padding the ingestion loops already refuse. `generate_and_activate` now applies the question identity too; the rebuild stores 1,334 distinct questions instead of 1,500 rows with 166 repeats. The probe also gained an independent re-derivation of every executable proof: **1,334 of 1,334 recompute to the option they mark correct**, evaluated in Python rather than trusted from the verifier. | `content.rs`, `check-corpus.py` |
+| Every claimed pack transition, on real state (DOD-035) | install v6 over v5 (upgrade), rollback to v5 (1,334 items stored but withdrawn in one statement), activate v6 again, with the database hash at each step. **The transition back did not work**: reinstalling the same signed pack reported success and changed nothing, because `install` deliberately never undoes a rollback -- right as a safety property, but on its own it makes a rollback a one-way door. `pack-activate` is now the way home, it supersedes rather than quarantines the version it replaces, and a test pins both halves. | `packs/state-*.log`, `packs/state-*.sha256`, `repo.rs`, `packs.rs`, `COMMANDS.md` |
+| A licence policy had to admit the computable subtests' citation | `pack-install` refused v6 whole: the construct record's licence ("Facts-only; item text is original work") was outside the permitted list. Named in it with the reasoning attached -- the page asserts all rights reserved, so relabelling it public domain would be the dishonest fix; what keeps such a pack honest is the executable proof the installer recomputes and the vault record whose bytes were hashed. | `packs.rs` |
+| Clean room (DOD-002, DOD-023) | A fresh `git clone` of the committed tree ran the README's five published commands in order -- install, preflight, generated-pack validation, the full 19-gate sweep, evidence-archive verification -- and all five exited 0. Lockfile digests, tool versions and both artifacts' digests recorded; the clean-room build differs in bytes from the working copy's, which is why no gate asserts digest equality. | `.agent/evidence/EP-009/cleanroom/` |
+| Zero state and the golden path (DOD-034) | On a directory that did not exist, the exact release artifact (`sha256 6983c707…`) created and migrated its database, passed its own 19 checks, took the signed v6 pack through the documented command, and completed the golden path: learner, 9-drill plan, one session per named objective, attempts stored once, analytics and mastery read back, provenance re-checked. `examples/golden_path.rs` is new and the soak found a defect in it within minutes (attempt ids did not name the learner, so a repeated run looked like a duplicate). The machine is the developer's, so the clause stays PARTIAL with the virgin-OS residual named. | `.agent/evidence/EP-009/zero-state/`, `golden_path.rs` |
+| Abbreviated soak (DOD-038) | `scripts/probes/soak.py`: packaged self-check plus a full golden path per iteration against a copy of the installation's store, with a heartbeat, an integrity check and a row census. 112 iterations over 12.02 minutes, 896 attempts added, 0 failures, integrity ok at every heartbeat; the trial was re-run after the final formatting pass changed the artifact, because old evidence does not prove changed bytes. The report labels itself an abbreviated trial and `release-state.py` reads that record rather than asserting a duration. | `.agent/evidence/EP-009/soak/` |
+
+Corpus **6,961 active items** (WK 1,949 · PC 1,676 · EI 1,565 · AR 466 · MC 447 · MK 421 · GS 301 ·
+AI 94 · SI 42), 70 vault records, 8,910 citations, every provenance invariant a zero; pack
+`core-asvab v6` active.
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; **all 42 mutations caught**
+across cargo, vitest and Playwright; DoD accounting **30 PASS / 11 PARTIAL / 1 EXTERNAL_REQUIRED**
+(from 27/11/2/1/1). Verdict unchanged: `CONDITIONAL_EXTERNAL_GATES`.
+
+Next in-repo work, in the order the clauses need it: DOD-013 (runtime canary in a critical proof),
+DOD-031 and DOD-040 (the dependency-edge and change-invalidation graphs are still templates),
+DOD-036 (RPO/RTO/MTTR unmeasured), the npm advisory state (the gate covers Rust advisories and npm
+licences, not npm advisories), and the three open requirements that are work here rather than
+external gates: REQ-014, REQ-032, REQ-037.
+
+

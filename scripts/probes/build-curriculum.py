@@ -36,6 +36,31 @@ TITLES = {
     "OBJ-WK-SYNONYM-01": "Word Knowledge: the word that means the same",
     "OBJ-PC-DETAIL-01": "Paragraph Comprehension: the detail the passage states",
     "OBJ-GS-EXPLAIN-01": "General Science: the explanation a scientific work gives",
+    # The computable subtests. Their objectives come from the factory's templates rather than
+    # from a source, and they are declared for the same reason: a study plan that names an
+    # objective has to name one the content actually teaches.
+    "OBJ-AR-RATE-01": "Arithmetic Reasoning: a rate applied over time",
+    "OBJ-AR-PERCENT-01": "Arithmetic Reasoning: a percent of a number",
+    "OBJ-AR-PROPORTION-01": "Arithmetic Reasoning: unit price and proportion",
+    "OBJ-AR-AVERAGE-01": "Arithmetic Reasoning: an average from a total and a count",
+    "OBJ-AR-INTEREST-01": "Arithmetic Reasoning: simple interest",
+    "OBJ-AR-GEOMETRY-01": "Arithmetic Reasoning: the perimeter of a rectangle",
+    "OBJ-AR-GEOMETRY-02": "Arithmetic Reasoning: the area of a triangle",
+    "OBJ-AR-RATE-02": "Arithmetic Reasoning: work done at a combined rate",
+    "OBJ-MK-ALGEBRA-01": "Mathematics Knowledge: solving a linear equation",
+    "OBJ-MK-ALGEBRA-02": "Mathematics Knowledge: evaluating an expression",
+    "OBJ-MK-COORDINATE-01": "Mathematics Knowledge: the slope of a line",
+    "OBJ-MK-EXPONENT-01": "Mathematics Knowledge: powers and exponents",
+    "OBJ-MK-GEOMETRY-01": "Mathematics Knowledge: the volume of a box",
+    "OBJ-MK-FRACTION-01": "Mathematics Knowledge: a fraction of a quantity",
+    "OBJ-MC-LEVER-01": "Mechanical Comprehension: effort on a lever",
+    "OBJ-MC-GEARS-01": "Mechanical Comprehension: turns through a gear train",
+    "OBJ-MC-PULLEY-01": "Mechanical Comprehension: effort in a pulley system",
+    "OBJ-MC-WHEEL-01": "Mechanical Comprehension: the wheel and axle",
+    "OBJ-MC-FLUID-01": "Mechanical Comprehension: pressure on a surface",
+    "OBJ-MC-FLUID-02": "Mechanical Comprehension: force from a hydraulic lift",
+    "OBJ-MC-PLANE-01": "Mechanical Comprehension: effort on an inclined plane",
+    "OBJ-MC-ADVANTAGE-01": "Mechanical Comprehension: mechanical advantage",
 }
 
 # What has to come first. Only relations the corpus can defend: shop knowledge before

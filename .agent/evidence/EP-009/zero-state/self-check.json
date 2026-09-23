@@ -1,0 +1,121 @@
+{
+  "artifact": "vector-desktop",
+  "version": "0.1.0",
+  "verdict": "pass",
+  "data_dir": "C:\\tmp\\vector-zero-state",
+  "elapsed_ms": 81,
+  "checks": [
+    {
+      "name": "open_and_migrate",
+      "ok": true,
+      "detail": "applied [1, 2, 3, 4, 5, 6, 7, 8], embedded [1, 2, 3, 4, 5, 6, 7, 8], database file exists true"
+    },
+    {
+      "name": "health",
+      "ok": true,
+      "detail": "healthy=true basis=operation_succeeded profiles=0"
+    },
+    {
+      "name": "profile_round_trip",
+      "ok": true,
+      "detail": "created and re-read learner-333f2a81-3022-4575-9b80-91808c751d98"
+    },
+    {
+      "name": "invalid_input_refused",
+      "ok": true,
+      "detail": "blank and off-scale targets refused; 1 profile(s) stored"
+    },
+    {
+      "name": "attempt_idempotency",
+      "ok": true,
+      "detail": "first insert returned true, retry returned false"
+    },
+    {
+      "name": "analytics",
+      "ok": true,
+      "detail": "total=2 correct=1 accuracy=0.500 mean_latency_ms=1000"
+    },
+    {
+      "name": "study_plan",
+      "ok": true,
+      "detail": "3 drill(s), total 60 minutes"
+    },
+    {
+      "name": "readiness_band",
+      "ok": true,
+      "detail": "band 0.000..1.000 confidence 0.000 official_score_claim=false"
+    },
+    {
+      "name": "mastery_write",
+      "ok": true,
+      "detail": "AR mastery stored"
+    },
+    {
+      "name": "recompute_mastery",
+      "ok": true,
+      "detail": "1 row(s) written; AR is now Some((0.5, 0.5773502691896258)) (expected score 0.5, uncertainty 0.577350)"
+    },
+    {
+      "name": "evidence_vault",
+      "ok": true,
+      "detail": "put ok=true, duplicate returned the same id=true, rows listed=Ok(1), unhashed record refused=true"
+    },
+    {
+      "name": "backup_create",
+      "ok": true,
+      "detail": "176128 bytes, integrity=ok, checksum=1852d2ebca8c437f6f0e812157cb551120be55152eb7129daf1a4188bce52639, attempt_rows=2"
+    },
+    {
+      "name": "slo_query_latency",
+      "ok": true,
+      "detail": "mean 5 us, max 28 us over 50 iterations (bound 20000 us)"
+    },
+    {
+      "name": "restore_verified",
+      "ok": true,
+      "detail": "archive held 2 attempt row(s); live state had 3 before the restore and 2 after"
+    },
+    {
+      "name": "restore_rejects_tampering",
+      "ok": true,
+      "detail": "byte flipped=true; restore refused=true; live attempt rows after refusal=2 (expected 2)"
+    },
+    {
+      "name": "restart_persistence",
+      "ok": true,
+      "detail": "reopened C:\\tmp\\vector-zero-state\\vector.db and read back 1 profile(s)"
+    },
+    {
+      "name": "backup_list",
+      "ok": true,
+      "detail": "1 archive(s) listed, target present=true"
+    },
+    {
+      "name": "reset_local_data",
+      "ok": true,
+      "detail": "wrong phrase refused=true; removed 1 profile(s), 2 attempt(s), 1 source(s); remaining 0 / 0 / 0"
+    },
+    {
+      "name": "artifact_slo_total_ms",
+      "ok": true,
+      "detail": "81 ms (bound 30000 ms)"
+    }
+  ],
+  "latency": {
+    "operation": "select_count_learner_profile",
+    "iterations": 50,
+    "mean_micros": 5,
+    "max_micros": 28
+  },
+  "backup": {
+    "path": "C:\\tmp\\vector-zero-state\\backups\\vector-20260923T130420Z.db",
+    "checksum": "1852d2ebca8c437f6f0e812157cb551120be55152eb7129daf1a4188bce52639",
+    "bytes": 176128,
+    "integrity": "ok",
+    "encrypted": false,
+    "attempt_rows": 2
+  },
+  "restore": {
+    "rows": 2
+  }
+}

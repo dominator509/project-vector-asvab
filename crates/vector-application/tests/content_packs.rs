@@ -14,8 +14,8 @@ use std::path::Path;
 use ed25519_dalek::SigningKey;
 use vector_application::content::{ContentPipeline, GenerateRequest};
 use vector_application::packs::{
-    build_pack, install_pack, installed_packs, pack_bytes, parse_pack, rollback_pack, verify_pack,
-    BuildPackRequest, PackRefusal, PACK_FORMAT, PACK_SCHEMA_VERSION,
+    activate_pack, build_pack, install_pack, installed_packs, pack_bytes, parse_pack,
+    rollback_pack, verify_pack, BuildPackRequest, PackRefusal, PACK_FORMAT, PACK_SCHEMA_VERSION,
 };
 use vector_persistence::content::ContentItemRepo;
 use vector_persistence::repo::{EvidenceRepo, NewEvidence};
@@ -630,6 +630,80 @@ fn rollback_does_not_reinstate_a_quarantined_pack() {
             .len(),
         0,
         "the quarantined version's items stay withdrawn"
+    );
+}
+
+/// A rollback has a way back, and only on purpose.
+///
+/// `install` leaves a registered pack's status alone so a stray reinstall cannot undo a rollback
+/// -- and that is the right safety property, but on its own it makes a rollback a one-way door.
+/// Found in round 29 by rolling a real installation back and reinstalling the same signed pack:
+/// the install reported success and changed nothing, leaving the learner's content withdrawn with
+/// no supported way to bring it back. Activating a version is that way, and this pins both halves:
+/// the reinstall stays inert, and the activation moves the content.
+#[test]
+fn an_activated_version_returns_to_service_and_a_reinstall_does_not() {
+    let (_first_dir, first_db) = store_with_items("activate-a", "AR", 4);
+    let v1 = build(&first_db, 1);
+    let (_second_dir, second_db) = store_with_items("activate-b", "MK", 3);
+    let v2 = build(&second_db, 2);
+
+    let (_target_dir, target_db) = database("activate-target");
+    install_pack(&target_db, &v1, &trusted(), RUNNING_VERSION).expect("v1");
+    install_pack(&target_db, &v2, &trusted(), RUNNING_VERSION).expect("v2");
+    rollback_pack(&target_db, "core-asvab").expect("rollback to v1");
+
+    // The reinstall is deliberately inert.
+    install_pack(&target_db, &v2, &trusted(), RUNNING_VERSION).expect("reinstall v2");
+    assert_eq!(
+        ContentItemRepo::new(&target_db)
+            .servable("MK")
+            .expect("MK")
+            .len(),
+        0,
+        "reinstalling a registered version must not quietly undo the rollback"
+    );
+
+    // The activation is the deliberate act, and it moves the content back into service.
+    let activated = activate_pack(&target_db, "core-asvab", 2).expect("activate v2");
+    assert_eq!(activated.version, 2);
+    assert_eq!(activated.status, "active");
+    assert_eq!(
+        ContentItemRepo::new(&target_db)
+            .servable("MK")
+            .expect("MK")
+            .len(),
+        3,
+        "v2's items serve again once v2 is active"
+    );
+    assert_eq!(
+        ContentItemRepo::new(&target_db)
+            .servable("AR")
+            .expect("AR")
+            .len(),
+        0,
+        "and v1's items are withdrawn, because v1 is not the active pack"
+    );
+    let statuses = installed_packs(&target_db).expect("packs");
+    assert_eq!(
+        statuses
+            .iter()
+            .find(|pack| pack.version == 1)
+            .expect("v1 is registered")
+            .status,
+        "superseded",
+        "the version left behind is superseded, not quarantined: a later transition can return to it"
+    );
+
+    // Activating what is already active is a no-op rather than an error, so a scripted
+    // transition can state its intent without first asking what the state is.
+    let again = activate_pack(&target_db, "core-asvab", 2).expect("activate v2 again");
+    assert_eq!(again.status, "active");
+    // And a version the installation does not hold is refused rather than invented.
+    let missing = activate_pack(&target_db, "core-asvab", 9).expect_err("no v9");
+    assert!(
+        missing.to_string().contains("no pack named core-asvab"),
+        "{missing}"
     );
 }
 

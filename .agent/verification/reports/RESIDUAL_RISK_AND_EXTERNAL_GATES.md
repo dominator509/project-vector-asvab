@@ -21,19 +21,16 @@ Verdict: **CONDITIONAL_EXTERNAL_GATES** — 6 requirement(s) cannot be satisfied
 
 | Clause | Status | What was checked |
 |---|---|---|
-| DOD-002 | PARTIAL | toolchain and lockfiles are committed; gate(s) passed: format-check, lint, typecheck, build; a clean-room build from a fresh clone has not been executed |
 | DOD-004 | PARTIAL | the packaged executable is launched and its database effect read back against this digest; the Playwright E2E suite runs against the built frontend bundle rather than inside the packaged process |
 | DOD-005 | PARTIAL | one documented developer machine; the clean-VM and declared-hardware lanes the manifest requires have not been provisioned |
 | DOD-013 | PARTIAL | identifiers are runtime-generated, but no critical proof uses a random canary value chosen at run time to defeat a canned response |
 | DOD-016 | PARTIAL | migration from an empty database and from the previous schema version is tested; there is no prior released version to upgrade from yet |
 | DOD-022 | PARTIAL | query latency and total startup are measured with bounds, but only on one machine: the manifest's low/mid/high hardware lanes are not provisioned |
-| DOD-023 | PARTIAL | the documented commands are the ones the gates run, but they have not been executed as published from a clean environment |
 | DOD-031 | PARTIAL | blocked rows are classified per ID rather than blanket-blocked, but the declared dependency-edge graph is empty, so cascade avoidance is reasoned rather than machine-checked |
 | DOD-033 | PARTIAL | the stage runner refuses to manufacture results (exit 3) and no infrastructure provisioning adapter has been implemented |
-| DOD-034 | PENDING | no clean-room install, boot and golden-path run has been executed |
-| DOD-035 | PENDING | no upgrade, downgrade or rollback path has been executed against real persistent state |
+| DOD-034 | PARTIAL | a zero-state lane is executed and evidenced -- the exact artifact boots, creates its database, passes its own 19 checks, takes the signed pack (6,961 items), and a learner completes the golden path on it (plan, one session per named objective, attempts read back, mastery moved, provenance re-checked). The machine is the developer's: the virgin-OS dimension belongs to DOD-005 and DOD-022, which are not provisioned |
 | DOD-036 | PARTIAL | backup, verified restore and refusal of a tampered archive are proven end to end; RPO/RTO/MTTR are not measured |
-| DOD-038 | DEFERRED_LONG_RUNNING | no soak, endurance, fuzz or stress duration has been run at scale |
+| DOD-038 | PARTIAL | an abbreviated trial is recorded and labelled as one: 112 iteration(s) of the packaged self-check plus a full golden path over 12.02 minute(s), 896 attempt(s) added, 0 failure(s), integrity 'ok'. No scale is declared anywhere in this repository, so the full-duration requirement is not met and this clause is never PASS |
 | DOD-039 | EXTERNAL_REQUIRED | manual screen-reader validation, code signing, legal review and name clearance require participants who cannot be simulated |
 | DOD-040 | PARTIAL | the artifact identity and proof matrix are regenerated every sweep, but the change-invalidation graph is still a template with no populated edges |
 

@@ -98,8 +98,19 @@ checks = [
         "select count(*) from content_items where state='active' and trim(reviewer)=''",
     ),
     (
-        "active items whose proof is not source_backed",
-        "select count(*) from content_items where state='active' and proof_kind <> 'source_backed'",
+        # Scoped to the subtests whose items are built from a source. The computable subtests
+        # have a different proof on purpose -- the arithmetic the verifier recomputed -- and
+        # their check is below, where the expression is actually evaluated.
+        "ingested items whose proof is not source_backed",
+        """select count(*) from content_items
+           where state='active' and subtest in ('WK','EI','PC','GS','SI','AI')
+             and proof_kind <> 'source_backed'""",
+    ),
+    (
+        "computable items whose proof is not executable",
+        """select count(*) from content_items
+           where state='active' and subtest in ('AR','MK','MC')
+             and proof_kind <> 'executable'""",
     ),
     (
         "duplicate content hashes",
@@ -229,6 +240,110 @@ for label, sql in checks:
     print(f"  {label:<48} {c.execute(sql).fetchone()[0]}")
 
 print()
+print("=== computable proofs, recomputed here ===")
+# The strongest form of the claim REQ-022 makes, checked by something other than the code that
+# made it: the stored proof expression is evaluated *in this probe*, and the result has to be the
+# option the item marks correct. The Rust verifier did the same arithmetic when the item was
+# stored; re-deriving it here is what makes the proof independent rather than self-reported.
+#
+# The evaluator is a five-line recursive-descent parser over numbers, `+ - * / ( )` -- the shapes
+# the factory's templates produce. Anything it cannot parse is counted as unreadable rather than
+# guessed at, and an unreadable proof is a failure of this check, not a pass.
+def evaluate(expression: str) -> float:
+    tokens = re.findall(r"\d+\.?\d*|[+\-*/()]", expression)
+    if not tokens or "".join(tokens) != expression.replace(" ", ""):
+        raise ValueError(f"unreadable expression: {expression!r}")
+
+    position = 0
+
+    def parse_expression() -> float:
+        nonlocal position
+        value = parse_term()
+        while position < len(tokens) and tokens[position] in "+-":
+            operator = tokens[position]
+            position += 1
+            operand = parse_term()
+            value = value + operand if operator == "+" else value - operand
+        return value
+
+    def parse_term() -> float:
+        nonlocal position
+        value = parse_factor()
+        while position < len(tokens) and tokens[position] in "*/":
+            operator = tokens[position]
+            position += 1
+            operand = parse_factor()
+            if operator == "*":
+                value *= operand
+            else:
+                if operand == 0:
+                    raise ValueError("division by zero")
+                value /= operand
+        return value
+
+    def parse_factor() -> float:
+        nonlocal position
+        if tokens[position] == "(":
+            position += 1
+            value = parse_expression()
+            if position >= len(tokens) or tokens[position] != ")":
+                raise ValueError("unbalanced bracket")
+            position += 1
+            return value
+        if tokens[position] == "-":
+            position += 1
+            return -parse_factor()
+        value = float(tokens[position])
+        position += 1
+        return value
+
+    result = parse_expression()
+    if position != len(tokens):
+        raise ValueError(f"trailing tokens in {expression!r}")
+    return result
+
+
+proof_checked = 0
+proof_unreadable = []
+proof_disagrees = []
+for item_id, subtest, options, idx, proof in c.execute(
+    "select id, subtest, options_json, correct_index, proof_json from content_items "
+    "where state='active' and subtest in ('AR','MK','MC')"
+):
+    parsed = json.loads(proof)
+    if "Executable" not in parsed:
+        proof_unreadable.append((item_id, "no executable proof"))
+        continue
+    executable = parsed["Executable"]
+    try:
+        recomputed = evaluate(executable["expression"])
+    except ValueError as error:
+        proof_unreadable.append((item_id, str(error)))
+        continue
+    stored_answer = json.loads(options)[idx]
+    try:
+        declared = float(executable["answer"])
+        option_value = float(stored_answer)
+    except ValueError:
+        proof_disagrees.append((item_id, f"non-numeric: {stored_answer!r}"))
+        continue
+    proof_checked += 1
+    if abs(recomputed - declared) > 1e-6:
+        proof_disagrees.append(
+            (item_id, f"{executable['expression']} = {recomputed}, proof says {declared}")
+        )
+    elif abs(declared - option_value) > 1e-6:
+        proof_disagrees.append(
+            (item_id, f"proof says {declared}, the correct option is {stored_answer!r}")
+        )
+
+print(f"  computable items whose proof recomputes to its option  {proof_checked}")
+print(f"  computable items whose proof cannot be read             {len(proof_unreadable)}")
+print(f"  computable items whose proof disagrees with its option  {len(proof_disagrees)}")
+for item_id, why in (proof_unreadable + proof_disagrees)[:5]:
+    print(f"      {item_id}: {why}")
+
+print()
 print("=== citations per subtest ===")
 for subtest, cite_count, items in c.execute(
     """select i.subtest, count(s.item_id), count(distinct i.id)
@@ -239,6 +354,10 @@ for subtest, cite_count, items in c.execute(
 
 print()
 print("=== three real items ===")
+# The corpus holds two kinds of proof, and the sample prints whichever the item carries. A
+# generated item's proof is the arithmetic the verifier recomputed (`Executable`); an ingested
+# item's is the source that states it (`SourceBacked`). This crashed on the first generated item
+# it met, which is the probe being narrower than the corpus -- not the corpus being wrong.
 for stem, options, idx, proof, explanation in c.execute(
     "select stem, options_json, correct_index, proof_json, explanation "
     "from content_items where state='active' order by id limit 3"
@@ -247,9 +366,14 @@ for stem, options, idx, proof, explanation in c.execute(
     for position, option in enumerate(json.loads(options)):
         marker = "   <-- correct" if position == idx else ""
         print(f"      {'ABCD'[position]}. {option}{marker}")
-    parsed = json.loads(proof)["SourceBacked"]
-    print(f"      cited source : {parsed['source_id']}")
-    print(f"      rubric       : {parsed['rubric'][:140]}...")
+    parsed = json.loads(proof)
+    if "SourceBacked" in parsed:
+        backed = parsed["SourceBacked"]
+        print(f"      cited source : {backed['source_id']}")
+        print(f"      rubric       : {backed['rubric'][:140]}...")
+    else:
+        executable = parsed["Executable"]
+        print(f"      proof        : {executable['expression']} = {executable['answer']}")
     print(f"      explanation  : {explanation[:120]}...")
 
 print()

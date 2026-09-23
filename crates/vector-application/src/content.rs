@@ -141,7 +141,16 @@ impl<'a> ContentPipeline<'a> {
 
         for item in items {
             let content_hash = item.content_hash();
-            if self.content_hash_exists(&content_hash)? {
+            // Two identities, and both are needed. The content hash catches the same item drawn
+            // twice. The question identity -- stem, correct answer, passage -- catches the same
+            // question asked again with its wrong answers shuffled, which is the padding the
+            // ingestion loops already refuse: one Electronics Information module asked its
+            // definitions up to seven times each, and 3,668 items carried 414 distinct questions
+            // between them. The factory draws its parameters at random, so it repeats questions
+            // the same way, and a learner served both copies is asked one question twice.
+            if self.content_hash_exists(&content_hash)?
+                || self.question_is_stored(&item.subtest, &item.stem, &item.answer, None)?
+            {
                 report.already_present += 1;
                 continue;
             }

@@ -58,11 +58,23 @@ pub const PACK_SCHEMA_VERSION: i64 = 1;
 /// domain and US government works, and anything else -- a commercially licensed
 /// question bank, a scan of a study guide, an unattributed source -- is exactly what
 /// the exclusion rule exists to keep out.
-pub const PERMITTED_LICENCES: [&str; 4] = [
+///
+/// The fifth entry is the computable subtests' own citation, and it needs saying why it is not a
+/// loophole. Arithmetic Reasoning, Mathematics Knowledge and Mechanical Comprehension have no
+/// source text: their items are drawn by the factory from the published subtest constructs, and
+/// their citation is the record of those constructs. That record's licence says what it is --
+/// facts only, item text original work -- because the page it cites asserts all rights reserved
+/// and claiming otherwise would be the dishonest option. What keeps such a pack honest is not
+/// this list but the other two checks that run beside it: an item of those subtests must carry an
+/// executable proof the installer recomputes (`COMPUTABLE_SUBTESTS` below), and every citation
+/// must name a vault record whose bytes were hashed when they were retrieved. This list checks a
+/// declaration; the vault and the proof check the thing itself.
+pub const PERMITTED_LICENCES: [&str; 5] = [
     "Public domain in the USA",
     "Public domain (US government work)",
     "Public domain",
     "US-Government-Work",
+    "Facts-only; item text is original work",
 ];
 
 /// Subtests whose answers are computable, and therefore must arrive with an
@@ -1211,6 +1223,15 @@ pub fn installed_packs(db: &Database) -> anyhow::Result<Vec<InstalledPackDto>> {
 /// Roll back to the previous version of a pack.
 pub fn rollback_pack(db: &Database, name: &str) -> anyhow::Result<InstalledPackDto> {
     Ok(ContentPackRepo::new(db).rollback(name)?.into())
+}
+
+/// Put a registered pack version back into service.
+///
+/// The companion to `rollback_pack`. `install_pack` will not do this -- by design, since a
+/// reinstall must not silently undo a deliberate rollback -- so a transition back to a version
+/// the installation already holds is its own command, and the caller has to mean it.
+pub fn activate_pack(db: &Database, name: &str, version: i64) -> anyhow::Result<InstalledPackDto> {
+    Ok(ContentPackRepo::new(db).activate(name, version)?.into())
 }
 
 /// Test-only field access.

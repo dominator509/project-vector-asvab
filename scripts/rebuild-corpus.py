@@ -6,6 +6,14 @@ is therefore a defined operation -- delete the items, ingest each subtest from i
 a fixed order with a fixed seed, and write the same reports the round logs carry -- and one
 command that does it is worth more than six commands remembered.
 
+Three subtests are the exception, and they are the reason this script also *generates*: the
+computable ones (Arithmetic Reasoning, Mathematics Knowledge, Mechanical Comprehension) have
+templates rather than sources, so their items exist only when something asks the factory for
+them. Generated through the same pipeline the application uses, with fixed seeds, so the same
+command produces the same items -- and the content pack carries them, which is what lets a
+study plan name an objective for those subtests and a fresh installation serve one without
+first pressing "prepare questions".
+
 It exists because three things about the ingestions are easy to get wrong by hand:
 
 * **the sources.** The Paragraph Comprehension manifest is the *same file* the provenance
@@ -46,7 +54,17 @@ DICTIONARY = "sources/webster-1913/pg29765.txt"
 THESAURUS = "sources/moby-thesaurus/words.txt"
 MANIFEST = EVIDENCE / "gutenberg-manifest.txt"
 
-SUBTESTS = ("WK", "EI", "PC", "GS", "SI", "AI")
+INGESTED_SUBTESTS = ("WK", "EI", "PC", "GS", "SI", "AI")
+
+# The subtests the factory makes rather than a source, and how many items each is asked for. Five
+# hundred per subtest is what the observations asked for: the factory draws uniformly over its
+# templates, and the store asks each question once, so a thin objective stays thin -- the fraction
+# template produced 2 distinct items from 100 draws and 10 from 400. Five hundred leaves every
+# objective with enough distinct items for a ten-question session.
+GENERATED_SUBTESTS = (("AR", 500), ("MK", 500), ("MC", 500))
+GENERATE_SEED = "20260923"
+
+SUBTESTS = INGESTED_SUBTESTS + tuple(name for name, _ in GENERATED_SUBTESTS)
 
 # The Shop Information sources, as `<source>:<id>:<title>=<path>`, where `<source>` is
 # `archive` or `gutenberg`. Written down rather than guessed from the id, because an all-digit
@@ -310,6 +328,18 @@ def main(argv: list[str]) -> int:
     for subtest, command in steps(tools, str(database)):
         if subtest in selected:
             run(command)
+
+    # 2b. Generate the computable subtests through the application's own pipeline. One command
+    # for all of them, so the per-subtest seeds stay what they are -- the seed is derived from
+    # the subtest name there, and running them one at a time would not change it.
+    wanted = [(name, count) for name, count in GENERATED_SUBTESTS if name in selected]
+    if wanted:
+        run(
+            ["cargo", "run", "-q", "-p", "vector-application", "--example", "generate_corpus",
+             "--", str(database)]
+            + [f"{name}={count}" for name, count in wanted]
+            + [GENERATE_SEED]
+        )
 
     # 3. Read the result back out of the store rather than out of the reports.
     connection = sqlite3.connect(database)

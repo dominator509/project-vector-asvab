@@ -1,0 +1,47 @@
+{
+  "trial": "abbreviated",
+  "scale_declared_in_repository": null,
+  "label": "abbreviated trial: bounded by --minutes, not the full soak DOD-038 asks for; this can never be PASS for the full requirement",
+  "artifact": "C:\\dev\\project-vector-asvab\\target\\release\\vector-desktop.exe",
+  "artifact_sha256": "4ae5cf7820d818c3bfa1fcfdffe755d4bad2dc2e30dc551abccbb243211e98e4",
+  "source_database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+  "working_copy": "C:\\tmp\\vector-soak\\soak.db",
+  "started_at": "2026-09-23T13:05:13Z",
+  "finished_at": "2026-09-23T13:17:14Z",
+  "minutes_requested": 12.0,
+  "minutes_observed": 12.02,
+  "iterations": 112,
+  "failures": [],
+  "latency_seconds": {
+    "min": 5.45,
+    "mean": 6.436,
+    "max": 11.21
+  },
+  "baseline": {
+    "integrity": "ok",
+    "rows": {
+      "content_items": 6961,
+      "attempts": 0,
+      "learner_profiles": null,
+      "evidence_records": 70,
+      "content_item_sources": 8910,
+      "learner_mastery": null
+    }
+  },
+  "final": {
+    "integrity": "ok",
+    "rows": {
+      "content_items": 6961,
+      "attempts": 896,
+      "learner_profiles": null,
+      "evidence_records": 70,
+      "content_item_sources": 8910,
+      "learner_mastery": null
+    }
+  },
+  "db_bytes_start": 85749760,
+  "db_bytes_end": 85749760,
+  "attempts_added": 896,
+  "heartbeats": "C:\\dev\\project-vector-asvab\\.agent\\evidence\\EP-009\\soak\\soak.jsonl",
+  "interrupted": false
+}

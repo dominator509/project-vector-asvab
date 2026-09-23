@@ -8,6 +8,68 @@
     ]
   },
   {
+    "objective_id": "OBJ-AR-AVERAGE-01",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: an average from a total and a count",
+    "prerequisites": [
+      "OBJ-AR-PROPORTION-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-AR-GEOMETRY-01",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: the perimeter of a rectangle",
+    "prerequisites": [
+      "OBJ-AR-PROPORTION-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-AR-GEOMETRY-02",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: the area of a triangle",
+    "prerequisites": [
+      "OBJ-AR-GEOMETRY-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-AR-INTEREST-01",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: simple interest",
+    "prerequisites": [
+      "OBJ-AR-PERCENT-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-AR-PERCENT-01",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: a percent of a number",
+    "prerequisites": [
+      "OBJ-AR-RATE-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-AR-PROPORTION-01",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: unit price and proportion",
+    "prerequisites": [
+      "OBJ-AR-PERCENT-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-AR-RATE-01",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: a rate applied over time",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-AR-RATE-02",
+    "subtest": "AR",
+    "title": "Arithmetic Reasoning: work done at a combined rate",
+    "prerequisites": [
+      "OBJ-AR-RATE-01"
+    ]
+  },
+  {
     "objective_id": "OBJ-EI-TERMINOLOGY-01",
     "subtest": "EI",
     "title": "Electronics Information: the term a definition names",
@@ -17,6 +79,92 @@
     "objective_id": "OBJ-GS-EXPLAIN-01",
     "subtest": "GS",
     "title": "General Science: the explanation a scientific work gives",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-ADVANTAGE-01",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: mechanical advantage",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-FLUID-01",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: pressure on a surface",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-FLUID-02",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: force from a hydraulic lift",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-GEARS-01",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: turns through a gear train",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-LEVER-01",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: effort on a lever",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-PLANE-01",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: effort on an inclined plane",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-PULLEY-01",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: effort in a pulley system",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MC-WHEEL-01",
+    "subtest": "MC",
+    "title": "Mechanical Comprehension: the wheel and axle",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MK-ALGEBRA-01",
+    "subtest": "MK",
+    "title": "Mathematics Knowledge: solving a linear equation",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MK-ALGEBRA-02",
+    "subtest": "MK",
+    "title": "Mathematics Knowledge: evaluating an expression",
+    "prerequisites": [
+      "OBJ-MK-ALGEBRA-01"
+    ]
+  },
+  {
+    "objective_id": "OBJ-MK-COORDINATE-01",
+    "subtest": "MK",
+    "title": "Mathematics Knowledge: the slope of a line",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MK-EXPONENT-01",
+    "subtest": "MK",
+    "title": "Mathematics Knowledge: powers and exponents",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MK-FRACTION-01",
+    "subtest": "MK",
+    "title": "Mathematics Knowledge: a fraction of a quantity",
+    "prerequisites": []
+  },
+  {
+    "objective_id": "OBJ-MK-GEOMETRY-01",
+    "subtest": "MK",
+    "title": "Mathematics Knowledge: the volume of a box",
     "prerequisites": []
   },
   {

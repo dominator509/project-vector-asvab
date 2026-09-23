@@ -37,6 +37,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PURPOSES = ROOT / "crates/vector-questions/src/purposes.rs"
 CONTENT = ROOT / "crates/vector-application/src/content.rs"
 PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
+PACK_REGISTRY = ROOT / "crates/vector-persistence/src/repo.rs"
 TOOLS = ROOT / "tools/vector-tools/src/content.rs"
 PACKS = ROOT / "crates/vector-application/src/packs.rs"
 SERVICE = ROOT / "crates/vector-application/src/service.rs"
@@ -566,6 +567,46 @@ FRONTEND_MUTATIONS = [
         "src/views/dataViews.test.tsx",
         "the plan's objective reaches practice",
         "the shell carries the plan's request into the practice view",
+    ),
+    # Round 29: the corpus the pack ships, and the way back from a rollback.
+    (
+        "generated-questions-not-deduplicated",
+        CONTENT,
+        (
+            """            if self.content_hash_exists(&content_hash)?
+                || self.question_is_stored(&item.subtest, &item.stem, &item.answer, None)?""",
+            """            if self.content_hash_exists(&content_hash)?""",
+        ),
+        "vector-desktop",
+        "a_generated_batch_asks_each_question_once",
+        "a question a generated batch draws twice is asked once",
+    ),
+    (
+        "activation-quarantines-the-active-version",
+        PACK_REGISTRY,
+        (
+            """            conn.execute(
+                "UPDATE content_packs SET status = 'superseded'
+                 WHERE name = ?1 AND status = 'active'",
+                params![name],
+            )?;
+            conn.execute(
+                "UPDATE content_packs SET status = 'active' WHERE id = ?1",
+                params![target.id],
+            )?;""",
+            """            conn.execute(
+                "UPDATE content_packs SET status = 'quarantined'
+                 WHERE name = ?1 AND status = 'active'",
+                params![name],
+            )?;
+            conn.execute(
+                "UPDATE content_packs SET status = 'active' WHERE id = ?1",
+                params![target.id],
+            )?;""",
+        ),
+        "vector-application",
+        "an_activated_version_returns_to_service_and_a_reinstall_does_not",
+        "the version an activation leaves behind can still be returned to",
     ),
 ]
 

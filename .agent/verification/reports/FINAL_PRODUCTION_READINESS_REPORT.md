@@ -12,22 +12,22 @@ committed artifact or a recorded exit code; nothing here is written by hand.
 | Field | Value |
 |---|---|
 | Version | 0.1.0 |
-| Artifact digest | `6983c707fafa8ac2f60e1c87fc35636cadf27f6a0fd78a08fd91caaba125f573` |
-| Identity digest | `8365f7b8236376e6d4b412fff893d3f56984159c5cadcd31a85f0a437b59cb61` |
-| Candidate epoch | 16 |
-| Git commit | `eeffab2b7736df2461cf18bb8769eb3776a529c7` |
+| Artifact digest | `4ae5cf7820d818c3bfa1fcfdffe755d4bad2dc2e30dc551abccbb243211e98e4` |
+| Identity digest | `44b65de93d6c977880d71a4cdd0bb13a1c92ccf5638274f1e7a04544e11077b1` |
+| Candidate epoch | 17 |
+| Git commit | `a1de4c02117c4c0ae6d12a91ae078190b2208487` |
 | Branch | main |
 
 Each component of the identity, measured from the artifact this sweep built:
 
 | Component | Digest |
 |---|---|
-| Binary | `6983c707fafa8ac2f60e1c87fc35636cadf27f6a0fd78a08fd91caaba125f573` |
+| Binary | `4ae5cf7820d818c3bfa1fcfdffe755d4bad2dc2e30dc551abccbb243211e98e4` |
 | Migrations | `3d4917b14857d46e0cdccc730ebe3d13cb7f5de52e9c5d7d17e5deacbdd51c68` |
-| Content | `2acedb0d3ae8133d38beae3febf7c173981cc0e608529e8c48650b177bd1ab4c` |
+| Content | `ce28acfb852064c662040c8d2f61390fa804fc99deb8cb989a6cb73d1241a644` |
 | Sbom | `dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42` |
 | Licenses | `538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8` |
-| GitSha | `5c44c91fd493445ead18a268b6acbf9a7624ad33215a5bebdca88d732b4a247f` |
+| GitSha | `593ce3b4d3a0c6a8e64b335e6c60ca41ef5f8f368c635fa9981b6a2fad6c172e` |
 
 ## Gates executed in this run
 
@@ -51,6 +51,7 @@ Each component of the identity, measured from the artifact this sweep built:
 | proof-matrix-stamp | 0 |
 | smoke-test | 0 |
 | live-fire | 0 |
+| release-state | 0 |
 
 ## Accounting
 
@@ -70,11 +71,9 @@ Definition of Done by status:
 
 | Status | Count |
 |---|---|
-| DEFERRED_LONG_RUNNING | 1 |
 | EXTERNAL_REQUIRED | 1 |
 | PARTIAL | 11 |
-| PASS | 27 |
-| PENDING | 2 |
+| PASS | 30 |
 
 ## Requirements
 
@@ -84,7 +83,7 @@ Definition of Done by status:
 
 ## Evidence
 
-629 evidence files, each with a recorded content hash, in
+668 evidence files, each with a recorded content hash, in
 `EVIDENCE_INDEX.json`.
 
 ## Limitations of this report

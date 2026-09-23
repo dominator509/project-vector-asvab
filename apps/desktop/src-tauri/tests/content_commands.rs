@@ -162,6 +162,40 @@ fn a_different_seed_extends_the_corpus() {
     assert!(stats.total > 20, "corpus total {}", stats.total);
 }
 
+#[test]
+fn a_generated_batch_asks_each_question_once() {
+    let (_dir, db) = database("distinct-questions");
+    // Large enough that the factory's random draw repeats stems: 500 draws over eight templates
+    // is where the corpus readback found 126 questions asked twice with their wrong answers
+    // shuffled. The store asks each question once, so the batch has to be filtered, not padded.
+    let report = content_generate_impl(&db, "AR", 500, 20260923).expect("generate");
+    assert!(report.activated > 100, "report: {report:?}");
+
+    let duplicates: i64 = db
+        .connection()
+        .query_row(
+            "SELECT COUNT(*) FROM (
+                 SELECT subtest, LOWER(TRIM(stem)),
+                        LOWER(TRIM(COALESCE(json_extract(options_json,
+                              '$[' || correct_index || ']'), ''))),
+                        LOWER(TRIM(COALESCE(passage, '')))
+                 FROM content_items WHERE state = 'active'
+                 GROUP BY 1, 2, 3, 4 HAVING COUNT(*) > 1
+             )",
+            [],
+            |row| row.get(0),
+        )
+        .expect("count duplicates");
+    assert_eq!(
+        duplicates, 0,
+        "a question asked twice in one subtest is padding, however its options are ordered"
+    );
+    assert!(
+        report.activated + report.already_present + report.rejected.len() == report.generated,
+        "every drawn item is accounted for: {report:?}"
+    );
+}
+
 // ---------------------------------------------------------------------------
 // Refusals
 // ---------------------------------------------------------------------------
@@ -384,11 +418,17 @@ fn an_untouched_installation_reports_an_empty_corpus() {
 #[test]
 fn the_manager_reports_the_corpus_its_sources_and_its_items() {
     let (_dir, db) = database("manager");
-    content_generate_impl(&db, "AR", 15, 7).expect("generate");
+    let report = content_generate_impl(&db, "AR", 15, 7).expect("generate");
 
     let view = content_manager_impl(&db, 50).expect("manager view");
-    assert_eq!(view.stats.total, 15);
-    assert_eq!(view.stats.servable, 15);
+    // The view reports what the pipeline stored, not what it was asked for: a question the batch
+    // drew twice is asked once, so the two counts are tied to the pipeline's own accounting
+    // rather than to the request.
+    assert_eq!(
+        view.stats.total, report.activated as i64,
+        "report: {report:?}"
+    );
+    assert_eq!(view.stats.servable, report.activated as i64);
     assert!(
         !view.sources.is_empty(),
         "the manager must show what the corpus rests on"
@@ -400,7 +440,7 @@ fn the_manager_reports_the_corpus_its_sources_and_its_items() {
         assert!(!source.url.trim().is_empty(), "{source:?}");
         assert!(!source.title.trim().is_empty(), "{source:?}");
     }
-    assert_eq!(view.items.len(), 15);
+    assert_eq!(view.items.len(), report.activated);
     for item in &view.items {
         assert_eq!(item.state, "active");
         assert_eq!(item.subtest, "AR");

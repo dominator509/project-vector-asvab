@@ -6,6 +6,54 @@
     "basis": "declared from the difficulty scale of 94 item(s); no learner responses recorded"
   },
   {
+    "objective_id": "OBJ-AR-AVERAGE-01",
+    "expected_correct": 0.4256,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 91 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-AR-GEOMETRY-01",
+    "expected_correct": 0.2689,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 82 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-AR-GEOMETRY-02",
+    "expected_correct": 0.3543,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 87 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-AR-INTEREST-01",
+    "expected_correct": 0.5987,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 32 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-AR-PERCENT-01",
+    "expected_correct": 0.31,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 72 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-AR-PROPORTION-01",
+    "expected_correct": 0.5,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 71 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-AR-RATE-01",
+    "expected_correct": 0.3775,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 64 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-AR-RATE-02",
+    "expected_correct": 0.8022,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 1 item(s); no learner responses recorded"
+  },
+  {
     "objective_id": "OBJ-EI-TERMINOLOGY-01",
     "expected_correct": 0.5744,
     "responses": 0,
@@ -16,6 +64,90 @@
     "expected_correct": 0.5498,
     "responses": 0,
     "basis": "declared from the difficulty scale of 301 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-ADVANTAGE-01",
+    "expected_correct": 0.3775,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 38 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-FLUID-01",
+    "expected_correct": 0.4256,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 78 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-FLUID-02",
+    "expected_correct": 0.475,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 86 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-GEARS-01",
+    "expected_correct": 0.475,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 70 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-LEVER-01",
+    "expected_correct": 0.4502,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 46 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-PLANE-01",
+    "expected_correct": 0.4502,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 56 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-PULLEY-01",
+    "expected_correct": 0.4013,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 60 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MC-WHEEL-01",
+    "expected_correct": 0.4256,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 66 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MK-ALGEBRA-01",
+    "expected_correct": 0.5498,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 122 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MK-ALGEBRA-02",
+    "expected_correct": 0.4013,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 118 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MK-COORDINATE-01",
+    "expected_correct": 0.6457,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 75 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MK-EXPONENT-01",
+    "expected_correct": 0.69,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 52 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MK-FRACTION-01",
+    "expected_correct": 0.4502,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 10 item(s); no learner responses recorded"
+  },
+  {
+    "objective_id": "OBJ-MK-GEOMETRY-01",
+    "expected_correct": 0.3318,
+    "responses": 0,
+    "basis": "declared from the difficulty scale of 123 item(s); no learner responses recorded"
   },
   {
     "objective_id": "OBJ-PC-DETAIL-01",

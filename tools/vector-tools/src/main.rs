@@ -181,6 +181,21 @@ enum Commands {
         #[arg(long)]
         name: String,
     },
+    /// Put a registered pack version back into service: the way back from a rollback.
+    ///
+    /// `pack-install` will not do this, on purpose -- a reinstall must not silently undo a
+    /// rollback somebody made -- so the transition back is its own command and the caller has to
+    /// mean it. Whatever is active is superseded rather than quarantined, so the transition can
+    /// be made again in either direction.
+    #[command(name = "pack-activate")]
+    PackActivate {
+        #[arg(long)]
+        db: PathBuf,
+        #[arg(long)]
+        name: String,
+        #[arg(long)]
+        version: i64,
+    },
 }
 
 #[derive(Subcommand)]
@@ -844,6 +859,10 @@ fn main() -> Result<()> {
         Commands::PackRollback { db, name } => {
             let rolled = content::rollback_pack(&db, &name)?;
             println!("{}", serde_json::to_string_pretty(&rolled)?);
+        }
+        Commands::PackActivate { db, name, version } => {
+            let activated = content::activate_pack(&db, &name, version)?;
+            println!("{}", serde_json::to_string_pretty(&activated)?);
         }
         Commands::Provider { action } => match action {
             ProviderCommands::Probe {
