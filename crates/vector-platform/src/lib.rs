@@ -6,6 +6,7 @@
 //! V-000..V-021 release accounting that decides the ship verdict.
 
 pub mod accounting;
+pub mod gh;
 pub mod process;
 pub mod release;
 pub mod update;

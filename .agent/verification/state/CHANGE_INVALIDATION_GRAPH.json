@@ -1,40 +1,48 @@
 {
-  "prior_epoch": 21,
-  "prior_git_sha": "6e7d1f16db71949069d8146cf720dfa83984a92e",
-  "prior_artifact_digest": "23f8c2c5bf182ea058eff3fa18ebd75cd07a81fb6613d839bf4c180fdc5f1dad",
-  "new_epoch": 22,
-  "new_git_sha": "6a6296dc8933ac2583e5ce405c6603b52311663e",
-  "new_artifact_digest": "6eaa3027f5c36e858f2a7448bd6befc17b23c5c5a58bd3c94cab4e61f6bbd4e9",
+  "prior_epoch": 22,
+  "prior_git_sha": "6a6296dc8933ac2583e5ce405c6603b52311663e",
+  "prior_artifact_digest": "6eaa3027f5c36e858f2a7448bd6befc17b23c5c5a58bd3c94cab4e61f6bbd4e9",
+  "new_epoch": 23,
+  "new_git_sha": "e2e0708662ea3bd3bd3c9f9d2fed83e4a4a4ab88",
+  "new_artifact_digest": "bffe12dce99616da84cc26cf8913081dc7601220e5a148fbeedaab2ac53dfafb",
   "committed_changes": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
     ".agent/evidence/EP-004/provider-probe.json",
-    ".agent/evidence/EP-009/ROUND-31-REPORT.md",
+    ".agent/evidence/EP-009/ROUND-32-REPORT.md",
     ".agent/evidence/EP-009/artifact_identity.json",
-    ".agent/evidence/EP-009/commit-message-round31.txt",
-    ".agent/evidence/EP-009/npm-advisories.json",
-    ".agent/evidence/EP-009/npm-audit-full.json",
-    ".agent/evidence/EP-009/npm-audit-prod.json",
-    ".agent/evidence/EP-010/npm-licenses.spdx",
+    ".agent/evidence/EP-009/commit-message-round32.txt",
+    ".agent/evidence/EP-009/update/e2e-transcript.md",
+    ".agent/evidence/EP-009/update/exit-codes.json",
+    ".agent/evidence/EP-009/update/keygen.json",
+    ".agent/evidence/EP-009/update/manifest.json",
+    ".agent/evidence/EP-009/update/rollback.json",
+    ".agent/evidence/EP-009/update/signed.json",
+    ".agent/evidence/EP-009/update/stage-apply.json",
+    ".agent/evidence/EP-009/update/verify-ok.json",
     ".agent/state/LEDGER.md",
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
+    ".agent/verification/REQUIREMENT_TRACEABILITY.csv",
     ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
-    ".agent/verification/reports/COMPLETE_TEST_ACCOUNTING.csv",
     ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
+    ".agent/verification/reports/RELEASE_GATE.json",
+    ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
     ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.json",
     ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
-    ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.json",
-    ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.md",
     ".agent/verification/state/DOD_STATUS.jsonl",
     ".agent/verification/state/EPOCHS.jsonl",
     ".agent/verification/state/EVIDENCE_INDEX.json",
     ".agent/verification/state/RUN_MANIFEST.json",
     "COMMANDS.md",
+    "Cargo.lock",
+    "README.md",
     "apps/desktop/e2e-results.json",
-    "apps/desktop/package.json",
-    "package.json",
-    "pnpm-lock.yaml",
-    "scripts/dependency-graph.py",
-    "scripts/release-state.py"
+    "crates/vector-platform/Cargo.toml",
+    "crates/vector-platform/src/gh.rs",
+    "crates/vector-platform/src/lib.rs",
+    "crates/vector-platform/src/update.rs",
+    "scripts/probes/mutation-round18.py",
+    "tools/vector-tools/src/main.rs",
+    "tools/vector-tools/src/update.rs"
   ],
   "uncommitted_changes": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
@@ -52,36 +60,34 @@
     ".agent/verification/state/RUN_MANIFEST.json",
     ".agent/verification/state/gate-results.jsonl",
     "COMMANDS.md",
-    "Cargo.lock",
     "README.md",
     "apps/desktop/e2e-results.json",
-    "crates/vector-platform/Cargo.toml",
-    "crates/vector-platform/src/lib.rs",
-    "scripts/probes/mutation-round18.py",
-    "tools/vector-tools/src/main.rs"
+    "crates/vector-platform/src/gh.rs",
+    "scripts/probes/mutation-round18.py"
   ],
   "changed_paths": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
     ".agent/evidence/EP-004/provider-probe.json",
-    ".agent/evidence/EP-009/ROUND-31-REPORT.md",
+    ".agent/evidence/EP-009/ROUND-32-REPORT.md",
     ".agent/evidence/EP-009/artifact_identity.json",
-    ".agent/evidence/EP-009/commit-message-round31.txt",
-    ".agent/evidence/EP-009/npm-advisories.json",
-    ".agent/evidence/EP-009/npm-audit-full.json",
-    ".agent/evidence/EP-009/npm-audit-prod.json",
-    ".agent/evidence/EP-010/npm-licenses.spdx",
+    ".agent/evidence/EP-009/commit-message-round32.txt",
+    ".agent/evidence/EP-009/update/e2e-transcript.md",
+    ".agent/evidence/EP-009/update/exit-codes.json",
+    ".agent/evidence/EP-009/update/keygen.json",
+    ".agent/evidence/EP-009/update/manifest.json",
+    ".agent/evidence/EP-009/update/rollback.json",
+    ".agent/evidence/EP-009/update/signed.json",
+    ".agent/evidence/EP-009/update/stage-apply.json",
+    ".agent/evidence/EP-009/update/verify-ok.json",
     ".agent/state/LEDGER.md",
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
     ".agent/verification/REQUIREMENT_TRACEABILITY.csv",
     ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
-    ".agent/verification/reports/COMPLETE_TEST_ACCOUNTING.csv",
     ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
     ".agent/verification/reports/RELEASE_GATE.json",
     ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
     ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.json",
     ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
-    ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.json",
-    ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.md",
     ".agent/verification/state/DOD_STATUS.jsonl",
     ".agent/verification/state/EPOCHS.jsonl",
     ".agent/verification/state/EVIDENCE_INDEX.json",
@@ -91,15 +97,13 @@
     "Cargo.lock",
     "README.md",
     "apps/desktop/e2e-results.json",
-    "apps/desktop/package.json",
     "crates/vector-platform/Cargo.toml",
+    "crates/vector-platform/src/gh.rs",
     "crates/vector-platform/src/lib.rs",
-    "package.json",
-    "pnpm-lock.yaml",
-    "scripts/dependency-graph.py",
+    "crates/vector-platform/src/update.rs",
     "scripts/probes/mutation-round18.py",
-    "scripts/release-state.py",
-    "tools/vector-tools/src/main.rs"
+    "tools/vector-tools/src/main.rs",
+    "tools/vector-tools/src/update.rs"
   ],
   "surfaces": {
     "accounting": {
@@ -107,14 +111,11 @@
         ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
         ".agent/verification/REQUIREMENT_TRACEABILITY.csv",
         ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
-        ".agent/verification/reports/COMPLETE_TEST_ACCOUNTING.csv",
         ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
         ".agent/verification/reports/RELEASE_GATE.json",
         ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
         ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.json",
         ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
-        ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.json",
-        ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.md",
         ".agent/verification/state/DOD_STATUS.jsonl",
         ".agent/verification/state/EPOCHS.jsonl",
         ".agent/verification/state/EVIDENCE_INDEX.json",
@@ -129,7 +130,9 @@
     "crate": {
       "paths": [
         "crates/vector-platform/Cargo.toml",
-        "crates/vector-platform/src/lib.rs"
+        "crates/vector-platform/src/gh.rs",
+        "crates/vector-platform/src/lib.rs",
+        "crates/vector-platform/src/update.rs"
       ],
       "gates": [
         "lint",
@@ -139,14 +142,11 @@
     },
     "dependencies": {
       "paths": [
-        "Cargo.lock",
-        "package.json",
-        "pnpm-lock.yaml"
+        "Cargo.lock"
       ],
       "gates": [
         "build",
-        "dependency-audit",
-        "typecheck"
+        "dependency-audit"
       ]
     },
     "documentation": {
@@ -160,21 +160,23 @@
       "paths": [
         ".agent/evidence/EP-001/desktop-live-fire.json",
         ".agent/evidence/EP-004/provider-probe.json",
-        ".agent/evidence/EP-009/ROUND-31-REPORT.md",
+        ".agent/evidence/EP-009/ROUND-32-REPORT.md",
         ".agent/evidence/EP-009/artifact_identity.json",
-        ".agent/evidence/EP-009/commit-message-round31.txt",
-        ".agent/evidence/EP-009/npm-advisories.json",
-        ".agent/evidence/EP-009/npm-audit-full.json",
-        ".agent/evidence/EP-009/npm-audit-prod.json",
-        ".agent/evidence/EP-010/npm-licenses.spdx"
+        ".agent/evidence/EP-009/commit-message-round32.txt",
+        ".agent/evidence/EP-009/update/e2e-transcript.md",
+        ".agent/evidence/EP-009/update/exit-codes.json",
+        ".agent/evidence/EP-009/update/keygen.json",
+        ".agent/evidence/EP-009/update/manifest.json",
+        ".agent/evidence/EP-009/update/rollback.json",
+        ".agent/evidence/EP-009/update/signed.json",
+        ".agent/evidence/EP-009/update/stage-apply.json",
+        ".agent/evidence/EP-009/update/verify-ok.json"
       ],
       "gates": []
     },
     "harness": {
       "paths": [
-        "scripts/dependency-graph.py",
-        "scripts/probes/mutation-round18.py",
-        "scripts/release-state.py"
+        "scripts/probes/mutation-round18.py"
       ],
       "gates": [
         "anti-gaming-scan"
@@ -182,8 +184,7 @@
     },
     "interface": {
       "paths": [
-        "apps/desktop/e2e-results.json",
-        "apps/desktop/package.json"
+        "apps/desktop/e2e-results.json"
       ],
       "gates": [
         "test-e2e",
@@ -199,7 +200,8 @@
     },
     "tooling": {
       "paths": [
-        "tools/vector-tools/src/main.rs"
+        "tools/vector-tools/src/main.rs",
+        "tools/vector-tools/src/update.rs"
       ],
       "gates": [
         "generated-pack",
@@ -227,10 +229,10 @@
   ],
   "evidence_hashes": {
     "gate-results.jsonl": "1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6",
-    "RUN_MANIFEST.json": "4d002b2b077085c29da110ceeba817e88ff9540739f343ca58f7ea5fc9cc9d03",
-    "DOD_STATUS.jsonl": "1a27b559970b88fbcac878a6c4e54e68737ef6192352ecb807ab04103c41993a",
+    "RUN_MANIFEST.json": "ef57bb5deaa7d4e501ff49f042feb1fa961a4293328ce868429a2dfe8ff1f99f",
+    "DOD_STATUS.jsonl": "01756835854ec28361aec5b0b3bb973cf0ae1754e28a3adcc24127b19a783e76",
     "DEPENDENCY_BLOCKER_GRAPH.json": "96d32c37e1125d60bcb5ebf7192a6c291850faecee1c310a0f6576a5a508e352",
-    "artifact_identity": "fc2d1e237d4d414daa9e4c8247baa2c8aff68329595b8e1b2af4e9e3003832d3"
+    "artifact_identity": "082cf997b5aebb2f8bc400fc4ff144530a8f0502c55e8d191205fac5de9498cd"
   },
   "violations": []
 }

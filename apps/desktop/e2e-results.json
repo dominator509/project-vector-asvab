@@ -103,7 +103,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 5810,
+                      "duration": 5757,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\u001b[22m\n",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\u001b[22m\n\n    at C:\\dev\\project-vector-asvab\\apps\\desktop\\e2e\\smoke.spec.ts:170:48",
@@ -127,7 +127,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-23T14:56:28.544Z",
+                      "startTime": "2026-09-23T15:34:58.999Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -168,8 +168,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-23T14:56:25.745Z",
-    "duration": 9205.452,
+    "startTime": "2026-09-23T15:34:57.474Z",
+    "duration": 7842.056,
     "expected": 0,
     "skipped": 0,
     "unexpected": 1,

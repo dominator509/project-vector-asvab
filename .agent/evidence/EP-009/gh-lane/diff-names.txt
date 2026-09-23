@@ -1,0 +1,4 @@
+crates/vector-platform/src/gh.rs
+crates/vector-platform/src/lib.rs
+docs/RELEASE_REVIEW_CHECKLIST.md
+tools/vector-tools/src/main.rs

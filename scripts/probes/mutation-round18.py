@@ -41,6 +41,7 @@ PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
 PACK_REGISTRY = ROOT / "crates/vector-persistence/src/repo.rs"
 BACKUP = ROOT / "crates/vector-persistence/src/backup.rs"
 UPDATE = ROOT / "crates/vector-platform/src/update.rs"
+GH_LANE = ROOT / "crates/vector-platform/src/gh.rs"
 TOOLS = ROOT / "tools/vector-tools/src/content.rs"
 PACKS = ROOT / "crates/vector-application/src/packs.rs"
 SERVICE = ROOT / "crates/vector-application/src/service.rs"
@@ -605,6 +606,29 @@ MUTATIONS = [
         "vector-platform",
         "an_edited_manifest_breaks_its_signature",
         "an update manifest's signature is verified, not merely present",
+    ),
+    (
+        "gh-lane-accepts-an-unapproved-request",
+        GH_LANE,
+        (
+            "    if approver.is_none() {\n        return Err(GhRefusal::NotApproved);\n    }",
+            "    if false && approver.is_none() {\n        return Err(GhRefusal::NotApproved);\n    }",
+        ),
+        "vector-platform",
+        "an_unapproved_pull_request_is_refused_before_any_process_runs",
+        "opening a pull request requires a named approver",
+    ),
+    (
+        "gh-lane-lets-a-token-through",
+        GH_LANE,
+        (
+            # rustfmt wraps this call; the mutation is written as it now stands.
+            "    let env =\n        build_env(parent_env, &extra).map_err(|error| GhRefusal::Process(error.to_string()))?;",
+            "    let env = parent_env.clone();",
+        ),
+        "vector-platform",
+        "the_child_environment_carries_no_credentials",
+        "the lane's child environment carries no credentials",
     ),
 ]
 

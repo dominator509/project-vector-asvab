@@ -1,0 +1,56 @@
+release: the pull-request lane, driven against the real repository (REQ-032)
+
+REQ-032 read PARTIAL_EP003_RECORD_DONE_GH_LANE_PENDING. The bookkeeping half existed -- a proposed
+repair is recorded, marking it merged without a named approver is refused, and the schema makes an
+unapproved-but-merged row unrepresentable -- but nothing ever opened a pull request. This adds that
+half and runs it against the real repository.
+
+crates/vector-platform/src/gh.rs holds three properties structurally rather than as documentation.
+The official client only: `gh`, or an absolute path a caller names, invoked through the same
+shell-free ProcessSpec the rest of the platform uses, with an argument vector rather than a command
+line for a shell to re-parse. Credentials never handled: the child environment comes from the
+platform's allowlist, which strips GH_TOKEN and GITHUB_TOKEN, so the lane runs on the session gh
+auth login established and cannot authenticate on its own. And no merge: one function builds every
+command the lane can express -- pr create and pr view -- and a test asserts that no command it can
+build contains merge, close or delete. An approver is required and refused before any process runs;
+None, an empty name and a whitespace-only name are all NotApproved.
+
+The first real run found a defect worth the round on its own: the lane failed with "To get started
+with GitHub CLI, please run: gh auth login" because the platform's environment allowlist carries
+HOME and USERPROFILE but not APPDATA, which is where gh keeps its session on Windows. The lane now
+forwards the configuration-location variables (APPDATA, LOCALAPPDATA, XDG_CONFIG_HOME,
+XDG_DATA_HOME) explicitly -- none of them is a credential -- rather than widening the allowlist for
+every child process, and a test pins both halves: those variables are forwarded, the token
+variables are not. A credential-passing design would have hidden exactly this failure behind a
+working call.
+
+Driven against the real repository: the lane opened pull request 22 on
+dominator509/project-vector-asvab (exit 0, "merged": false in the lane's own report); the official
+client read it back independently as OPEN with mergedAt null; the diff named four files; the pull
+request was then closed unmerged with a comment saying why, and the branch deleted on the remote
+(gh api on the branch returns 404). The default branch is unchanged by any of it. Transcripts and
+JSON are in .agent/evidence/EP-009/gh-lane/.
+
+Five unit tests cover the lane -- the enumerated command set contains no merge, close or delete; an
+unapproved request is refused before any process runs; the child environment carries no credentials
+and does carry the configuration locations; an unusable repository, branch or title is refused; and
+the lane runs a real program, parses the URL out of its stdout, and reports a failing program's own
+stderr. Two mutations are caught: gh-lane-accepts-an-unapproved-request and
+gh-lane-lets-a-token-through.
+
+REQ-032 moves to DONE_OFFICIAL_GH_LANE_EXPLICIT_APPROVAL_NO_AUTO_MERGE and the open requirements
+fall from five to four: REQ-036 (a code-signing certificate), REQ-038 (a person using a screen
+reader) and REQ-060 (trademark clearance), all three external, plus REQ-014 (a local GGUF model),
+which is work here.
+
+DoD unchanged at 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates recorded exit 0; 46 mutations
+caught across cargo, vitest and Playwright; verdict CONDITIONAL_EXTERNAL_GATES. Corpus unchanged at
+6,961 active items; pack core-asvab v6 active.
+
+Recorded rather than chased: GitHub's Dependabot count on the default branch is now 2 moderate,
+down from 17 before round 31's toolchain upgrade, while pnpm audit and cargo deny check both report
+nothing. The two views disagree about the same tree, and the difference is worth a look before the
+next release rather than being assumed away.
+
+Remaining in-repo: REQ-014 (local GGUF model). Externally gated and unchanged: REQ-036, REQ-038,
+REQ-060, DOD-005, DOD-022, DOD-016, DOD-033, DOD-004, DOD-039, and DOD-034's foreign machine.

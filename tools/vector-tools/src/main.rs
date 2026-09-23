@@ -297,6 +297,29 @@ enum RepairCommands {
         #[arg(long)]
         out: Option<PathBuf>,
     },
+    /// Open a pull request through the official gh client, with a named approver.
+    ///
+    /// The branch must already be pushed. There is no merge command: merging is a human act on
+    /// the forge, and this lane cannot express it.
+    #[command(name = "gh-open")]
+    GhOpen {
+        #[arg(long)]
+        repo: String,
+        #[arg(long)]
+        head: String,
+        #[arg(long, default_value = "main")]
+        base: String,
+        #[arg(long)]
+        title: String,
+        #[arg(long)]
+        body: String,
+        /// Who approved opening it. Required: without a name the lane refuses.
+        #[arg(long)]
+        approver: String,
+        /// Path to the gh binary, when it is not on PATH.
+        #[arg(long)]
+        gh: Option<PathBuf>,
+    },
 }
 
 #[derive(Subcommand)]
@@ -1130,6 +1153,45 @@ fn main() -> Result<()> {
                 if code != 0 {
                     anyhow::bail!("the {gate} gate failed inside the worktree (exit {code})");
                 }
+            }
+            RepairCommands::GhOpen {
+                repo,
+                head,
+                base,
+                title,
+                body,
+                approver,
+                gh,
+            } => {
+                let action = vector_platform::gh::GhAction::CreatePullRequest {
+                    repo: repo.clone(),
+                    head,
+                    base,
+                    title,
+                    body,
+                };
+                let program = match gh {
+                    Some(path) => vector_platform::gh::program_at(path),
+                    None => vector_platform::gh::default_program(),
+                };
+                let env: std::collections::BTreeMap<String, String> = std::env::vars().collect();
+                let opened = vector_platform::gh::open_pull_request(
+                    &action,
+                    &program,
+                    &env,
+                    Some(&approver),
+                )
+                .map_err(|refusal| anyhow::anyhow!("{refusal}"))?;
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "url": opened.url,
+                        "number": opened.number,
+                        "approver": approver,
+                        "command": opened.command,
+                        "merged": false,
+                    })
+                );
             }
         },
         Commands::Db { action } => match action {

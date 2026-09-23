@@ -511,4 +511,24 @@ caught**; artifact digest `6eaa3027…`, epoch 22. Corpus unchanged at 6,961 act
 
 Remaining in-repo: REQ-032 (`gh` pull-request lane) and REQ-014 (local GGUF model).
 
+### Round 33
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The pull-request lane (REQ-032) | `crates/vector-platform/src/gh.rs`: the official `gh` client invoked through the platform's shell-free `ProcessSpec` (an argument vector, never a shell), an approver required and refused before any process runs (`None`, `""` and `"   "` are all `NotApproved`), and a command builder that can only express `pr create` and `pr view` -- a test asserts no command it can build contains `merge`, `close` or `delete`. The child environment comes from the platform's allowlist, so `GH_TOKEN`/`GITHUB_TOKEN` never reach `gh`: the lane runs on the session `gh auth login` established and cannot authenticate by itself. | `gh.rs`, `tools/vector-tools/src/main.rs`, `COMMANDS.md` |
+| A defect the first real run found | The lane failed with *"To get started with GitHub CLI, please run: gh auth login"* because the platform allowlist carries `HOME` and `USERPROFILE` but not `APPDATA`, which is where `gh` keeps its session on Windows. The lane now forwards the configuration-location variables (`APPDATA`, `LOCALAPPDATA`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`) explicitly rather than widening the allowlist for every child process, and a test pins that they are forwarded while the token variables are not. | `gh.rs`, `.agent/evidence/EP-009/gh-lane/open.json` |
+| Driven against the real repository | `repair gh-open` opened **pull request 22** on `dominator509/project-vector-asvab` (exit 0, `"merged": false` in the lane's own report); `gh pr view 22 --json …` read it back independently as `OPEN`, `mergedAt: null`; `gh pr diff 22 --name-only` showed four files; `gh pr close 22` closed it unmerged and the branch was deleted (`gh api …/branches/…` → 404). The default branch is unchanged by any of it. | `.agent/evidence/EP-009/gh-lane/`, `ROUND-33-REPORT.md` |
+
+`REQ-032` moves to `DONE_OFFICIAL_GH_LANE_EXPLICIT_APPROVAL_NO_AUTO_MERGE`; open requirements fall
+from 5 to **4** -- `REQ-036`, `REQ-038` and `REQ-060` (external) and `REQ-014` (a local GGUF model,
+which is work here). DoD unchanged at 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates exit 0;
+**46 mutations caught**; verdict `CONDITIONAL_EXTERNAL_GATES`.
+
+Recorded rather than chased: GitHub's Dependabot count on the default branch is now **2 moderate**
+(from 17 before round 31's toolchain upgrade) while `pnpm audit` and `cargo deny check` both report
+nothing. The two views disagree about the same tree, and the difference is worth a look before the
+next release rather than being assumed away.
+
+Remaining in-repo: REQ-014 (local GGUF model).
+
 

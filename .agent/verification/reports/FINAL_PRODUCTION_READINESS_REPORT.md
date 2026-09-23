@@ -5,29 +5,29 @@ committed artifact or a recorded exit code; nothing here is written by hand.
 
 ## Verdict
 
-**CONDITIONAL_EXTERNAL_GATES** — 5 requirement(s) cannot be satisfied inside this repository; the build and its gates pass
+**CONDITIONAL_EXTERNAL_GATES** — 4 requirement(s) cannot be satisfied inside this repository; the build and its gates pass
 
 ## Artifact identity
 
 | Field | Value |
 |---|---|
 | Version | 0.1.0 |
-| Artifact digest | `6eaa3027f5c36e858f2a7448bd6befc17b23c5c5a58bd3c94cab4e61f6bbd4e9` |
-| Identity digest | `0124934c2fda51a6764cc3f5c20bdc8a9630d162334a74b6dae73e0bdd896fee` |
-| Candidate epoch | 22 |
-| Git commit | `6a6296dc8933ac2583e5ce405c6603b52311663e` |
+| Artifact digest | `bffe12dce99616da84cc26cf8913081dc7601220e5a148fbeedaab2ac53dfafb` |
+| Identity digest | `d3a77d216552931833a4a5856796f0f1a14b9819342fa077b09b4d68fbf5df73` |
+| Candidate epoch | 23 |
+| Git commit | `e2e0708662ea3bd3bd3c9f9d2fed83e4a4a4ab88` |
 | Branch | main |
 
 Each component of the identity, measured from the artifact this sweep built:
 
 | Component | Digest |
 |---|---|
-| Binary | `6eaa3027f5c36e858f2a7448bd6befc17b23c5c5a58bd3c94cab4e61f6bbd4e9` |
+| Binary | `bffe12dce99616da84cc26cf8913081dc7601220e5a148fbeedaab2ac53dfafb` |
 | Migrations | `3d4917b14857d46e0cdccc730ebe3d13cb7f5de52e9c5d7d17e5deacbdd51c68` |
 | Content | `375a896baabb5ce4546bc2814437e688f49d5d8983b12dcc798d88f9bfa95940` |
 | Sbom | `685ae45ef40eb048fe02b5aff0399c4e82eca3200c044098dd99266b8b0809bb` |
 | Licenses | `538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8` |
-| GitSha | `b3ff161edd2769d3ab302b442f2b5bbd522570b8f3c84c37f0c86b70294f9536` |
+| GitSha | `6a9251a13f7c22a57783e5cf248ca7a83fd5b6d3930b3fae22d92a09faf382c3` |
 
 ## Gates executed in this run
 
@@ -51,9 +51,6 @@ Each component of the identity, measured from the artifact this sweep built:
 | proof-matrix-stamp | 0 |
 | smoke-test | 0 |
 | live-fire | 0 |
-| release-state | 0 |
-| dependency-graph | 0 |
-| change-invalidation | 0 |
 
 ## Accounting
 
@@ -79,13 +76,13 @@ Definition of Done by status:
 
 ## Requirements
 
-60 requirements, 55 DONE,
-5 open. The open ones are listed in
+60 requirements, 56 DONE,
+4 open. The open ones are listed in
 `RESIDUAL_RISK_AND_EXTERNAL_GATES.md` with the reason each cannot be closed here.
 
 ## Evidence
 
-695 evidence files, each with a recorded content hash, in
+703 evidence files, each with a recorded content hash, in
 `EVIDENCE_INDEX.json`.
 
 ## Limitations of this report

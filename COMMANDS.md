@@ -53,6 +53,7 @@ export RUST_BACKTRACE=1
 | Provider probe | `sh scripts/provider-probe.sh` |
 | Provider live-fire | `sh scripts/provider-live-fire.sh` |
 | MCP probe | `sh scripts/mcp-probe.sh` |
+| Open a pull request through `gh` | `cargo run -p vector-tools -- repair gh-open --repo <owner/name> --head <branch> --base main --title <title> --body <body> --approver <name>` (the official client, the branch already pushed, an approver named on the command; the lane cannot merge, and it runs on the session `gh auth login` established rather than on a token) |
 | Isolated worktree lane | `cargo run -p vector-tools -- repair lane --gate reality-gate` |
 | Content ingestion (Word Knowledge) | `cargo run -p vector-tools -- content ingest-wk --db <db> --thesaurus <moby words.txt> --dictionary <webster pg29765.txt>` |
 | Content ingestion (Electronics Information) | `cargo run -p vector-tools -- content ingest-ei --db <db> --dictionary <webster pg29765.txt> --module <neets module.txt> [--module ...]` |

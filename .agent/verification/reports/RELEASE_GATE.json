@@ -1,18 +1,12 @@
 {
   "verdict": "CONDITIONAL_EXTERNAL_GATES",
-  "reason": "5 requirement(s) cannot be satisfied inside this repository; the build and its gates pass",
+  "reason": "4 requirement(s) cannot be satisfied inside this repository; the build and its gates pass",
   "blockers": [
     {
       "kind": "requirement",
       "id": "REQ-014",
       "status": "PARTIAL_TRANSPORT_REGISTERED_MODEL_NOT_LAUNCHED",
       "detail": "llama.cpp GGUF with optional user-selected unfiltered model"
-    },
-    {
-      "kind": "requirement",
-      "id": "REQ-032",
-      "status": "PARTIAL_EP003_RECORD_DONE_GH_LANE_PENDING",
-      "detail": "official gh; explicit approval; no auto-merge"
     },
     {
       "kind": "requirement",
