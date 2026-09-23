@@ -518,6 +518,75 @@ fn backup_digest_matches_the_archive_on_disk() {
     assert_eq!(outcome, RestoreOutcome::Restored { rows: 1 });
 }
 
+/// A store too damaged to open is exactly the case a restore exists for.
+///
+/// Found by the DOD-036 recovery measurement in round 30: of three hard failures on a real
+/// store, a corrupted page and a deleted file restored, and a *truncated* file did not --
+/// `Database::open` failed with "database disk image is malformed" before any restore logic
+/// ran, so the documented path could not recover the learner's data at all.
+#[test]
+fn a_truncated_store_is_restored_from_its_archive() {
+    let dir = tempdir::TempDir::new("restore-truncated");
+    let path = dir.path().join("vector.db");
+    let backup_path = dir.path().join("backup.sqlite");
+
+    let (checksum, before_rows) = {
+        let mut db = open_db(&dir);
+        MigrationManager::apply(&mut db, &migrations()).expect("migrate");
+        db.connection()
+            .execute(
+                "INSERT INTO learner_profile (id, name, target_score, created_at)
+                 VALUES ('learner-1','Ada',60,'2026-09-10T00:00:00Z')",
+                [],
+            )
+            .expect("learner");
+        AttemptRepo::new(&db)
+            .record("learner-1", "AR", "q1", true, 1200)
+            .expect("record");
+        AttemptRepo::new(&db)
+            .record("learner-1", "AR", "q2", false, 1500)
+            .expect("record");
+        let manifest = BackupManager::create(&db, &backup_path).expect("create backup");
+        let rows: i64 = db
+            .connection()
+            .query_row("SELECT COUNT(*) FROM attempts", [], |row| row.get(0))
+            .expect("count");
+        (manifest.checksum, rows)
+    };
+
+    // Truncate the live file in half, the way a power loss or a bad copy leaves it.
+    let length = std::fs::metadata(&path).expect("metadata").len();
+    {
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&path)
+            .expect("open live file");
+        file.set_len(length / 2).expect("truncate");
+    }
+    assert!(
+        Database::open(&path).is_err(),
+        "the fixture has to be a store that cannot be opened, or this test proves nothing"
+    );
+
+    // Without a handle to the damaged store, the archive still restores and reconciles.
+    let outcome =
+        BackupManager::restore_verified_at(&path, &backup_path, Some(&checksum)).expect("restore");
+    assert_eq!(outcome, RestoreOutcome::Restored { rows: before_rows });
+
+    let mut restored = Database::open(&path).expect("the restored store opens");
+    MigrationManager::apply(&mut restored, &migrations()).expect("migrations still apply");
+    let rows: i64 = restored
+        .connection()
+        .query_row("SELECT COUNT(*) FROM attempts", [], |row| row.get(0))
+        .expect("count");
+    assert_eq!(rows, before_rows, "the restored store holds what it held");
+    let integrity: String = restored
+        .connection()
+        .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+        .expect("integrity");
+    assert_eq!(integrity, "ok");
+}
+
 // ---------------------------------------------------------------------------
 // SPEC-002: foreign-key integrity is enforced, not merely declared.
 // ---------------------------------------------------------------------------

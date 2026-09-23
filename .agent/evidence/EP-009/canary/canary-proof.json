@@ -1,0 +1,42 @@
+{
+  "clause": "DOD-013",
+  "canary": {
+    "value": "canary-e1444bf3951a95a6",
+    "source": "secrets.token_hex(8) -- the operating system's CSPRNG, at run time",
+    "target_score": 79,
+    "minutes": 53,
+    "decoy": "canary-e1444bf3951a95a0",
+    "decoy_rule": "the canary with its last character changed"
+  },
+  "propagation": {
+    "entry_point": "the application's own golden path (the service calls the Tauri commands make)",
+    "database": "C:\\tmp\\vector-canary\\canary.db",
+    "source_database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+    "exit": 0,
+    "seconds": 6.31,
+    "sessions": 8,
+    "reported": "attempts stored            8 row(s) over 8 subtest(s)"
+  },
+  "independent_observation": {
+    "found": 1,
+    "learner_id": "learner-7c4c552d-66d3-4135-8a94-efe40ecc4078",
+    "name": "canary-e1444bf3951a95a6",
+    "target_score": 79,
+    "attempts": 8,
+    "mastery_rows": 8
+  },
+  "negative_control": {
+    "found": 0
+  },
+  "expectations": {
+    "the canary learner exists exactly once": true,
+    "the stored name is the canary": true,
+    "the stored target is the canary run's target": true,
+    "the run's attempts are stored against the canary learner": true,
+    "the canary learner has mastery rows": true,
+    "the negative control found nothing": true,
+    "the canary is not a value the repository contains": true
+  },
+  "passed": true,
+  "limitation": "the canary enters at the command boundary, not through the window: no window driver exists in this environment (DOD-004)"
+}

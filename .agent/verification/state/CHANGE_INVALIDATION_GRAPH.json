@@ -1,0 +1,296 @@
+{
+  "prior_epoch": 17,
+  "prior_git_sha": "a1de4c02117c4c0ae6d12a91ae078190b2208487",
+  "prior_artifact_digest": "4ae5cf7820d818c3bfa1fcfdffe755d4bad2dc2e30dc551abccbb243211e98e4",
+  "new_epoch": 19,
+  "new_git_sha": "21c60697bdb304c0d9f8bb22fb41f65e0e137003",
+  "new_artifact_digest": "f75d5bc89e0c1a961f2d7436b1ddad3c03bf3f51f308fec3217ded64c163e20d",
+  "committed_changes": [
+    ".agent/evidence/EP-001/desktop-live-fire.json",
+    ".agent/evidence/EP-004/provider-probe.json",
+    ".agent/evidence/EP-007/content-corpus/ROUND-29-REPORT.md",
+    ".agent/evidence/EP-007/content-corpus/commit-message-round29.txt",
+    ".agent/evidence/EP-007/content-corpus/pack-calibration.json",
+    ".agent/evidence/EP-007/content-corpus/pack-curriculum.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-build-v6.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-install-v6-again.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-install-v6.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-v6.json",
+    ".agent/evidence/EP-007/content-corpus/packs/state-after-reupgrade-v6.sha256",
+    ".agent/evidence/EP-007/content-corpus/packs/state-after-rollback-v5.sha256",
+    ".agent/evidence/EP-007/content-corpus/packs/state-after-upgrade-v6.sha256",
+    ".agent/evidence/EP-007/content-corpus/packs/state-before-v6.sha256",
+    ".agent/evidence/EP-009/artifact_identity.json",
+    ".agent/evidence/EP-009/cleanroom/REPORT.md",
+    ".agent/evidence/EP-009/cleanroom/exit-codes.json",
+    ".agent/evidence/EP-009/cleanroom/lockfiles.json",
+    ".agent/evidence/EP-009/soak/soak.json",
+    ".agent/evidence/EP-009/soak/soak.jsonl",
+    ".agent/evidence/EP-009/zero-state/artifact.sha256",
+    ".agent/evidence/EP-009/zero-state/boot-state.txt",
+    ".agent/evidence/EP-009/zero-state/self-check.json",
+    ".agent/evidence/EP-009/zero-state/store-after-golden-path.sha256",
+    ".agent/state/LEDGER.md",
+    ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
+    ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
+    ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
+    ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
+    ".agent/verification/state/DOD_STATUS.jsonl",
+    ".agent/verification/state/EVIDENCE_INDEX.json",
+    ".agent/verification/state/RUN_MANIFEST.json",
+    "COMMANDS.md",
+    "apps/desktop/e2e-results.json",
+    "apps/desktop/src-tauri/tests/content_commands.rs",
+    "crates/vector-application/examples/generate_corpus.rs",
+    "crates/vector-application/examples/golden_path.rs",
+    "crates/vector-application/src/content.rs",
+    "crates/vector-application/src/packs.rs",
+    "crates/vector-application/tests/content_packs.rs",
+    "crates/vector-persistence/src/repo.rs",
+    "scripts/probes/build-curriculum.py",
+    "scripts/probes/check-corpus.py",
+    "scripts/probes/mutation-round18.py",
+    "scripts/probes/soak.py",
+    "scripts/rebuild-corpus.py",
+    "scripts/release-state.py",
+    "tools/vector-tools/src/content.rs",
+    "tools/vector-tools/src/main.rs"
+  ],
+  "uncommitted_changes": [
+    ".agent/evidence/EP-001/desktop-live-fire.json",
+    ".agent/evidence/EP-004/provider-probe.json",
+    ".agent/evidence/EP-009/artifact_identity.json",
+    ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
+    ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
+    ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
+    ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
+    ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
+    ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.json",
+    ".agent/verification/state/DOD_STATUS.jsonl",
+    ".agent/verification/state/EVIDENCE_INDEX.json",
+    ".agent/verification/state/RUN_MANIFEST.json",
+    ".agent/verification/state/gate-results.jsonl",
+    "apps/desktop/e2e-results.json",
+    "crates/vector-application/examples/golden_path.rs",
+    "crates/vector-persistence/src/backup.rs",
+    "crates/vector-persistence/tests/ep003_acceptance.rs",
+    "scripts/probes/mutation-round18.py",
+    "scripts/release-state.py",
+    "scripts/verify.sh",
+    "tools/vector-tools/src/main.rs"
+  ],
+  "changed_paths": [
+    ".agent/evidence/EP-001/desktop-live-fire.json",
+    ".agent/evidence/EP-004/provider-probe.json",
+    ".agent/evidence/EP-007/content-corpus/ROUND-29-REPORT.md",
+    ".agent/evidence/EP-007/content-corpus/commit-message-round29.txt",
+    ".agent/evidence/EP-007/content-corpus/pack-calibration.json",
+    ".agent/evidence/EP-007/content-corpus/pack-curriculum.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-build-v6.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-install-v6-again.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-install-v6.json",
+    ".agent/evidence/EP-007/content-corpus/packs/pack-v6.json",
+    ".agent/evidence/EP-007/content-corpus/packs/state-after-reupgrade-v6.sha256",
+    ".agent/evidence/EP-007/content-corpus/packs/state-after-rollback-v5.sha256",
+    ".agent/evidence/EP-007/content-corpus/packs/state-after-upgrade-v6.sha256",
+    ".agent/evidence/EP-007/content-corpus/packs/state-before-v6.sha256",
+    ".agent/evidence/EP-009/artifact_identity.json",
+    ".agent/evidence/EP-009/cleanroom/REPORT.md",
+    ".agent/evidence/EP-009/cleanroom/exit-codes.json",
+    ".agent/evidence/EP-009/cleanroom/lockfiles.json",
+    ".agent/evidence/EP-009/soak/soak.json",
+    ".agent/evidence/EP-009/soak/soak.jsonl",
+    ".agent/evidence/EP-009/zero-state/artifact.sha256",
+    ".agent/evidence/EP-009/zero-state/boot-state.txt",
+    ".agent/evidence/EP-009/zero-state/self-check.json",
+    ".agent/evidence/EP-009/zero-state/store-after-golden-path.sha256",
+    ".agent/state/LEDGER.md",
+    ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
+    ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
+    ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
+    ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
+    ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
+    ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.json",
+    ".agent/verification/state/DOD_STATUS.jsonl",
+    ".agent/verification/state/EVIDENCE_INDEX.json",
+    ".agent/verification/state/RUN_MANIFEST.json",
+    ".agent/verification/state/gate-results.jsonl",
+    "COMMANDS.md",
+    "apps/desktop/e2e-results.json",
+    "apps/desktop/src-tauri/tests/content_commands.rs",
+    "crates/vector-application/examples/generate_corpus.rs",
+    "crates/vector-application/examples/golden_path.rs",
+    "crates/vector-application/src/content.rs",
+    "crates/vector-application/src/packs.rs",
+    "crates/vector-application/tests/content_packs.rs",
+    "crates/vector-persistence/src/backup.rs",
+    "crates/vector-persistence/src/repo.rs",
+    "crates/vector-persistence/tests/ep003_acceptance.rs",
+    "scripts/probes/build-curriculum.py",
+    "scripts/probes/check-corpus.py",
+    "scripts/probes/mutation-round18.py",
+    "scripts/probes/soak.py",
+    "scripts/rebuild-corpus.py",
+    "scripts/release-state.py",
+    "scripts/verify.sh",
+    "tools/vector-tools/src/content.rs",
+    "tools/vector-tools/src/main.rs"
+  ],
+  "surfaces": {
+    "accounting": {
+      "paths": [
+        ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
+        ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
+        ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
+        ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
+        ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
+        ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.json",
+        ".agent/verification/state/DOD_STATUS.jsonl",
+        ".agent/verification/state/EVIDENCE_INDEX.json",
+        ".agent/verification/state/RUN_MANIFEST.json",
+        ".agent/verification/state/gate-results.jsonl"
+      ],
+      "gates": [
+        "dependency-graph",
+        "release-state"
+      ]
+    },
+    "application": {
+      "paths": [
+        "crates/vector-application/examples/generate_corpus.rs",
+        "crates/vector-application/examples/golden_path.rs",
+        "crates/vector-application/src/content.rs",
+        "crates/vector-application/src/packs.rs",
+        "crates/vector-application/tests/content_packs.rs"
+      ],
+      "gates": [
+        "lint",
+        "test-integration",
+        "test-unit"
+      ]
+    },
+    "desktop-shell": {
+      "paths": [
+        "apps/desktop/src-tauri/tests/content_commands.rs"
+      ],
+      "gates": [
+        "build",
+        "test-integration"
+      ]
+    },
+    "documentation": {
+      "paths": [
+        "COMMANDS.md"
+      ],
+      "gates": []
+    },
+    "evidence": {
+      "paths": [
+        ".agent/evidence/EP-001/desktop-live-fire.json",
+        ".agent/evidence/EP-004/provider-probe.json",
+        ".agent/evidence/EP-007/content-corpus/ROUND-29-REPORT.md",
+        ".agent/evidence/EP-007/content-corpus/commit-message-round29.txt",
+        ".agent/evidence/EP-007/content-corpus/pack-calibration.json",
+        ".agent/evidence/EP-007/content-corpus/pack-curriculum.json",
+        ".agent/evidence/EP-007/content-corpus/packs/pack-build-v6.json",
+        ".agent/evidence/EP-007/content-corpus/packs/pack-install-v6-again.json",
+        ".agent/evidence/EP-007/content-corpus/packs/pack-install-v6.json",
+        ".agent/evidence/EP-007/content-corpus/packs/pack-v6.json",
+        ".agent/evidence/EP-007/content-corpus/packs/state-after-reupgrade-v6.sha256",
+        ".agent/evidence/EP-007/content-corpus/packs/state-after-rollback-v5.sha256",
+        ".agent/evidence/EP-007/content-corpus/packs/state-after-upgrade-v6.sha256",
+        ".agent/evidence/EP-007/content-corpus/packs/state-before-v6.sha256",
+        ".agent/evidence/EP-009/artifact_identity.json",
+        ".agent/evidence/EP-009/cleanroom/REPORT.md",
+        ".agent/evidence/EP-009/cleanroom/exit-codes.json",
+        ".agent/evidence/EP-009/cleanroom/lockfiles.json",
+        ".agent/evidence/EP-009/soak/soak.json",
+        ".agent/evidence/EP-009/soak/soak.jsonl",
+        ".agent/evidence/EP-009/zero-state/artifact.sha256",
+        ".agent/evidence/EP-009/zero-state/boot-state.txt",
+        ".agent/evidence/EP-009/zero-state/self-check.json",
+        ".agent/evidence/EP-009/zero-state/store-after-golden-path.sha256"
+      ],
+      "gates": []
+    },
+    "harness": {
+      "paths": [
+        "scripts/probes/build-curriculum.py",
+        "scripts/probes/check-corpus.py",
+        "scripts/probes/mutation-round18.py",
+        "scripts/probes/soak.py",
+        "scripts/rebuild-corpus.py",
+        "scripts/release-state.py",
+        "scripts/verify.sh"
+      ],
+      "gates": [
+        "anti-gaming-scan",
+        "dependency-graph",
+        "release-state"
+      ]
+    },
+    "interface": {
+      "paths": [
+        "apps/desktop/e2e-results.json"
+      ],
+      "gates": [
+        "test-e2e",
+        "test-unit",
+        "typecheck"
+      ]
+    },
+    "ledger": {
+      "paths": [
+        ".agent/state/LEDGER.md"
+      ],
+      "gates": []
+    },
+    "persistence": {
+      "paths": [
+        "crates/vector-persistence/src/backup.rs",
+        "crates/vector-persistence/src/repo.rs",
+        "crates/vector-persistence/tests/ep003_acceptance.rs"
+      ],
+      "gates": [
+        "lint",
+        "test-integration",
+        "test-unit"
+      ]
+    },
+    "tooling": {
+      "paths": [
+        "tools/vector-tools/src/content.rs",
+        "tools/vector-tools/src/main.rs"
+      ],
+      "gates": [
+        "generated-pack",
+        "test-unit"
+      ]
+    }
+  },
+  "rerun_list": [
+    "anti-gaming-scan",
+    "artifact-identity",
+    "build",
+    "change-invalidation",
+    "dependency-graph",
+    "generated-pack",
+    "lint",
+    "live-fire",
+    "proof-matrix-stamp",
+    "release-state",
+    "smoke-test",
+    "test-e2e",
+    "test-integration",
+    "test-unit",
+    "typecheck"
+  ],
+  "evidence_hashes": {
+    "gate-results.jsonl": "1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6",
+    "RUN_MANIFEST.json": "42d619263a0b0b2d4e0970cd8294cc5cfa569d60a18e454553531adfd82efd8b",
+    "DOD_STATUS.jsonl": "bdeff7e9417604743b0852e35026fb8d4d7d7221f11a9cd5a0f6d8afefd92818",
+    "DEPENDENCY_BLOCKER_GRAPH.json": "1d17dcc5aa110c0712e6593e1a0b358e3e8f750e4bb323a25be485a0a2d373d6",
+    "artifact_identity": "2f7673a167616387b1b9746a58f2d1a27be11ca17f13d7376dce527ebb1540dd"
+  },
+  "violations": []
+}

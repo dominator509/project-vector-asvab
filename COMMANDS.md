@@ -29,7 +29,12 @@ export RUST_BACKTRACE=1
 | Smoke exact artifact | `sh scripts/smoke-test.sh` |
 | Live-fire | `sh scripts/live-fire.sh` |
 | Packaged desktop live-fire | `python3 scripts/desktop-live-fire.py --report .agent/evidence/EP-001/desktop-live-fire.json` |
-| Full verification | `sh scripts/verify.sh` |
+| Runtime canary proof | `python3 scripts/probes/canary-proof.py` (a learner name and target drawn from the operating system's CSPRNG at run time, propagated through the study path and read back by a separate connection, with a negative control) |
+| Recovery objectives | `python3 scripts/probes/recovery-objectives.py` (injects truncated, corrupted and deleted stores, restores each from a verified archive, and measures RTO/MTTR against the declared target) |
+| Bounded soak | `python3 scripts/probes/soak.py --minutes <n>` (packaged self-check plus a golden path per iteration, with a heartbeat, integrity check and row census; labels itself an abbreviated trial) |
+| Full verification | `sh scripts/verify.sh` (runs every gate and continues past a failure, marking only the gates that consume a failed artifact as `BLOCKED_PREREQUISITE`; exits non-zero if anything failed or was blocked) |
+| Dependency blocker graph | `python3 scripts/dependency-graph.py` (derives which prerequisite or capability each blocked test waits on, and refuses a blanket block) |
+| Change invalidation graph | `python3 scripts/change-invalidation.py` (diffs the previous epoch's commit against this candidate and refuses a changed path no gate covers) |
 | Production readiness | `sh scripts/production-readiness-check.sh` |
 | Generated-pack shape | `python3 scripts/validate-generated-pack.py .` |
 | Anti-gaming scan | `python3 scripts/anti-gaming-scan.py .` |

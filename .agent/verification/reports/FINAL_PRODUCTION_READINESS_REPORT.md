@@ -12,22 +12,22 @@ committed artifact or a recorded exit code; nothing here is written by hand.
 | Field | Value |
 |---|---|
 | Version | 0.1.0 |
-| Artifact digest | `4ae5cf7820d818c3bfa1fcfdffe755d4bad2dc2e30dc551abccbb243211e98e4` |
-| Identity digest | `44b65de93d6c977880d71a4cdd0bb13a1c92ccf5638274f1e7a04544e11077b1` |
-| Candidate epoch | 17 |
-| Git commit | `a1de4c02117c4c0ae6d12a91ae078190b2208487` |
+| Artifact digest | `f75d5bc89e0c1a961f2d7436b1ddad3c03bf3f51f308fec3217ded64c163e20d` |
+| Identity digest | `20331cb9508bcf0c11627e4cf1ef8563cf606fdda8736226ac355224448eba91` |
+| Candidate epoch | 19 |
+| Git commit | `21c60697bdb304c0d9f8bb22fb41f65e0e137003` |
 | Branch | main |
 
 Each component of the identity, measured from the artifact this sweep built:
 
 | Component | Digest |
 |---|---|
-| Binary | `4ae5cf7820d818c3bfa1fcfdffe755d4bad2dc2e30dc551abccbb243211e98e4` |
+| Binary | `f75d5bc89e0c1a961f2d7436b1ddad3c03bf3f51f308fec3217ded64c163e20d` |
 | Migrations | `3d4917b14857d46e0cdccc730ebe3d13cb7f5de52e9c5d7d17e5deacbdd51c68` |
 | Content | `ce28acfb852064c662040c8d2f61390fa804fc99deb8cb989a6cb73d1241a644` |
 | Sbom | `dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42` |
 | Licenses | `538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8` |
-| GitSha | `593ce3b4d3a0c6a8e64b335e6c60ca41ef5f8f368c635fa9981b6a2fad6c172e` |
+| GitSha | `c5fa464d984f63794ec3515b7b2e6e5780c794976500cbf6b2d40807422a2192` |
 
 ## Gates executed in this run
 
@@ -51,7 +51,6 @@ Each component of the identity, measured from the artifact this sweep built:
 | proof-matrix-stamp | 0 |
 | smoke-test | 0 |
 | live-fire | 0 |
-| release-state | 0 |
 
 ## Accounting
 
@@ -72,8 +71,8 @@ Definition of Done by status:
 | Status | Count |
 |---|---|
 | EXTERNAL_REQUIRED | 1 |
-| PARTIAL | 11 |
-| PASS | 30 |
+| PARTIAL | 7 |
+| PASS | 34 |
 
 ## Requirements
 
@@ -83,7 +82,7 @@ Definition of Done by status:
 
 ## Evidence
 
-668 evidence files, each with a recorded content hash, in
+673 evidence files, each with a recorded content hash, in
 `EVIDENCE_INDEX.json`.
 
 ## Limitations of this report

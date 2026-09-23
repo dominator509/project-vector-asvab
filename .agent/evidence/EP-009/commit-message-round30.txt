@@ -1,0 +1,79 @@
+verify: close the four in-repo evidence clauses (DOD-013, DOD-031, DOD-036, DOD-040)
+
+Round 29 closed the two PENDING release clauses. This round closes the four that were in-repo work
+rather than missing capability, and two of them turned up real defects.
+
+The sweep no longer lets one failure hide the rest (DOD-031). It stopped at the first failing gate,
+which is not what the clause asks for: a failed gate is a prerequisite for the gates that consume
+its artifact and for nothing else, and stopping meant eighteen gates reported nothing at all, so a
+reader could not tell "this gate failed" from "we never got there". `scripts/verify.sh` now runs
+every gate and records a gate whose declared prerequisite did not pass as BLOCKED_PREREQUISITE with
+the gate that blocked it (`"exit": null` -- neither a pass nor a failure), exiting non-zero if
+anything failed or was blocked. Demonstrated in this round by accident and then on purpose: a
+formatting failure left all twenty other gates running and recorded. `scripts/dependency-graph.py`
+derives the graph from the test registry, the 484-row accounting and the sweep's own results, and
+refuses an unnamed blocker, a gate blocked by a gate that passed, a passing row with an incoming
+edge, and any cycle -- both refusals proven by mutating the accounting and the gate results.
+Measured: 484 tests, 26 explicit edges over 12 unsatisfied nodes, the widest blocking 7 tests, and
+77 tests that ran to completion inside a stage holding a blocked sibling.
+
+What a candidate's changes invalidate (DOD-040). `scripts/change-invalidation.py` records each
+epoch against its commit and artifact digest, diffs the previous epoch against this one (committed
+and uncommitted -- several rounds verified bytes no commit described), maps every changed path to a
+surface and that surface to the gates that exercise it, closes the rerun list over the gate edges,
+and refuses a changed path no gate covers. Its own first run caught a bug in itself: stripping
+porcelain output shifted the first path by one character, which the coverage check reported as an
+uncovered path. Prior epoch 17 (a1de4c02) to epoch 19 (21c6069): 55 changed paths over 8 surfaces,
+15 gates on the rerun list, no violations, and the gate edges are checked against verify.sh so the
+two cannot drift.
+
+An unpredictable value through the real path (DOD-013). `scripts/probes/canary-proof.py` draws a
+learner name from the operating system's CSPRNG and a target score from the same source at run
+time, propagates both through the application's own study path against a copy of the installation's
+store, and reads them back with a separate SQLite connection. The negative control is what makes it
+a proof: the same canary with one character changed must find nothing, or an observation that
+always passes would look identical to one that reads the value. Storing mastery became part of the
+golden path so the canary had something to read back. Stated limitation: the canary enters at the
+command boundary rather than through the window, because no window driver exists here (DOD-004).
+
+Recovery objectives, measured -- and a real gap found (DOD-036). `scripts/probes/recovery-
+objectives.py` declares the objectives (no automatic backup schedule is claimed, so the RPO is the
+interval since the learner's last backup; a 60-second RTO target) and injects three hard failures on
+copies of the real store. The first run found that a truncated store could not be restored at all:
+`restore_verified` needs a handle on the live database and SQLite refuses to open a malformed one,
+so the documented path failed with "database disk image is malformed" before any restore logic ran.
+A learner whose file was truncated by a power loss had no way back to their archive. Fixed:
+`restore_verified_at` takes the live path instead of a handle, runs the same archive checks, and
+swaps the file with no connection to the damaged database, moving the damaged file aside rather
+than deleting it; the CLI falls back to it when the live file cannot be opened; a test pins it and
+the mutation `no-path-based-restore` proves the test depends on it. Measured after the fix:
+truncated, corrupt-page and deleted all reconcile to the pre-fault rows and bytes, RTO 7.85s
+against the declared 60s, MTTR 7.85s.
+
+The mutation harness was misclassifying mutations. Two Rust mutations added in round 29 were written
+into the frontend list, so they were "caught" by a vitest runner that never loaded them -- a false
+pass in the harness whose whole purpose is to prevent false confidence. Entries now live in the
+list whose runner can execute them (40 cargo, 2 vitest, 1 Playwright); `test_passes` refuses a
+crate that is not a workspace member or a filter that matched no test, counting passed *and* failed
+because a caught mutation makes its test fail and a failing binary reports "0 passed; 1 failed"
+(the first version of that guard stopped the run on the very first mutation); and `vitest_passes`
+refuses a missing file or an empty selection. All 43 mutations are now caught, verified by the
+runner that can actually run each one.
+
+Accounting: DoD 30 PASS / 11 PARTIAL / 1 EXTERNAL_REQUIRED becomes 34 PASS / 7 PARTIAL / 1
+EXTERNAL_REQUIRED; gates 19 becomes 21. Three accounting rows were narrowed rather than left stale:
+E2E-011 records that the cache-free half of clean-room deployment is executed and the foreign
+machine is what remains; SUP-004 records the measurement that two clean environments produce
+different bytes for the same source, so the claim stays blocked rather than relabelled; E2E-018
+records the abbreviated soak and the full duration still missing.
+
+Corpus unchanged at 6,961 active items; pack core-asvab v6 active; every provenance invariant a
+zero. Gates: `sh scripts/verify.sh` exits 0 with 21 gates recorded exit 0; artifact digest
+f75d5bc89e0c1a96...; epoch 19; verdict CONDITIONAL_EXTERNAL_GATES.
+
+Still in-repo: the npm advisory state (pnpm audit --prod is clean, dev tooling carries 1 critical /
+2 high / 5 moderate, and the dependency-audit gate covers Rust advisories and npm licences rather
+than npm advisories) and the three open requirements that are work here -- REQ-014 (local GGUF
+model), REQ-032 (gh pull-request lane), REQ-037 (signature verification for updates). Externally
+gated and unchanged: DOD-039, DOD-005, DOD-022, DOD-016, DOD-033, DOD-004, and DOD-034's foreign
+machine.

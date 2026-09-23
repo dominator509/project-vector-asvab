@@ -28,6 +28,7 @@ Usage:
     python3 scripts/probes/mutation-round18.py
 """
 
+import re
 import shutil
 import subprocess
 import sys
@@ -38,6 +39,7 @@ PURPOSES = ROOT / "crates/vector-questions/src/purposes.rs"
 CONTENT = ROOT / "crates/vector-application/src/content.rs"
 PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
 PACK_REGISTRY = ROOT / "crates/vector-persistence/src/repo.rs"
+BACKUP = ROOT / "crates/vector-persistence/src/backup.rs"
 TOOLS = ROOT / "tools/vector-tools/src/content.rs"
 PACKS = ROOT / "crates/vector-application/src/packs.rs"
 SERVICE = ROOT / "crates/vector-application/src/service.rs"
@@ -537,38 +539,8 @@ MUTATIONS = [
         "an_objective_with_no_content_falls_back_to_the_subtest",
         "an objective with no content falls back to the whole subtest",
     ),
-]
-
-# Rules enforced in the interface rather than in Rust. The same contract applies: the
-# mutation disables the rule and the test that is supposed to depend on it must fail. The
-# runner is vitest, so these are kept apart from the cargo list above -- one list per
-# runner rather than a command string in every entry.
-#
-# (id, file, edit, test file, name filter, what the rule is).
-FRONTEND_MUTATIONS = [
-    (
-        "objective-not-sent-to-the-backend",
-        USE_PRACTICE_ITEMS,
-        (
-            "const item = await client.contentNext(subtest, seen, objectiveId);",
-            "const item = await client.contentNext(subtest, seen, null);",
-        ),
-        "src/views/dataViews.test.tsx",
-        "the plan's objective reaches practice",
-        "the reader asks the backend for the objective the plan named",
-    ),
-    (
-        "objective-not-carried-into-practice",
-        APP_TSX,
-        (
-            "<PracticeContentView learnerId={profile?.id} request={practice} />",
-            "<PracticeContentView learnerId={profile?.id} request={null} />",
-        ),
-        "src/views/dataViews.test.tsx",
-        "the plan's objective reaches practice",
-        "the shell carries the plan's request into the practice view",
-    ),
-    # Round 29: the corpus the pack ships, and the way back from a rollback.
+    # Round 29-30: the corpus the pack ships, the way back from a rollback, and a restore
+    # over a database too damaged to open.
     (
         "generated-questions-not-deduplicated",
         CONTENT,
@@ -608,10 +580,58 @@ FRONTEND_MUTATIONS = [
         "an_activated_version_returns_to_service_and_a_reinstall_does_not",
         "the version an activation leaves behind can still be returned to",
     ),
+    (
+        "no-path-based-restore",
+        BACKUP,
+        (
+            # The rule is "a store too damaged to open is still restorable". Displacing the
+            # damaged file is not the rule -- on Windows a rename over an existing file
+            # replaces it, so mutating that guard left the test passing and the mutation was
+            # reported NOT CAUGHT until it was rewritten to refuse the restore outright.
+            "        let remove_sidecars = || {",
+            "        anyhow::bail!(\"the path-based restore is disabled\");\n        #[allow(unreachable_code)]\n        let remove_sidecars = || {",
+        ),
+        "vector-persistence",
+        "a_truncated_store_is_restored_from_its_archive",
+        "a store too damaged to open is still restorable from its archive",
+    ),
+]
+
+# Rules enforced in the interface rather than in Rust. The same contract applies: the
+# mutation disables the rule and the test that is supposed to depend on it must fail. The
+# runner is vitest, so these are kept apart from the cargo list above -- one list per
+# runner rather than a command string in every entry.
+#
+# (id, file, edit, test file, name filter, what the rule is).
+FRONTEND_MUTATIONS = [
+    (
+        "objective-not-sent-to-the-backend",
+        USE_PRACTICE_ITEMS,
+        (
+            "const item = await client.contentNext(subtest, seen, objectiveId);",
+            "const item = await client.contentNext(subtest, seen, null);",
+        ),
+        "src/views/dataViews.test.tsx",
+        "the plan's objective reaches practice",
+        "the reader asks the backend for the objective the plan named",
+    ),
+    (
+        "objective-not-carried-into-practice",
+        APP_TSX,
+        (
+            "<PracticeContentView learnerId={profile?.id} request={practice} />",
+            "<PracticeContentView learnerId={profile?.id} request={null} />",
+        ),
+        "src/views/dataViews.test.tsx",
+        "the plan's objective reaches practice",
+        "the shell carries the plan's request into the practice view",
+    ),
 ]
 
 # Rules the browser-level smoke spec relies on. Its runner rebuilds the bundle first, so the
-# result is about the rule and not about whatever build happened to be lying around.
+# result is about the rule and not about whatever build happened to be lying around. Each list
+# is checked against the runner that executes it: a cargo entry naming a crate that is not a
+# workspace member, or a frontend entry naming a file that does not exist, stops the run.
 #
 # (id, file, edit, test file, name filter, what the rule is).
 E2E_MUTATIONS = [
@@ -629,7 +649,32 @@ E2E_MUTATIONS = [
 ]
 
 
+CARGO_CRATES = {
+    "vector-application",
+    "vector-content",
+    "vector-desktop",
+    "vector-domain",
+    "vector-llm",
+    "vector-mcp",
+    "vector-observability",
+    "vector-persistence",
+    "vector-platform",
+    "vector-questions",
+    "vector-repair",
+    "vector-study",
+    "vector-tools",
+}
+
+
 def test_passes(crate: str, test: str) -> bool:
+    """Whether a Rust test still passes under a mutation.
+
+    Refuses to answer when the command could not have run the test at all: a crate that is not
+    a workspace member, or a filter that matched nothing, are configuration mistakes, and
+    reporting either as a result is how a mutation ends up "caught" by a test that never ran.
+    """
+    if crate not in CARGO_CRATES:
+        raise SystemExit(f"mutation names crate {crate!r}, which is not a workspace member")
     result = subprocess.run(
         ["cargo", "test", "-q", "-p", crate, test],
         cwd=ROOT,
@@ -638,14 +683,35 @@ def test_passes(crate: str, test: str) -> bool:
         encoding="utf-8",
         errors="replace",
     )
+    output = result.stdout + result.stderr
+    if result.returncode != 0 and "could not compile" in output:
+        return False
+    # Both numbers, not just `passed`: a mutation that *is* caught makes its test fail, and a
+    # failing binary reports "0 passed; 1 failed". Counting only passes would read the caught
+    # case as "this filter matched nothing" and stop the run -- which it did, once, on the very
+    # first mutation (`an_adjective_is_not_a_purpose`).
+    results = re.findall(r"test result: \w+\. (\d+) passed; (\d+) failed", output)
+    ran = sum(int(passed) + int(failed) for passed, failed in results)
+    if not results or ran == 0:
+        raise SystemExit(
+            f"mutation filter {test!r} matched no test in {crate}: the rule cannot be judged"
+        )
     return result.returncode == 0
 
 
 def vitest_passes(test_file: str, name_filter: str) -> bool:
-    """Whether a frontend test still passes, run the way the project runs it."""
+    """Whether a frontend test still passes, run the way the project runs it.
+
+    Same refusal as `test_passes`: a file vitest cannot find, or a filter that selects
+    nothing, must stop the run rather than count as a caught mutation. Two Rust mutations sat
+    in the frontend list for a round and were reported "caught" by a runner that never loaded
+    them, which is precisely the false confidence this harness exists to prevent.
+    """
     npx = shutil.which("npx")
     if npx is None:
         raise SystemExit("npx is not on PATH; the interface mutations cannot be run")
+    if not (DESKTOP / test_file).exists():
+        raise SystemExit(f"mutation names {test_file!r}, which does not exist under apps/desktop")
     result = subprocess.run(
         [npx, "vitest", "run", test_file, "-t", name_filter],
         cwd=DESKTOP,
@@ -654,6 +720,14 @@ def vitest_passes(test_file: str, name_filter: str) -> bool:
         encoding="utf-8",
         errors="replace",
     )
+    output = result.stdout + result.stderr
+    if "No test files found" in output:
+        raise SystemExit(f"vitest found no test file at {test_file!r}")
+    if re.search(r"Tests\s+no tests", output) or re.search(r"Tests\s+0 passed", output):
+        raise SystemExit(
+            f"mutation filter {name_filter!r} selected no test in {test_file}: "
+            "the rule cannot be judged"
+        )
     return result.returncode == 0
 
 

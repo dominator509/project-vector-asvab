@@ -1003,9 +1003,28 @@ fn main() -> Result<()> {
                 source,
                 checksum,
             } => {
-                let mut db = Database::open(&db_path)?;
-                let outcome =
-                    BackupManager::restore_verified(&mut db, &source, checksum.as_deref())?;
+                // A malformed live file is exactly the case a restore exists for, and SQLite
+                // will not open one -- so the handle-based path is tried first (it swaps the
+                // bytes under the open connection and keeps the app's WAL behaviour), and a
+                // store too damaged to open falls back to the path-based swap. Measured in
+                // round 30: without the fallback, restoring over a truncated store failed with
+                // "database disk image is malformed" before any restore logic ran.
+                let outcome = match Database::open(&db_path) {
+                    Ok(mut db) => {
+                        BackupManager::restore_verified(&mut db, &source, checksum.as_deref())?
+                    }
+                    Err(open_error) => {
+                        println!(
+                            "the live database could not be opened ({open_error}); restoring \
+                             from the archive without it"
+                        );
+                        BackupManager::restore_verified_at(
+                            std::path::Path::new(&db_path),
+                            &source,
+                            checksum.as_deref(),
+                        )?
+                    }
+                };
                 match outcome {
                     RestoreOutcome::Restored { rows } => {
                         println!("Restored {} attempt rows from {}", rows, source.display());

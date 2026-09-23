@@ -1,0 +1,79 @@
+{
+  "clause": "DOD-036",
+  "source_database": "C:\\Users\\domin\\AppData\\Roaming\\com.vector.app\\vector.db",
+  "store_bytes": 85749760,
+  "declared": {
+    "rpo": "no automatic backup schedule is claimed: the RPO is the interval since the learner's last backup or export, and the measured interval for this run is 7.382s between the backup taken here and the injected faults",
+    "rto_seconds": 60.0,
+    "mttr": "fault detection plus verified restore, measured per fault kind"
+  },
+  "measured": {
+    "backup_seconds": 7.382,
+    "restore_seconds_max": 7.848,
+    "mttr_seconds_max": 7.851,
+    "rpo_seconds_this_run": 7.382
+  },
+  "rto_target_met": true,
+  "reconciled_every_fault": true,
+  "pre_fault": {
+    "integrity": "ok",
+    "rows": {
+      "content_items": 6961,
+      "attempts": 0,
+      "learner_profile": 0,
+      "evidence_records": 70,
+      "content_item_sources": 8910,
+      "mastery": 0,
+      "content_packs": 4
+    }
+  },
+  "backup": {
+    "path": "C:\\tmp\\vector-recovery\\vector-backup.db",
+    "digest": "6beb7aff0b769961c80237b31e164bf496eff3fed786d4a39994cc6c131e2280",
+    "rows": {
+      "content_items": 6961,
+      "attempts": 0,
+      "learner_profile": 0,
+      "evidence_records": 70,
+      "content_item_sources": 8910,
+      "mastery": 0,
+      "content_packs": 4
+    },
+    "integrity": "ok"
+  },
+  "faults": [
+    {
+      "fault": "truncated",
+      "state_after_fault": "unreadable: database disk image is malformed",
+      "detect_seconds": 0.003,
+      "restore_exit": 0,
+      "restore_seconds": 7.848,
+      "mttr_seconds": 7.851,
+      "reconciled": true,
+      "rows_reconciled": true,
+      "bytes_reconciled": true
+    },
+    {
+      "fault": "corrupt-page",
+      "state_after_fault": "unreadable: database disk image is malformed",
+      "detect_seconds": 0.373,
+      "restore_exit": 0,
+      "restore_seconds": 7.476,
+      "mttr_seconds": 7.849,
+      "reconciled": true,
+      "rows_reconciled": true,
+      "bytes_reconciled": true
+    },
+    {
+      "fault": "deleted",
+      "state_after_fault": "unreadable: unable to open database file",
+      "detect_seconds": 0.0,
+      "restore_exit": 0,
+      "restore_seconds": 7.652,
+      "mttr_seconds": 7.652,
+      "reconciled": true,
+      "rows_reconciled": true,
+      "bytes_reconciled": true
+    }
+  ]
+}

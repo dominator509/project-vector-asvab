@@ -15,7 +15,7 @@
 //! request. It writes learner rows, so point it at a zero-state database or a copy.
 //!
 //! Usage:
-//!     cargo run -p vector-application --example golden_path -- <db> [name] [minutes]
+//!     cargo run -p vector-application --example golden_path -- <db> [name] [minutes] [target]
 
 use std::path::PathBuf;
 
@@ -42,6 +42,12 @@ fn main() {
         .next()
         .and_then(|value| value.parse().ok())
         .unwrap_or(30);
+    // The target is a fourth input so a caller proving the path with unpredictable data can
+    // put two run-time values through it, not one.
+    let target: u32 = arguments
+        .next()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(70);
 
     let mut db = Database::open(PathBuf::from(&path)).expect("open the database");
     let migrations = MigrationManager::load_from_dir(
@@ -55,7 +61,7 @@ fn main() {
 
     // 1. A learner. The plan is theirs, so there is no plan without one.
     let profile = services
-        .create_profile(&name, 70)
+        .create_profile(&name, target)
         .expect("create a learner");
     let readback = services
         .get_profile(&profile.id)
@@ -74,7 +80,7 @@ fn main() {
 
     // 2. The plan for the time the learner has.
     let plan = services
-        .study_plan(&profile.id, 70, minutes)
+        .study_plan(&profile.id, target, minutes)
         .expect("a plan");
     let allocated: u32 = plan.drills.iter().map(|drill| drill.minutes).sum();
     assert_eq!(
@@ -194,6 +200,23 @@ fn main() {
         })
         .collect();
     step("objectives with evidence", moved.join("; "));
+
+    // Recompute the stored per-subtest mastery from those attempts, then read it back. An
+    // estimate that was computed and never stored is not something a later session can rely
+    // on, and the readback is what proves the write.
+    let written = services
+        .recompute_mastery(&profile.id)
+        .expect("recompute mastery");
+    let stored = services.mastery(&profile.id).expect("stored mastery");
+    step(
+        "mastery stored",
+        format!("{written} row(s) written, {} readable", stored.len()),
+    );
+    assert_eq!(
+        written,
+        stored.len(),
+        "the number of mastery rows written and read back must agree"
+    );
 
     // 5. The answered items are still active, cited, and proved -- the provenance claim, read
     //    from the store the session just wrote to.

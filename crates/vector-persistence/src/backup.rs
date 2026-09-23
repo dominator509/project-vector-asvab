@@ -212,6 +212,96 @@ impl BackupManager {
         Ok(RestoreOutcome::Restored { rows })
     }
 
+    /// Restore when the live database cannot be opened at all.
+    ///
+    /// `restore_verified` needs a handle on the live file: it reads the path from the open
+    /// connection and swaps the bytes underneath it. That is correct for a store that is
+    /// merely wrong, and useless for one that is *malformed* -- SQLite refuses to open it, so
+    /// the documented restore path fails before it can do anything, which is the state a
+    /// truncated or bit-rotted file is in. Measured in round 30: of three hard failures, the
+    /// corrupt-page and deleted cases recovered and the truncated one refused with
+    /// "database disk image is malformed".
+    ///
+    /// So this variant starts from the path instead of the handle, runs the same checks on the
+    /// archive -- checksum, integrity, readability -- and swaps the file with no connection to
+    /// the damaged database at all. The damaged file is moved aside rather than deleted, so a
+    /// failure part way through can still be undone.
+    pub fn restore_verified_at(
+        live_path: &Path,
+        source: &Path,
+        expected_checksum: Option<&str>,
+    ) -> anyhow::Result<RestoreOutcome> {
+        if !source.exists() {
+            anyhow::bail!("backup not found at {}", source.display());
+        }
+        if let Some(expected) = expected_checksum {
+            let actual = Self::sha256_file(source)?;
+            if actual != expected {
+                anyhow::bail!(
+                    "backup at {} does not match the recorded digest (expected {expected}, got {actual})",
+                    source.display()
+                );
+            }
+        }
+        let integrity = Self::verify_integrity(source)?;
+        if integrity != "ok" {
+            anyhow::bail!("backup at {} is corrupt: {integrity}", source.display());
+        }
+        let rows = Self::count_attempts(source)?;
+
+        let staged = live_path.with_extension("restore-stage");
+        if staged.exists() {
+            std::fs::remove_file(&staged)?;
+        }
+        std::fs::copy(source, &staged)?;
+        {
+            let probe = match rusqlite::Connection::open(&staged) {
+                Ok(connection) => connection,
+                Err(error) => {
+                    let _ = std::fs::remove_file(&staged);
+                    anyhow::bail!("backup could not be opened as a database: {error}");
+                }
+            };
+            let check: String = probe.query_row("PRAGMA integrity_check", [], |row| row.get(0))?;
+            if check != "ok" {
+                let _ = std::fs::remove_file(&staged);
+                anyhow::bail!("staged backup failed integrity_check: {check}");
+            }
+        }
+
+        let displaced = live_path.with_extension("pre-restore");
+        if displaced.exists() {
+            let _ = std::fs::remove_file(&displaced);
+        }
+        let remove_sidecars = || {
+            for suffix in ["-wal", "-shm"] {
+                let sidecar = PathBuf::from(format!("{}{suffix}", live_path.display()));
+                if sidecar.exists() {
+                    let _ = std::fs::remove_file(&sidecar);
+                }
+            }
+        };
+        if live_path.exists() {
+            if let Err(error) = std::fs::rename(live_path, &displaced) {
+                let _ = std::fs::remove_file(&staged);
+                return Err(anyhow::anyhow!("could not displace live database: {error}"));
+            }
+        }
+        if let Err(error) = std::fs::rename(&staged, live_path) {
+            // Put the damaged file back rather than leaving the learner with nothing.
+            let _ = std::fs::rename(&displaced, live_path);
+            remove_sidecars();
+            let _ = std::fs::remove_file(&staged);
+            return Err(anyhow::anyhow!(
+                "could not install restored database: {error}"
+            ));
+        }
+        remove_sidecars();
+        let _ = std::fs::remove_file(&displaced);
+
+        Ok(RestoreOutcome::Restored { rows })
+    }
+
     /// Replace the caller's handle with a throwaway in-memory database so the
     /// live file lock is released. The temporary handle is never used for reads;
     /// the caller rebinds `db` to the real file afterwards.

@@ -136,7 +136,13 @@ class Inputs:
                 if not line:
                     continue
                 row = json.loads(line)
-                self.gates[row["gate"]] = int(row["exit"])
+                # A blocked gate records `"exit": null` with the gate that blocked it: the
+                # sweep continues past a failure (DOD-031) and marks the gates that consume
+                # the failed artifact rather than claiming they passed or never mentioning
+                # them. None means "not run in this sweep", which is what `gate_status`
+                # already distinguishes from a failure.
+                value = row.get("exit")
+                self.gates[row["gate"]] = None if value is None else int(value)
                 self.gate_order.append(row["gate"])
 
         identity_path = REPO / ".agent" / "evidence" / "EP-009" / "artifact_identity.json"
@@ -265,6 +271,87 @@ def evaluate_dod(i: Inputs) -> list[dict]:
             f"{len(soak.get('failures') or [])} failure(s), integrity "
             f"{soak.get('final', {}).get('integrity')!r}"
         )
+
+    # The runtime canary proof: a value drawn from the OS CSPRNG at run time, propagated
+    # through the study path, read back by a separate connection, with a negative control.
+    canary_ok = False
+    canary_note = "no runtime canary proof has been executed"
+    canary_report = REPO / ".agent/evidence/EP-009/canary/canary-proof.json"
+    if canary_report.exists():
+        canary = json.loads(canary_report.read_text(encoding="utf-8"))
+        canary_ok = bool(canary.get("passed"))
+        observation = canary.get("independent_observation", {})
+        canary_note = (
+            f"a canary drawn from the operating system's CSPRNG at run time "
+            f"({canary.get('canary', {}).get('source', 'unknown source')}) is propagated through "
+            f"the application's own study path and read back by a separate SQLite reader: the "
+            f"learner row carries the canary name and target, {observation.get('attempts')} "
+            f"attempt(s) and {observation.get('mastery_rows')} mastery row(s) hang off it, and "
+            f"the negative control -- the same canary with one character changed -- finds nothing"
+        )
+
+    # The dependency blocker graph: which prerequisite or capability each blocked test waits on,
+    # and the machine check that nothing is blocked by cascade.
+    graph_ok = False
+    graph_note = "no dependency blocker graph has been generated"
+    graph_path = STATE / "DEPENDENCY_BLOCKER_GRAPH.json"
+    if graph_path.exists():
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+        counts = graph.get("counts", {})
+        continuation = graph.get("cascade_avoidance", {}).get("tests_that_continued", [])
+        graph_ok = (
+            not graph.get("violations")
+            and counts.get("edges", 0) > 0
+            and bool(continuation)
+        )
+        widest = max(
+            (len(targets) for targets in graph.get("blast_radius", {}).values()), default=0
+        )
+        graph_note = (
+            f"{counts.get('tests')} test(s), {counts.get('edges')} explicit edge(s) over "
+            f"{counts.get('unsatisfied_nodes')} unsatisfied node(s); the widest node blocks "
+            f"{widest} test(s) and {len(continuation)} test(s) ran to completion inside a stage "
+            f"that holds a blocked sibling, so cascade avoidance is observed rather than asserted"
+        )
+
+    # The change invalidation graph: what this candidate's changes invalidate, from the
+    # previous epoch's commit, and the machine check that no changed path is uncovered.
+    invalidation_ok = False
+    invalidation_note = "no change invalidation graph has been generated"
+    invalidation_path = STATE / "CHANGE_INVALIDATION_GRAPH.json"
+    if invalidation_path.exists():
+        invalidation = json.loads(invalidation_path.read_text(encoding="utf-8"))
+        rerun = invalidation.get("rerun_list", [])
+        invalidation_ok = not invalidation.get("violations")
+        invalidation_note = (
+            f"epoch {invalidation.get('prior_epoch')} -> {invalidation.get('new_epoch')}: "
+            f"{len(invalidation.get('changed_paths', []))} changed path(s) over "
+            f"{len(invalidation.get('surfaces', {}))} surface(s), rerun list "
+            f"{', '.join(rerun) if rerun else 'nothing'}; every changed path is covered by a gate, "
+            f"and the gate edges are checked against scripts/verify.sh"
+        )
+
+    # The recovery measurement: declared RPO/RTO, and RTO/MTTR measured against faulted copies
+    # of a real store, with the post-restore state reconciled byte for byte.
+    recovery_ok = False
+    recovery_note = "no recovery measurement has been executed"
+    recovery_path = REPO / ".agent/evidence/EP-009/recovery/recovery-objectives.json"
+    if recovery_path.exists():
+        recovery = json.loads(recovery_path.read_text(encoding="utf-8"))
+        measured = recovery.get("measured", {})
+        faults = recovery.get("faults", [])
+        recovery_ok = bool(recovery.get("reconciled_every_fault")) and bool(
+            recovery.get("rto_target_met")
+        )
+        recovery_note = (
+            f"{len(faults)} hard failure(s) injected on copies of a real store "
+            f"({', '.join(fault.get('fault', '?') for fault in faults)}); RTO measured "
+            f"{measured.get('restore_seconds_max')}s against a declared "
+            f"{recovery.get('declared', {}).get('rto_seconds')}s, MTTR "
+            f"{measured.get('mttr_seconds_max')}s, and every fault reconciled to the pre-fault "
+            f"rows and bytes. The RPO is declared, not promised: no automatic backup schedule is "
+            f"claimed, so it is the interval since the learner's last backup"
+        )
     record(
         "DOD-002",
         "PASS" if build_status == "PASS" and cleanroom_ok else (
@@ -369,10 +456,15 @@ def evaluate_dod(i: Inputs) -> list[dict]:
 
     record(
         "DOD-013",
-        "PARTIAL",
-        "apps/desktop/src-tauri/src/self_check.rs",
-        "identifiers are runtime-generated, but no critical proof uses a random "
-        "canary value chosen at run time to defeat a canned response",
+        "PASS" if canary_ok else "PARTIAL",
+        ".agent/evidence/EP-009/canary/canary-proof.json",
+        canary_note
+        + (
+            "; the canary enters at the command boundary rather than through the window, "
+            "because no window driver exists in this environment (DOD-004)"
+            if canary_ok
+            else ""
+        ),
     )
 
     record(
@@ -522,11 +614,9 @@ def evaluate_dod(i: Inputs) -> list[dict]:
 
     record(
         "DOD-031",
-        "PARTIAL",
+        "PASS" if graph_ok else "PARTIAL",
         ".agent/verification/state/DEPENDENCY_BLOCKER_GRAPH.json",
-        "blocked rows are classified per ID rather than blanket-blocked, but the "
-        "declared dependency-edge graph is empty, so cascade avoidance is reasoned "
-        "rather than machine-checked",
+        graph_note,
     )
 
     record(
@@ -569,10 +659,9 @@ def evaluate_dod(i: Inputs) -> list[dict]:
 
     record(
         "DOD-036",
-        "PARTIAL",
-        "apps/desktop/src-tauri/src/self_check.rs",
-        "backup, verified restore and refusal of a tampered archive are proven "
-        "end to end; RPO/RTO/MTTR are not measured",
+        "PASS" if recovery_ok else "PARTIAL",
+        ".agent/evidence/EP-009/recovery/recovery-objectives.json",
+        recovery_note,
     )
 
     record(
@@ -606,10 +695,9 @@ def evaluate_dod(i: Inputs) -> list[dict]:
 
     record(
         "DOD-040",
-        "PARTIAL",
+        "PASS" if invalidation_ok else "PARTIAL",
         ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
-        "the artifact identity and proof matrix are regenerated every sweep, but "
-        "the change-invalidation graph is still a template with no populated edges",
+        invalidation_note,
     )
 
     record(

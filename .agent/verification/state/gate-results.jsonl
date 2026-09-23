@@ -17,3 +17,5 @@
 {"gate":"smoke-test","exit":0}
 {"gate":"live-fire","exit":0}
 {"gate":"release-state","exit":0}
+{"gate":"dependency-graph","exit":0}
+{"gate":"change-invalidation","exit":0}

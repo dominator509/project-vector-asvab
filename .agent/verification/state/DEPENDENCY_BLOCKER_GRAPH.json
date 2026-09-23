@@ -1,4 +1,4367 @@
 {
-  "blocked_nodes": [],
-  "edges": []
+  "generated_from": {
+    "registry": ".agent\\verification\\MASTER_TEST_REGISTRY.csv",
+    "accounting": ".agent\\verification\\reports\\COMPLETE_TEST_ACCOUNTING.csv",
+    "gate_results": ".agent\\verification\\state\\gate-results.jsonl"
+  },
+  "counts": {
+    "tests": 484,
+    "blocked": 26,
+    "edges": 26,
+    "unsatisfied_nodes": 12
+  },
+  "unsatisfied_nodes": [
+    "capability:binary-analysis-toolchain",
+    "capability:cache-free-environment",
+    "capability:ci-runner",
+    "capability:deployment-target",
+    "capability:external-laboratory",
+    "capability:fuzzing-toolchain",
+    "capability:human-participant",
+    "capability:independent-build-environment",
+    "capability:runtime-instrumentation",
+    "capability:signing-certificate",
+    "prerequisite:full-duration-trial",
+    "prerequisite:prior-released-version"
+  ],
+  "blast_radius": {
+    "capability:binary-analysis-toolchain": [
+      "test:GEN-078",
+      "test:GEN-079"
+    ],
+    "capability:cache-free-environment": [
+      "test:E2E-011"
+    ],
+    "capability:ci-runner": [
+      "test:GEN-089"
+    ],
+    "capability:deployment-target": [
+      "test:GEN-015",
+      "test:GEN-019",
+      "test:GEN-022",
+      "test:GEN-023",
+      "test:GEN-085",
+      "test:SUP-013"
+    ],
+    "capability:external-laboratory": [
+      "test:GEN-103"
+    ],
+    "capability:fuzzing-toolchain": [
+      "test:GEN-027"
+    ],
+    "capability:human-participant": [
+      "test:E2E-020",
+      "test:GEN-011",
+      "test:GEN-018",
+      "test:GEN-020",
+      "test:GEN-021",
+      "test:SUP-010",
+      "test:SUP-015"
+    ],
+    "capability:independent-build-environment": [
+      "test:SUP-004"
+    ],
+    "capability:runtime-instrumentation": [
+      "test:GEN-016"
+    ],
+    "capability:signing-certificate": [
+      "test:GEN-075"
+    ],
+    "prerequisite:full-duration-trial": [
+      "test:E2E-018"
+    ],
+    "prerequisite:prior-released-version": [
+      "test:E2E-013",
+      "test:E2E-014",
+      "test:SUP-005"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "capability:binary-analysis-toolchain",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:cache-free-environment",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:ci-runner",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:deployment-target",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:external-laboratory",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:fuzzing-toolchain",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:human-participant",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:independent-build-environment",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:runtime-instrumentation",
+      "kind": "capability"
+    },
+    {
+      "id": "capability:signing-certificate",
+      "kind": "capability"
+    },
+    {
+      "id": "gate:anti-gaming-scan",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:artifact-identity",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:build",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:dependency-audit",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:format-check",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:generated-pack",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:lint",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:live-fire",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:mcp-probe",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:proof-matrix-stamp",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:provider-probe",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:release-state",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:security-check",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:smoke-test",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:test-collection-guard",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:test-e2e",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:test-integration",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:test-unit",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "gate:typecheck",
+      "kind": "gate",
+      "exit": 0,
+      "status": "RAN"
+    },
+    {
+      "id": "prerequisite:full-duration-trial",
+      "kind": "prerequisite"
+    },
+    {
+      "id": "prerequisite:prior-released-version",
+      "kind": "prerequisite"
+    },
+    {
+      "id": "test:BC-001",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Smart Contract Static Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-002",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Automated Static Code Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-003",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Control Flow Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-004",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Flow Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-005",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Taint Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-006",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Pattern Matching Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-007",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Vulnerability Pattern Detection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-008",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Smart Contract Dynamic Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-009",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Runtime Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-010",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Runtime Monitoring",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-011",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Transaction Monitoring",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-012",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Anomaly Detection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-013",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Behavioral Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-014",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "On-Chain Monitoring",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-015",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Smart Contract Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-016",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Property-Based Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-017",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Invariant Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-018",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Coverage-Guided Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-019",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Stateful Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-020",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Differential Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-021",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Grammar-Based Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-022",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Mutation-Based Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-023",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Formal Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-024",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Symbolic Execution",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-025",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Model Checking",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-026",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Theorem Proving",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-027",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "SMT Solving",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-028",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Bounded Model Checking",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-029",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Abstract Interpretation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-030",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Manual Code Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-031",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Expert Security Audit",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-032",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Peer Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-033",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Architecture Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-034",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Line-by-Line Code Inspection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-035",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Smart Contract Penetration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-036",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Red Team Exercises",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-037",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Adversarial Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-038",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Exploit Simulation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-039",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Attack Surface Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-040",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Black Box Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-041",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Gray Box Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-042",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "White Box Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-043",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Threat Modeling",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-044",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "STRIDE Threat Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-045",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Attack Tree Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-046",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Data Flow Diagram (DFD) Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-047",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Attack Surface Mapping",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-048",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Risk-Based Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-049",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Reentrancy Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-050",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Integer Overflow/Underflow Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-051",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Front-Running Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-052",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Sandwich Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-053",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Flash Loan Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-054",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Oracle Manipulation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-055",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Timestamp Dependency Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-056",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Denial of Service (DoS) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-057",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Gas Limit DoS Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-058",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Delegatecall Injection Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-059",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Storage Collision Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-060",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Signature Replay Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-061",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Block Gas Limit Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-062",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Access Control Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-063",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Role-Based Access Control (RBAC) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-064",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Privilege Escalation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-065",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Authorization Bypass Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-066",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Permission Boundary Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-067",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Ownership Verification Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-068",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cryptographic Primitive Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-069",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Side-Channel Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-070",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Key Management Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-071",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Signature Verification Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-072",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Randomness Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-073",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Verifiable Random Function (VRF) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-074",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Encryption Scheme Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-075",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Hash Function Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-076",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Proxy Contract Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-077",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Upgradability Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-078",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Storage Layout Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-079",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Initialization Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-080",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Transparent Proxy Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-081",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "UUPS Proxy Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-082",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Beacon Proxy Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-083",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Implementation Verification Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-084",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Economic Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-085",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Game-Theoretic Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-086",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Incentive Mechanism Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-087",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Tokenomics Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-088",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "MEV (Maximal Extractable Value) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-089",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Liquidity Pool Manipulation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-090",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Consensus Protocol Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-091",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Byzantine Fault Tolerance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-092",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Consensus Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-093",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Validator Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-094",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Block Propagation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-095",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Network Partition Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-096",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Finality Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-097",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Node Operation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-098",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Client Implementation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-099",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Execution Layer Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-100",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Consensus Layer Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-101",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Peer-to-Peer Network Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-102",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Network Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-103",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Oracle Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-104",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Oracle Data Integrity Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-105",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cross-Chain Bridge Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-106",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Bridge Security Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-107",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Price Feed Manipulation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-108",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cross-Chain Message Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-109",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Wallet Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-110",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Private Key Exposure Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-111",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Hardware Security Module (HSM) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-112",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Multi-Signature Wallet Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-113",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Seed Phrase Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-114",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Key Derivation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-115",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Transaction Signing Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-116",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "ERC-20 Token Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-117",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "ERC-721 Token Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-118",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "ERC-1155 Token Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-119",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Token Integration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-120",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Token Standard Conformance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-121",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Dependency Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-122",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Software Bill of Materials (SBOM) Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-123",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Package Vulnerability Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-124",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Third-Party Library Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-125",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Artifact Integrity Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-126",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Compiler Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-127",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "CI/CD Pipeline Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-128",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Automated Security Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-129",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Pre-Commit Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-130",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Build Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-131",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Deployment Security Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-132",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Secret Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-133",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Credential Exposure Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-134",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Private Key Leakage Detection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-135",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "API Key Exposure Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-136",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Hardcoded Secrets Detection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-137",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Infrastructure-as-Code (IaC) Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-138",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Configuration Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-139",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Terraform Security Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-140",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Container Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-141",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Kubernetes Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-142",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Docker Image Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-143",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "DAO Governance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-144",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Voting Mechanism Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-145",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Proposal Execution Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-146",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Treasury Management Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-147",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Governance Attack Simulation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-148",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Token-Based Voting Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-149",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Regulatory Compliance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-150",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Privacy Compliance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-151",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Protection Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-152",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "SOC 2 Compliance Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-153",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "ISO 27001 Compliance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-154",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Code Coverage Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-155",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Statement Coverage Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-156",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Branch Coverage Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-157",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Function Coverage Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-158",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Path Coverage Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-159",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Unit Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-160",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Integration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-161",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "System Integration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-162",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-163",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "End-to-End Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-164",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Regression Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-165",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Performance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-166",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Load Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-167",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Stress Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-168",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Scalability Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-169",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Transaction Throughput Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-170",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Gas Optimization Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-171",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Input Validation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-172",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Boundary Value Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-173",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Input Sanitization Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-174",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Edge Case Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-175",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Overflow/Underflow Boundary Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-176",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Audit Trail Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-177",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Event Logging Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-178",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Immutability Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-179",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Tamper-Evidence Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-180",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Forensic Analysis Support Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-181",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Incident Response Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-182",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Disaster Recovery Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-183",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Emergency Pause Mechanism Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-184",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Circuit Breaker Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-185",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Rollback Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-186",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Recovery Procedure Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-187",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Smart Contract Mutation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-188",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Test Suite Adequacy Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-189",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Mutation Score Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-190",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Sandwich Attack Stress Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-191",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Slippage Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-192",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Price Oracle Manipulation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-193",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Liquidity Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-194",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Governance Token Attack Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-195",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "NFT Metadata Integrity Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-196",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cross-Contract Call Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-197",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "External Call Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-198",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Fallback Function Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-199",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Payable Function Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-200",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Self-Destruct Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-201",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Constructor Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:BC-202",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Modifier Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:E2E-001",
+      "kind": "test",
+      "stage": "05-SMOKE",
+      "title": "Smoke & Infrastructure Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-002",
+      "kind": "test",
+      "stage": "06-SANITY",
+      "title": "Sanity & Build Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-003",
+      "kind": "test",
+      "stage": "07-FUNCTIONAL-REALITY",
+      "title": "Full Functional Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-004",
+      "kind": "test",
+      "stage": "08-API-INTEGRATION",
+      "title": "API Contract & Security Validation",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-005",
+      "kind": "test",
+      "stage": "11-REGRESSION",
+      "title": "Regression & Differential Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-006",
+      "kind": "test",
+      "stage": "13-EXPLORATORY",
+      "title": "Ad Hoc & Exploratory Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-007",
+      "kind": "test",
+      "stage": "14-USABILITY-A11Y-DX",
+      "title": "Usability, Accessibility & DX Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-008",
+      "kind": "test",
+      "stage": "15-PERFORMANCE",
+      "title": "Performance & Workload Orchestration",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-009",
+      "kind": "test",
+      "stage": "17-STRESS-CHAOS",
+      "title": "Systemic Stress & Exhaustion Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-010",
+      "kind": "test",
+      "stage": "18-RECOVERY-DR",
+      "title": "Resilience & Recovery Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-011",
+      "kind": "test",
+      "stage": "19-FINAL-ARTIFACT",
+      "title": "Clean-Room Deployment Verification",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:E2E-012",
+      "kind": "test",
+      "stage": "09-DATA-SEMANTICS",
+      "title": "Schema Evolution & Data Migration Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-013",
+      "kind": "test",
+      "stage": "10-COMPATIBILITY",
+      "title": "Version-Skew & Compatibility Verification",
+      "must_account": "true",
+      "status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "id": "test:E2E-014",
+      "kind": "test",
+      "stage": "10-COMPATIBILITY",
+      "title": "Downgrade & Rollback Compatibility Verification",
+      "must_account": "true",
+      "status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "id": "test:E2E-015",
+      "kind": "test",
+      "stage": "09-DATA-SEMANTICS",
+      "title": "Import / Export / Data Portability Round-Trip",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-016",
+      "kind": "test",
+      "stage": "09-DATA-SEMANTICS",
+      "title": "Temporal, Timezone & Clock-Skew Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-017",
+      "kind": "test",
+      "stage": "09-DATA-SEMANTICS",
+      "title": "I18N/L10N & Unicode Robustness Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-018",
+      "kind": "test",
+      "stage": "16-SOAK",
+      "title": "Soak, Endurance & Resource-Leak Verification",
+      "must_account": "true",
+      "status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "id": "test:E2E-019",
+      "kind": "test",
+      "stage": "12-AI-AGENT-SAFETY",
+      "title": "AI/Agentic Systems Safety & Capability Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:E2E-020",
+      "kind": "test",
+      "stage": "20-UAT-HUMAN",
+      "title": "User Acceptance Testing Orchestration",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-001",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Static Application Security Testing (SAST)",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-002",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Software Composition Analysis (SCA)",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-003",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Dependency Scanning",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-004",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "License Compliance Scanning",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-005",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Secrets Scanning",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-006",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Credential Scanning",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-007",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Hardcoded Credential Detection",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-008",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Static Taint Analysis",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-009",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Flow Analysis",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-010",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Secure Code Review",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-011",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Manual Secure Code Review",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-012",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Source Code Security Audit",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-013",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Security Code Metrics Analysis",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-014",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Cyclomatic Complexity Analysis",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-015",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Dynamic Application Security Testing (DAST)",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-016",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Interactive Application Security Testing (IAST)",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-017",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Runtime Application Self-Protection (RASP)",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-018",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Manual Penetration Testing",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-019",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Automated Penetration Testing",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-020",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Red Team Testing",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-021",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Purple Team Testing",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-022",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Adversary Emulation / Simulation",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-023",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Breach and Attack Simulation (BAS)",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-024",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Fuzz Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-025",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Coverage-Guided Fuzzing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-026",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Grammar-Based Fuzzing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-027",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Mutation-Based Fuzzing",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-028",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Protocol Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-029",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Web Application Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-030",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-031",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "REST API Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-032",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "GraphQL Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-033",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "SOAP API Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-034",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Mobile Application Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-035",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Desktop Application Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-036",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Client-Side Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-037",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Microservices Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-038",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Serverless / FaaS Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-039",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Container Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-040",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Kubernetes Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-041",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cloud-Native Application Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-042",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Vulnerability Scanning",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-043",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Vulnerability Assessment",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-044",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Weakness Enumeration Mapping (CWE)",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-045",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Injection Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-046",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "SQL Injection Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-047",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cross-Site Scripting (XSS) Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-048",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cross-Site Request Forgery (CSRF) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-049",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Input Validation Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-050",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Authentication Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-051",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Authorization Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-052",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Broken Access Control Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-053",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "IDOR Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-054",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Privilege Escalation Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-055",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Session Management Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-056",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Business Logic Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-057",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cryptographic Implementation Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-058",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Weak Cryptography Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-059",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "TLS/SSL Configuration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-060",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Side-Channel Resistance Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-061",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Misconfiguration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-062",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Sensitive Data Exposure Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-063",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Logging and Monitoring Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-064",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Infrastructure-as-Code (IaC) Security Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-065",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Configuration Hardening Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-066",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Container Image Vulnerability Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-067",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Cloud Configuration Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-068",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Network Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-069",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Service Mesh Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-070",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Gateway Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-071",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Sandbox and Isolated Environment Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-072",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Software Bill of Materials (SBOM) Generation and Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-073",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Dependency Integrity Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-074",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Build Provenance Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-075",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Artifact Signing Verification",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-076",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Artifact Attestation Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-077",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Binary Integrity Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-078",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Binary Analysis",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-079",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Reverse Engineering Security Analysis",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-080",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Third-Party Software Security Assessment",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-081",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "CI/CD Pipeline Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-082",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Pre-Commit Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-083",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Pre-Build Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-084",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Post-Build Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-085",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Pre-Deployment Security Testing",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-086",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Continuous Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:GEN-087",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Gate Enforcement",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-088",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Test Automation",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-089",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Test Orchestration",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:GEN-090",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Security Requirements Testing (Requirements-Driven)",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-091",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Threat Modeling",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-092",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Attack Tree Analysis",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-093",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Abuse Case Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-094",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Misuse Case Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-095",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Architecture Security Assessment",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-096",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Secure Design Review",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-097",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Feature Design Review",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-098",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Control Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-099",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Compliance Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-100",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Policy-as-Code Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-101",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Compliance-as-Code Validation",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-102",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Regulatory Security Testing (e.g., GDPR)",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-103",
+      "kind": "test",
+      "stage": "19-EXTERNAL-HUMAN",
+      "title": "Common Criteria Security Evaluation",
+      "must_account": "true",
+      "status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "id": "test:GEN-104",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Symbolic Execution",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-105",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Model-Based Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-106",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Property-Based Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-107",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Formal Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-108",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Property Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-109",
+      "kind": "test",
+      "stage": "11-FORMAL-PROPERTY-REGRESSION",
+      "title": "Theorem Proving for Security Properties",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-110",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Regression Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-111",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Incident Response Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-112",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Baseline Validation",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-113",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Zero Trust Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-114",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Chaos Engineering for Security Resilience",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-115",
+      "kind": "test",
+      "stage": "15-17-PERFORMANCE-STRESS-RECOVERY",
+      "title": "Fault Injection Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-116",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Canary Release Security Validation",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-117",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Blue-Green Deployment Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-118",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Security Observability Validation",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-119",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Anomaly Detection Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-120",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Web Application Firewall (WAF) Effectiveness Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-121",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "WAF Bypass Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:GEN-122",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Exploratory Security Testing",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:HIPAA-001",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Static Application Security Testing (SAST)",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-002",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Secure Code Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-003",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Manual Secure Code Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-004",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Peer Security Code Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-005",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Security-Focused Code Inspection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-006",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Dynamic Application Security Testing (DAST)",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-007",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Interactive Application Security Testing (IAST)",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-008",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Runtime Application Self-Protection (RASP)",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-009",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Web Application Penetration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-010",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Application Vulnerability Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-011",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Manual Application Penetration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-012",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-013",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "REST API Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-014",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "GraphQL Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-015",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "gRPC Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-016",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Authentication Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-017",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Authorization Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-018",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Software Composition Analysis (SCA)",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-019",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Open Source Dependency Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-020",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Third-Party Component Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-021",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "License Compliance Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-022",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Software Bill of Materials (SBOM) Generation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-023",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "SBOM Vulnerability Analysis",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-024",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Software Supply Chain Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-025",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Build Provenance Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-026",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Artifact Integrity Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-027",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Dependency Provenance Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-028",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Secure Build Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-029",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Container Image Security Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-030",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Container Runtime Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-031",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Kubernetes Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-032",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Infrastructure-as-Code Security Scanning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-033",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Terraform Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-034",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "CloudFormation Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-035",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Cloud Configuration Security Assessment",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-036",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cloud Security Posture Management (CSPM) Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-037",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Authentication Mechanism Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-038",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Multi-Factor Authentication Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-039",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Authorization and Access Control Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-040",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Role-Based Access Control (RBAC) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-041",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Attribute-Based Access Control (ABAC) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-042",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Session Management Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-043",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Token and JWT Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-044",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cryptographic Module Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-045",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cryptographic Algorithm Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-046",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Encryption Implementation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-047",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "TLS/SSL Configuration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-048",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Key Management Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-049",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Random Number Generator Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-050",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Input Validation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-051",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "SQL Injection Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-052",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cross-Site Scripting (XSS) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-053",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "OS Command Injection Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-054",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "LDAP Injection Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-055",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "XML & XPath Injection Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-056",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Server-Side Request Forgery (SSRF) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-057",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cross-Site Request Forgery (CSRF) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-058",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Secrets Scanning (Source/Repo) Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-059",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Hardcoded Credential Detection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-060",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "API Key Exposure Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-061",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Private Key Leakage Detection",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-062",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Secrets Management Controls Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-063",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Fuzz Testing (General) Planning",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-064",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Protocol Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-065",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "File Format Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-066",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-067",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Mutation-Based Fuzzing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-068",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Business Logic Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-069",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Workflow & State Manipulation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-070",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Race Condition Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-071",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "TOCTOU Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-072",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Authorization Bypass Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-073",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Threat Modeling",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-074",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Security Architecture Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-075",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Secure Design Review",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-076",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Logging & Monitoring Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-077",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Audit Trail Integrity Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-078",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Alerting & Detection Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-079",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Security Event Correlation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-080",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "SIEM Integration Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-081",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Protection at Rest Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-082",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Protection in Transit Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-083",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Loss Prevention (DLP) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-084",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "PII/PHI Handling Compliance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-085",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Retention & Deletion Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-086",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Configuration Hardening Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-087",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Default Credential Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-088",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Environment Segregation Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-089",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Backup & Recovery Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-090",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Disaster Recovery Security Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-091",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Endpoint Security Integration Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-092",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Host Hardening Validation",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-093",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Privilege Escalation Path Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-094",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Local File Inclusion (LFI) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-095",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Remote File Inclusion (RFI) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-096",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Path Traversal Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-097",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Deserialization Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-098",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Memory Safety Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-099",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Secure Updates / Patch Mechanism Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-100",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "End-of-Life Component Risk Assessment",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-101",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "SBOM Validation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-102",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Third-Party Dependency Risk Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-103",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "Open Source License Compliance Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-104",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Secrets Lifecycle Management Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-105",
+      "kind": "test",
+      "stage": "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "title": "API Key Exposure Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-106",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cloud IAM Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-107",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Cloud Storage Exposure Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-108",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Infrastructure as Code (IaC) Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-109",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Container Image Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-110",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Kubernetes Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-111",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Serverless Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-112",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "API Rate Limiting & Abuse Protection Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-113",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Business Logic Abuse Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-114",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Race Condition Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-115",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Time-of-Check-Time-of-Use (TOCTOU) Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-116",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Session Management Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-117",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Token Security Testing (JWT/OAuth)",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-118",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Multi-Factor Authentication (MFA) Validation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-119",
+      "kind": "test",
+      "stage": "17-RECOVERY-OBSERVABILITY",
+      "title": "Account Recovery Workflow Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-120",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Authorization Bypass Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-121",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "GraphQL Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-122",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "WebSocket Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-123",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Message Queue / Event Bus Security Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-124",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Data Integrity Validation Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:HIPAA-125",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Supply Chain Trust Boundary Testing",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:SUP-001",
+      "kind": "test",
+      "stage": "02-CLAIMS-TRACEABILITY",
+      "title": "Repository Reality / Anti-Simulation Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-002",
+      "kind": "test",
+      "stage": "02-CLAIMS-TRACEABILITY",
+      "title": "Requirements-to-Release Traceability Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-003",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Packaging & Distribution Artifact Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-004",
+      "kind": "test",
+      "stage": "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "title": "Reproducible Build Verification",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:SUP-005",
+      "kind": "test",
+      "stage": "10-COMPATIBILITY",
+      "title": "Upgrade Path Verification",
+      "must_account": "true",
+      "status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "id": "test:SUP-006",
+      "kind": "test",
+      "stage": "09-DATA-SEMANTICS",
+      "title": "Idempotency, Retry & Delivery-Semantics Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-007",
+      "kind": "test",
+      "stage": "10-COMPATIBILITY",
+      "title": "Configuration & Feature-Flag Combinatorial Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-008",
+      "kind": "test",
+      "stage": "10-COMPATIBILITY",
+      "title": "Cross-Platform & Supported-Environment Matrix Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:SUP-009",
+      "kind": "test",
+      "stage": "14-USABILITY-A11Y-DX",
+      "title": "Executable Documentation & Quickstart Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-010",
+      "kind": "test",
+      "stage": "14-USABILITY-A11Y-DX",
+      "title": "Visual Regression Verification",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:SUP-011",
+      "kind": "test",
+      "stage": "18-RECOVERY-DR",
+      "title": "Operational Observability Correctness Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-012",
+      "kind": "test",
+      "stage": "15-PERFORMANCE",
+      "title": "SLO, SLA & Error-Budget Release Verification",
+      "must_account": "true",
+      "status": "PASS"
+    },
+    {
+      "id": "test:SUP-013",
+      "kind": "test",
+      "stage": "19-FINAL-ARTIFACT",
+      "title": "Deployment, Promotion, Canary & Rollback Lifecycle Verification",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "id": "test:SUP-014",
+      "kind": "test",
+      "stage": "12-DYNAMIC-SECURITY",
+      "title": "Multi-Tenant Isolation & Noisy-Neighbor Verification",
+      "must_account": "true",
+      "status": "SKIPPED_NOT_APPLICABLE"
+    },
+    {
+      "id": "test:SUP-015",
+      "kind": "test",
+      "stage": "20-UAT-HUMAN",
+      "title": "Manual Accessibility & Assistive-Technology Validation",
+      "must_account": "true",
+      "status": "BLOCKED_CAPABILITY"
+    }
+  ],
+  "edges": [
+    {
+      "from": "capability:human-participant",
+      "to": "test:GEN-011",
+      "why": "manual secure code review requires a human reviewer",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:deployment-target",
+      "to": "test:GEN-015",
+      "why": "DAST requires a running deployed service and a scanning tool (e.g. OWASP ZAP) that is not installed",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:runtime-instrumentation",
+      "to": "test:GEN-016",
+      "why": "IAST requires runtime instrumentation agent support from the language runtime",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:human-participant",
+      "to": "test:GEN-018",
+      "why": "manual penetration testing requires a human tester; PREFLIGHT PF-017 human lane",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:deployment-target",
+      "to": "test:GEN-019",
+      "why": "automated penetration testing needs a deployed target and a DAST tool such as OWASP ZAP, which is not installed",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:human-participant",
+      "to": "test:GEN-020",
+      "why": "red team testing requires a human team and a deployed environment",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:human-participant",
+      "to": "test:GEN-021",
+      "why": "purple team testing requires both offensive and defensive human participants",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:deployment-target",
+      "to": "test:GEN-022",
+      "why": "adversary emulation requires a human red team and a deployed environment",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:deployment-target",
+      "to": "test:GEN-023",
+      "why": "breach and attack simulation requires a deployed production-like environment",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:fuzzing-toolchain",
+      "to": "test:GEN-027",
+      "why": "mutation-based fuzzing requires a coverage-guided fuzzer (cargo-fuzz/AFL), not installed",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:signing-certificate",
+      "to": "test:GEN-075",
+      "why": "artifact signing verification requires a code-signing certificate (REQ-036 external gate)",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:binary-analysis-toolchain",
+      "to": "test:GEN-078",
+      "why": "binary analysis requires Ghidra or IDA Pro, which are not installed",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:binary-analysis-toolchain",
+      "to": "test:GEN-079",
+      "why": "reverse engineering analysis requires a disassembler toolchain, not installed",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:deployment-target",
+      "to": "test:GEN-085",
+      "why": "pre-deployment testing requires a deployment target; AUTO_DEPLOY is false",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:ci-runner",
+      "to": "test:GEN-089",
+      "why": "security test orchestration requires a CI runner; the local harness covers this",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:external-laboratory",
+      "to": "test:GEN-103",
+      "why": "Common Criteria evaluation is an external laboratory certification, not an in-repo test",
+      "recorded_status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "from": "capability:cache-free-environment",
+      "to": "test:E2E-011",
+      "why": "clean-room deployment verification requires a disposable environment with no local caches (PREFLIGHT PF-014)",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "prerequisite:prior-released-version",
+      "to": "test:E2E-013",
+      "why": "version-skew testing requires a second released version; only one candidate exists",
+      "recorded_status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "from": "prerequisite:prior-released-version",
+      "to": "test:E2E-014",
+      "why": "downgrade and rollback compatibility requires a prior released version",
+      "recorded_status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "from": "prerequisite:full-duration-trial",
+      "to": "test:E2E-018",
+      "why": "soak testing requires an extended wall-clock budget beyond a single verification run",
+      "recorded_status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "from": "capability:human-participant",
+      "to": "test:E2E-020",
+      "why": "user acceptance testing requires human participants; PREFLIGHT PF-017 human lane",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:independent-build-environment",
+      "to": "test:SUP-004",
+      "why": "reproducible-build verification requires a second clean environment to compare digests (PREFLIGHT PF-014)",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "prerequisite:prior-released-version",
+      "to": "test:SUP-005",
+      "why": "upgrade-path verification requires a prior released version to upgrade from",
+      "recorded_status": "BLOCKED_PREREQUISITE"
+    },
+    {
+      "from": "capability:human-participant",
+      "to": "test:SUP-010",
+      "why": "visual regression requires approved baseline screenshots from a human-reviewed run",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:deployment-target",
+      "to": "test:SUP-013",
+      "why": "deployment, promotion and canary lifecycle requires a deployment target; AUTO_DEPLOY is false",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    },
+    {
+      "from": "capability:human-participant",
+      "to": "test:SUP-015",
+      "why": "assistive-technology validation requires a human using Narrator or NVDA; PREFLIGHT PF-017",
+      "recorded_status": "BLOCKED_CAPABILITY"
+    }
+  ],
+  "cascade_avoidance": {
+    "stages_holding_a_blocked_row": [
+      ".agent/verification/SUPPLEMENTAL_PRODUCTION_GATES.md",
+      "03-STATIC-DESIGN-SUPPLY-CHAIN",
+      "04-BUILD-ARTIFACT-DEPLOYMENT",
+      "10-COMPATIBILITY",
+      "12-DYNAMIC-SECURITY",
+      "14-USABILITY-A11Y-DX",
+      "19-EXTERNAL-HUMAN",
+      "19-FINAL-ARTIFACT",
+      "20-UAT-HUMAN",
+      "embedded-suite"
+    ],
+    "tests_that_continued": [
+      "E2E-007",
+      "GEN-001",
+      "GEN-002",
+      "GEN-003",
+      "GEN-004",
+      "GEN-005",
+      "GEN-006",
+      "GEN-007",
+      "GEN-008",
+      "GEN-009",
+      "GEN-010",
+      "GEN-012",
+      "GEN-013",
+      "GEN-014",
+      "GEN-024",
+      "GEN-025",
+      "GEN-026",
+      "GEN-030",
+      "GEN-031",
+      "GEN-035",
+      "GEN-036",
+      "GEN-041",
+      "GEN-042",
+      "GEN-043",
+      "GEN-044",
+      "GEN-045",
+      "GEN-046",
+      "GEN-047",
+      "GEN-049",
+      "GEN-050",
+      "GEN-051",
+      "GEN-052",
+      "GEN-054",
+      "GEN-055",
+      "GEN-056",
+      "GEN-057",
+      "GEN-060",
+      "GEN-062",
+      "GEN-070",
+      "GEN-071",
+      "GEN-072",
+      "GEN-073",
+      "GEN-074",
+      "GEN-076",
+      "GEN-077",
+      "GEN-080",
+      "GEN-082",
+      "GEN-083",
+      "GEN-084",
+      "GEN-087",
+      "GEN-088",
+      "GEN-090",
+      "GEN-091",
+      "GEN-092",
+      "GEN-093",
+      "GEN-094",
+      "GEN-095",
+      "GEN-096",
+      "GEN-097",
+      "GEN-098",
+      "GEN-099",
+      "GEN-100",
+      "GEN-101",
+      "GEN-102",
+      "GEN-105",
+      "GEN-108",
+      "GEN-110",
+      "GEN-112",
+      "GEN-113",
+      "GEN-116",
+      "GEN-117",
+      "GEN-120",
+      "GEN-121",
+      "GEN-122",
+      "SUP-003",
+      "SUP-007",
+      "SUP-009"
+    ]
+  },
+  "violations": []
 }

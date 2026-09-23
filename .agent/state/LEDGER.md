@@ -451,4 +451,27 @@ DOD-036 (RPO/RTO/MTTR unmeasured), the npm advisory state (the gate covers Rust 
 licences, not npm advisories), and the three open requirements that are work here rather than
 external gates: REQ-014, REQ-032, REQ-037.
 
+### Round 30
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The sweep no longer lets one failure hide the rest (DOD-031) | `scripts/verify.sh` runs every gate and records a gate whose declared prerequisite did not pass as `BLOCKED_PREREQUISITE` with the gate that blocked it, exiting non-zero if anything failed or was blocked -- so a reader can tell "this gate failed" from "we never got there". Demonstrated in this round: a formatting failure left all twenty other gates running and recorded. `scripts/dependency-graph.py` derives the graph from the registry, the 484-row accounting and the sweep's own results, and refuses an unnamed blocker, a false gate edge, a passing row with an incoming edge, and any cycle. | `verify.sh`, `dependency-graph.py`, `DEPENDENCY_BLOCKER_GRAPH.json` |
+| What a candidate's changes invalidate (DOD-040) | `scripts/change-invalidation.py` records each epoch against its commit and artifact digest, diffs the previous epoch against this one (committed and uncommitted), maps changed paths to surfaces and gates, closes the rerun list over the gate edges, and refuses a changed path no gate covers. It caught a bug in itself on the first run: stripping porcelain output shifted the first path by a character, which the coverage check reported. | `change-invalidation.py`, `CHANGE_INVALIDATION_GRAPH.md` |
+| An unpredictable value through the real path (DOD-013) | `scripts/probes/canary-proof.py` draws a learner name and target score from the OS CSPRNG at run time, propagates both through the application's study path, reads them back with a separate SQLite connection, and requires the negative control -- the same canary with one character changed -- to find nothing. The canary enters at the command boundary because no window driver exists here (DOD-004). | `canary-proof.py`, `.agent/evidence/EP-009/canary/` |
+| Recovery objectives, and the gap they found (DOD-036) | A truncated, a corrupted and a deleted store are each restored from a verified archive and reconciled to the pre-fault rows and bytes. The first run found that a **truncated store could not be restored at all**: the documented path needs a handle on the live database, and SQLite will not open a malformed one. `restore_verified_at` now restores from the path with the same archive checks and no connection to the damaged file, the CLI falls back to it, and a test plus a mutation pin it. RTO 7.85 s against a declared 60 s. | `backup.rs`, `main.rs`, `ep003_acceptance.rs`, `.agent/evidence/EP-009/recovery/` |
+| The mutation harness was misclassifying mutations | Two Rust mutations from round 29 sat in the vitest list and were "caught" by a runner that never loaded them. Entries now live in the list whose runner can execute them, `test_passes` refuses a crate that is not a workspace member or a filter that matched nothing (counting passed *and* failed, because a caught mutation reports "0 passed; 1 failed"), and `vitest_passes` refuses a missing file or an empty selection. **All 43 caught.** | `mutation-round18.py`, `mutation-round30.log` |
+
+DoD accounting moved from 30 PASS / 11 PARTIAL / 1 EXTERNAL_REQUIRED to **34 PASS / 7 PARTIAL / 1
+EXTERNAL_REQUIRED**; gates from 19 to **21**. Three accounting rows were narrowed rather than left
+stale: `E2E-011` (the cache-free half is executed; the foreign machine is what remains), `SUP-004`
+(two clean environments produce different bytes for the same source -- recorded as a measurement,
+so the claim stays blocked rather than relabelled), and `E2E-018` (abbreviated trial recorded, full
+duration still missing). Corpus unchanged at 6,961 active items; pack `core-asvab v6` active;
+artifact digest `f75d5bc89e0c1a96…`, epoch 19; verdict `CONDITIONAL_EXTERNAL_GATES`.
+
+Remaining in-repo: the npm advisory state (`pnpm audit --prod` is clean; dev tooling carries 1
+critical / 2 high / 5 moderate, and the gate covers Rust advisories and npm licences rather than npm
+advisories) and the three open requirements that are work here -- REQ-014 (local GGUF model),
+REQ-032 (`gh` pull-request lane), REQ-037 (signature verification for updates).
+
 
