@@ -531,4 +531,23 @@ next release rather than being assumed away.
 
 Remaining in-repo: REQ-014 (local GGUF model).
 
+### Round 34
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The local model lane, live (REQ-014) | llama.cpp **b11136** (MIT, server sha256 `48927d3b…`) serving `qwen2.5-0.5b-instruct-q4_k_m.gguf` from `Qwen/Qwen2.5-0.5B-Instruct-GGUF` (**Apache-2.0**, read from the repository's metadata before the download; sha256 `74a4da8c…`), on loopback. It answered *"In one sentence: what does an ohmmeter measure?"* with *"An ohmmeter measures resistance in electrical circuits."* in 0.67 s, read straight from the OpenAI-compatible endpoint with its usage block. | `.agent/evidence/EP-009/local-model/` |
+| The product sees it | `VECTOR_LLAMA_ENDPOINT=http://127.0.0.1:8099 vector-tools provider probe --all-configured` reports the `local_llama` lane **healthy** with the server up -- and routes both local-only and remote-allowed requests to it -- and **unavailable** with the reason (*"no llama.cpp server at http://127.0.0.1:8099 (connection timed out); set VECTOR_LLAMA_ENDPOINT…"*) once it stops. The first time this lane has been healthy in the project's evidence. | `probe-running.json`, `probe-stopped.json` |
+| A duplicate mechanism, deleted | I first wrote a second local-probe module in `vector-llm` with its own environment variable, then found `probe_local_llama()` already doing the same raw-TCP `/health` exchange against `VECTOR_LLAMA_ENDPOINT`. The new module was removed and the existing path used: a second mechanism for one question is drift, and its evidence would have been about my code rather than the product. | `tools/vector-tools/src/transports.rs` |
+| Two gate failures, fixed without weakening | `many_persisted_attempts_stay_within_budget` measured **1.08x** growth alone but tripped its 5x threshold inside the sweep, where its first 250 durable inserts competed with nine sibling suites on one disk. The ten timing-sensitive tests in that file now take a shared lock for the part they time. And `change-invalidation` refused `AI_TRANSPORTS.md` as a changed path no gate would notice, because its surface table named two documents individually; root documents now match by suffix -- and only at the root, so a `.md` inside a crate stays source. | `ep007_performance.rs`, `change-invalidation.py` |
+
+`REQ-014` moves to `DONE_GGUF_MODEL_LIVEFIRED_TRANSPORT_HEALTHY`; open requirements fall from 4 to
+**3**, all external: `REQ-036` (a code-signing certificate), `REQ-038` (a person using a screen
+reader), `REQ-060` (trademark clearance). Named in `AI_TRANSPORTS.md` rather than implied: no screen
+for choosing the model file, and no tutor surface sending a lesson question through the lane yet.
+DoD unchanged at 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates exit 0; verdict
+`CONDITIONAL_EXTERNAL_GATES`.
+
+Every in-repo requirement is now done. What remains is the external residue, and the closure
+accounting that states it.
+
 

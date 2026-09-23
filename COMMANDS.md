@@ -50,7 +50,8 @@ export RUST_BACKTRACE=1
 | Local desktop stop | `test -f .agent/evidence/dev.pid && kill $(cat .agent/evidence/dev.pid)` |
 | Local DB setup | `sh scripts/db-setup.sh` |
 | Migrate | `sh scripts/migrate.sh` |
-| Provider probe | `sh scripts/provider-probe.sh` |
+| Provider probe | `sh scripts/provider-probe.sh` (the `local_llama` lane is probed at `VECTOR_LLAMA_ENDPOINT`, default `http://127.0.0.1:8080`) |
+| Local model lane | start a llama.cpp server on loopback and point the product at it: `llama-server -m <model>.gguf --host 127.0.0.1 --port 8099`, then `VECTOR_LLAMA_ENDPOINT=http://127.0.0.1:8099 sh scripts/provider-probe.sh`. The probe reports the `local_llama` lane healthy while a server answers and unavailable with the reason once it stops; the endpoint variable is the only configuration. |
 | Provider live-fire | `sh scripts/provider-live-fire.sh` |
 | MCP probe | `sh scripts/mcp-probe.sh` |
 | Open a pull request through `gh` | `cargo run -p vector-tools -- repair gh-open --repo <owner/name> --head <branch> --base main --title <title> --body <body> --approver <name>` (the official client, the branch already pushed, an approver named on the command; the lane cannot merge, and it runs on the session `gh auth login` established rather than on a token) |

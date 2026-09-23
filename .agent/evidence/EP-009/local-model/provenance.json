@@ -1,0 +1,32 @@
+{
+  "requirement": "REQ-014",
+  "runtime": {
+    "project": "llama.cpp",
+    "release": "b11136",
+    "asset": "llama-b11136-bin-win-cpu-x64.zip",
+    "licence": "MIT",
+    "source": "github.com/ggml-org/llama.cpp",
+    "server_sha256": "48927D3B0C2391BAC96A181A3B55E55F286812F162B7DD42464A5C38188FF7B4"
+  },
+  "model": {
+    "repository": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "file": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "licence": "Apache-2.0 (declared by the repository, checked through the Hugging Face API before download)",
+    "sha256": "74A4DA8C9FDBCD15BD1F6D01D621410D31C6FC00986F5EB687824E7B93D7A9DB",
+    "bytes": 491400032
+  },
+  "launch": "llama-server.exe -m qwen2.5-0.5b-instruct-q4_k_m.gguf --host 127.0.0.1 --port 8099 --ctx-size 2048 --threads 4",
+  "endpoint_variable": "VECTOR_LLAMA_ENDPOINT=http://127.0.0.1:8099 (the variable the product's own probe reads)",
+  "answer": {
+    "prompt": "In one sentence: what does an ohmmeter measure?",
+    "completion": "An ohmmeter measures resistance in electrical circuits.",
+    "usage": {
+      "completion_tokens": 11,
+      "prompt_tokens": 41,
+      "total_tokens": 52,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  }
+}

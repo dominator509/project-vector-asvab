@@ -38,8 +38,23 @@ fn within<F: FnOnce() -> R, R>(label: &str, limit: Duration, body: F) -> R {
 // Redaction throughput
 // ---------------------------------------------------------------------------
 
+/// Serialise the timing-sensitive measurements in this file against each other.
+///
+/// The test harness runs the tests in one binary on parallel threads, and the suites beside this
+/// one hammer the same disk. Measured in round 34: `many_persisted_attempts_stay_within_budget`
+/// grew 1.08x on a quiet machine and tripped its 5x threshold during the full sweep, because the
+/// first two hundred and fifty durable inserts competed with nine sibling suites and the last two
+/// hundred and fifty did not. The threshold was not the problem and lowering it would be; the
+/// measurement needed the machine to itself, so these tests take a lock for the part they time.
+fn measurement_lock() -> std::sync::MutexGuard<'static, ()> {
+    static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+    LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
 #[test]
 fn redacting_many_captures_stays_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_observability::crash::{redact_capture, CanaryRegistry, CrashCapture};
 
     let mut canaries = CanaryRegistry::new();
@@ -75,6 +90,8 @@ fn redacting_many_captures_stays_within_budget() {
 
 #[test]
 fn verifying_many_captures_stays_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_observability::crash::{
         redact_capture, verify_no_secrets, CanaryRegistry, CrashCapture,
     };
@@ -109,6 +126,8 @@ fn verifying_many_captures_stays_within_budget() {
 
 #[test]
 fn screening_many_payloads_stays_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_questions::ingestion::{sandbox_parse, License, SourcePayload, TrustTier};
 
     let payload = SourcePayload {
@@ -129,6 +148,8 @@ fn screening_many_payloads_stays_within_budget() {
 
 #[test]
 fn archive_entry_checks_stay_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_questions::ingestion::check_archive_entry;
 
     within("5,000 entry checks", Duration::from_secs(5), || {
@@ -145,6 +166,8 @@ fn archive_entry_checks_stay_within_budget() {
 
 #[test]
 fn scheduling_many_reviews_stays_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_study::fsrs::{CardState, Fsrs, FsrsParameters, Rating};
 
     let fsrs = Fsrs::new(FsrsParameters::default()).expect("valid");
@@ -166,6 +189,8 @@ fn scheduling_many_reviews_stays_within_budget() {
 
 #[test]
 fn planning_many_sessions_stays_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_study::selection::{generate_plan, PlanGoal, SkillEstimate};
 
     let skills: Vec<SkillEstimate> = (0..10)
@@ -190,6 +215,8 @@ fn planning_many_sessions_stays_within_budget() {
 
 #[test]
 fn many_persisted_attempts_stay_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_persistence::repo::AttemptRepo;
     use vector_persistence::{Database, MigrationManager};
 
@@ -290,6 +317,8 @@ fn many_persisted_attempts_stay_within_budget() {
 
 #[test]
 fn analytics_over_a_large_table_stays_within_budget() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_persistence::repo::AttemptRepo;
     use vector_persistence::{Database, MigrationManager};
 
@@ -350,6 +379,8 @@ fn analytics_over_a_large_table_stays_within_budget() {
 
 #[test]
 fn a_database_survives_forced_termination_and_reopens() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_persistence::repo::AttemptRepo;
     use vector_persistence::{Database, MigrationManager};
 
@@ -394,6 +425,8 @@ fn a_database_survives_forced_termination_and_reopens() {
 
 #[test]
 fn an_interrupted_migration_leaves_a_usable_database() {
+    // Timed: see `measurement_lock` for why this is serialised.
+    let _measured = measurement_lock();
     use vector_persistence::{Database, MigrationManager};
 
     let dir = std::env::temp_dir().join(format!("vec-migfail-{}", std::process::id()));

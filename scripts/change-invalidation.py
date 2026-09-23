@@ -56,9 +56,15 @@ SURFACES: list[tuple[str, str, list[str]]] = [
     ("Cargo.lock", "dependencies", ["dependency-audit", "build"]),
     ("pnpm-lock.yaml", "dependencies", ["dependency-audit", "build"]),
     ("package.json", "dependencies", ["dependency-audit", "typecheck"]),
+    # Every operating document at the root, not a list of the two that existed when this table
+    # was written: round 34 added a paragraph to AI_TRANSPORTS.md and the coverage check refused
+    # it, which is the check working -- a documentation change no surface names is a change
+    # nothing would notice.
     ("docs/", "documentation", []),
     ("COMMANDS.md", "documentation", []),
     ("README.md", "documentation", []),
+    ("AGENTS.md", "control-plane", []),
+    ("*.md", "documentation", []),
     (".agent/verification/", "accounting", ["release-state", "dependency-graph"]),
     (".agent/evidence/", "evidence", []),
     (".agent/state/", "ledger", []),
@@ -135,7 +141,18 @@ def declared_edges() -> dict[str, list[str]]:
 
 
 def surface_for(path: str) -> tuple[str, list[str]] | None:
+    """The surface a changed path belongs to.
+
+    A pattern beginning `*.` matches by suffix and only for a path with no directory: an
+    operating document at the repository root is documentation, while `crates/…/notes.md` is
+    source that happens to be prose, and treating the two the same would let a code change be
+    filed as documentation.
+    """
     for prefix, surface, gates in SURFACES:
+        if prefix.startswith("*."):
+            if "/" not in path and path.endswith(prefix[1:]):
+                return surface, gates
+            continue
         if path == prefix or path.startswith(prefix):
             return surface, gates
     return None

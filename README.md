@@ -5,11 +5,13 @@ live-fire outcomes, 11 implementation nodes, 22 release-verification stages, a
 484-test registry and a 42-clause Definition of Done.
 
 **Current state.** All 11 nodes are `NODE_DONE` and the verification sweep passes.
-The release verdict is **not GO**, and four of the 60 requirements are open. Three
-of them need something this repository cannot supply — a code-signing
+The release verdict is **not GO**, and three of the 60 requirements are open, all
+three needing something this repository cannot supply — a code-signing
 certificate (`REQ-036`), a person using a screen reader (`REQ-038`), and
-trademark clearance (`REQ-060`). One more is work that can be done here: a local
-GGUF model (`REQ-014`). Update signing and staging (`REQ-037`) is implemented: the
+trademark clearance (`REQ-060`). The local model lane (`REQ-014`) is live: a
+llama.cpp server with a user-selected Apache-2.0 GGUF answers on loopback, and the
+product's own provider probe reports the lane healthy while it runs and
+unavailable with the reason once it stops. Update signing and staging (`REQ-037`) is implemented: the
 manifest is Ed25519-signed and the artifact is verified by digest and length
 before anything is written, the transition stages beside the installation and
 moves the previous artifact aside, and rolling back puts it there again. The

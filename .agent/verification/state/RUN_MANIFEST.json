@@ -3,12 +3,12 @@
   "schema_version": 1,
   "project": "Project VECTOR",
   "version": "0.1.0",
-  "artifact_digest": "bffe12dce99616da84cc26cf8913081dc7601220e5a148fbeedaab2ac53dfafb",
-  "identity_digest": "d3a77d216552931833a4a5856796f0f1a14b9819342fa077b09b4d68fbf5df73",
+  "artifact_digest": "24eb2530754cc46c8434acf8d3f21f1d268c49974bea21f3143546b11f8a5000",
+  "identity_digest": "f1743f64962199d9f17d151dee28d017f64b7f7cb5a17b120fdf92c9315365f5",
   "identity_components": [
     {
       "component": "Binary",
-      "digest": "bffe12dce99616da84cc26cf8913081dc7601220e5a148fbeedaab2ac53dfafb",
+      "digest": "24eb2530754cc46c8434acf8d3f21f1d268c49974bea21f3143546b11f8a5000",
       "bytes": 13166080
     },
     {
@@ -33,12 +33,12 @@
     },
     {
       "component": "GitSha",
-      "digest": "6a9251a13f7c22a57783e5cf248ca7a83fd5b6d3930b3fae22d92a09faf382c3",
+      "digest": "4757f28992ca6750bdb7ce5fdff53da50787bc189dd3f95c2ac3e4891dc88024",
       "bytes": null
     }
   ],
-  "candidate_epoch": 23,
-  "git_sha": "e2e0708662ea3bd3bd3c9f9d2fed83e4a4a4ab88",
+  "candidate_epoch": 25,
+  "git_sha": "0646c41a183332fb834ea43c0c6ad81d96a1914e",
   "git_branch": "main",
   "registry_count": 484,
   "dod_count": 42,
@@ -116,5 +116,5 @@
       "exit": 0
     }
   ],
-  "generated_at": "2026-09-23T15:18:38.241118+00:00"
+  "generated_at": "2026-09-23T16:16:14.924411+00:00"
 }

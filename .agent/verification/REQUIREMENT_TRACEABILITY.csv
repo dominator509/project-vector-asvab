@@ -12,7 +12,7 @@ REQ-010,offline mastery/speed/confidence/trends,SPEC-002,EP-003/EP-004,AT-REQ-01
 REQ-011,uncertainty/calibration; never official-score claim,SPEC-003,EP-004,AT-REQ-011-EP004,DONE_BAND_NO_SCORE_CLAIM
 REQ-012,versioned sourced formulas/job targets/freshness,SPEC-002,EP-004,AT-REQ-012-EP004,DONE_VERSIONED_SOURCED_FRESHNESS_ENFORCED
 REQ-013,versioned policy data,SPEC-002,EP-004,AT-REQ-013-EP004,DONE_RETEST_PLANNER_ON_VERSIONED_POLICY
-REQ-014,llama.cpp GGUF with optional user-selected unfiltered model,SPEC-003,EP-004,AT-REQ-014-EP004,PARTIAL_TRANSPORT_REGISTERED_MODEL_NOT_LAUNCHED
+REQ-014,llama.cpp GGUF with optional user-selected unfiltered model,SPEC-003,EP-004,AT-REQ-014-EP004,DONE_GGUF_MODEL_LIVEFIRED_TRANSPORT_HEALTHY
 REQ-015,provider-neutral capabilities/auth/billing/terms contract,SPEC-003,EP-004,AT-REQ-015-EP004,DONE
 REQ-016,Grok native official CLI headless/ACP without credential access,SPEC-003,EP-004,AT-REQ-016-EP004,DONE_ADAPTER_AND_CREDENTIAL_ISOLATION_SIGNIN_EXTERNAL_GATE
 REQ-017,Codex native official codex exec with ChatGPT login,SPEC-003,EP-004,AT-REQ-017-EP004,DONE_LIVEFIRED_CODEX_EXEC_ANSWERED

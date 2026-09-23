@@ -8,13 +8,13 @@
       "GEMINI_API_KEY",
       "GROK_API_KEY"
     ],
-    "checkedAt": "2026-09-23T16:12:36.671585800+00:00",
+    "checkedAt": "2026-09-23T15:49:44.150166600+00:00",
     "healthy": 1,
     "lanes": [
       {
         "billing": "None",
         "health": {
-          "reason": "no llama.cpp server at http://127.0.0.1:8080 (connection timed out); set VECTOR_LLAMA_ENDPOINT to a running llama.cpp server to use the local lane",
+          "reason": "no llama.cpp server at http://127.0.0.1:8099 (connection timed out); set VECTOR_LLAMA_ENDPOINT to a running llama.cpp server to use the local lane",
           "state": "unavailable"
         },
         "id": "local_llama",

@@ -5,34 +5,34 @@ candidate's diff. DOD-040: a change to code, dependencies, schema, configuration
 build, a test oracle or the artifact invalidates every downstream result that rested
 on the old bytes.
 
-- prior epoch: 22 at `6a6296dc`
-- new epoch: 23 at `e2e07086`
-- artifact: `bffe12dce99616da84cc26cf8913081dc7601220e5a148fbeedaab2ac53dfafb`
-- changed paths: 38 (37 committed, 19 uncommitted)
+- prior epoch: 23 at `e2e07086`
+- new epoch: 25 at `0646c41a`
+- artifact: `24eb2530754cc46c8434acf8d3f21f1d268c49974bea21f3143546b11f8a5000`
+- changed paths: 36 (29 committed, 25 uncommitted)
 
 ## Surfaces and what they invalidate
 
 - **accounting** (13 path(s)): gates dependency-graph, release-state
+- **application** (1 path(s)): gates lint, test-integration, test-unit
 - **crate** (4 path(s)): gates lint, test-integration, test-unit
-- **dependencies** (1 path(s)): gates build, dependency-audit
-- **documentation** (2 path(s)): gates none
-- **evidence** (13 path(s)): gates none
-- **harness** (1 path(s)): gates anti-gaming-scan
+- **documentation** (3 path(s)): gates none
+- **evidence** (10 path(s)): gates none
+- **harness** (2 path(s)): gates anti-gaming-scan
 - **interface** (1 path(s)): gates test-e2e, test-unit, typecheck
 - **ledger** (1 path(s)): gates none
-- **tooling** (2 path(s)): gates generated-pack, test-unit
+- **tooling** (1 path(s)): gates generated-pack, test-unit
 
 ## Rerun list
 
-`anti-gaming-scan`, `artifact-identity`, `build`, `change-invalidation`, `dependency-audit`, `dependency-graph`, `generated-pack`, `lint`, `live-fire`, `proof-matrix-stamp`, `release-state`, `smoke-test`, `test-e2e`, `test-integration`, `test-unit`, `typecheck`
+`anti-gaming-scan`, `artifact-identity`, `build`, `change-invalidation`, `dependency-graph`, `generated-pack`, `lint`, `live-fire`, `proof-matrix-stamp`, `release-state`, `smoke-test`, `test-e2e`, `test-integration`, `test-unit`, `typecheck`
 
 ## Evidence hashes at this epoch
 
 - `gate-results.jsonl`: `1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6`
-- `RUN_MANIFEST.json`: `ef57bb5deaa7d4e501ff49f042feb1fa961a4293328ce868429a2dfe8ff1f99f`
-- `DOD_STATUS.jsonl`: `01756835854ec28361aec5b0b3bb973cf0ae1754e28a3adcc24127b19a783e76`
+- `RUN_MANIFEST.json`: `e626272ea341dbb4c9d1a081ea2523db91761f6fcc00b4afc1e3dc507b64b6b3`
+- `DOD_STATUS.jsonl`: `b76216c5ed5a57416d288686178378bbb5c806a3371b45c48904d26d91def6fe`
 - `DEPENDENCY_BLOCKER_GRAPH.json`: `96d32c37e1125d60bcb5ebf7192a6c291850faecee1c310a0f6576a5a508e352`
-- `artifact_identity`: `082cf997b5aebb2f8bc400fc4ff144530a8f0502c55e8d191205fac5de9498cd`
+- `artifact_identity`: `206b6793a45804bd74118462990e9d28e741c30ae4b821b12de44bb3fce78274`
 
 ## Violations
 
