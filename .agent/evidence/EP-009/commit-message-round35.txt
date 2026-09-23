@@ -1,0 +1,38 @@
+test: ask whether the packaged application can be driven, and record the answer (DOD-004)
+
+DOD-004's residual is that the Playwright suite runs against the built frontend bundle with a
+stubbed command boundary rather than inside the packaged executable. This round went after that
+residual with the documented tooling and came back with a measurement instead of a claim.
+
+Set up: tauri-driver 3.0.0-alpha.0 (Apache-2.0 OR MIT) from crates.io with --native-driver, and
+msedgedriver 153.0.4234.48 downloaded to match the installed WebView2 runtime exactly -- the
+version-match the Tauri documentation names as the cause of hangs when it is wrong. The client is
+scripts/probes/packaged-journey.py, which speaks the WebDriver protocol over urllib rather than
+adding a test-runner dependency, for the same reason the local-model probe speaks HTTP to llama.cpp.
+The driver reported "msedgedriver ready for new sessions" and created sessions against the release
+binary.
+
+Measured: the session is created with one window handle, and GET /source returns
+<html><head></head><body></body></html> (39 characters), unchanged at every sample over thirty
+seconds. The packaged window is reachable; its WebView2 document is not exposed to the driver in
+this environment, so a user journey cannot be driven inside the packaged process here.
+
+What that does and does not change. The packaged process does reach the Rust command layer, and
+that was already proven: launching the release binary writes a ui_ready marker through the real IPC
+path and a separate process reads it back out of the application database (the live-fire gate). The
+browser suite's claim is different and stays as it was: it drives the built bundle with a stubbed
+command boundary. DOD-004 stays PARTIAL, now with the measurement above as its evidence rather than
+a vague "not done".
+
+The probe ships anyway, and its own docstring records what it measured here. It is the tool the
+clause needs, it fails loudly with a report instead of pretending, and on a machine whose driver
+does expose the document it is the missing half: create a learner through the real onboarding form,
+read the plan, answer a question served from the installed pack, and read the attempt back out of
+the application's own database, with the real Rust layer behind every step and no stub anywhere.
+
+DoD unchanged at 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates recorded exit 0; three
+requirements open, all external. Corpus unchanged at 6,961 active items; pack core-asvab v6 active;
+verdict CONDITIONAL_EXTERNAL_GATES.
+
+What is left is the closure accounting: the seven PARTIAL clauses and the one EXTERNAL_REQUIRED
+clause each with a named owner, and a statement of what this repository can and cannot prove.

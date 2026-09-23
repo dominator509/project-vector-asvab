@@ -1,21 +1,24 @@
 {
-  "prior_epoch": 23,
-  "prior_git_sha": "e2e0708662ea3bd3bd3c9f9d2fed83e4a4a4ab88",
-  "prior_artifact_digest": "bffe12dce99616da84cc26cf8913081dc7601220e5a148fbeedaab2ac53dfafb",
-  "new_epoch": 25,
-  "new_git_sha": "0646c41a183332fb834ea43c0c6ad81d96a1914e",
-  "new_artifact_digest": "24eb2530754cc46c8434acf8d3f21f1d268c49974bea21f3143546b11f8a5000",
+  "prior_epoch": 25,
+  "prior_git_sha": "0646c41a183332fb834ea43c0c6ad81d96a1914e",
+  "prior_artifact_digest": "24eb2530754cc46c8434acf8d3f21f1d268c49974bea21f3143546b11f8a5000",
+  "new_epoch": 26,
+  "new_git_sha": "c4a14c732a5a4cca7449b4f2115b04de3f8518a0",
+  "new_artifact_digest": "b6a2315e2155c1c474232205542d35251ef140f50ed8687cd787fae9299b849b",
   "committed_changes": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
     ".agent/evidence/EP-004/provider-probe.json",
-    ".agent/evidence/EP-009/ROUND-33-REPORT.md",
+    ".agent/evidence/EP-009/ROUND-34-REPORT.md",
     ".agent/evidence/EP-009/artifact_identity.json",
-    ".agent/evidence/EP-009/commit-message-round33.txt",
-    ".agent/evidence/EP-009/gh-lane/close.txt",
-    ".agent/evidence/EP-009/gh-lane/diff-names.txt",
-    ".agent/evidence/EP-009/gh-lane/open.json",
-    ".agent/evidence/EP-009/gh-lane/readback-after-close.json",
-    ".agent/evidence/EP-009/gh-lane/readback.json",
+    ".agent/evidence/EP-009/commit-message-round34.txt",
+    ".agent/evidence/EP-009/local-model/llama-server.sha256",
+    ".agent/evidence/EP-009/local-model/model.sha256",
+    ".agent/evidence/EP-009/local-model/probe-running.json",
+    ".agent/evidence/EP-009/local-model/probe-stopped.json",
+    ".agent/evidence/EP-009/local-model/provenance.json",
+    ".agent/evidence/EP-009/local-model/request.json",
+    ".agent/evidence/EP-009/local-model/response.json",
+    ".agent/evidence/EP-009/local-model/runtime-version.txt",
     ".agent/state/LEDGER.md",
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
     ".agent/verification/REQUIREMENT_TRACEABILITY.csv",
@@ -29,51 +32,44 @@
     ".agent/verification/state/EPOCHS.jsonl",
     ".agent/verification/state/EVIDENCE_INDEX.json",
     ".agent/verification/state/RUN_MANIFEST.json",
+    "AI_TRANSPORTS.md",
     "COMMANDS.md",
     "README.md",
     "apps/desktop/e2e-results.json",
-    "crates/vector-platform/.local/state/gh/device-id",
-    "crates/vector-platform/src/gh.rs",
-    "scripts/probes/mutation-round18.py"
+    "crates/vector-application/tests/ep007_performance.rs",
+    "scripts/change-invalidation.py"
   ],
   "uncommitted_changes": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
     ".agent/evidence/EP-004/provider-probe.json",
     ".agent/evidence/EP-009/artifact_identity.json",
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
-    ".agent/verification/REQUIREMENT_TRACEABILITY.csv",
     ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
     ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
-    ".agent/verification/reports/RELEASE_GATE.json",
     ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
-    ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.json",
-    ".agent/verification/state/CHANGE_INVALIDATION_GRAPH.md",
     ".agent/verification/state/DOD_STATUS.jsonl",
     ".agent/verification/state/EPOCHS.jsonl",
     ".agent/verification/state/EVIDENCE_INDEX.json",
     ".agent/verification/state/RUN_MANIFEST.json",
     ".agent/verification/state/gate-results.jsonl",
-    "AI_TRANSPORTS.md",
     "COMMANDS.md",
-    "README.md",
     "apps/desktop/e2e-results.json",
-    "crates/vector-application/tests/ep007_performance.rs",
-    "crates/vector-llm/src/lib.rs",
-    "crates/vector-llm/src/transport.rs",
-    "scripts/change-invalidation.py",
-    "tools/vector-tools/src/transports.rs"
+    "scripts/release-state.py"
   ],
   "changed_paths": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
     ".agent/evidence/EP-004/provider-probe.json",
-    ".agent/evidence/EP-009/ROUND-33-REPORT.md",
+    ".agent/evidence/EP-009/ROUND-34-REPORT.md",
     ".agent/evidence/EP-009/artifact_identity.json",
-    ".agent/evidence/EP-009/commit-message-round33.txt",
-    ".agent/evidence/EP-009/gh-lane/close.txt",
-    ".agent/evidence/EP-009/gh-lane/diff-names.txt",
-    ".agent/evidence/EP-009/gh-lane/open.json",
-    ".agent/evidence/EP-009/gh-lane/readback-after-close.json",
-    ".agent/evidence/EP-009/gh-lane/readback.json",
+    ".agent/evidence/EP-009/commit-message-round34.txt",
+    ".agent/evidence/EP-009/local-model/llama-server.sha256",
+    ".agent/evidence/EP-009/local-model/model.sha256",
+    ".agent/evidence/EP-009/local-model/probe-running.json",
+    ".agent/evidence/EP-009/local-model/probe-stopped.json",
+    ".agent/evidence/EP-009/local-model/provenance.json",
+    ".agent/evidence/EP-009/local-model/request.json",
+    ".agent/evidence/EP-009/local-model/response.json",
+    ".agent/evidence/EP-009/local-model/runtime-version.txt",
     ".agent/state/LEDGER.md",
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
     ".agent/verification/REQUIREMENT_TRACEABILITY.csv",
@@ -93,13 +89,8 @@
     "README.md",
     "apps/desktop/e2e-results.json",
     "crates/vector-application/tests/ep007_performance.rs",
-    "crates/vector-llm/src/lib.rs",
-    "crates/vector-llm/src/transport.rs",
-    "crates/vector-platform/.local/state/gh/device-id",
-    "crates/vector-platform/src/gh.rs",
     "scripts/change-invalidation.py",
-    "scripts/probes/mutation-round18.py",
-    "tools/vector-tools/src/transports.rs"
+    "scripts/release-state.py"
   ],
   "surfaces": {
     "accounting": {
@@ -133,19 +124,6 @@
         "test-unit"
       ]
     },
-    "crate": {
-      "paths": [
-        "crates/vector-llm/src/lib.rs",
-        "crates/vector-llm/src/transport.rs",
-        "crates/vector-platform/.local/state/gh/device-id",
-        "crates/vector-platform/src/gh.rs"
-      ],
-      "gates": [
-        "lint",
-        "test-integration",
-        "test-unit"
-      ]
-    },
     "documentation": {
       "paths": [
         "AI_TRANSPORTS.md",
@@ -158,21 +136,24 @@
       "paths": [
         ".agent/evidence/EP-001/desktop-live-fire.json",
         ".agent/evidence/EP-004/provider-probe.json",
-        ".agent/evidence/EP-009/ROUND-33-REPORT.md",
+        ".agent/evidence/EP-009/ROUND-34-REPORT.md",
         ".agent/evidence/EP-009/artifact_identity.json",
-        ".agent/evidence/EP-009/commit-message-round33.txt",
-        ".agent/evidence/EP-009/gh-lane/close.txt",
-        ".agent/evidence/EP-009/gh-lane/diff-names.txt",
-        ".agent/evidence/EP-009/gh-lane/open.json",
-        ".agent/evidence/EP-009/gh-lane/readback-after-close.json",
-        ".agent/evidence/EP-009/gh-lane/readback.json"
+        ".agent/evidence/EP-009/commit-message-round34.txt",
+        ".agent/evidence/EP-009/local-model/llama-server.sha256",
+        ".agent/evidence/EP-009/local-model/model.sha256",
+        ".agent/evidence/EP-009/local-model/probe-running.json",
+        ".agent/evidence/EP-009/local-model/probe-stopped.json",
+        ".agent/evidence/EP-009/local-model/provenance.json",
+        ".agent/evidence/EP-009/local-model/request.json",
+        ".agent/evidence/EP-009/local-model/response.json",
+        ".agent/evidence/EP-009/local-model/runtime-version.txt"
       ],
       "gates": []
     },
     "harness": {
       "paths": [
         "scripts/change-invalidation.py",
-        "scripts/probes/mutation-round18.py"
+        "scripts/release-state.py"
       ],
       "gates": [
         "anti-gaming-scan"
@@ -193,15 +174,6 @@
         ".agent/state/LEDGER.md"
       ],
       "gates": []
-    },
-    "tooling": {
-      "paths": [
-        "tools/vector-tools/src/transports.rs"
-      ],
-      "gates": [
-        "generated-pack",
-        "test-unit"
-      ]
     }
   },
   "rerun_list": [
@@ -210,7 +182,6 @@
     "build",
     "change-invalidation",
     "dependency-graph",
-    "generated-pack",
     "lint",
     "live-fire",
     "proof-matrix-stamp",
@@ -223,10 +194,10 @@
   ],
   "evidence_hashes": {
     "gate-results.jsonl": "1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6",
-    "RUN_MANIFEST.json": "e626272ea341dbb4c9d1a081ea2523db91761f6fcc00b4afc1e3dc507b64b6b3",
-    "DOD_STATUS.jsonl": "b76216c5ed5a57416d288686178378bbb5c806a3371b45c48904d26d91def6fe",
+    "RUN_MANIFEST.json": "987a3011a790fea209ed6ea1b3cadae94ff31fe3b944bd7124f6b6ce63ae2b52",
+    "DOD_STATUS.jsonl": "5720f3e1fdce6d95cba2ef4098cdf9b53e2602f05b585ce47daad19b2e91ec62",
     "DEPENDENCY_BLOCKER_GRAPH.json": "96d32c37e1125d60bcb5ebf7192a6c291850faecee1c310a0f6576a5a508e352",
-    "artifact_identity": "206b6793a45804bd74118462990e9d28e741c30ae4b821b12de44bb3fce78274"
+    "artifact_identity": "0de7ed79283edd0bbd5d6699da2a105a7d0567a3fe13dd7ad63a80e2c86a8359"
   },
   "violations": []
 }

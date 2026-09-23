@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "error": "'h1' never contained 'Project VECTOR'; last saw ''",
+  "steps": [
+    {
+      "step": "session",
+      "detail": "packaged vector-desktop.exe under tauri-driver",
+      "at_seconds": 3.12
+    }
+  ],
+  "application": "C:\\dev\\project-vector-asvab\\target\\release\\vector-desktop.exe",
+  "learners": {
+    "found": 0
+  }
+}

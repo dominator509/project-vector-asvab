@@ -18,7 +18,7 @@ Verdict: **CONDITIONAL_EXTERNAL_GATES** — 3 requirement(s) cannot be satisfied
 
 | Clause | Status | What was checked |
 |---|---|---|
-| DOD-004 | PARTIAL | the packaged executable is launched and its database effect read back against this digest; the Playwright E2E suite runs against the built frontend bundle rather than inside the packaged process |
+| DOD-004 | PARTIAL | the packaged executable is launched and its database effect read back against this digest, and the packaged webview reaches the Rust command layer through the real IPC path; driving a *journey* inside the packaged process was attempted in round 35 with tauri-driver and a version-matched msedgedriver: the window is reachable and its WebView2 document is not exposed (39-character empty page, unchanged over 30 seconds), so the browser suite continues to run against the built bundle. The probe for the journey ships and fails loudly rather than pretending |
 | DOD-005 | PARTIAL | one documented developer machine; the clean-VM and declared-hardware lanes the manifest requires have not been provisioned |
 | DOD-016 | PARTIAL | migration from an empty database and from the previous schema version is tested; there is no prior released version to upgrade from yet |
 | DOD-022 | PARTIAL | query latency and total startup are measured with bounds, but only on one machine: the manifest's low/mid/high hardware lanes are not provisioned |

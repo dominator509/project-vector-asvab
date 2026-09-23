@@ -401,10 +401,14 @@ def evaluate_dod(i: Inputs) -> list[dict]:
     record(
         "DOD-004",
         "PARTIAL",
-        ".agent/evidence/EP-001/desktop-live-fire.json",
-        "the packaged executable is launched and its database effect read back "
-        "against this digest; the Playwright E2E suite runs against the built "
-        "frontend bundle rather than inside the packaged process",
+        ".agent/evidence/EP-009/packaged-journey/ATTEMPT.md",
+        "the packaged executable is launched and its database effect read back against this "
+        "digest, and the packaged webview reaches the Rust command layer through the real IPC "
+        "path; driving a *journey* inside the packaged process was attempted in round 35 with "
+        "tauri-driver and a version-matched msedgedriver: the window is reachable and its WebView2 "
+        "document is not exposed (39-character empty page, unchanged over 30 seconds), so the "
+        "browser suite continues to run against the built bundle. The probe for the journey ships "
+        "and fails loudly rather than pretending",
     )
 
     record(

@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T16:16:16.473836+00:00",
+  "generated_at": "2026-09-23T16:35:47.213467+00:00",
   "root": ".agent/evidence",
-  "count": 715,
+  "count": 722,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -216,7 +216,7 @@
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
       "bytes": 1248,
-      "sha256": "ac6d39049f15e713211324376bfc5b9f0e0bd242d818d7f503039c0287eabe53"
+      "sha256": "008de8df6449bfeec4a04b1a1bb0054596155936e65f9e80f22c6c1efcc44266"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -641,7 +641,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "1f5ef93dac48933989ba3fa4c3324aa0090e69761284562a45e529b88aac61c1"
+      "sha256": "c4e9e9fee0f082df2178b4ee9665c04f95d3b483163c5c8b4303325bf06f72c2"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -2041,7 +2041,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1025,
-      "sha256": "206b6793a45804bd74118462990e9d28e741c30ae4b821b12de44bb3fce78274"
+      "sha256": "0de7ed79283edd0bbd5d6699da2a105a7d0567a3fe13dd7ad63a80e2c86a8359"
     },
     {
       "path": ".agent/evidence/EP-009/canary/canary-proof.json",
@@ -2107,6 +2107,11 @@
       "path": ".agent/evidence/EP-009/commit-message-round33.txt",
       "bytes": 4062,
       "sha256": "a8eaeb88d0b29f60fbc9254ac96765efe0de44e117c5d28b0314e8ef2355964c"
+    },
+    {
+      "path": ".agent/evidence/EP-009/commit-message-round34.txt",
+      "bytes": 3808,
+      "sha256": "af7c22049096fe029cb939f229ad8a0404f322b94bf22286d856ecb3fa47343b"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",
@@ -2294,6 +2299,21 @@
       "sha256": "6c32ded5706b13cef7738dcc84b425a1640d8aff6b4b7350450fd1410254a2ae"
     },
     {
+      "path": ".agent/evidence/EP-009/packaged-journey/attempt.json",
+      "bytes": 1906,
+      "sha256": "f81e994742190cf5283a2e53c59f7eb7dd93a764cbe78601d61e10a350021268"
+    },
+    {
+      "path": ".agent/evidence/EP-009/packaged-journey/ATTEMPT.md",
+      "bytes": 1967,
+      "sha256": "557039c5968e514f56d244772c65f15edb7c6bcd668a231619f444715a85708f"
+    },
+    {
+      "path": ".agent/evidence/EP-009/packaged-journey/journey.json",
+      "bytes": 371,
+      "sha256": "fedd6d9a2448f471bba8283609990a71e1c3dcb6ca7e9555217d6455c104f66e"
+    },
+    {
       "path": ".agent/evidence/EP-009/placeholder-negative-proof.exitcode",
       "bytes": 3,
       "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
@@ -2362,6 +2382,16 @@
       "path": ".agent/evidence/EP-009/ROUND-33-REPORT.md",
       "bytes": 4869,
       "sha256": "9a0a3ab98713d4f5d9e2b547d67f5a0ccbd8ebf2a61c1e3e2d6d7bfcfcd0ac9f"
+    },
+    {
+      "path": ".agent/evidence/EP-009/ROUND-34-REPORT.md",
+      "bytes": 4467,
+      "sha256": "d11c6ab3e4aff8c4b07a40704bfd38445f5252eb91d617a25cc83d1b9d39efc7"
+    },
+    {
+      "path": ".agent/evidence/EP-009/ROUND-35-REPORT.md",
+      "bytes": 3084,
+      "sha256": "7bc94b1776f985554e9ba9f5ef068fe8d018e4dd860ac76962b975e8b611ea4e"
     },
     {
       "path": ".agent/evidence/EP-009/sbom.spdx",
@@ -2495,8 +2525,13 @@
     },
     {
       "path": ".agent/evidence/EP-009/verify-round34.log",
-      "bytes": 1037543,
-      "sha256": "2c40eb2768db8ad7b3f28adbc66be6cb4446ed2a40604004026bc94e683cad8e"
+      "bytes": 1039876,
+      "sha256": "c9c8f109f233fe581a14ac4b6c1be78f817acb100ee22c33644b250cc5d180a5"
+    },
+    {
+      "path": ".agent/evidence/EP-009/verify-round35.log",
+      "bytes": 1037875,
+      "sha256": "9a24b3ff1904ffe99b70c56be26f7ed91e7abc7fdfec7c9e7ddec3df2de689a6"
     },
     {
       "path": ".agent/evidence/EP-009/zero-state/artifact.sha256",

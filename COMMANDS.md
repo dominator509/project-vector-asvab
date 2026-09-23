@@ -29,6 +29,7 @@ export RUST_BACKTRACE=1
 | npm advisory check | `pnpm audit` (contacts the registry, so it is a documented manual check rather than a sweep gate; the result is recorded in `.agent/evidence/EP-009/npm-advisories.json`, which the release accounting reads) |
 | Smoke exact artifact | `sh scripts/smoke-test.sh` |
 | Live-fire | `sh scripts/live-fire.sh` |
+| Packaged study journey (WebDriver) | `tauri-driver --native-driver <msedgedriver.exe> --port 4444` then `python3 scripts/probes/packaged-journey.py` -- drives the packaged window through a real journey (create a learner, read the plan, answer a question, read the attempt back). Measured in round 35: the window is reachable and its WebView2 document is not exposed to the driver in this environment, so this is not a gate and DOD-004 stays PARTIAL with that residual recorded. |
 | Packaged desktop live-fire | `python3 scripts/desktop-live-fire.py --report .agent/evidence/EP-001/desktop-live-fire.json` |
 | Runtime canary proof | `python3 scripts/probes/canary-proof.py` (a learner name and target drawn from the operating system's CSPRNG at run time, propagated through the study path and read back by a separate connection, with a negative control) |
 | Recovery objectives | `python3 scripts/probes/recovery-objectives.py` (injects truncated, corrupted and deleted stores, restores each from a verified archive, and measures RTO/MTTR against the declared target) |
