@@ -8,27 +8,35 @@ Verdict: **CONDITIONAL_EXTERNAL_GATES** — 3 requirement(s) cannot be satisfied
 
 ## Requirements that cannot be closed inside this repository
 
-| Requirement | Status | What it is |
-|---|---|---|
-| REQ-036 | PARTIAL_MSI_AND_NSIS_BUILT_SIGNING_EXTERNAL_GATE | signed Windows artifact + clean install/upgrade/uninstall |
-| REQ-038 | PARTIAL_AUTOMATED_A11Y_DONE_MANUAL_SCREEN_READER_EXTERNAL_GATE | WCAG 2.2 AA + keyboard/Narrator/NVDA |
-| REQ-060 | BLOCKED_EXTERNAL_LEGAL_CLEARANCE_REQUIRED | working title requires trademark/name clearance before GA |
+| Requirement | Status | What it is | Whose move | What they have to do |
+|---|---|---|---|---|
+| REQ-036 | PARTIAL_MSI_AND_NSIS_BUILT_SIGNING_EXTERNAL_GATE | signed Windows artifact + clean install/upgrade/uninstall | the publisher | obtain a code-signing certificate, sign the MSI and NSIS artifacts in the release lane, then re-run `sh scripts/verify.sh` so DOD-003 and REQ-036 re-record against the signed bytes |
+| REQ-038 | PARTIAL_AUTOMATED_A11Y_DONE_MANUAL_SCREEN_READER_EXTERNAL_GATE | WCAG 2.2 AA + keyboard/Narrator/NVDA | a human tester | run the packaged application with Narrator or NVDA and record what they find; the automated accessibility checks are already green |
+| REQ-060 | BLOCKED_EXTERNAL_LEGAL_CLEARANCE_REQUIRED | working title requires trademark/name clearance before GA | counsel | clear the working title, or choose another, before a general-availability release |
 
 ## Definition-of-Done clauses that are not PASS
 
-| Clause | Status | What was checked |
-|---|---|---|
-| DOD-004 | PARTIAL | the packaged executable is launched and its database effect read back against this digest, and the packaged webview reaches the Rust command layer through the real IPC path; driving a *journey* inside the packaged process was attempted in round 35 with tauri-driver and a version-matched msedgedriver: the window is reachable and its WebView2 document is not exposed (39-character empty page, unchanged over 30 seconds), so the browser suite continues to run against the built bundle. The probe for the journey ships and fails loudly rather than pretending |
-| DOD-005 | PARTIAL | one documented developer machine; the clean-VM and declared-hardware lanes the manifest requires have not been provisioned |
-| DOD-016 | PARTIAL | migration from an empty database and from the previous schema version is tested; there is no prior released version to upgrade from yet |
-| DOD-022 | PARTIAL | query latency and total startup are measured with bounds, but only on one machine: the manifest's low/mid/high hardware lanes are not provisioned |
-| DOD-033 | PARTIAL | the stage runner refuses to manufacture results (exit 3) and no infrastructure provisioning adapter has been implemented |
-| DOD-034 | PARTIAL | a zero-state lane is executed and evidenced -- the exact artifact boots, creates its database, passes its own 19 checks, takes the signed pack (6,961 items), and a learner completes the golden path on it (plan, one session per named objective, attempts read back, mastery moved, provenance re-checked). The machine is the developer's: the virgin-OS dimension belongs to DOD-005 and DOD-022, which are not provisioned |
-| DOD-038 | PARTIAL | an abbreviated trial is recorded and labelled as one: 112 iteration(s) of the packaged self-check plus a full golden path over 12.02 minute(s), 896 attempt(s) added, 0 failure(s), integrity 'ok'. No scale is declared anywhere in this repository, so the full-duration requirement is not met and this clause is never PASS |
-| DOD-039 | EXTERNAL_REQUIRED | manual screen-reader validation, code signing, legal review and name clearance require participants who cannot be simulated |
+| Clause | Status | What was checked | Whose move | What they have to do |
+|---|---|---|---|---|
+| DOD-004 | PARTIAL | the packaged executable is launched and its database effect read back against this digest, and the packaged webview reaches the Rust command layer through the real IPC path; driving a *journey* inside the packaged process was attempted in round 35 with tauri-driver and a version-matched msedgedriver: the window is reachable and its WebView2 document is not exposed (39-character empty page, unchanged over 30 seconds), so the browser suite continues to run against the built bundle. The probe for the journey ships and fails loudly rather than pretending | whoever has a driver that exposes the WebView2 document | start `tauri-driver --native-driver <msedgedriver.exe> --port 4444` on such a machine and run `python3 scripts/probes/packaged-journey.py`; on this one the window is reachable and the document is empty, which is measured in that probe's evidence |
+| DOD-005 | PARTIAL | one documented developer machine; the clean-VM and declared-hardware lanes the manifest requires have not been provisioned | whoever has a clean VM or container | provision an ephemeral environment, run the published commands (`install.sh`, `preflight.sh`, `validate-generated-pack.py`, `verify.sh`, `verify-evidence-archive.py` -- the clean-room lane is the recipe) and record the image digest |
+| DOD-016 | PARTIAL | migration from an empty database and from the previous schema version is tested; there is no prior released version to upgrade from yet | the second release | cut a release, keep a copy of its database, and migrate that copy into the next candidate |
+| DOD-022 | PARTIAL | query latency and total startup are measured with bounds, but only on one machine: the manifest's low/mid/high hardware lanes are not provisioned | whoever has the declared hardware | run the SLO suite on the low, mid and high lanes the environment manifest names |
+| DOD-033 | PARTIAL | the stage runner refuses to manufacture results (exit 3) and no infrastructure provisioning adapter has been implemented | nobody, unless infrastructure is declared | the declared toolchain is provisioned by `install.sh` and discovered by `preflight.sh`, both evidenced in the clean-room lane; no other infrastructure is declared for a distribution that ships as a desktop binary, so there is nothing for a provisioning adapter to provision. If a deployment target is ever declared, this becomes a coding task |
+| DOD-034 | PARTIAL | a zero-state lane is executed and evidenced -- the exact artifact boots, creates its database, passes its own 19 checks, takes the signed pack (6,961 items), and a learner completes the golden path on it (plan, one session per named objective, attempts read back, mastery moved, provenance re-checked). The machine is the developer's: the virgin-OS dimension belongs to DOD-005 and DOD-022, which are not provisioned | whoever has a foreign machine | repeat the zero-state lane (the artifact's self-check, the signed pack, the golden path) on an OS image this repository was not built on |
+| DOD-038 | PARTIAL | an abbreviated trial is recorded and labelled as one: 112 iteration(s) of the packaged self-check plus a full golden path over 12.02 minute(s), 896 attempt(s) added, 0 failure(s), integrity 'ok'. No scale is declared anywhere in this repository, so the full-duration requirement is not met and this clause is never PASS | whoever can give the machine the full duration | declare the scale in the environment manifest, then run `python3 scripts/probes/soak.py --minutes <that scale>`; the abbreviated trial already recorded is 112 iterations over 12.02 minutes with 0 failures |
+| DOD-039 | EXTERNAL_REQUIRED | manual screen-reader validation, code signing, legal review and name clearance require participants who cannot be simulated | humans: a screen-reader user, a signer, and counsel | the same three moves as REQ-038, REQ-036 and REQ-060 |
 
 ## What green gates do and do not mean
 
 A green sweep means the project's own gates passed on this artifact. It
 does not mean the product is releasable. The clauses above are why the
 verdict is not GO.
+
+## The shape of what is left
+
+Nothing in the table above is unfinished code. Each row is either a person this
+repository cannot employ, an environment it cannot provision, a release that has not
+happened yet, or a claim it deliberately does not make. The audit trail for every
+closed item -- with the command, the exit code and the artifact digest -- is in
+`.agent/evidence/`, indexed by `.agent/verification/state/EVIDENCE_INDEX.json`.

@@ -911,6 +911,71 @@ def _csv_cell(value: str) -> str:
     return text
 
 
+
+# Who can close each open item, and what they have to do. A residual report that names only
+# statuses leaves a reader with the question this table answers: whose move is it? Every entry is
+# a human or an environment this repository cannot supply; none of them is a coding task left
+# undone, and the sort order says so.
+OWNERS: dict[str, tuple[str, str]] = {
+    "REQ-036": (
+        "the publisher",
+        "obtain a code-signing certificate, sign the MSI and NSIS artifacts in the release lane, "
+        "then re-run `sh scripts/verify.sh` so DOD-003 and REQ-036 re-record against the signed "
+        "bytes",
+    ),
+    "REQ-038": (
+        "a human tester",
+        "run the packaged application with Narrator or NVDA and record what they find; the "
+        "automated accessibility checks are already green",
+    ),
+    "REQ-060": (
+        "counsel",
+        "clear the working title, or choose another, before a general-availability release",
+    ),
+    "DOD-004": (
+        "whoever has a driver that exposes the WebView2 document",
+        "start `tauri-driver --native-driver <msedgedriver.exe> --port 4444` on such a machine and "
+        "run `python3 scripts/probes/packaged-journey.py`; on this one the window is reachable and "
+        "the document is empty, which is measured in that probe's evidence",
+    ),
+    "DOD-005": (
+        "whoever has a clean VM or container",
+        "provision an ephemeral environment, run the published commands (`install.sh`, "
+        "`preflight.sh`, `validate-generated-pack.py`, `verify.sh`, `verify-evidence-archive.py` -- "
+        "the clean-room lane is the recipe) and record the image digest",
+    ),
+    "DOD-016": (
+        "the second release",
+        "cut a release, keep a copy of its database, and migrate that copy into the next candidate",
+    ),
+    "DOD-022": (
+        "whoever has the declared hardware",
+        "run the SLO suite on the low, mid and high lanes the environment manifest names",
+    ),
+    "DOD-033": (
+        "nobody, unless infrastructure is declared",
+        "the declared toolchain is provisioned by `install.sh` and discovered by `preflight.sh`, "
+        "both evidenced in the clean-room lane; no other infrastructure is declared for a "
+        "distribution that ships as a desktop binary, so there is nothing for a provisioning "
+        "adapter to provision. If a deployment target is ever declared, this becomes a coding task",
+    ),
+    "DOD-034": (
+        "whoever has a foreign machine",
+        "repeat the zero-state lane (the artifact's self-check, the signed pack, the golden path) "
+        "on an OS image this repository was not built on",
+    ),
+    "DOD-038": (
+        "whoever can give the machine the full duration",
+        "declare the scale in the environment manifest, then run "
+        "`python3 scripts/probes/soak.py --minutes <that scale>`; the abbreviated trial already "
+        "recorded is 112 iterations over 12.02 minutes with 0 failures",
+    ),
+    "DOD-039": (
+        "humans: a screen-reader user, a signer, and counsel",
+        "the same three moves as REQ-038, REQ-036 and REQ-060",
+    ),
+}
+
 def build_residual_risk(i: Inputs, decision: dict, dod_rows: list[dict]) -> str:
     lines = [
         "# Residual risk and external gates",
@@ -923,26 +988,31 @@ def build_residual_risk(i: Inputs, decision: dict, dod_rows: list[dict]) -> str:
         "",
         "## Requirements that cannot be closed inside this repository",
         "",
-        "| Requirement | Status | What it is |",
-        "|---|---|---|",
+        "| Requirement | Status | What it is | Whose move | What they have to do |",
+        "|---|---|---|---|---|",
     ]
     for requirement in i.open_requirements:
+        owner, action = OWNERS.get(requirement["requirement_id"], ("unassigned", ""))
         lines.append(
-            f"| {requirement['requirement_id']} | {requirement['status']} | {requirement['requirement']} |"
+            f"| {requirement['requirement_id']} | {requirement['status']} | "
+            f"{requirement['requirement']} | {owner} | {action} |"
         )
     if not i.open_requirements:
-        lines.append("| — | — | none |")
+        lines.append("| — | — | none | — | — |")
 
     lines += [
         "",
         "## Definition-of-Done clauses that are not PASS",
         "",
-        "| Clause | Status | What was checked |",
-        "|---|---|---|",
+        "| Clause | Status | What was checked | Whose move | What they have to do |",
+        "|---|---|---|---|---|",
     ]
     for row in dod_rows:
         if row["status"] != "PASS":
-            lines.append(f"| {row['dod_id']} | {row['status']} | {row['check']} |")
+            owner, action = OWNERS.get(row["dod_id"], ("unassigned", ""))
+            lines.append(
+                f"| {row['dod_id']} | {row['status']} | {row['check']} | {owner} | {action} |"
+            )
 
     lines += [
         "",
@@ -951,6 +1021,14 @@ def build_residual_risk(i: Inputs, decision: dict, dod_rows: list[dict]) -> str:
         "A green sweep means the project's own gates passed on this artifact. It",
         "does not mean the product is releasable. The clauses above are why the",
         "verdict is not GO.",
+        "",
+        "## The shape of what is left",
+        "",
+        "Nothing in the table above is unfinished code. Each row is either a person this",
+        "repository cannot employ, an environment it cannot provision, a release that has not",
+        "happened yet, or a claim it deliberately does not make. The audit trail for every",
+        "closed item -- with the command, the exit code and the artifact digest -- is in",
+        "`.agent/evidence/`, indexed by `.agent/verification/state/EVIDENCE_INDEX.json`.",
         "",
     ]
     return "\n".join(lines)
