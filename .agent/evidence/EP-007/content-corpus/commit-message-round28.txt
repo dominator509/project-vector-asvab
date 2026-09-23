@@ -1,0 +1,80 @@
+content: the plan's objective reaches the item the learner is served (REQ-003, REQ-048, REQ-056)
+
+Rounds 26-27 gave the plan a grain finer than the subtest: each drill names the objective to
+work on, read from the installed pack's curriculum and chosen as the weakest whose
+prerequisites are met. The practice surface ignored it. The plan said one thing and the
+session did another, and the learner had no way to tell which to believe. Round 27's own
+report recorded the gap: "the curriculum's grain stops at the plan".
+
+The objective now travels from the plan, through the command boundary, into the read that
+picks the item.
+
+Persistence. `ContentItemRepo::servable_in(subtest, Option<&str>)` narrows the servable read
+with one predicate in one SQL string -- `AND (?2 IS NULL OR objective_id = ?2)` -- because the
+provenance rules below it (active, and not withdrawn by a pack rollback) are the part that
+must never diverge between the narrow and the wide read, and one string cannot drift from
+itself. `servable` delegates with `None`.
+
+Application. `ContentPipeline::next_item_for(subtest, objective_id, seen)` prefers the named
+objective's items and falls back to the whole subtest when the objective holds none: a plan
+can name an objective this installation has no items for -- a pack was rolled back, or the
+objective is declared and unbuilt -- and refusing to serve anything would turn a content gap
+into a blocked learner. The fallback is scoped to the subtest, so it cannot cross into another
+skill. The rotation rule (first unseen, lowest id, wrapping when the pool is exhausted) moved
+into a free `pick` helper so the two reads cannot rotate differently. `next_item` delegates
+with `None`, so every existing caller behaves exactly as before.
+
+Boundary and interface. The command takes an optional `objective_id`, so direct subtest
+browsing is unchanged; `VectorClient.contentNext(subtest, seen, objectiveId?)` and
+`usePracticeItems(..., objectiveId)` pass it on every fetch; `PracticeContentView` takes a
+`PracticeRequest`, says which objective it is serving, and clears it when a subtest is chosen
+by hand (keeping another subtest's objective would narrow a read to an objective it cannot
+hold); `TodayView` renders a per-drill control that starts the session the plan asked for,
+only when navigation is supplied, because a button that went nowhere is worse than the label
+it replaces; `Shell` carries the request into the view and announces it in the polite live
+region.
+
+Read back from the installation's own store. `examples/plan_report.rs` now prints what a
+session for each named objective is actually served. Against a copy of the real database with
+the installed `core-asvab v5` pack and its 5,627 items, every served item carries the
+objective the plan named: SI -> OBJ-SI-TOOLS-01, EI -> OBJ-EI-TERMINOLOGY-01, GS ->
+OBJ-GS-EXPLAIN-01, PC -> OBJ-PC-DETAIL-01, WK -> OBJ-WK-SYNONYM-01. The readback is in the
+round report; this is the check a fixture cannot give, and it is the check that caught the
+empty AO drill in round 26.
+
+Proof. Tests: two Rust tests driven through the real embedded migrations and a real corpus
+(the objective spread is read back out of the store, then every objective is walked to
+exhaustion to prove the pool is neither widened nor truncated, and the fallback is proved not
+to cross subtests); two interface tests asserting the objective reached the command boundary
+rather than the hook's arguments; a view test that creates a learner, clicks the plan's drill
+and asserts the session's objective; and a browser test against the built bundle whose stub
+holds two Arithmetic Reasoning items in two objectives with the wrong one first.
+
+`python3 scripts/probes/mutation-round18.py` now catches all 40 mutations across three
+runners (cargo, vitest, Playwright), including five new ones: the narrowing ignored, the
+fallback removed, the objective not sent to the backend, the request not carried into the
+view, and the built bundle serving the subtest's first item instead of the objective's. The
+Playwright runner rebuilds the bundle first, because a spec run against a stale `dist`
+describes code that no longer exists.
+
+Two harness defects were found and fixed on the way, both "a tool that changes what it
+measures": a concurrent `cargo test` failed a rule that was mutated at that moment (the
+docstring now says to run it alone), and the text-mode restore rewrote line endings, so the
+format gate failed on two TypeScript files nobody had edited (restore is now byte-exact, and
+a full run leaves the format gate green with each file's endings unchanged).
+
+Corpus unchanged at 5,627 active items (1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 42 SI, 94 AI);
+pack `core-asvab v5` active; every provenance invariant a zero.
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; artifact digest
+6983c707fafa8ac2f60e1c87fc35636cadf27f6a0fd78a08fd91caaba125f573, candidate epoch 16, verdict
+CONDITIONAL_EXTERNAL_GATES. Tests: 70 Rust binaries / 949 passed, 217 frontend unit in 12
+files, 9 integration, 37 Playwright, 0 failures.
+
+Still open, measured rather than assumed: the narrowing is a no-op on the ingested subtests
+today, because the curriculum declares one objective per ingested subtest and every item of
+that subtest carries it; a plan cannot name an objective for a generated subtest, because the
+pack's curriculum declares none of the factory's 22 AR/MK/MC objectives and those drills carry
+`objective_id: null`; practising a generated subtest on a real installation still takes one
+explicit "Prepare 40 ... questions" click. SI 42 remains thin, AI carries its known noise
+floor, General Science is one work, and the Word Knowledge rare-distractor gap is unchanged.

@@ -285,6 +285,24 @@ impl<'a> ContentItemRepo<'a> {
     /// guarantees active implies complete, so this is a belt-and-braces read
     /// rather than the enforcement point.
     pub fn servable(&self, subtest: &str) -> anyhow::Result<Vec<StoredItem>> {
+        self.servable_in(subtest, None)
+    }
+
+    /// The same read, narrowed to one objective when one is named.
+    ///
+    /// A study plan names the objective a session is for, so practice that ignored
+    /// the objective would deliver items from a different skill than the plan just
+    /// told the learner to work on. `None` keeps the earlier subtest-wide read, so a
+    /// caller with no objective in hand behaves exactly as before.
+    ///
+    /// `?2 IS NULL OR objective_id = ?2` rather than two statements: the provenance
+    /// predicate below is the part that must never diverge between the narrow and
+    /// the wide read, and one SQL string cannot drift from itself.
+    pub fn servable_in(
+        &self,
+        subtest: &str,
+        objective_id: Option<&str>,
+    ) -> anyhow::Result<Vec<StoredItem>> {
         self.query(
             "SELECT id, subtest, objective_id, state, stem, options_json,
                     correct_index, explanation, distractors_json, difficulty,
@@ -292,6 +310,7 @@ impl<'a> ContentItemRepo<'a> {
                     generator_hash, verifier_hash, passage
              FROM content_items
              WHERE state = 'active' AND subtest = ?1
+               AND (?2 IS NULL OR objective_id = ?2)
                AND (
                      NOT EXISTS (
                          SELECT 1 FROM content_pack_items m
@@ -304,7 +323,7 @@ impl<'a> ContentItemRepo<'a> {
                      )
                    )
              ORDER BY id",
-            params![subtest],
+            params![subtest, objective_id],
         )
     }
 

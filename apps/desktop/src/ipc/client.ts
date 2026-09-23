@@ -857,8 +857,19 @@ export interface VectorClient {
     count: number,
     seed: number,
   ): Promise<GenerationReportDto>;
-  /** The next item to practise, or `null` when the corpus has nothing to serve. */
-  contentNext(subtest: string, seen: string[]): Promise<ItemDto | null>;
+  /**
+   * The next item to practise, or `null` when the corpus has nothing to serve.
+   *
+   * `objectiveId` narrows the read to the objective a study plan named. It is
+   * optional because browsing a subtest directly has no objective in hand, and the
+   * backend falls back to the subtest when the named objective holds no content —
+   * an objective with nothing built yet must not block a learner from practising.
+   */
+  contentNext(
+    subtest: string,
+    seen: string[],
+    objectiveId?: string | null,
+  ): Promise<ItemDto | null>;
   /** How much content this installation holds. */
   contentStats(): Promise<ContentStatsDto>;
   /** Everything the content manager draws, in one payload. */
@@ -1008,8 +1019,12 @@ export function createVectorClient(invoke: Invoke): VectorClient {
     contentGenerate: (subtest, count, seed) =>
       call("content_generate", { subtest, count, seed }, readGenerationReport),
 
-    contentNext: (subtest, seen) =>
-      call("content_next", { subtest, seen }, readOptionalItem),
+    contentNext: (subtest, seen, objectiveId) =>
+      call(
+        "content_next",
+        { subtest, seen, objective_id: objectiveId ?? null },
+        readOptionalItem,
+      ),
 
     contentStats: () => call("content_stats", undefined, readContentStats),
 

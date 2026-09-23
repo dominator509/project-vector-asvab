@@ -21,6 +21,7 @@ import type {
   PlanDto,
 } from "../ipc/types";
 import { useActiveProfile } from "../state/ProfileContext";
+import type { PracticeRequest } from "./PracticeContentView";
 
 /** The planning horizons offered, in minutes. */
 export const TIME_BUDGETS = [15, 30, 60, 90] as const;
@@ -32,7 +33,18 @@ export interface TodaySnapshot {
   latency: LatencyDto;
 }
 
-export function TodayView() {
+/**
+ * `onPractise` is how a plan drill becomes a session.
+ *
+ * It is optional so the view can be rendered on its own in a test, and the
+ * control is rendered only when it is supplied: a "Practise" button that went
+ * nowhere would be worse than the label it replaces.
+ */
+export function TodayView({
+  onPractise,
+}: {
+  onPractise?: (request: PracticeRequest) => void;
+} = {}) {
   const backend = useBackend();
   const { profile, unavailable } = useActiveProfile();
   const [minutes, setMinutes] = useState<number>(30);
@@ -111,7 +123,11 @@ export function TodayView() {
       >
         {(snapshot) => (
           <>
-            <PlanSection plan={snapshot.plan} minutes={minutes} />
+            <PlanSection
+              plan={snapshot.plan}
+              minutes={minutes}
+              onPractise={onPractise}
+            />
             <AnalyticsSection analytics={snapshot.analytics} />
             <DiagnosticsSection
               health={snapshot.health}
@@ -124,7 +140,15 @@ export function TodayView() {
   );
 }
 
-function PlanSection({ plan, minutes }: { plan: PlanDto; minutes: number }) {
+function PlanSection({
+  plan,
+  minutes,
+  onPractise,
+}: {
+  plan: PlanDto;
+  minutes: number;
+  onPractise?: (request: PracticeRequest) => void;
+}) {
   const allocated = plan.drills.reduce((sum, d) => sum + d.minutes, 0);
 
   if (plan.drills.length === 0) {
@@ -144,7 +168,7 @@ function PlanSection({ plan, minutes }: { plan: PlanDto; minutes: number }) {
       <h4 id="plan-heading">Plan</h4>
       <ol data-testid="today-drills">
         {plan.drills.map((drill) => (
-          <li key={drill.subtest}>
+          <li key={`${drill.subtest}-${drill.objective_id ?? "none"}`}>
             <strong>{drill.subtest}</strong> — {drill.minutes} minutes{" "}
             <span className="reason">({drill.reason})</span>
             {/* The objective comes from the installed pack's curriculum, and the reason says
@@ -158,6 +182,25 @@ function PlanSection({ plan, minutes }: { plan: PlanDto; minutes: number }) {
                 {" "}
                 {drill.objective_id}
               </span>
+            )}
+            {/* The plan is a set of instructions, so each drill is the control that
+                starts it. The objective travels with the request, which is the
+                whole point: a session that ignored it would contradict the plan. */}
+            {onPractise && (
+              <button
+                type="button"
+                className="drill-start"
+                data-testid={`drill-start-${drill.subtest}`}
+                onClick={() =>
+                  onPractise({
+                    subtest: drill.subtest,
+                    objectiveId: drill.objective_id,
+                  })
+                }
+              >
+                Practise {drill.subtest}
+                {drill.objective_id !== null ? ` — ${drill.objective_id}` : ""}
+              </button>
             )}
           </li>
         ))}

@@ -101,6 +101,23 @@ export interface FakeClientOptions {
   readiness?: ReadinessDto;
   /** Force the next `backup_restore` to verify against the archive digest. */
   verifyRestoreDigest?: boolean;
+  /**
+   * Objectives the fixture plan names, by subtest.
+   *
+   * The default plan names none, because the real one draws objectives from the
+   * installed pack's curriculum and a fixture that invented one would let a view
+   * render a reading nothing produced. A test that needs a plan naming an
+   * objective -- how the objective reaches practice -- says so here.
+   */
+  planObjectives?: Record<string, string>;
+  /**
+   * Objectives the generated items carry, cycled in order.
+   *
+   * One subtest holds several objectives in the real corpus, so the default
+   * cycles too: a fake that put every item of a subtest in a single objective
+   * could not tell a narrowed read from a widened one.
+   */
+  generateObjectives?: string[];
 }
 
 export interface FakeClient {
@@ -322,9 +339,11 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
             ? availableMinutes - each * (codes.length - 1)
             : each,
         reason: index === 0 ? "weakness" : "due review",
-        // The stub names no objective: an objective comes from an installed pack's curriculum,
-        // and a stub that invented one would let the view render a reading nothing produced.
-        objective_id: null,
+        // The stub names no objective by default: an objective comes from an installed pack's
+        // curriculum, and a stub that invented one would let the view render a reading nothing
+        // produced. A test that needs a plan naming an objective opts in through
+        // `planObjectives`, and then the objective it names is the one it supplied.
+        objective_id: options.planObjectives?.[subtest] ?? null,
       }));
       return { drills, total_minutes: availableMinutes };
     },
@@ -546,7 +565,10 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
         state.items.set(id, {
           id,
           subtest,
-          objective_id: `OBJ-${subtest}-TEST-01`,
+          objective_id:
+            options.generateObjectives?.[
+              i % options.generateObjectives.length
+            ] ?? `OBJ-${subtest}-TEST-0${(i % 2) + 1}`,
           stem: `${subtest} generated item ${i} for seed ${seed}`,
           // A Paragraph Comprehension item always has a passage, because the store
           // refuses one that does not: the question refers to a text, so an item
@@ -587,14 +609,23 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
     async contentNext(
       subtest: string,
       seen: string[],
+      objectiveId?: string | null,
     ): Promise<ItemDto | null> {
-      record("content_next", { subtest, seen });
+      record("content_next", { subtest, seen, objectiveId });
       // Quarantined items are excluded, mirroring the backend's `servable`, which
       // reads `state = 'active'`. A fake that served them would let the practice
       // view pass its tests while handing a learner a withdrawn question.
-      const candidates = [...state.items.values()].filter(
+      const servable = [...state.items.values()].filter(
         (item) => item.subtest === subtest && !state.quarantined.has(item.id),
       );
+      // Objective narrowing first, then the subtest-wide fallback, in the same
+      // order the backend uses: a fake that widened the read would let the
+      // practice view pass while serving another objective's questions.
+      const narrowed =
+        objectiveId == null
+          ? servable
+          : servable.filter((item) => item.objective_id === objectiveId);
+      const candidates = narrowed.length > 0 ? narrowed : servable;
       if (candidates.length === 0) {
         return null;
       }

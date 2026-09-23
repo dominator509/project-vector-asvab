@@ -399,3 +399,29 @@ Still open: **the curriculum's grain stops at the plan** -- mastery is read per 
 practice surface still chooses items by subtest, so selecting the next item from the objective the
 plan named is the next step; SI 42 remains the thin bank; AI's noun frame carries a known noise
 floor; General Science is one work; the Word Knowledge rare-distractor gap is unchanged.
+
+### Round 28
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The plan's objective reaches the item | `ContentItemRepo::servable_in(subtest, Option<&str>)` narrows the servable read with one predicate in one SQL string (`AND (?2 IS NULL OR objective_id = ?2)`), so the provenance rules below it cannot drift between the narrow and the wide read; `servable` delegates with `None`. `ContentPipeline::next_item_for(subtest, objective_id, seen)` prefers the named objective's items and falls back to the whole subtest when the objective holds none -- an unbuilt objective is a content gap, and serving nothing would turn it into a blocked learner. The rotation rule moved into a free `pick` helper so both reads rotate identically. | `crates/vector-persistence/src/content.rs`, `crates/vector-application/src/content.rs` |
+| From the plan into the session | The command takes an optional `objective_id`; `VectorClient.contentNext(subtest, seen, objectiveId?)` and `usePracticeItems(..., objectiveId)` pass it on every fetch; `PracticeContentView` takes a `PracticeRequest`, says which objective it is serving, and clears it when a subtest is chosen by hand; `TodayView` renders a per-drill control that starts the session the plan asked for (only when navigation is supplied, because a button that went nowhere is worse than a label); `Shell` carries the request into the view and announces it in the polite live region. | `commands.rs`, `client.ts`, `usePracticeItems.ts`, `PracticeContentView.tsx`, `TodayView.tsx`, `App.tsx` |
+| Read back from the installation's own store | `examples/plan_report.rs` now prints what a session for each named objective is actually served. Against a copy of the real database: SI -> `OBJ-SI-TOOLS-01` item, EI -> `OBJ-EI-TERMINOLOGY-01`, GS -> `OBJ-GS-EXPLAIN-01`, PC -> `OBJ-PC-DETAIL-01`, WK -> `OBJ-WK-SYNONYM-01`, each served item carrying the objective the plan named. | `.agent/evidence/EP-007/content-corpus/ROUND-28-REPORT.md` |
+| Proof the rule is load-bearing | The mutation harness grew vitest and Playwright runners and now catches **all 40** mutations: narrowing ignored, fallback removed, objective not sent to the backend, request not carried into the view, and the built bundle serving the subtest's first item instead of the objective's. The Playwright runner rebuilds the bundle first, because a spec run against a stale `dist` describes code that no longer exists. Two harness defects were fixed on the way: a run now refuses to be judged alongside another test command, and it restores the tree byte-exactly -- its text-mode restore had rewritten line endings and made the format gate fail on files nobody had edited. | `scripts/probes/mutation-round18.py`, `mutation-round28.log` |
+
+Corpus unchanged at **5,627 active items** (1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 42 SI, 94 AI);
+pack `core-asvab v5` active; every provenance invariant a zero.
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; artifact digest
+`6983c707fafa8ac2f60e1c87fc35636cadf27f6a0fd78a08fd91caaba125f573`, candidate epoch 16, verdict
+`CONDITIONAL_EXTERNAL_GATES`. Tests: 70 Rust binaries / 949 passed (`cargo test --workspace`), 217
+frontend unit tests in 12 files, 9 integration, 37 Playwright, 0 failures.
+
+Still open, measured rather than assumed: the narrowing is a **no-op on the ingested subtests today**
+because the curriculum declares one objective per ingested subtest and every item of that subtest
+carries it (read back per subtest/objective from the store); a plan **cannot name an objective for a
+generated subtest** because the pack's curriculum declares none of the factory's 22 AR/MK/MC
+objectives; practising a generated subtest on a real installation still takes one explicit "Prepare
+40 ... questions" click. SI 42 remains thin, AI carries its known noise floor, General Science is one
+work, and the Word Knowledge rare-distractor gap is unchanged.
+

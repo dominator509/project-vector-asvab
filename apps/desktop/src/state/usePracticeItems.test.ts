@@ -85,4 +85,56 @@ describe("usePracticeItems", () => {
     await result.current.generate("AR", 6);
     await waitFor(() => expect(fake.state.items.size).toBeGreaterThan(before));
   });
+
+  it("asks the backend for the objective the plan named", async () => {
+    const fake = createFakeClient();
+    await fake.client.contentGenerate("AR", 12, 5);
+
+    // Every objective the generated corpus actually holds, read back from the
+    // fake's own store rather than assumed.
+    const objectives = [
+      ...new Set(
+        [...fake.state.items.values()].map((item) => item.objective_id),
+      ),
+    ];
+    expect(objectives.length).toBeGreaterThan(1);
+
+    const target = objectives[objectives.length - 1];
+    fake.calls.length = 0;
+
+    const { result } = renderHook(() =>
+      usePracticeItems(fake.client, "AR", 4, false, target),
+    );
+    await waitFor(() => expect(result.current.state.status).toBe("ready"));
+
+    // The objective must reach the command boundary, not merely be accepted by
+    // the hook: a hook that dropped it would serve another objective's items and
+    // still look correct from the outside.
+    const serves = fake.calls.filter((call) => call.command === "content_next");
+    expect(serves.length).toBeGreaterThan(0);
+    for (const call of serves) {
+      expect(call.args?.objectiveId).toBe(target);
+    }
+
+    if (result.current.state.status !== "ready") throw new Error("not ready");
+    for (const item of result.current.state.items) {
+      expect(item.objectiveId).toBe(target);
+    }
+  });
+
+  it("falls back to the whole subtest when the objective holds nothing", async () => {
+    const fake = createFakeClient();
+    await fake.client.contentGenerate("AR", 6, 3);
+
+    const { result } = renderHook(() =>
+      usePracticeItems(fake.client, "AR", 3, false, "OBJ-AR-NOT-BUILT-01"),
+    );
+    await waitFor(() => expect(result.current.state.status).toBe("ready"));
+
+    // An unbuilt objective is a content gap, not a reason to serve an empty
+    // screen: the plan can name an objective this installation has no items for.
+    if (result.current.state.status !== "ready") throw new Error("not ready");
+    expect(result.current.state.items).toHaveLength(3);
+    expect(result.current.state.items[0].subtest).toBe("AR");
+  });
 });

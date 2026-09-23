@@ -19,6 +19,7 @@ import { AccessibleSettings } from "./views/AccessibleSettings";
 import { OnboardingView } from "./views/OnboardingView";
 import { ContentManagerView } from "./views/ContentManagerView";
 import { PracticeContentView } from "./views/PracticeContentView";
+import type { PracticeRequest } from "./views/PracticeContentView";
 import { SearchView } from "./views/SearchView";
 import { ExamSimulatorView } from "./views/ExamSimulatorView";
 import { ReadinessPanel } from "./views/ReadinessView";
@@ -51,6 +52,10 @@ export default function App() {
  */
 export function Shell() {
   const [view, setView] = useState<ViewId>(DEFAULT_VIEW);
+  // What the learner pressed in the plan, carried into the practice view. Held
+  // here because the plan and the practice session are different views, and the
+  // objective has to survive the navigation between them.
+  const [practice, setPractice] = useState<PracticeRequest | null>(null);
   const [a11y, setA11y] = useState<A11ySettings>(DEFAULT_A11Y_SETTINGS);
   const [liveMessage, setLiveMessage] = useState("");
   const navRef = useRef<HTMLElement | null>(null);
@@ -64,6 +69,17 @@ export function Shell() {
   const navigate = useCallback((next: ViewId) => {
     setView(next);
     setLiveMessage(`Showing ${viewDefinition(next).label}`);
+  }, []);
+
+  /** Start the session a plan drill asked for, and say so for screen readers. */
+  const startPractice = useCallback((request: PracticeRequest) => {
+    setPractice(request);
+    setView("practice");
+    setLiveMessage(
+      request.objectiveId === null
+        ? `Practising ${request.subtest}`
+        : `Practising ${request.subtest}, objective ${request.objectiveId}`,
+    );
   }, []);
 
   /**
@@ -157,7 +173,13 @@ export function Shell() {
 
         <main id="main-content" tabIndex={-1} data-testid="main-content">
           <h2 data-testid="view-heading">{viewDefinition(view).label}</h2>
-          <ViewBody view={view} a11y={a11y} onA11yChange={setA11y} />
+          <ViewBody
+            view={view}
+            a11y={a11y}
+            onA11yChange={setA11y}
+            practice={practice}
+            onPractise={startPractice}
+          />
         </main>
       </div>
 
@@ -181,9 +203,17 @@ interface ViewBodyProps {
   view: ViewId;
   a11y: A11ySettings;
   onA11yChange: (settings: A11ySettings) => void;
+  practice: PracticeRequest | null;
+  onPractise: (request: PracticeRequest) => void;
 }
 
-function ViewBody({ view, a11y, onA11yChange }: ViewBodyProps) {
+function ViewBody({
+  view,
+  a11y,
+  onA11yChange,
+  practice,
+  onPractise,
+}: ViewBodyProps) {
   // Attempts are recorded against the learner the application has selected.
   const { profile } = useActiveProfile();
 
@@ -191,7 +221,7 @@ function ViewBody({ view, a11y, onA11yChange }: ViewBodyProps) {
     case "onboarding":
       return <OnboardingView />;
     case "today":
-      return <TodayView />;
+      return <TodayView onPractise={onPractise} />;
     case "accessibility":
       return <AccessibleSettings settings={a11y} onChange={onA11yChange} />;
     case "content":
@@ -199,7 +229,7 @@ function ViewBody({ view, a11y, onA11yChange }: ViewBodyProps) {
     case "practice":
       // Real generated items, loaded from the command boundary. This used to
       // pass `sampleQuestions`, which is how the app appeared to have content.
-      return <PracticeContentView learnerId={profile?.id} />;
+      return <PracticeContentView learnerId={profile?.id} request={practice} />;
     case "search":
       return <SearchView />;
     case "cat":

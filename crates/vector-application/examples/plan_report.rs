@@ -12,6 +12,7 @@
 
 use std::path::PathBuf;
 
+use vector_application::content::ContentPipeline;
 use vector_application::service::Services;
 use vector_persistence::{Database, MigrationManager};
 
@@ -72,6 +73,44 @@ fn main() {
         );
     }
 
+    // The plan names an objective; this is what the practice surface actually asks the store
+    // for, run against the real corpus rather than a fixture. Round 27's readback caught a drill
+    // that could not start, so the same readback is applied to the item read: a plan naming an
+    // objective no item carries would send the learner to a narrowed read that falls back, and
+    // only the real store can say whether that is what happens.
+    let pipeline = ContentPipeline::new(&db);
+    println!("\nwhat a session for each named objective is served:");
+    for drill in plan.drills.iter().filter(|d| d.objective_id.is_some()) {
+        let objective = drill.objective_id.as_deref().unwrap_or_default();
+        let served = pipeline
+            .next_item_for(&drill.subtest, Some(objective), &[])
+            .expect("a read of the real corpus");
+        match served {
+            Some(item) => println!(
+                "  {:<4} {:<26} -> {} [{}] {}",
+                drill.subtest,
+                objective,
+                item.id,
+                item.objective_id,
+                shorten(&item.stem)
+            ),
+            None => println!(
+                "  {:<4} {:<26} -> nothing to serve",
+                drill.subtest, objective
+            ),
+        }
+    }
+
     // The profile is written, so the caller is told what to clean up when it did not use a copy.
     println!("\nwrote learner {} to {}", profile.id, path);
+}
+
+/// The stem, cut to one line so the readback stays readable.
+fn shorten(stem: &str) -> String {
+    let flat = stem.split_whitespace().collect::<Vec<_>>().join(" ");
+    if flat.chars().count() <= 72 {
+        return flat;
+    }
+    let cut: String = flat.chars().take(72).collect();
+    format!("{cut}…")
 }

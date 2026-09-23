@@ -130,12 +130,21 @@ export interface PracticeContent {
  * on every run and "generate more" would report them all as already present and
  * add nothing. Seeding from the current total means the first run is
  * reproducible and a later run extends the corpus instead of repeating it.
+ *
+ * ## Why the objective narrows the read
+ *
+ * A plan that names `OBJ-MK-ALGEBRA-02` and a session that then serves coordinate
+ * geometry contradicts itself on the next screen, and the learner has no way to
+ * tell which of the two to believe. The objective is passed to the backend, which
+ * falls back to the whole subtest when the objective holds no servable item, so a
+ * thin objective degrades into practice rather than into an empty screen.
  */
 export function usePracticeItems(
   client: VectorClient,
   subtest: string,
   wanted: number = PRACTICE_SET_SIZE,
   canGenerate: boolean = isGeneratable(subtest),
+  objectiveId: string | null = null,
 ): PracticeContent {
   const [state, setState] = useState<PracticeContentState>({
     status: "loading",
@@ -165,7 +174,7 @@ export function usePracticeItems(
       const seen: string[] = [];
       const collected = [];
       for (let i = 0; i < wanted; i += 1) {
-        const item = await client.contentNext(subtest, seen);
+        const item = await client.contentNext(subtest, seen, objectiveId);
         if (current !== run.current) return;
         // `null` means the corpus has nothing for this subtest; a repeated id
         // means it is exhausted and would loop.
@@ -187,7 +196,7 @@ export function usePracticeItems(
         message: error instanceof Error ? error.message : String(error),
       });
     }
-  }, [client, subtest, wanted, canGenerate]);
+  }, [client, subtest, wanted, canGenerate, objectiveId]);
 
   useEffect(() => {
     void load();

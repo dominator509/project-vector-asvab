@@ -88,6 +88,19 @@ pub struct ContentPipeline<'a> {
     db: &'a Database,
 }
 
+/// The first item the learner has not seen, or the first item when all are seen.
+///
+/// Ordered by id in SQL, so the pick is stable across restarts rather than
+/// reshuffled by whatever the database returns first. Repeating the first item
+/// when the pool is exhausted is deliberate: a finite corpus must not end a
+/// session in progress, and the caller's `seen` list says what it has shown.
+fn pick<'i>(items: &'i [StoredItem], seen: &[String]) -> Option<&'i StoredItem> {
+    items
+        .iter()
+        .find(|item| !seen.iter().any(|id| id == &item.id))
+        .or_else(|| items.first())
+}
+
 impl<'a> ContentPipeline<'a> {
     pub fn new(db: &'a Database) -> Self {
         Self { db }
@@ -1204,13 +1217,32 @@ impl<'a> ContentPipeline<'a> {
     /// response history, and the mastery model is per *subtest*, so this
     /// deliberately does not pretend to be the CAT-ASVAB's item selection.
     pub fn next_item(&self, subtest: &str, seen: &[String]) -> anyhow::Result<Option<ItemDto>> {
+        self.next_item_for(subtest, None, seen)
+    }
+
+    /// The next item for one named objective, falling back to the subtest.
+    ///
+    /// The study plan tells the learner which objective a session is for, so a
+    /// session that returned items from another objective would contradict the plan
+    /// on the very next screen. When the objective holds no servable item the
+    /// subtest read is used instead of returning nothing: an objective with no
+    /// content yet is a content gap, and refusing to serve anything turns a gap
+    /// into a blocked learner. `objective_id = None` is the plain subtest read.
+    pub fn next_item_for(
+        &self,
+        subtest: &str,
+        objective_id: Option<&str>,
+        seen: &[String],
+    ) -> anyhow::Result<Option<ItemDto>> {
         let repo = ContentItemRepo::new(self.db);
+        if let Some(objective) = objective_id {
+            let items = repo.servable_in(subtest, Some(objective))?;
+            if let Some(chosen) = pick(&items, seen) {
+                return Ok(Some(ItemDto::from(chosen)));
+            }
+        }
         let items = repo.servable(subtest)?;
-        let chosen = items
-            .iter()
-            .find(|item| !seen.iter().any(|id| id == &item.id))
-            .or_else(|| items.first());
-        Ok(chosen.map(ItemDto::from))
+        Ok(pick(&items, seen).map(ItemDto::from))
     }
 
     /// How much content exists, by state and by subtest.

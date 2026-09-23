@@ -87,7 +87,7 @@ fn generating_activates_items_that_can_then_be_served() {
     );
 
     // Read the effect back rather than trusting the return value.
-    let item = content_next_impl(&db, "AR", &[])
+    let item = content_next_impl(&db, "AR", None, &[])
         .expect("next")
         .expect("an item must be servable after generation");
     assert_eq!(item.subtest, "AR");
@@ -99,7 +99,7 @@ fn a_served_item_is_answerable_and_explains_its_distractors() {
     let (_dir, db) = database("shape");
     content_generate_impl(&db, "MK", 5, 7).expect("generate");
 
-    let item = content_next_impl(&db, "MK", &[])
+    let item = content_next_impl(&db, "MK", None, &[])
         .expect("next")
         .expect("item");
 
@@ -212,7 +212,7 @@ fn a_subtest_with_no_templates_is_refused_rather_than_reporting_success() {
 #[test]
 fn next_item_returns_nothing_when_the_corpus_is_empty() {
     let (_dir, db) = database("empty");
-    let item = content_next_impl(&db, "AR", &[]).expect("next");
+    let item = content_next_impl(&db, "AR", None, &[]).expect("next");
     assert!(item.is_none(), "an empty corpus serves nothing");
 }
 
@@ -223,7 +223,7 @@ fn next_item_skips_ids_the_caller_has_already_seen() {
 
     let mut seen: Vec<String> = Vec::new();
     for _ in 0..3 {
-        let item = content_next_impl(&db, "AR", &seen)
+        let item = content_next_impl(&db, "AR", None, &seen)
             .expect("next")
             .expect("an unseen item");
         assert!(
@@ -236,7 +236,7 @@ fn next_item_skips_ids_the_caller_has_already_seen() {
     assert_eq!(seen.len(), 3, "three distinct items were served");
 
     // With everything seen, the corpus wraps rather than starving the learner.
-    let wrapped = content_next_impl(&db, "AR", &seen).expect("next");
+    let wrapped = content_next_impl(&db, "AR", None, &seen).expect("next");
     assert!(
         wrapped.is_some(),
         "a fully-seen corpus should wrap rather than serve nothing"
@@ -247,8 +247,88 @@ fn next_item_skips_ids_the_caller_has_already_seen() {
 fn next_item_does_not_cross_subtests() {
     let (_dir, db) = database("scoping");
     content_generate_impl(&db, "AR", 5, 3).expect("AR");
-    let mk = content_next_impl(&db, "MK", &[]).expect("next");
+    let mk = content_next_impl(&db, "MK", None, &[]).expect("next");
     assert!(mk.is_none(), "MK has no items yet");
+}
+
+#[test]
+fn a_named_objective_serves_its_own_items_and_not_a_neighbour() {
+    let (_dir, db) = database("objective");
+    // The factory spreads one subtest across several objectives, so this corpus
+    // holds more than one objective's items in the same subtest -- which is what
+    // makes the assertion below meaningful rather than tautological.
+    let report = content_generate_impl(&db, "AR", 40, 4_242).expect("generate");
+    assert!(report.activated > 8, "report: {report:?}");
+
+    // Read the objective spread back out of the store rather than assuming which
+    // objectives the factory's templates map onto.
+    let spread: Vec<(String, i64)> = {
+        let conn = db.connection();
+        let mut statement = conn
+            .prepare(
+                "SELECT objective_id, COUNT(*) FROM content_items
+                 WHERE subtest = 'AR' GROUP BY objective_id ORDER BY objective_id",
+            )
+            .expect("prepare");
+        let rows = statement
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+            .expect("query");
+        rows.collect::<Result<Vec<(String, i64)>, _>>()
+            .expect("rows")
+    };
+    assert!(
+        spread.len() >= 2,
+        "one subtest must hold two objectives for this test to mean anything: {spread:?}"
+    );
+
+    for (objective, count) in &spread {
+        // Walked to exhaustion: an unnarrowed read returns the lowest id in the
+        // subtest whatever objective it belongs to, so a first-item coincidence
+        // cannot pass this, and serving exactly `count` distinct items proves the
+        // objective's pool is neither widened nor truncated.
+        let mut seen: Vec<String> = Vec::new();
+        for _ in 0..*count {
+            let served = content_next_impl(&db, "AR", Some(objective), &seen).expect("next");
+            let item = served
+                .unwrap_or_else(|| panic!("{objective} holds {count} items but served nothing"));
+            assert_eq!(
+                &item.objective_id, objective,
+                "practice for {objective} served an item from {}",
+                item.objective_id
+            );
+            assert!(
+                !seen.contains(&item.id),
+                "{objective} repeated {} before exhausting its {count} items",
+                item.id
+            );
+            seen.push(item.id);
+        }
+        assert_eq!(
+            seen.len() as i64,
+            *count,
+            "{objective} should serve all {count} of its items"
+        );
+    }
+}
+
+#[test]
+fn an_objective_with_no_content_falls_back_to_the_subtest() {
+    let (_dir, db) = database("objective-fallback");
+    content_generate_impl(&db, "AR", 12, 11).expect("generate");
+
+    // A plan can name an objective this installation has no content for, either
+    // because a pack was rolled back or because the objective is unbuilt. Serving
+    // nothing would turn a content gap into a blocked learner.
+    let fallback = content_next_impl(&db, "AR", Some("OBJ-AR-NOT-BUILT-99"), &[]).expect("next");
+    let item = fallback.expect("an unbuilt objective must fall back to the subtest");
+    assert_eq!(item.subtest, "AR");
+
+    // The fallback is scoped to the subtest, not to the whole corpus.
+    let other = content_next_impl(&db, "MK", Some("OBJ-MK-NOT-BUILT-99"), &[]).expect("next");
+    assert!(
+        other.is_none(),
+        "the fallback must not cross into another subtest: {other:?}"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -383,7 +463,7 @@ fn a_quarantined_item_is_never_served() {
 
     // Read the serving path directly rather than trusting the count.
     for _ in 0..10 {
-        if let Some(item) = content_next_impl(&db, "AR", &[]).expect("next") {
+        if let Some(item) = content_next_impl(&db, "AR", None, &[]).expect("next") {
             assert_ne!(item.id, target, "a quarantined item was served");
         }
     }
@@ -506,7 +586,7 @@ fn mechanical_comprehension_generates_and_is_served() {
         report.rejected
     );
 
-    let item = content_next_impl(&db, "MC", &[])
+    let item = content_next_impl(&db, "MC", None, &[])
         .expect("next")
         .expect("an MC item must be servable after generation");
     assert_eq!(item.subtest, "MC");
@@ -575,7 +655,7 @@ fn an_ingested_comprehension_item_is_served_with_its_passage() {
         .expect("ingest");
     assert!(report.activated > 0, "the fixture should yield items");
 
-    let item = content_next_impl(&db, "PC", &[])
+    let item = content_next_impl(&db, "PC", None, &[])
         .expect("next")
         .expect("an ingested item must be servable");
     assert_eq!(item.subtest, "PC");
@@ -682,7 +762,7 @@ fn a_pack_installed_through_the_command_is_served() {
     assert_eq!(report.name, "core-asvab");
 
     // The effect is read back through the serving command, not the report.
-    let item = content_next_impl(&target_db, "AR", &[])
+    let item = content_next_impl(&target_db, "AR", None, &[])
         .expect("next")
         .expect("an installed item must be served");
     assert_eq!(item.subtest, "AR");
@@ -754,7 +834,7 @@ fn a_pack_signed_by_another_key_is_refused_through_the_command() {
         "the refusal should say why: {error}"
     );
     assert_eq!(
-        content_next_impl(&target_db, "AR", &[]).expect("next"),
+        content_next_impl(&target_db, "AR", None, &[]).expect("next"),
         None,
         "a refused pack leaves nothing to serve"
     );

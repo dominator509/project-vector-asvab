@@ -675,6 +675,92 @@ describe("boundary handshake", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// The plan's objective reaches the practice session
+// ---------------------------------------------------------------------------
+
+describe("the plan's objective reaches practice", () => {
+  /** A harness with a learner, a plan that names an objective, and a corpus. */
+  async function plannedSession() {
+    const h = harness({ planObjectives: { AR: "OBJ-AR-TEST-02" } });
+    h.storage.setItem("vector.activeProfileId", "");
+    const profile = await h.fake.client.createProfile("Ada", 60);
+    h.storage.setItem("vector.activeProfileId", profile.id);
+    await h.fake.client.contentGenerate("AR", 12, 5);
+    return h;
+  }
+
+  it("starts the objective the plan named, and the corpus answers for it", async () => {
+    const user = userEvent.setup();
+    const h = await plannedSession();
+
+    render(
+      <BackendProvider available client={h.fake.client}>
+        <ProfileProvider storage={h.storage}>
+          <Shell />
+        </ProfileProvider>
+      </BackendProvider>,
+    );
+
+    // The plan is on the default view; its drill is the way into a session.
+    const start = await screen.findByTestId("drill-start-AR");
+    expect(start).toHaveTextContent("OBJ-AR-TEST-02");
+    await user.click(start);
+
+    // The session says which objective it is serving...
+    expect(await screen.findByTestId("practice-objective")).toHaveTextContent(
+      "OBJ-AR-TEST-02",
+    );
+
+    // ...and every item it asked for was narrowed to that objective. This is the
+    // assertion that fails if the objective stops being sent: the fake's corpus
+    // holds OBJ-AR-TEST-01 items too, and they are served when the read widens.
+    const serves = h.fake.calls.filter(
+      (call) => call.command === "content_next",
+    );
+    expect(serves.length).toBeGreaterThan(0);
+    for (const call of serves) {
+      expect(call.args?.objectiveId).toBe("OBJ-AR-TEST-02");
+    }
+
+    const questions = await screen.findAllByRole("radio");
+    expect(questions.length).toBeGreaterThan(0);
+    expect(screen.getByTestId("practice-corpus-summary")).toHaveTextContent(
+      /from a corpus of 12/,
+    );
+  });
+
+  it("does not offer a control that would go nowhere", async () => {
+    // Rendered without a navigation callback, the drill stays a label. A button
+    // that did nothing would be worse than no button.
+    const h = await plannedSession();
+    mount(<TodayView />, h);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("today-drills")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("drill-objective-AR")).toHaveTextContent(
+      "OBJ-AR-TEST-02",
+    );
+    expect(screen.queryByTestId("drill-start-AR")).not.toBeInTheDocument();
+  });
+
+  it("hands the drill's own subtest and objective to the caller", async () => {
+    const user = userEvent.setup();
+    const h = await plannedSession();
+    const started: Array<{ subtest: string; objectiveId: string | null }> = [];
+    mount(<TodayView onPractise={(request) => started.push(request)} />, h);
+
+    await user.click(await screen.findByTestId("drill-start-WK"));
+    await user.click(screen.getByTestId("drill-start-AR"));
+
+    expect(started).toEqual([
+      { subtest: "WK", objectiveId: null },
+      { subtest: "AR", objectiveId: "OBJ-AR-TEST-02" },
+    ]);
+  });
+});
+
 describe("practice persistence", () => {
   it("records the attempt and reports the stored total read back", async () => {
     const user = userEvent.setup();

@@ -105,6 +105,22 @@ export interface StubOptions {
   packs?: StubPack[];
   /** Value `ui_ready` returns, for specs that read the marker back. */
   marker?: string;
+  /**
+   * Drills `study_plan` returns. Empty by default, which is a plan with nothing to do.
+   *
+   * A drill carries the objective the real planner names, so a spec can drive the
+   * plan's objective into a practice session -- the path that had no coverage at all
+   * while the stub returned an empty plan.
+   */
+  drills?: StubDrill[];
+}
+
+/** One drill as the planner returns it. */
+export interface StubDrill {
+  subtest: string;
+  minutes: number;
+  reason: string;
+  objective_id: string | null;
 }
 
 /**
@@ -153,10 +169,16 @@ export async function installStubBackend(
   const items = options.items ?? [AR_ITEM];
   const packs = options.packs ?? [];
   const marker = options.marker ?? "marker-e2e";
+  const drills = options.drills ?? [];
 
   await page.addInitScript(
-    ({ items, packs, marker }) => {
+    ({ items, packs, marker, drills }) => {
       const subtests = [...new Set(items.map((item) => item.subtest))].sort();
+      const profiles: Array<{
+        id: string;
+        name: string;
+        target_score: number;
+      }> = [];
       const w = window as unknown as Record<string, unknown>;
       w.__TAURI_INTERNALS__ = {
         async invoke(command: string, args: Record<string, unknown> = {}) {
@@ -178,6 +200,28 @@ export async function installStubBackend(
                 profiles: 0,
               };
             case "list_profiles":
+              return profiles;
+            case "create_profile": {
+              // Stateful, because the onboarding view reads the row back before it
+              // selects it: a stub that echoed a fixed profile would pass while the
+              // readback the view performs was never answered.
+              const created = {
+                id: `profile-e2e-${profiles.length + 1}`,
+                name: String(args.name ?? ""),
+                target_score: Number(args.target_score ?? 0),
+              };
+              profiles.push(created);
+              return created;
+            }
+            case "get_profile": {
+              const found = profiles.find(
+                (candidate) => candidate.id === args.id,
+              );
+              if (!found) {
+                throw new Error(`not found: profile ${String(args.id)}`);
+              }
+              return found;
+            }
             case "mastery":
             case "evidence_list":
             case "backup_list":
@@ -185,8 +229,15 @@ export async function installStubBackend(
               return [];
             case "analytics":
               return { total: 0, correct: 0, accuracy: 0, mean_latency_ms: 0 };
-            case "study_plan":
-              return { drills: [], total_minutes: 0 };
+            case "study_plan": {
+              return {
+                drills,
+                total_minutes: drills.reduce(
+                  (sum, drill) => sum + drill.minutes,
+                  0,
+                ),
+              };
+            }
             case "readiness":
               return {
                 low: 0,
@@ -231,9 +282,18 @@ export async function installStubBackend(
               };
             case "content_next": {
               const seen = (args.seen as string[] | undefined) ?? [];
-              const candidates = items.filter(
+              const servable = items.filter(
                 (item) => item.subtest === args.subtest,
               );
+              // The objective narrows the read, and an objective holding nothing
+              // falls back to the subtest -- the same rule the backend applies, so
+              // the window cannot look right while the real read behaves otherwise.
+              const objective = args.objective_id as string | null | undefined;
+              const narrowed =
+                objective == null
+                  ? servable
+                  : servable.filter((item) => item.objective_id === objective);
+              const candidates = narrowed.length > 0 ? narrowed : servable;
               return (
                 candidates.find((item) => !seen.includes(item.id)) ??
                 candidates[0] ??
@@ -310,6 +370,6 @@ export async function installStubBackend(
         },
       };
     },
-    { items, packs, marker },
+    { items, packs, marker, drills },
   );
 }

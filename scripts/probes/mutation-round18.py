@@ -7,8 +7,11 @@ which means the rule is decoration.
 
 The rules are the ones the corpus reader and the ingestion loops were given: the nineteen in
 round 18 (what a purpose is, what a tool's name is, what damage is refused, one question asked
-once, a refused item leaving no draft) and the two in round 19 (a thin module not taking a run
-down, and a run that produces nothing still failing).
+once, a refused item leaving no draft), the two in round 19 (a thin module not taking a run
+down, and a run that produces nothing still failing), and the three in round 28 (a named
+objective narrowing the servable read, an objective with no content falling back to its
+subtest, and the interface actually asking for the objective the plan named), and the browser
+rule in round 28 (the built bundle serves the objective's item rather than the subtest's first).
 
 A rule enforced in two places is one rule: the mutation disables *every* site of it, because
 disabling one site and watching the test still pass would say nothing about the rule.
@@ -16,10 +19,16 @@ disabling one site and watching the test still pass would say nothing about the 
 Each mutation is applied to a copy of the file and restored afterwards, so the working tree
 is left exactly as it was found. The script exits non-zero if any mutation went uncaught.
 
+Run it alone. It edits the source in place, so any other test command running at the same time
+compiles whatever mutation is applied at that moment and reports a failure that belongs to this
+script, not to the code -- observed in round 28, when a concurrent `cargo test` failed on
+`a_letter_from_another_alphabet_is_refused` because that rule was mutated at the time.
+
 Usage:
     python3 scripts/probes/mutation-round18.py
 """
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -31,6 +40,10 @@ PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
 TOOLS = ROOT / "tools/vector-tools/src/content.rs"
 PACKS = ROOT / "crates/vector-application/src/packs.rs"
 SERVICE = ROOT / "crates/vector-application/src/service.rs"
+DESKTOP = ROOT / "apps/desktop"
+USE_PRACTICE_ITEMS = DESKTOP / "src/state/usePracticeItems.ts"
+APP_TSX = DESKTOP / "src/App.tsx"
+STUB_BACKEND = DESKTOP / "e2e/stubBackend.ts"
 
 NAME_STOP_WORDS_IN_THE_NAME = """    if words
         .iter()
@@ -496,6 +509,82 @@ MUTATIONS = [
         "a_run_in_which_no_module_produced_an_item_fails",
         "a run that produced nothing at all is still a failure",
     ),
+    # Round 28: the plan names an objective, and practice has to serve it. The rule
+    # spans three layers, so it gets three mutations -- a narrowing the store does
+    # not apply, a fallback the pipeline does not take, and a filter the reader
+    # never asks for would each look correct from outside their own layer.
+    (
+        "objective-narrowing-ignored",
+        PERSISTENCE,
+        (
+            "AND (?2 IS NULL OR objective_id = ?2)",
+            "AND (?2 IS NULL OR 1 = 1)",
+        ),
+        "vector-desktop",
+        "a_named_objective_serves_its_own_items_and_not_a_neighbour",
+        "a named objective narrows the servable read to its own items",
+    ),
+    (
+        "objective-fallback-removed",
+        CONTENT,
+        (
+            """        let items = repo.servable(subtest)?;
+        Ok(pick(&items, seen).map(ItemDto::from))""",
+            """        Ok(None)""",
+        ),
+        "vector-desktop",
+        "an_objective_with_no_content_falls_back_to_the_subtest",
+        "an objective with no content falls back to the whole subtest",
+    ),
+]
+
+# Rules enforced in the interface rather than in Rust. The same contract applies: the
+# mutation disables the rule and the test that is supposed to depend on it must fail. The
+# runner is vitest, so these are kept apart from the cargo list above -- one list per
+# runner rather than a command string in every entry.
+#
+# (id, file, edit, test file, name filter, what the rule is).
+FRONTEND_MUTATIONS = [
+    (
+        "objective-not-sent-to-the-backend",
+        USE_PRACTICE_ITEMS,
+        (
+            "const item = await client.contentNext(subtest, seen, objectiveId);",
+            "const item = await client.contentNext(subtest, seen, null);",
+        ),
+        "src/views/dataViews.test.tsx",
+        "the plan's objective reaches practice",
+        "the reader asks the backend for the objective the plan named",
+    ),
+    (
+        "objective-not-carried-into-practice",
+        APP_TSX,
+        (
+            "<PracticeContentView learnerId={profile?.id} request={practice} />",
+            "<PracticeContentView learnerId={profile?.id} request={null} />",
+        ),
+        "src/views/dataViews.test.tsx",
+        "the plan's objective reaches practice",
+        "the shell carries the plan's request into the practice view",
+    ),
+]
+
+# Rules the browser-level smoke spec relies on. Its runner rebuilds the bundle first, so the
+# result is about the rule and not about whatever build happened to be lying around.
+#
+# (id, file, edit, test file, name filter, what the rule is).
+E2E_MUTATIONS = [
+    (
+        "e2e-stub-serves-the-whole-subtest",
+        STUB_BACKEND,
+        (
+            "const candidates = narrowed.length > 0 ? narrowed : servable;",
+            "const candidates = servable;",
+        ),
+        "e2e/smoke.spec.ts",
+        "the plan's objective reaches the session it starts",
+        "a session is served the objective's item, not the subtest's first",
+    ),
 ]
 
 
@@ -511,18 +600,57 @@ def test_passes(crate: str, test: str) -> bool:
     return result.returncode == 0
 
 
+def vitest_passes(test_file: str, name_filter: str) -> bool:
+    """Whether a frontend test still passes, run the way the project runs it."""
+    npx = shutil.which("npx")
+    if npx is None:
+        raise SystemExit("npx is not on PATH; the interface mutations cannot be run")
+    result = subprocess.run(
+        [npx, "vitest", "run", test_file, "-t", name_filter],
+        cwd=DESKTOP,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    return result.returncode == 0
+
+
 def apply(path: Path, edits: list[tuple[str, str]]) -> str | None:
-    """Write the mutated file, returning the original text, or None if a pattern is absent."""
-    original = path.read_text(encoding="utf-8")
-    mutated = original
+    """Write the mutated file, returning the original text, or None if a pattern is absent.
+
+    The file's own line endings are kept and the original bytes are returned so the restore is
+    byte-exact. This matters: the first version read and wrote in text mode, which normalises
+    CRLF to LF on read and expands LF back to CRLF on Windows writes. Every mutated file came
+    back with different bytes than it went in with, and the sweep's format gate failed on two
+    TypeScript files that prettier wants with LF -- a harness that edits the tree it is judging
+    has to put it back exactly as it found it.
+    """
+    raw = path.read_bytes().decode("utf-8")
+    normalized = raw.replace("\r\n", "\n")
+    mutated = normalized
     for old, new in edits:
         if mutated.count(old) != 1:
             return None
         mutated = mutated.replace(old, new)
-    if mutated == original:
+    if mutated == normalized:
         return None
-    path.write_text(mutated, encoding="utf-8")
-    return original
+    written = mutated.replace("\n", "\r\n") if "\r\n" in raw else mutated
+    path.write_bytes(written.encode("utf-8"))
+    return raw
+
+
+def restore(path: Path, original: str) -> None:
+    path.write_bytes(original.encode("utf-8"))
+
+
+def all_mutations() -> list[tuple]:
+    """Every mutation, from every runner, in one shape: (name, path, edits, rest...)."""
+    combined: list[tuple] = []
+    for entry in MUTATIONS + FRONTEND_MUTATIONS + E2E_MUTATIONS:
+        name, path, edits, *rest = entry
+        combined.append((name, path, edits, *rest))
+    return combined
 
 
 def leftovers() -> list[str]:
@@ -535,7 +663,7 @@ def leftovers() -> list[str]:
     sense. Checking before mutating turns that into a refusal with a filename in it.
     """
     found: list[str] = []
-    for (_name, path, edits, *_rest) in MUTATIONS:
+    for (_name, path, edits, *_rest) in all_mutations():
         if isinstance(edits, tuple):
             edits = [edits]
         text = path.read_text(encoding="utf-8")
@@ -548,14 +676,7 @@ def leftovers() -> list[str]:
     return found
 
 
-def main() -> int:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    stale = leftovers()
-    if stale:
-        print("a previous run left a mutation applied; restore the source before mutating:")
-        for line in stale:
-            print(f"  {line}")
-        return 2
+def run_rust_mutations() -> int:
     uncaught = 0
     for (name, path, edits, crate, test, description) in MUTATIONS:
         if isinstance(edits, tuple):
@@ -568,16 +689,104 @@ def main() -> int:
         try:
             caught = not test_passes(crate, test)
         finally:
-            path.write_text(original, encoding="utf-8")
+            restore(path, original)
         if not caught:
             uncaught += 1
         print(f"{name:<32} {'caught' if caught else 'NOT CAUGHT':<11} {test}")
         print(f"    rule: {description}")
+    return uncaught
+
+
+def run_frontend_mutations() -> int:
+    uncaught = 0
+    for (name, path, edits, test_file, name_filter, description) in FRONTEND_MUTATIONS:
+        if isinstance(edits, tuple):
+            edits = [edits]
+        original = apply(path, edits)
+        if original is None:
+            print(f"{name:<32} PATTERN NOT FOUND in {path.name}: mutation not applied")
+            uncaught += 1
+            continue
+        try:
+            caught = not vitest_passes(test_file, name_filter)
+        finally:
+            restore(path, original)
+        if not caught:
+            uncaught += 1
+        print(f"{name:<32} {'caught' if caught else 'NOT CAUGHT':<11} {name_filter}")
+        print(f"    rule: {description}")
+    return uncaught
+
+
+def run_e2e_mutations() -> int:
+    uncaught = 0
+    for (name, path, edits, test_file, name_filter, description) in E2E_MUTATIONS:
+        if isinstance(edits, tuple):
+            edits = [edits]
+        original = apply(path, edits)
+        if original is None:
+            print(f"{name:<32} PATTERN NOT FOUND in {path.name}: mutation not applied")
+            uncaught += 1
+            continue
+        try:
+            caught = not playwright_passes(test_file, name_filter)
+        finally:
+            restore(path, original)
+        if not caught:
+            uncaught += 1
+        print(f"{name:<32} {'caught' if caught else 'NOT CAUGHT':<11} {name_filter}")
+        print(f"    rule: {description}")
+    return uncaught
+
+
+def playwright_passes(test_file: str, name_filter: str) -> bool:
+    """Whether a browser-level spec still passes, against a bundle built from this source.
+
+    The build is not optional: the spec runs against the production bundle, and without a
+    build it would be judging whatever artifact happened to be lying in `dist` from an
+    earlier round -- which is how a green E2E can describe code that no longer exists.
+    """
+    npx = shutil.which("npx")
+    if npx is None:
+        raise SystemExit("npx is not on PATH; the E2E mutation cannot be run")
+    build = subprocess.run(
+        [npx, "vite", "build"],
+        cwd=DESKTOP,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if build.returncode != 0:
+        raise SystemExit(f"the bundle did not build; the E2E mutation cannot be judged:\n{build.stderr[-2000:]}")
+    result = subprocess.run(
+        [npx, "playwright", "test", test_file, "-g", name_filter],
+        cwd=DESKTOP,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    return result.returncode == 0
+
+
+def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    stale = leftovers()
+    if stale:
+        print("a previous run left a mutation applied; restore the source before mutating:")
+        for line in stale:
+            print(f"  {line}")
+        return 2
+    uncaught = (
+        run_rust_mutations() + run_frontend_mutations() + run_e2e_mutations()
+    )
     print()
     if uncaught:
         print(f"{uncaught} mutation(s) went uncaught: the rule is not load-bearing")
         return 1
-    print(f"all {len(MUTATIONS)} mutation(s) caught: every rule is load-bearing")
+    total = len(MUTATIONS) + len(FRONTEND_MUTATIONS) + len(E2E_MUTATIONS)
+    print(f"all {total} mutation(s) caught: every rule is load-bearing")
     return 0
 
 

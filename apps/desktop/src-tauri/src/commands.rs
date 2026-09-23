@@ -643,13 +643,17 @@ pub fn content_generate(
 }
 
 /// The next item to practise, skipping ids the caller has already seen.
+///
+/// `objective_id` is optional in the payload: a caller that has no objective in
+/// hand (direct subtest browsing) sends nothing and gets the subtest-wide read.
 pub fn content_next_impl(
     db: &Database,
     subtest: &str,
+    objective_id: Option<&str>,
     seen: &[String],
 ) -> Result<Option<ItemDto>, ServiceError> {
     ContentPipeline::new(db)
-        .next_item(subtest, seen)
+        .next_item_for(subtest, objective_id, seen)
         .map_err(content_error)
 }
 
@@ -658,8 +662,11 @@ pub fn content_next(
     state: State<'_, AppState>,
     subtest: String,
     seen: Vec<String>,
+    objective_id: Option<String>,
 ) -> Result<Option<ItemDto>, String> {
-    with_db(&state, |db| content_next_impl(db, &subtest, &seen))
+    with_db(&state, |db| {
+        content_next_impl(db, &subtest, objective_id.as_deref(), &seen)
+    })
 }
 
 /// How much content this installation holds, by state and subtest.

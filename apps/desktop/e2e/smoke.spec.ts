@@ -9,7 +9,7 @@
 
 import { expect, test } from "@playwright/test";
 
-import { PC_ITEM, installStubBackend } from "./stubBackend";
+import { AR_ITEM, PC_ITEM, installStubBackend } from "./stubBackend";
 
 test.describe("production artifact smoke", () => {
   test("the built bundle serves and renders the shell", async ({ page }) => {
@@ -114,6 +114,61 @@ test.describe("production artifact smoke", () => {
     await page.locator('label.option-row[data-correct="true"] input').check();
     await page.getByRole("button", { name: /check answer/i }).click();
     await expect(page.getByTestId("worked-solution")).toBeVisible();
+  });
+
+  test("the plan's objective reaches the session it starts", async ({
+    page,
+  }) => {
+    // The stub holds two Arithmetic Reasoning items in two different objectives,
+    // and the one the plan did *not* name comes first. A session that ignored the
+    // objective would serve it and this spec would see the wrong question.
+    const other: typeof AR_ITEM = {
+      ...AR_ITEM,
+      id: "q-e2e-ar-0",
+      objective_id: "OBJ-AR-PERCENT-01",
+      stem: "What is 15 percent of 240?",
+      options: ["24", "36", "48", "60"],
+      correct_index: 1,
+      explanation: "0.15 * 240 = 36",
+    };
+    await installStubBackend(page, {
+      items: [other, AR_ITEM],
+      drills: [
+        {
+          subtest: "AR",
+          minutes: 10,
+          reason: "weakness",
+          objective_id: "OBJ-AR-RATE-01",
+        },
+      ],
+    });
+    await page.goto("/");
+
+    // A plan belongs to a learner, so the session starts the way a real one does:
+    // create the profile, then read the plan the backend produced for it.
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /getting started/i })
+      .click();
+    await page.getByLabel(/your name or initials/i).fill("E2E");
+    await page.getByRole("button", { name: /create profile/i }).click();
+    await page
+      .getByTestId("primary-nav")
+      .getByRole("button", { name: /today/i })
+      .click();
+
+    const start = page.getByTestId("drill-start-AR");
+    await expect(start).toContainText("OBJ-AR-RATE-01");
+    await start.click();
+
+    // The session says which objective it is serving...
+    await expect(page.getByTestId("practice-objective")).toContainText(
+      "OBJ-AR-RATE-01",
+    );
+    // ...and the question is the item that objective holds, not the first item of
+    // the subtest. The plan is an instruction, so the session has to follow it.
+    await expect(page.getByText(AR_ITEM.stem)).toBeVisible();
+    await expect(page.getByText(other.stem)).toHaveCount(0);
   });
 });
 
