@@ -1,0 +1,7 @@
+{
+  "verify-ok": 0,
+  "wrong-signer": 1,
+  "not-newer": 1,
+  "stage": 0,
+  "rollback": 0
+}

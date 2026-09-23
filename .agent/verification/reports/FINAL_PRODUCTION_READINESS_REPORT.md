@@ -5,29 +5,29 @@ committed artifact or a recorded exit code; nothing here is written by hand.
 
 ## Verdict
 
-**CONDITIONAL_EXTERNAL_GATES** — 6 requirement(s) cannot be satisfied inside this repository; the build and its gates pass
+**CONDITIONAL_EXTERNAL_GATES** — 5 requirement(s) cannot be satisfied inside this repository; the build and its gates pass
 
 ## Artifact identity
 
 | Field | Value |
 |---|---|
 | Version | 0.1.0 |
-| Artifact digest | `23f8c2c5bf182ea058eff3fa18ebd75cd07a81fb6613d839bf4c180fdc5f1dad` |
-| Identity digest | `34660fa20937a564e99362396b061ccc398f22519e5ff7157d115921072b0199` |
-| Candidate epoch | 21 |
-| Git commit | `6e7d1f16db71949069d8146cf720dfa83984a92e` |
+| Artifact digest | `6eaa3027f5c36e858f2a7448bd6befc17b23c5c5a58bd3c94cab4e61f6bbd4e9` |
+| Identity digest | `0124934c2fda51a6764cc3f5c20bdc8a9630d162334a74b6dae73e0bdd896fee` |
+| Candidate epoch | 22 |
+| Git commit | `6a6296dc8933ac2583e5ce405c6603b52311663e` |
 | Branch | main |
 
 Each component of the identity, measured from the artifact this sweep built:
 
 | Component | Digest |
 |---|---|
-| Binary | `23f8c2c5bf182ea058eff3fa18ebd75cd07a81fb6613d839bf4c180fdc5f1dad` |
+| Binary | `6eaa3027f5c36e858f2a7448bd6befc17b23c5c5a58bd3c94cab4e61f6bbd4e9` |
 | Migrations | `3d4917b14857d46e0cdccc730ebe3d13cb7f5de52e9c5d7d17e5deacbdd51c68` |
 | Content | `375a896baabb5ce4546bc2814437e688f49d5d8983b12dcc798d88f9bfa95940` |
 | Sbom | `685ae45ef40eb048fe02b5aff0399c4e82eca3200c044098dd99266b8b0809bb` |
 | Licenses | `538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8` |
-| GitSha | `9dc0d097e87a50aaa8f181ad2f0eafeb52ed82c29520a9bf4c63148d1450b306` |
+| GitSha | `b3ff161edd2769d3ab302b442f2b5bbd522570b8f3c84c37f0c86b70294f9536` |
 
 ## Gates executed in this run
 
@@ -79,13 +79,13 @@ Definition of Done by status:
 
 ## Requirements
 
-60 requirements, 54 DONE,
-6 open. The open ones are listed in
+60 requirements, 55 DONE,
+5 open. The open ones are listed in
 `RESIDUAL_RISK_AND_EXTERNAL_GATES.md` with the reason each cannot be closed here.
 
 ## Evidence
 
-679 evidence files, each with a recorded content hash, in
+695 evidence files, each with a recorded content hash, in
 `EVIDENCE_INDEX.json`.
 
 ## Limitations of this report

@@ -1,0 +1,17 @@
+{
+  "manifest": {
+    "format": "vector-update-1",
+    "app": "vector-desktop",
+    "version": "0.2.0",
+    "min_running_version": "0.1.0",
+    "published_at": "2026-09-23T14:35:22.916707100+00:00",
+    "artifact": {
+      "file_name": "vector-desktop-0.2.0.exe",
+      "sha256": "sha256:cb44575b12446b1253a3ce16456c6708a573efeda501d6f47695616b4881fa13",
+      "bytes": 27
+    },
+    "notes_url": "https://example.invalid/notes"
+  },
+  "signature": "ec8715edc5ca504ab45508b641736173f3b7d7f8d2aed1721d9a04181cd5d541868ced2a138e9a41a99d3e97a37a813fb24cab9dcccda6dba903ea4816402d02",
+  "signer": "c4e23431b8401d802a86fea476e4e661ea38664bb74a519f83b3904e85304367"
+}

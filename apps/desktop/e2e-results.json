@@ -4,12 +4,14 @@
       "C:\\Program Files\\nodejs\\node.exe",
       "C:\\dev\\project-vector-asvab\\apps\\desktop\\node_modules\\@playwright\\test\\cli.js",
       "test",
-      "e2e/live-fire.spec.ts"
+      "e2e/smoke.spec.ts",
+      "-g",
+      "the plan's objective reaches the session it starts"
     ],
     "configFile": "C:\\dev\\project-vector-asvab\\apps\\desktop\\playwright.config.ts",
     "rootDir": "C:/dev/project-vector-asvab/apps/desktop/e2e",
     "failOnFlakyTests": false,
-    "forbidOnly": true,
+    "forbidOnly": false,
     "fullyParallel": true,
     "globalSetup": null,
     "globalTeardown": null,
@@ -61,7 +63,7 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.63.0",
-    "workers": 1,
+    "workers": 4,
     "webServer": {
       "command": "pnpm run preview --host 127.0.0.1 --port 4173 --strictPort",
       "url": "http://127.0.0.1:4173",
@@ -73,21 +75,21 @@
   },
   "suites": [
     {
-      "title": "live-fire.spec.ts",
-      "file": "live-fire.spec.ts",
+      "title": "smoke.spec.ts",
+      "file": "smoke.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "live-fire: real artifact, real effects, independent readback",
-          "file": "live-fire.spec.ts",
-          "line": 15,
+          "title": "production artifact smoke",
+          "file": "smoke.spec.ts",
+          "line": 14,
           "column": 6,
           "specs": [
             {
-              "title": "the artifact digest is stable across two fetches",
-              "ok": true,
+              "title": "the plan's objective reaches the session it starts",
+              "ok": false,
               "tags": [],
               "tests": [
                 {
@@ -100,227 +102,63 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 43,
-                      "errors": [],
+                      "status": "failed",
+                      "duration": 5810,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\u001b[22m\n\n    at C:\\dev\\project-vector-asvab\\apps\\desktop\\e2e\\smoke.spec.ts:170:48",
+                        "location": {
+                          "file": "C:\\dev\\project-vector-asvab\\apps\\desktop\\e2e\\smoke.spec.ts",
+                          "column": 48,
+                          "line": 170
+                        },
+                        "snippet": "  168 |     // ...and the question is the item that objective holds, not the first item of\n  169 |     // the subtest. The plan is an instruction, so the session has to follow it.\n> 170 |     await expect(page.getByText(AR_ITEM.stem)).toBeVisible();\n      |                                                ^\n  171 |     await expect(page.getByText(other.stem)).toHaveCount(0);\n  172 |   });\n  173 | });"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "C:\\dev\\project-vector-asvab\\apps\\desktop\\e2e\\smoke.spec.ts",
+                            "column": 48,
+                            "line": 170
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('A printer produces 12 pages per minute. How many pages does it produce in 2.5 hours?')\u001b[22m\n\n\n  168 |     // ...and the question is the item that objective holds, not the first item of\n  169 |     // the subtest. The plan is an instruction, so the session has to follow it.\n> 170 |     await expect(page.getByText(AR_ITEM.stem)).toBeVisible();\n      |                                                ^\n  171 |     await expect(page.getByText(other.stem)).toHaveCount(0);\n  172 |   });\n  173 | });\n    at C:\\dev\\project-vector-asvab\\apps\\desktop\\e2e\\smoke.spec.ts:170:48"
+                        }
+                      ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-09-23T14:27:36.844Z",
+                      "startTime": "2026-09-23T14:56:28.544Z",
                       "annotations": [],
-                      "attachments": []
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "C:\\dev\\project-vector-asvab\\apps\\desktop\\test-results\\smoke-production-artifact--ca105-aches-the-session-it-starts-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "C:\\dev\\project-vector-asvab\\apps\\desktop\\test-results\\smoke-production-artifact--ca105-aches-the-session-it-starts-chromium\\error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "C:\\dev\\project-vector-asvab\\apps\\desktop\\test-results\\smoke-production-artifact--ca105-aches-the-session-it-starts-chromium\\trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "C:\\dev\\project-vector-asvab\\apps\\desktop\\e2e\\smoke.spec.ts",
+                        "column": 48,
+                        "line": 170
+                      }
                     }
                   ],
-                  "status": "expected"
+                  "status": "unexpected"
                 }
               ],
-              "id": "86f582698c962c5bb6c1-9a5c8195de17c5435275",
-              "file": "live-fire.spec.ts",
-              "line": 16,
-              "column": 3
-            },
-            {
-              "title": "the built bundle is self-contained",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 729,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-23T14:27:36.928Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "86f582698c962c5bb6c1-da6558829da8c65d7eed",
-              "file": "live-fire.spec.ts",
-              "line": 33,
-              "column": 3
-            },
-            {
-              "title": "a full practice cycle produces an observable effect",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 504,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-23T14:27:37.762Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "86f582698c962c5bb6c1-29c7318c5ff94fbce39a",
-              "file": "live-fire.spec.ts",
-              "line": 51,
-              "column": 3
-            },
-            {
-              "title": "a mistake is captured and re-readable in the error notebook",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 548,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-23T14:27:38.286Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "86f582698c962c5bb6c1-bdfecaf4cb09b16542d2",
-              "file": "live-fire.spec.ts",
-              "line": 82,
-              "column": 3
-            },
-            {
-              "title": "practice refuses rather than fabricating content with no backend",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 355,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-23T14:27:38.849Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "86f582698c962c5bb6c1-13468112521e701e417f",
-              "file": "live-fire.spec.ts",
+              "id": "4219922fea2e2bd3c691-513fd299cceed7aac446",
+              "file": "smoke.spec.ts",
               "line": 119,
-              "column": 3
-            },
-            {
-              "title": "the exam simulator preserves an answer within a continuous session",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 440,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-23T14:27:39.216Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "86f582698c962c5bb6c1-c87f6a2192c479119508",
-              "file": "live-fire.spec.ts",
-              "line": 139,
-              "column": 3
-            },
-            {
-              "title": "keyboard-only operation completes a real task",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 778,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-09-23T14:27:39.692Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "86f582698c962c5bb6c1-4aacc12acb27f3a98133",
-              "file": "live-fire.spec.ts",
-              "line": 159,
               "column": 3
             }
           ]
@@ -330,11 +168,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-09-23T14:27:35.323Z",
-    "duration": 5477.191000000001,
-    "expected": 7,
+    "startTime": "2026-09-23T14:56:25.745Z",
+    "duration": 9205.452,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 1,
     "flaky": 0
   }
 }

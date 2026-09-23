@@ -1,0 +1,55 @@
+content: the update path -- signature, digest, atomic stage, rollback (REQ-037)
+
+REQ-037 read PARTIAL_DIGEST_VERIFY_AND_TAMPER_DETECTION_DONE_SIGNATURE_PENDING: two of the four
+things it names existed (the digest and tamper detection, on content packs) and two did not -- a
+signature for an application update, and a staged transition. This adds the missing half.
+
+`crates/vector-platform/src/update.rs` verifies a signed update manifest in a deliberate order:
+format and application, then the signer against the hex Ed25519 key the installation pins (a valid
+signature by an untrusted key is refused as that, not as a bad signature -- different facts deserve
+different messages), then the signature over a length-prefixed payload rebuilt from the manifest's
+current fields, so editing the version, the artifact name, its digest, its size, the minimum base
+version or the publication date breaks it. The version relation is checked after the cryptography
+because a version mismatch is not an attack. The artifact is checked by SHA-256 and by length
+before anything is written anywhere.
+
+`stage` copies the verified artifact beside the installation under a versioned name and verifies
+the copy again; `apply_staged` moves the previous artifact aside and puts the staged one in place,
+restoring the old one if the rename fails; `rollback` puts it back. A running executable cannot be
+replaced on Windows, so applying is a separate step from staging and this code never replaces the
+file it is running from.
+
+The end-to-end run against real files found two design errors that the unit test had not, because
+the test's manifest file name happened to match the installed artifact name. The first run applied
+the update to `vector-desktop-0.2.0.exe` -- the published name -- instead of the installed
+`vector-desktop.exe`, and then could not roll back, having looked for the backup beside the
+installed file. The published file name and the installed file name are different things, and a
+rollback has to be able to find what an apply displaced. `apply_staged` now takes the installed
+target explicitly, derives the backup path from it, returns None when there was nothing to displace
+(a first install, which is legitimate), and rollback takes the same target and says plainly when
+there is no previous artifact.
+
+Measured refusals, not only a happy path: honest update exit 0; untrusted signer exit 1, naming
+both keys; edited manifest exit 1 ("Verification equation was not satisfied"); tampered artifact
+exit 1, naming both digests; an offer that is not newer exit 1; stage and apply exit 0 with the
+target holding the published bytes and the backup holding the old ones; rollback exit 0 with the
+target restored and the backup consumed. Five unit tests cover the same rules plus six separate
+edits to a signed manifest and the first-install case, and the mutation
+`update-signature-not-checked` -- replace the verify_strict call with a discarded result -- is
+caught by an_edited_manifest_breaks_its_signature, so the signature check is load-bearing rather
+than merely present.
+
+REQ-037 moves to DONE_SIGNATURE_HASH_ATOMIC_STAGE_ROLLBACK_CERTIFICATE_EXTERNAL_GATE and the open
+requirements fall from six to five. Deliberately not implemented, and named rather than implied:
+downloading (the manifest carries the digest and size; fetching the bytes is the operator's or the
+launcher's step, and the crate takes no network dependency) and the signing certificate (REQ-036's
+external gate).
+
+DoD unchanged at 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates recorded exit 0; 44 mutations
+caught across cargo, vitest and Playwright; artifact digest 6eaa3027..., epoch 22. Corpus unchanged
+at 6,961 active items; pack core-asvab v6 active; every provenance invariant a zero. Verdict
+CONDITIONAL_EXTERNAL_GATES.
+
+Remaining in-repo: REQ-032 (gh pull-request lane) and REQ-014 (local GGUF model). Externally gated
+and unchanged: REQ-036, REQ-038, REQ-060, DOD-005, DOD-022, DOD-016, DOD-033, DOD-004, DOD-039, and
+DOD-034's foreign machine.

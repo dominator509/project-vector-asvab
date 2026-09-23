@@ -40,6 +40,7 @@ CONTENT = ROOT / "crates/vector-application/src/content.rs"
 PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
 PACK_REGISTRY = ROOT / "crates/vector-persistence/src/repo.rs"
 BACKUP = ROOT / "crates/vector-persistence/src/backup.rs"
+UPDATE = ROOT / "crates/vector-platform/src/update.rs"
 TOOLS = ROOT / "tools/vector-tools/src/content.rs"
 PACKS = ROOT / "crates/vector-application/src/packs.rs"
 SERVICE = ROOT / "crates/vector-application/src/service.rs"
@@ -594,6 +595,16 @@ MUTATIONS = [
         "vector-persistence",
         "a_truncated_store_is_restored_from_its_archive",
         "a store too damaged to open is still restorable from its archive",
+    ),    (
+        "update-signature-not-checked",
+        UPDATE,
+        (
+            "    key.verify_strict(&manifest.signing_payload(), &signature)\n        .map_err(|error| UpdateRefusal::InvalidSignature(error.to_string()))?;",
+            "    let _ = key.verify_strict(&manifest.signing_payload(), &signature);",
+        ),
+        "vector-platform",
+        "an_edited_manifest_breaks_its_signature",
+        "an update manifest's signature is verified, not merely present",
     ),
 ]
 

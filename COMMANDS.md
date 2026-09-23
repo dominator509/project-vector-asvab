@@ -88,6 +88,12 @@ export RUST_BACKTRACE=1
 | Install a signed content pack | `cargo run -p vector-tools -- pack-install --db <db> --pack <pack file> --trusted-signer <public key hex> --app-version 0.1.0` |
 | List installed packs | `cargo run -p vector-tools -- pack-list --db <db>` |
 | Roll a pack back | `cargo run -p vector-tools -- pack-rollback --db <db> --name core-asvab` |
+| Generate the update signing key | `cargo run -p vector-tools -- update update-keygen --key <key file>` (refuses to overwrite; keep it out of the repository) |
+| Build an update manifest | `cargo run -p vector-tools -- update update-manifest --artifact <file> --version 0.2.0 --min-running 0.1.0 [--notes-url <url>] --out <manifest.json>` (the digest and size come from the file itself) |
+| Sign an update manifest | `cargo run -p vector-tools -- update update-sign --manifest <manifest.json> --key <key file> --out <signed.json>` |
+| Verify an update | `cargo run -p vector-tools -- update update-verify --signed <signed.json> --artifact <file> --trusted-signer <public key hex> --running 0.1.0` (refuses an untrusted signer, an edited manifest, a digest or size mismatch, and an offer that is not newer) |
+| Stage and apply an update | `cargo run -p vector-tools -- update update-stage --signed <signed.json> --artifact <file> --trusted-signer <hex> --running 0.1.0 --install-dir <dir> --target <dir>/vector-desktop.exe` (stages beside the installation, moves the previous artifact aside; a running executable is never replaced) |
+| Roll an update back | `cargo run -p vector-tools -- update update-rollback --target <dir>/vector-desktop.exe` |
 | Activate a registered pack version | `cargo run -p vector-tools -- pack-activate --db <db> --name core-asvab --version 6` (the way back from a rollback; `pack-install` deliberately never undoes a rollback, and this supersedes the active version rather than quarantining it) |
 | OCR residue check | `python3 scripts/probes/check-ocr-residue.py <db>` |
 | OCR detector probe | `cargo run -p vector-questions --example ocr_probe -- <webster pg29765.txt> <token>` |

@@ -8,6 +8,7 @@
 pub mod accounting;
 pub mod process;
 pub mod release;
+pub mod update;
 
 pub fn name() -> &'static str {
     "vector-platform"

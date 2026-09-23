@@ -1,6 +1,6 @@
 {
   "verdict": "CONDITIONAL_EXTERNAL_GATES",
-  "reason": "6 requirement(s) cannot be satisfied inside this repository; the build and its gates pass",
+  "reason": "5 requirement(s) cannot be satisfied inside this repository; the build and its gates pass",
   "blockers": [
     {
       "kind": "requirement",
@@ -19,12 +19,6 @@
       "id": "REQ-036",
       "status": "PARTIAL_MSI_AND_NSIS_BUILT_SIGNING_EXTERNAL_GATE",
       "detail": "signed Windows artifact + clean install/upgrade/uninstall"
-    },
-    {
-      "kind": "requirement",
-      "id": "REQ-037",
-      "status": "PARTIAL_DIGEST_VERIFY_AND_TAMPER_DETECTION_DONE_SIGNATURE_PENDING",
-      "detail": "signature/hash/atomic stage/rollback"
     },
     {
       "kind": "requirement",

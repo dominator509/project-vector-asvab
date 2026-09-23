@@ -1,0 +1,9 @@
+{
+  "format": "vector-update-1",
+  "app": "vector-desktop",
+  "version": "0.2.0",
+  "min_running_version": "0.1.0",
+  "published_at": "2026-09-23T14:35:22.916707100+00:00",
+  "artifact": {
+    "file_name": "vector-desktop-0.2.0.exe",
+    "sha256": "sha256:cb44575b12446b1253a3ce16456c6708a573efeda501d6f47695616b4881fa13",

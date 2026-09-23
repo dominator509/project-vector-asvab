@@ -491,4 +491,24 @@ Remaining in-repo: the three open requirements that are work here -- REQ-037 (si
 for updates; the certificate is external), REQ-032 (`gh` pull-request lane), REQ-014 (local GGUF
 model).
 
+### Round 32
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| The update path's missing half (REQ-037) | `crates/vector-platform/src/update.rs`: an Ed25519-signed update manifest verified in a deliberate order -- format and application, then the signer against the key this installation pins (a valid signature by an untrusted key is refused as *that*, not as a bad signature), then the signature over a length-prefixed payload rebuilt from the manifest's current fields, then the version relation because a version mismatch is not an attack, then the artifact by SHA-256 and length before anything is written. `stage` verifies the copy it stages; `apply_staged` moves the previous artifact aside and restores it if the rename fails; `rollback` puts it back. A running executable is never replaced: applying is a separate step from staging. | `update.rs`, `tools/vector-tools/src/update.rs`, `COMMANDS.md` |
+| What the end-to-end run found | The unit test used a manifest file name that matched the installed artifact name, so it passed. Against real files the first run applied the update to the *published* name (`vector-desktop-0.2.0.exe`) instead of the installed one and then could not roll back, having looked for the backup beside the installed file. Both are design errors -- the published file name and the installed file name are different things, and a rollback must be able to find what an apply displaced. `apply_staged` now takes the installed target, derives the backup from it, returns `None` for a first install, and `rollback` takes the same target. | `.agent/evidence/EP-009/update/e2e-transcript.md` |
+| Proven refusals, not just a happy path | Against real files: honest update exit 0; untrusted signer exit 1 (naming both keys); edited manifest exit 1 (*"Verification equation was not satisfied"*); tampered artifact exit 1 (naming both digests); offer not newer exit 1; stage and apply exit 0 with the target holding the published bytes and the backup holding the old ones; rollback exit 0 with the target restored and the backup consumed. Five unit tests cover the same rules plus six separate edits to a signed manifest and the first-install case, and the mutation `update-signature-not-checked` is caught. | `.agent/evidence/EP-009/update/`, `.agent/evidence/EP-009/ROUND-32-REPORT.md` |
+
+`REQ-037` moves from `PARTIAL_DIGEST_VERIFY_AND_TAMPER_DETECTION_DONE_SIGNATURE_PENDING` to
+`DONE_SIGNATURE_HASH_ATOMIC_STAGE_ROLLBACK_CERTIFICATE_EXTERNAL_GATE`; open requirements fall from
+6 to **5**. Deliberately not implemented and named: downloading (the manifest carries the digest and
+size; fetching is the operator's step, and the crate takes no network dependency) and the
+certificate (`REQ-036`'s external gate).
+
+DoD unchanged at 34 PASS / 7 PARTIAL / 1 EXTERNAL_REQUIRED; 21 gates exit 0; **44 mutations
+caught**; artifact digest `6eaa3027…`, epoch 22. Corpus unchanged at 6,961 active items; pack
+`core-asvab v6` active; verdict `CONDITIONAL_EXTERNAL_GATES`.
+
+Remaining in-repo: REQ-032 (`gh` pull-request lane) and REQ-014 (local GGUF model).
+
 

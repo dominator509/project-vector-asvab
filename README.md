@@ -5,12 +5,16 @@ live-fire outcomes, 11 implementation nodes, 22 release-verification stages, a
 484-test registry and a 42-clause Definition of Done.
 
 **Current state.** All 11 nodes are `NODE_DONE` and the verification sweep passes.
-The release verdict is **not GO**, and six of the 60 requirements are open. Three
+The release verdict is **not GO**, and five of the 60 requirements are open. Three
 of them need something this repository cannot supply — a code-signing
 certificate (`REQ-036`), a person using a screen reader (`REQ-038`), and
-trademark clearance (`REQ-060`). The other three are work that can be done here:
-an update mechanism with signature verification (`REQ-037`), a local GGUF model
-(`REQ-014`), and driving the broker's pull-request lane through `gh` (`REQ-032`).
+trademark clearance (`REQ-060`). Two more are work that can be done here: a local
+GGUF model (`REQ-014`) and driving the broker's pull-request lane through `gh`
+(`REQ-032`). Update signing and staging (`REQ-037`) is implemented: the manifest
+is Ed25519-signed and the artifact is verified by digest and length before
+anything is written, the transition stages beside the installation and moves the
+previous artifact aside, and rolling back puts it there again. The certificate a
+signed distribution needs is `REQ-036`'s external gate.
 
 Read the generated state rather than this summary; each file below is produced by
 `python3 scripts/release-state.py` and is never edited by hand.

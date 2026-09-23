@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T14:28:39.278339+00:00",
+  "generated_at": "2026-09-23T14:56:47.245511+00:00",
   "root": ".agent/evidence",
-  "count": 679,
+  "count": 695,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -216,7 +216,7 @@
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
       "bytes": 1248,
-      "sha256": "6c1cd56b1fae6f4a603f7b98db860f206437447fbc8b65cf404c5d7ad3f66f90"
+      "sha256": "2f2957c181f25d99918458c21fe346dcd3c718eaf4b51c2e6072fa7a0842d377"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -641,7 +641,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "863438e11b4f99621c7970e6c0f71b45762c87e58efba393c90557b13bccb9f1"
+      "sha256": "f61efd412d338f1493b6628606f618681944f1cbfa514984a3c81928795d6c0f"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -2041,7 +2041,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1025,
-      "sha256": "d2a4019882c9e3a8c26dbacd6b8f96cb687c2a44c83d549e93bd851265bef10f"
+      "sha256": "fc2d1e237d4d414daa9e4c8247baa2c8aff68329595b8e1b2af4e9e3003832d3"
     },
     {
       "path": ".agent/evidence/EP-009/canary/canary-proof.json",
@@ -2092,6 +2092,11 @@
       "path": ".agent/evidence/EP-009/commit-message-round30.txt",
       "bytes": 6395,
       "sha256": "26a73aaf31a0cfc9645acae4b9b9780fb72d28dd7c1e9f619bc50dbb2e541861"
+    },
+    {
+      "path": ".agent/evidence/EP-009/commit-message-round31.txt",
+      "bytes": 3108,
+      "sha256": "98c321f3364eb4634034ccb1963acb919a6eb6dae5cfbd7cd392a879317de3db"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",
@@ -2189,6 +2194,11 @@
       "sha256": "c23bff19c5501f2837a6f3afa18a0b55fd390a8d2e0ba656fb110d7e287a3e6b"
     },
     {
+      "path": ".agent/evidence/EP-009/mutation-round32.log",
+      "bytes": 7179,
+      "sha256": "0472fa5823b382264a50b015070ed9d15323a693fc93e9ec55cfb49d0b55d75e"
+    },
+    {
       "path": ".agent/evidence/EP-009/npm-advisories.json",
       "bytes": 1553,
       "sha256": "efd31f132e3bd4285b19b7f26846772fcb6cf89ac3c35bc73b812e6ef89b4d6d"
@@ -2259,6 +2269,11 @@
       "sha256": "4264fb1330e080daec9f3a264de072a558d0446868ab933a72960c0150e4ad56"
     },
     {
+      "path": ".agent/evidence/EP-009/ROUND-31-REPORT.md",
+      "bytes": 4111,
+      "sha256": "426e6a216fe8fc8fc25082ddec0a7e994af620915e164a5de072fb60a7be34b8"
+    },
+    {
       "path": ".agent/evidence/EP-009/sbom.spdx",
       "bytes": 19132,
       "sha256": "dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42"
@@ -2314,9 +2329,74 @@
       "sha256": "48cdbed4f21594b0a527ec261ec9ff54f2734ed87942f3df125c4c70d8505118"
     },
     {
+      "path": ".agent/evidence/EP-009/update/e2e-transcript.md",
+      "bytes": 1023,
+      "sha256": "feb1f1f58bd6c1ca08bd8468164aeb1da0ec130d752b514537d84a9e73eeb163"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/exit-codes.json",
+      "bytes": 98,
+      "sha256": "47ed89b28e8f8b9fd1169e16b1dfbe80773c1f11d105a82b60877fe475445ad9"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/keygen.json",
+      "bytes": 126,
+      "sha256": "75f995dcf260130a0405644221ee928980bde2a0b77accf10d39c1376013cef7"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/manifest.json",
+      "bytes": 406,
+      "sha256": "a8f68fac7e528f2d157ec72afa96832f94c6e9aa6b894f95401c509d64f84642"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/refuse-edited-manifest.log",
+      "bytes": 139,
+      "sha256": "409a44de54ac50a55da3fc643d13b267c75b65089aeabc9bd16d3bc46c61a3d1"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/refuse-not-newer.log",
+      "bytes": 58,
+      "sha256": "a06c25beedcea39fd9ada114d9e78a2830075a9092407040ba70c2f2ff355ad2"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/refuse-tampered-artifact.log",
+      "bytes": 201,
+      "sha256": "1aad8b710b9791f365bd2af03572ff8dc17e1dd8630b941bb8ccad6999f01af0"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/refuse-untrusted-signer.log",
+      "bytes": 213,
+      "sha256": "eb542b9ab6dc59b004d913b529bb1fcd205862a47002949a245d2f741963575f"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/rollback.json",
+      "bytes": 82,
+      "sha256": "d8a05d4c37706972b9a3a60ab4c1c8e54dea058e51efa8b8e3f8eac6a084cdbc"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/signed.json",
+      "bytes": 679,
+      "sha256": "66cb2b5c331e6d7729cd7e4f5bcf36b3916fcb0b1421a35d0d18bdca02cdac91"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/stage-apply.json",
+      "bytes": 155,
+      "sha256": "58192274138b02b0643f56c89a47a37d25ab447913284130586da5a5b0b75769"
+    },
+    {
+      "path": ".agent/evidence/EP-009/update/verify-ok.json",
+      "bytes": 332,
+      "sha256": "81873416081536c08f75d301c7d7e1e155ec970842d87ef9d6456f1f69fdcc8c"
+    },
+    {
       "path": ".agent/evidence/EP-009/verify-round31.log",
       "bytes": 1036924,
       "sha256": "daa268bb64e96e76578b45a2bce061fd92422477e704cf9c63a37ed0fa48870c"
+    },
+    {
+      "path": ".agent/evidence/EP-009/verify-round32.log",
+      "bytes": 1039114,
+      "sha256": "5efdf277b0f9a1109c16ec9a5d99abf9af2495fdcb12de4b000e3042edcf283b"
     },
     {
       "path": ".agent/evidence/EP-009/zero-state/artifact.sha256",

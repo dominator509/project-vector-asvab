@@ -7,6 +7,7 @@ use vector_persistence::{Database, MigrationManager};
 mod content;
 mod repair_lane;
 mod transports;
+mod update;
 
 #[derive(Parser)]
 #[command(name = "vector-tools")]
@@ -195,6 +196,84 @@ enum Commands {
         name: String,
         #[arg(long)]
         version: i64,
+    },
+    /// Application updates: build and sign a manifest, verify one, stage it, roll it back.
+    #[command(subcommand)]
+    Update(UpdateCommands),
+}
+
+#[derive(Subcommand)]
+enum UpdateCommands {
+    /// Generate the key that signs update manifests (refuses to overwrite).
+    #[command(name = "update-keygen")]
+    Keygen {
+        #[arg(long)]
+        key: PathBuf,
+    },
+    /// Build a manifest for an artifact, with its digest and size read from the file.
+    #[command(name = "update-manifest")]
+    Manifest {
+        #[arg(long)]
+        artifact: PathBuf,
+        #[arg(long, default_value = "vector-desktop")]
+        app: String,
+        #[arg(long)]
+        version: String,
+        #[arg(long, default_value = "0.1.0")]
+        min_running: String,
+        #[arg(long)]
+        notes_url: Option<String>,
+        #[arg(long)]
+        out: PathBuf,
+    },
+    /// Sign a manifest with the update key.
+    #[command(name = "update-sign")]
+    Sign {
+        #[arg(long)]
+        manifest: PathBuf,
+        #[arg(long)]
+        key: PathBuf,
+        #[arg(long)]
+        out: PathBuf,
+    },
+    /// Verify a signed manifest and the artifact it describes.
+    #[command(name = "update-verify")]
+    Verify {
+        #[arg(long)]
+        signed: PathBuf,
+        #[arg(long)]
+        artifact: PathBuf,
+        #[arg(long)]
+        trusted_signer: String,
+        #[arg(long, default_value = "vector-desktop")]
+        app: String,
+        #[arg(long)]
+        running: String,
+    },
+    /// Verify, stage and apply an update over the artifact in an installation directory.
+    #[command(name = "update-stage")]
+    Stage {
+        #[arg(long)]
+        signed: PathBuf,
+        #[arg(long)]
+        artifact: PathBuf,
+        #[arg(long)]
+        trusted_signer: String,
+        #[arg(long, default_value = "vector-desktop")]
+        app: String,
+        #[arg(long)]
+        running: String,
+        #[arg(long)]
+        install_dir: PathBuf,
+        /// The installed artifact the update replaces (what the launcher runs).
+        #[arg(long)]
+        target: PathBuf,
+    },
+    /// Put the previous artifact back after an applied update.
+    #[command(name = "update-rollback")]
+    Rollback {
+        #[arg(long)]
+        target: PathBuf,
     },
 }
 
@@ -864,6 +943,87 @@ fn main() -> Result<()> {
             let activated = content::activate_pack(&db, &name, version)?;
             println!("{}", serde_json::to_string_pretty(&activated)?);
         }
+        Commands::Update(action) => match action {
+            UpdateCommands::Keygen { key } => {
+                let public = update::generate_update_key(&key)?;
+                println!(
+                    "{}",
+                    serde_json::json!({ "key": key.display().to_string(), "public": public })
+                );
+            }
+            UpdateCommands::Manifest {
+                artifact,
+                app,
+                version,
+                min_running,
+                notes_url,
+                out,
+            } => {
+                let manifest = update::manifest_for_artifact(
+                    &artifact,
+                    &app,
+                    &version,
+                    &min_running,
+                    notes_url,
+                )?;
+                if let Some(parent) = out.parent() {
+                    if !parent.as_os_str().is_empty() {
+                        std::fs::create_dir_all(parent)?;
+                    }
+                }
+                std::fs::write(&out, serde_json::to_vec_pretty(&manifest)?)?;
+                println!("{}", serde_json::to_string_pretty(&manifest)?);
+            }
+            UpdateCommands::Sign { manifest, key, out } => {
+                let signed = update::sign_manifest(&manifest, &key, &out)?;
+                println!("{}", serde_json::to_string_pretty(&signed)?);
+            }
+            UpdateCommands::Verify {
+                signed,
+                artifact,
+                trusted_signer,
+                app,
+                running,
+            } => {
+                let manifest =
+                    update::verify_update(&signed, &artifact, &trusted_signer, &app, &running)?;
+                println!("{}", serde_json::to_string_pretty(&manifest)?);
+            }
+            UpdateCommands::Stage {
+                signed,
+                artifact,
+                trusted_signer,
+                app,
+                running,
+                install_dir,
+                target,
+            } => {
+                let (staged, displaced) = update::stage_update(
+                    &signed,
+                    &artifact,
+                    &trusted_signer,
+                    &app,
+                    &running,
+                    &install_dir,
+                    &target,
+                )?;
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "staged": staged.display().to_string(),
+                        "displaced": displaced.map(|path| path.display().to_string()),
+                        "target": target.display().to_string(),
+                    })
+                );
+            }
+            UpdateCommands::Rollback { target } => {
+                let restored = update::rollback_update(&target)?;
+                println!(
+                    "{}",
+                    serde_json::json!({ "restored_from": restored.display().to_string() })
+                );
+            }
+        },
         Commands::Provider { action } => match action {
             ProviderCommands::Probe {
                 all_configured,

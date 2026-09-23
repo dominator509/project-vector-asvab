@@ -5,22 +5,21 @@ candidate's diff. DOD-040: a change to code, dependencies, schema, configuration
 build, a test oracle or the artifact invalidates every downstream result that rested
 on the old bytes.
 
-- prior epoch: 19 at `21c60697`
-- new epoch: 21 at `6e7d1f16`
-- artifact: `23f8c2c5bf182ea058eff3fa18ebd75cd07a81fb6613d839bf4c180fdc5f1dad`
-- changed paths: 39 (35 committed, 22 uncommitted)
+- prior epoch: 21 at `6e7d1f16`
+- new epoch: 22 at `6a6296dc`
+- artifact: `6eaa3027f5c36e858f2a7448bd6befc17b23c5c5a58bd3c94cab4e61f6bbd4e9`
+- changed paths: 39 (29 committed, 22 uncommitted)
 
 ## Surfaces and what they invalidate
 
-- **accounting** (14 path(s)): gates dependency-graph, release-state
-- **application** (1 path(s)): gates lint, test-integration, test-unit
-- **dependencies** (2 path(s)): gates build, dependency-audit, typecheck
-- **documentation** (1 path(s)): gates none
-- **evidence** (8 path(s)): gates none
-- **harness** (7 path(s)): gates anti-gaming-scan, dependency-graph, release-state
+- **accounting** (16 path(s)): gates dependency-graph, release-state
+- **crate** (2 path(s)): gates lint, test-integration, test-unit
+- **dependencies** (3 path(s)): gates build, dependency-audit, typecheck
+- **documentation** (2 path(s)): gates none
+- **evidence** (9 path(s)): gates none
+- **harness** (3 path(s)): gates anti-gaming-scan
 - **interface** (2 path(s)): gates test-e2e, test-unit, typecheck
 - **ledger** (1 path(s)): gates none
-- **persistence** (2 path(s)): gates lint, test-integration, test-unit
 - **tooling** (1 path(s)): gates generated-pack, test-unit
 
 ## Rerun list
@@ -30,10 +29,10 @@ on the old bytes.
 ## Evidence hashes at this epoch
 
 - `gate-results.jsonl`: `1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6`
-- `RUN_MANIFEST.json`: `8439b8b76e8d7c9bec86e25fbe82c894c55993729a1e29bd6fe75928e0be4d4a`
-- `DOD_STATUS.jsonl`: `7763e2457e514ff145293baa2671f8ef4fb3f1d0d3ca1dec9bfa290542cab558`
+- `RUN_MANIFEST.json`: `4d002b2b077085c29da110ceeba817e88ff9540739f343ca58f7ea5fc9cc9d03`
+- `DOD_STATUS.jsonl`: `1a27b559970b88fbcac878a6c4e54e68737ef6192352ecb807ab04103c41993a`
 - `DEPENDENCY_BLOCKER_GRAPH.json`: `96d32c37e1125d60bcb5ebf7192a6c291850faecee1c310a0f6576a5a508e352`
-- `artifact_identity`: `d2a4019882c9e3a8c26dbacd6b8f96cb687c2a44c83d549e93bd851265bef10f`
+- `artifact_identity`: `fc2d1e237d4d414daa9e4c8247baa2c8aff68329595b8e1b2af4e9e3003832d3`
 
 ## Violations
 
