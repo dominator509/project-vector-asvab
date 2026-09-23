@@ -1,0 +1,72 @@
+content: what a pack teaches, in the product (REQ-003, REQ-023, REQ-032, REQ-048, REQ-056)
+
+Round 20 gave the pack format the curriculum graph and the calibration metadata the spec lists,
+and recorded honestly that neither was visible: they travelled in the pack, the installer
+verified them, and no learner or reviewer could see them. This round closes that, and finds a
+defect on the way.
+
+## What it adds
+
+**The content manager shows what a pack teaches.** `InstalledPackDto` gains one entry per
+objective the pack's manifest declares -- its title, subtest, prerequisites and calibration --
+and the packs panel renders them under the pack:
+
+```
+What core-asvab v3 teaches
+  Auto Information: what a component is for (AI) -- after OBJ-SI-TOOLS-01
+      -- 53% expected correct, declared, no responses recorded
+```
+
+The sentence turns on `responses`. A difficulty figure with no responses behind it is a
+declaration made from the material, not an observation of learners, and the panel says
+"declared, no responses recorded" rather than printing a percentage that reads like a
+measurement. A pack whose manifest predates the curriculum says so, instead of rendering an
+empty list as if it were one.
+
+**The plan follows the curriculum.** `Services::study_plan` reads the active pack's graph and
+moves a drill that teaches a prerequisite ahead of the drill that requires it, appending to the
+drill's own reason: `... ; it is the prerequisite for AI in this pack's curriculum`. Two things
+make that honest rather than clever:
+
+* the order is the *pack's*, not this layer's opinion of the subject. A device with no pack
+  installed has no declared curriculum, and its plan is unchanged;
+* the move is conservative. It pulls a prerequisite earlier only when both subtests are already
+  planned, never pushes a dependent drill past anything else, and never replaces the planner's
+  own reason -- a learner with fifteen minutes should not have their session stretched to reach
+  something they will meet tomorrow, and the planner's judgement about why and how long is
+  still true after the reordering.
+
+## The defect the work found
+
+`objectives_from_manifest` first parsed the registry's stored manifest as a `PackDocument`. The
+installer stores the pack's *payload* -- the bytes the signature covers, without the signature
+itself -- so every pack listed zero objectives and the panel would have shown "this pack
+declares no curriculum" for a pack that declares six. The integration test caught it on its
+first run (`left: 0, right: 4`), which is what the test was for: the field would otherwise have
+been populated by nothing and rendered as a blank list nobody could distinguish from an old
+pack.
+
+## Verification
+
+The behaviour is covered at three levels, because each can fail on its own: a Rust test that an
+installed pack reports the graph and the calibration it was built with, a view test that the
+panel renders the prerequisite edge and distinguishes a declared figure from a measured one, and
+an end-to-end test in the built bundle through the stub boundary.
+
+`mutation-round18.py` now proves 26 rules, including both of this round's: removing the
+prerequisite ordering fails the planner test, and emptying `objectives_from_manifest` fails the
+DTO test.
+
+Corpus unchanged at 5,621 active items (1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 55 SI, 75 AI),
+69 evidence records, 7,570 citations, pack `core-asvab v3` active, every provenance invariant
+zero. `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0: 1,717 Rust tests across
+109 binaries, 211 frontend unit tests, 36 E2E, packaged live-fire passed.
+
+## Still open
+
+SI 55 and AI 75 remain thin for a subtest that asks sixteen questions in a sitting. The plan
+orders by prerequisite but does not yet track mastery *per objective*: attempts are recorded per
+item and items carry an objective id, so per-objective mastery is derivable, and the plan still
+reasons about subtests while the curriculum's finer grain is used only for ordering. General
+Science is still one work, and the noun-head check and the Word Knowledge rare-distractor gap
+are unchanged.

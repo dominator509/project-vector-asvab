@@ -36,6 +36,7 @@ import type {
   LatencyDto,
   MasteryDto,
   NewEvidenceDto,
+  PackObjectiveDto,
   PlanDto,
   ProfileDto,
   ReadinessDto,
@@ -153,6 +154,27 @@ class Reader {
       throw new MalformedResponseError(
         this.command,
         `field "${key}" must be a boolean, got ${describe(field)}`,
+      );
+    }
+    return field;
+  }
+
+  /**
+   * A field that is either a finite number or an explicit null.
+   *
+   * By the same rule as `nullableString`: absence is rejected, because the backend always
+   * sends the field and treating a missing one as "no value" would hide a contract break
+   * behind a plausible-looking result.
+   */
+  nullableNumber(source: Record<string, unknown>, key: string): number | null {
+    const field = source[key];
+    if (field === null) {
+      return null;
+    }
+    if (typeof field !== "number" || !Number.isFinite(field)) {
+      throw new MalformedResponseError(
+        this.command,
+        `field "${key}" must be a finite number or null, got ${describe(field)}`,
       );
     }
     return field;
@@ -690,6 +712,12 @@ function readReviewHistory(command: string, value: unknown): ReviewEntryDto[] {
 function readInstalledPack(command: string, value: unknown): InstalledPackDto {
   const r = new Reader(command, value);
   const o = r.object();
+  // A pack that declares no curriculum is a pack whose manifest predates it, and the view says
+  // so rather than showing an empty list. A pack that *does* declare one has to carry the
+  // fields, so a short read is refused rather than rendered as blanks.
+  const objectives = new Reader(command, o.objectives ?? [])
+    .array()
+    .map((entry) => readPackObjective(command, entry));
   return {
     id: r.string(o, "id"),
     name: r.string(o, "name"),
@@ -701,6 +729,32 @@ function readInstalledPack(command: string, value: unknown): InstalledPackDto {
     item_count: r.number(o, "item_count"),
     created_at: r.string(o, "created_at"),
     signature_valid: r.boolean(o, "signature_valid"),
+    objectives,
+  };
+}
+
+function readPackObjective(command: string, value: unknown): PackObjectiveDto {
+  const r = new Reader(command, value);
+  const o = r.object();
+  const prerequisites = new Reader(command, o.prerequisites ?? [])
+    .array()
+    .map((entry) => {
+      if (typeof entry !== "string") {
+        throw new MalformedResponseError(
+          command,
+          `a prerequisite must be a string, got ${describe(entry)}`,
+        );
+      }
+      return entry;
+    });
+  return {
+    objective_id: r.string(o, "objective_id"),
+    subtest: r.string(o, "subtest"),
+    title: r.string(o, "title"),
+    prerequisites,
+    expected_correct: r.nullableNumber(o, "expected_correct"),
+    responses: r.nullableNumber(o, "responses"),
+    basis: r.nullableString(o, "basis"),
   };
 }
 

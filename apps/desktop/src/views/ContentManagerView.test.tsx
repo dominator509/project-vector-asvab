@@ -268,6 +268,38 @@ describe("the packs panel", () => {
     expect(screen.queryByTestId("pack-notice")).not.toBeInTheDocument();
   });
 
+  it("shows what an installed pack teaches, and how its difficulty was arrived at", async () => {
+    const fake = await seeded();
+    renderWith(fake);
+    await waitFor(() =>
+      expect(screen.getByTestId("pack-path-input")).toBeInTheDocument(),
+    );
+
+    await userEvent.type(screen.getByTestId("pack-path-input"), "core.vpack");
+    await userEvent.click(screen.getByTestId("pack-install"));
+    await waitFor(() =>
+      expect(screen.getByTestId("packs-table")).toBeInTheDocument(),
+    );
+
+    const panel = screen.getByTestId("pack-objectives-pack-core-asvab-1");
+    // The objective, its subtest and its prerequisite edge.
+    expect(panel).toHaveTextContent("Rate problems");
+    expect(panel).toHaveTextContent("(MK)");
+    expect(
+      screen.getByTestId("objective-after-OBJ-MK-ALGEBRA-01"),
+    ).toHaveTextContent("after OBJ-AR-RATE-01");
+
+    // A figure that rests on no responses says so; one that rests on 120 says that.
+    expect(
+      screen.getByTestId("objective-calibration-OBJ-AR-RATE-01"),
+    ).toHaveTextContent(
+      "62% expected correct, declared, no responses recorded",
+    );
+    expect(
+      screen.getByTestId("objective-calibration-OBJ-MK-ALGEBRA-01"),
+    ).toHaveTextContent("44% expected correct, 120 response(s)");
+  });
+
   it("rolls a pack back and says what is in service again", async () => {
     const fake = await seeded();
     renderWith(fake);

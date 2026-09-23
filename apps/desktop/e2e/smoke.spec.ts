@@ -134,6 +134,26 @@ test.describe("content packs in the built bundle", () => {
           item_count: 1234,
           created_at: "2026-09-22T00:00:00Z",
           signature_valid: true,
+          objectives: [
+            {
+              objective_id: "OBJ-SI-TOOLS-01",
+              subtest: "SI",
+              title: "Shop Information: which tool performs a purpose",
+              prerequisites: [],
+              expected_correct: 0.53,
+              responses: 0,
+              basis: "declared from the items' difficulty scale",
+            },
+            {
+              objective_id: "OBJ-AI-FUNCTION-01",
+              subtest: "AI",
+              title: "Auto Information: what a component is for",
+              prerequisites: ["OBJ-SI-TOOLS-01"],
+              expected_correct: 0.53,
+              responses: 0,
+              basis: "declared from the items' difficulty scale",
+            },
+          ],
         },
       ],
     });
@@ -148,6 +168,17 @@ test.describe("content packs in the built bundle", () => {
     await expect(table).toContainText("core-asvab");
     await expect(table).toContainText("1234");
     await expect(table).toContainText("verified");
+
+    // What the pack teaches travels with it, including the prerequisite edge and the fact
+    // that its difficulty figures rest on no responses.
+    const objectives = page.getByTestId("pack-objectives-pack-core-asvab-1");
+    await expect(objectives).toContainText("which tool performs a purpose");
+    await expect(
+      page.getByTestId("objective-after-OBJ-AI-FUNCTION-01"),
+    ).toContainText("after OBJ-SI-TOOLS-01");
+    await expect(
+      page.getByTestId("objective-calibration-OBJ-AI-FUNCTION-01"),
+    ).toContainText("declared, no responses recorded");
 
     // Installing with no path is refused by the interface rather than by the
     // backend, and a pack this stub cannot verify is refused by the backend with the

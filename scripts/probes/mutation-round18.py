@@ -30,6 +30,7 @@ CONTENT = ROOT / "crates/vector-application/src/content.rs"
 PERSISTENCE = ROOT / "crates/vector-persistence/src/content.rs"
 TOOLS = ROOT / "tools/vector-tools/src/content.rs"
 PACKS = ROOT / "crates/vector-application/src/packs.rs"
+SERVICE = ROOT / "crates/vector-application/src/service.rs"
 
 NAME_STOP_WORDS_IN_THE_NAME = """    if words
         .iter()
@@ -308,6 +309,28 @@ MUTATIONS = [
         "vector-tools",
         "a_manual_that_describes_no_tool_does_not_take_the_run_down",
         "a manual the reader finds no tools in does not end the run",
+    ),
+    (
+        "no-prerequisite-ordering",
+        SERVICE,
+        (
+            "    if pairs.is_empty() || drills.len() < 2 {",
+            "    if true || pairs.is_empty() || drills.len() < 2 {",
+        ),
+        "vector-application",
+        "a_plan_follows_the_curriculum_the_installed_pack_declares",
+        "a plan follows the prerequisites the installed pack declares",
+    ),
+    (
+        "no-pack-objectives",
+        PACKS,
+        (
+            "    let Ok(payload) = serde_json::from_str::<PackPayload>(manifest_json) else {",
+            "    if true {\n        return Vec::new();\n    }\n    let Ok(payload) = serde_json::from_str::<PackPayload>(manifest_json) else {",
+        ),
+        "vector-application",
+        "an_installed_pack_reports_what_it_teaches",
+        "an installed pack reports the objectives its manifest declares",
     ),
     (
         "no-curriculum-check",

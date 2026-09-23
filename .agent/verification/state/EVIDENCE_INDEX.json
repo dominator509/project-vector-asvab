@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-09-23T01:21:28.766381+00:00",
+  "generated_at": "2026-09-23T02:05:16.516221+00:00",
   "root": ".agent/evidence",
-  "count": 603,
+  "count": 606,
   "files": [
     {
       "path": ".agent/evidence/commit-ep000-ep002-remediation.txt",
@@ -215,8 +215,8 @@
     },
     {
       "path": ".agent/evidence/EP-001/desktop-live-fire.json",
-      "bytes": 1248,
-      "sha256": "b73b79b7beeb48ca36edce2e1d34d0c1ae07722c64ff4ea2990f1eb918fcda69"
+      "bytes": 1247,
+      "sha256": "e522833f94129d211a9ef96b8e8cef613ba964b06faebede14f3372aea53d8b7"
     },
     {
       "path": ".agent/evidence/EP-001/status.txt",
@@ -641,7 +641,7 @@
     {
       "path": ".agent/evidence/EP-004/provider-probe.json",
       "bytes": 2687,
-      "sha256": "d219b7e67ae2930e2b62c5fefb262c463975d5f503df851e2ae0cb1c1c2a4db4"
+      "sha256": "e813ee69c59853182626bc891a5dff0df0178da0f4693e8b61b3c0db40cb2e69"
     },
     {
       "path": ".agent/evidence/EP-004/typecheck.exitcode",
@@ -1079,6 +1079,11 @@
       "sha256": "9c0591ac6f30757f9ae2c5ac56ef556b3b230d244234a57e091780e2dd41f5a7"
     },
     {
+      "path": ".agent/evidence/EP-007/content-corpus/commit-message-round20.txt",
+      "bytes": 5742,
+      "sha256": "242d7de88e6b1ff7af7c9d35b58f176dbbf12067672d2e0f9435ea23d728d782"
+    },
+    {
       "path": ".agent/evidence/EP-007/content-corpus/commit-message.txt",
       "bytes": 3069,
       "sha256": "822e55c0ec24a720d9b73ce531565cd88fe8ba43b4ba96c659d74d55de154eb2"
@@ -1380,8 +1385,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/ROUND-20-REPORT.md",
-      "bytes": 6712,
-      "sha256": "a22d4392713ca12d11846af285d00c81b059f1abcf52b4961c39559383398888"
+      "bytes": 7396,
+      "sha256": "c3349f65e588eaba161125aad6a980909f0e9b579746f4bf95d5421ccab4fe50"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/ROUND-21-REPORT.md",
+      "bytes": 4450,
+      "sha256": "11b7b15a292473baeb03736e90f148d7cec903c8aa6c8821ed415b23e5187eda"
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/tools-report.txt",
@@ -1400,8 +1410,13 @@
     },
     {
       "path": ".agent/evidence/EP-007/content-corpus/verify-round20.log",
-      "bytes": 1010222,
-      "sha256": "60dfc2d7710d2d539a3eb91decc188a02a793b5fa84e1cdfb920f587c3248d02"
+      "bytes": 1010595,
+      "sha256": "ee41a870bee740851d387d01ecb4f779e50825929c8605f61aae8853470de08f"
+    },
+    {
+      "path": ".agent/evidence/EP-007/content-corpus/verify-round21.log",
+      "bytes": 1012140,
+      "sha256": "43d9c9e00cec046c4d817a81166ec2a5e7079be67c143483f86f27140087b079"
     },
     {
       "path": ".agent/evidence/EP-007/diagnose-fuzz-hang.py",
@@ -1791,7 +1806,7 @@
     {
       "path": ".agent/evidence/EP-009/artifact_identity.json",
       "bytes": 1025,
-      "sha256": "6539ea91a35cc30b2ba41fd528b8497af77dd2198f6af966cd553334fc679d8b"
+      "sha256": "37a89af7259d73144697a9b0b3e86c90517f4533d3e919000ad23dc105ba6c13"
     },
     {
       "path": ".agent/evidence/EP-009/dod-gate.exitcode",

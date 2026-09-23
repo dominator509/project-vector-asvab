@@ -289,3 +289,31 @@ the pack and the installer verifies them, but the content manager does not show 
 teaches and the study planner does not order work by the prerequisites, which is the next
 round's natural work; GS is still one work; the noun-head check and the Word Knowledge
 rare-distractor gap are unchanged.
+
+### Round 21
+
+| Area | What it delivered | Evidence |
+|---|---|---|
+| What a pack teaches, in the product | `InstalledPackDto` gains one entry per objective the pack's manifest declares -- title, subtest, prerequisites, calibration -- and the content manager renders them: `Auto Information: what a component is for (AI) -- after OBJ-SI-TOOLS-01 -- 53% expected correct, declared, no responses recorded`. The sentence turns on `responses`: a figure with none behind it is a declaration from the material, and the panel says so rather than printing a percentage that reads like an observation. A pack whose manifest predates the curriculum says that instead of rendering an empty list. | `.agent/evidence/EP-007/content-corpus/ROUND-21-REPORT.md`, `ContentManagerView.tsx` |
+| The plan follows the curriculum | `Services::study_plan` reads the active pack's graph and moves a drill that teaches a prerequisite ahead of the drill that requires it, appending `; it is the prerequisite for AI in this pack's curriculum` to the drill's own reason. The order is the *pack's*, not this layer's opinion: a device with no pack installed has no declared curriculum and its plan is unchanged. The move is conservative -- it pulls a prerequisite earlier only when both subtests are already planned, and the planner's own reason survives. | `service.rs`, `service_layer.rs` |
+| The defect it found | `objectives_from_manifest` parsed the registry's stored manifest as a `PackDocument`, but the installer stores the pack's *payload* (the bytes the signature covers). Every pack therefore listed zero objectives, and the panel would have shown "declares no curriculum" for a pack that declares six. The integration test caught it on its first run: `left: 0, right: 4`. | `packs.rs` |
+
+Corpus unchanged at **5,621 active items** (1,949 WK, 1,565 EI, 1,676 PC, 301 GS, 55 SI, 75 AI),
+69 evidence records, 7,570 citations, pack `core-asvab v3` active, every provenance invariant a
+zero.
+
+Gates: `sh scripts/verify.sh` exits 0 with all 19 gates recorded exit 0; 1,717 Rust tests across
+109 binaries, **211** frontend unit tests, 36 E2E, packaged live-fire passed against artifact
+`f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38`. **All 26 mutations
+caught.** Verdict unchanged: `CONDITIONAL_EXTERNAL_GATES`.
+
+The panel is covered at three levels, because each level can fail on its own: a Rust test that an
+installed pack reports the graph and calibration it was built with, a view test that the panel
+renders the prerequisite edge and distinguishes a declared figure from a measured one, and an
+end-to-end test in the built bundle through the stub boundary.
+
+Still open: **SI 55 and AI 75 remain thin**; **the plan orders by prerequisite but does not
+track mastery per objective** -- attempts are recorded per item and items carry an objective id,
+so per-objective mastery is derivable, and the plan still reasons about subtests while the
+curriculum's finer grain is used only for ordering; GS is one work; the noun-head check and the
+Word Knowledge rare-distractor gap are unchanged.

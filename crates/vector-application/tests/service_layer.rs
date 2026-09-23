@@ -274,9 +274,182 @@ fn mastery_outside_the_unit_interval_is_refused() {
     ));
 }
 
+/// A signed pack whose curriculum declares `before` as a prerequisite of `after`.
+///
+/// Written here rather than in the library because it is a fixture: the library's own tests
+/// cover what a pack verifies, and this covers what the planner does with one.
+fn pack_with_curriculum(
+    db: &Database,
+    before: &str,
+    after: &str,
+) -> (
+    vector_application::packs::PackDocument,
+    ed25519_dalek::SigningKey,
+) {
+    use vector_application::packs::{BuildPackRequest, CurriculumNode};
+    let key = ed25519_dalek::SigningKey::from_bytes(&[11_u8; 32]);
+
+    // A pack attests content, so the store needs at least one item before one can be built.
+    // The items come from the factory, which needs a recorded source to cite.
+    let source = vector_persistence::repo::EvidenceRepo::new(db)
+        .put(&vector_persistence::repo::NewEvidence::new(
+            "https://archive.org/details/micro_IA41153156_0308",
+            "Tools and Their Uses (Internet Archive micro_IA41153156_0308)",
+            "sha256:planner-fixture",
+            "Public domain (US government work)",
+            "2026-09-22",
+            0.90,
+            "retrieved",
+        ))
+        .expect("record the source");
+    vector_application::content::ContentPipeline::new(db)
+        .generate_and_activate(&vector_application::content::GenerateRequest {
+            subtest: "AR",
+            count: 4,
+            seed: 20_260_922,
+            source_id: &source,
+            reviewer: "content-reviewer",
+            generator: "factory",
+        })
+        .expect("generate items for the pack to attest");
+    let curriculum = vec![
+        CurriculumNode {
+            objective_id: format!("OBJ-{before}-TOOLS-01"),
+            subtest: before.to_string(),
+            title: format!("{before} first"),
+            prerequisites: Vec::new(),
+        },
+        CurriculumNode {
+            objective_id: format!("OBJ-{after}-FUNCTION-01"),
+            subtest: after.to_string(),
+            title: format!("{after} second"),
+            prerequisites: vec![format!("OBJ-{before}-TOOLS-01")],
+        },
+    ];
+    let base = vector_application::packs::build_pack(
+        db,
+        &BuildPackRequest {
+            name: "core-asvab",
+            version: 1,
+            app_min: "0.1.0",
+            app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
+        },
+        &key,
+    )
+    .expect("build the base pack");
+    // The graph has to cover every objective the store's items use, so the fixture's two
+    // nodes are added to the ones the items brought.
+    let mut curriculum = curriculum;
+    for node in base.curriculum() {
+        if !curriculum
+            .iter()
+            .any(|existing| existing.objective_id == node.objective_id)
+        {
+            curriculum.push(node.clone());
+        }
+    }
+    let calibration = curriculum
+        .iter()
+        .map(|node| vector_application::packs::CalibrationEntry {
+            objective_id: node.objective_id.clone(),
+            expected_correct: 0.5,
+            responses: 0,
+            basis: "declared; no responses recorded".to_string(),
+        })
+        .collect();
+    let document = vector_application::packs::build_pack(
+        db,
+        &BuildPackRequest {
+            name: "core-asvab",
+            version: 1,
+            app_min: "0.1.0",
+            app_max: None,
+            curriculum,
+            calibration,
+        },
+        &key,
+    )
+    .expect("build");
+    (document, key)
+}
+
 // ---------------------------------------------------------------------------
 // Planning
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Planning against the pack's curriculum
+// ---------------------------------------------------------------------------
+
+/// With a pack installed, a drill that teaches a prerequisite comes before the drill that
+/// requires it, and its reason says so.
+///
+/// The ordering comes from the curriculum the *content* declares, not from this layer's
+/// opinion of the subject: the plan is only moved when the installed pack says objective A
+/// comes before objective B and the two are in different subtests.
+#[test]
+fn a_plan_follows_the_curriculum_the_installed_pack_declares() {
+    let tmp = TempDb::new("plan-curriculum");
+    let db = tmp.open();
+    let services = Services::new(&db);
+    let profile = services.create_profile("Ada", 70).expect("create");
+
+    // Both subtests are unstudied, so the planner wants to drill them; which comes first is
+    // what the pack decides.
+    let before = services.study_plan(&profile.id, 70, 60).expect("plan");
+    let planned: Vec<String> = before
+        .drills
+        .iter()
+        .map(|drill| drill.subtest.clone())
+        .collect();
+    assert!(
+        planned.contains(&"SI".to_string()) && planned.contains(&"AI".to_string()),
+        "the fixture needs both subtests planned: {planned:?}"
+    );
+
+    // Install a pack whose curriculum puts Shop Information before Auto Information.
+    let (document, key) = crate::pack_with_curriculum(&db, "SI", "AI");
+    let bytes = vector_application::packs::pack_bytes(&document).expect("serialize");
+    let signer = key.verifying_key().to_bytes().to_vec();
+    vector_application::packs::install_pack(&db, &bytes, &signer, "0.1.0")
+        .expect("install the pack");
+
+    let after = services.study_plan(&profile.id, 70, 60).expect("plan");
+    let si = after
+        .drills
+        .iter()
+        .position(|drill| drill.subtest == "SI")
+        .expect("SI is planned");
+    let ai = after
+        .drills
+        .iter()
+        .position(|drill| drill.subtest == "AI")
+        .expect("AI is planned");
+    assert!(
+        si < ai,
+        "the prerequisite must come first: {:?}",
+        after.drills
+    );
+    assert!(
+        after.drills[si].reason.contains("prerequisite for AI"),
+        "the reason should say why the order changed: {:?}",
+        after.drills[si]
+    );
+    // The drill's own reason survives: the planner's judgement is added to, not replaced.
+    assert!(
+        after.drills[si].reason.contains(
+            &before
+                .drills
+                .iter()
+                .find(|drill| drill.subtest == "SI")
+                .expect("SI was planned before")
+                .reason
+        ),
+        "the planner's own reason must survive the reordering: {:?}",
+        after.drills[si]
+    );
+}
 
 #[test]
 fn a_new_learner_gets_a_plan_covering_the_unstudied_subtests() {

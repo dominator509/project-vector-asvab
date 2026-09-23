@@ -336,6 +336,58 @@ export function ContentManagerView() {
           </table>
         )}
 
+        {/* What the installed packs teach. A pack is not a bag of questions: it declares the
+            objectives it teaches, what has to come first, and what it claims about how hard
+            each one is. A difficulty figure whose `responses` is zero is a declaration made
+            from the material, not a measurement of learners, and this says so rather than
+            printing a percentage that reads like an observation. */}
+        {packs.map((pack) => (
+          <div
+            key={`${pack.id}-objectives`}
+            data-testid={`pack-objectives-${pack.id}`}
+          >
+            <h4>{`What ${pack.name} v${pack.version} teaches`}</h4>
+            {pack.objectives.length === 0 ? (
+              <p className="hint" data-testid={`pack-no-curriculum-${pack.id}`}>
+                This pack declares no curriculum: its manifest predates the
+                curriculum graph, so what it teaches has to be read from its
+                items.
+              </p>
+            ) : (
+              <ul>
+                {pack.objectives.map((objective) => (
+                  <li
+                    key={objective.objective_id}
+                    data-testid={`objective-${objective.objective_id}`}
+                  >
+                    <strong>{objective.title}</strong>{" "}
+                    <span className="hint">({objective.subtest})</span>
+                    {objective.prerequisites.length > 0 && (
+                      <span
+                        className="hint"
+                        data-testid={`objective-after-${objective.objective_id}`}
+                      >
+                        {` — after ${objective.prerequisites.join(", ")}`}
+                      </span>
+                    )}
+                    {objective.expected_correct !== null && (
+                      <span
+                        data-testid={`objective-calibration-${objective.objective_id}`}
+                      >
+                        {` — ${Math.round(objective.expected_correct * 100)}% expected correct, `}
+                        {objective.responses === null ||
+                        objective.responses === 0
+                          ? "declared, no responses recorded"
+                          : `${objective.responses} response(s)`}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ))}
+
         <label>
           Install a pack from this machine
           <input

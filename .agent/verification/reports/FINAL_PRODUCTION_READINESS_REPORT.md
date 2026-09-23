@@ -12,22 +12,22 @@ committed artifact or a recorded exit code; nothing here is written by hand.
 | Field | Value |
 |---|---|
 | Version | 0.1.0 |
-| Artifact digest | `0f2471966669c90f501d5ab6a76afe4a8878a8168efb2bd81628602cca88332f` |
-| Identity digest | `3522b1bf07bdbc8028a80e0044ddcf70cea9dcf57df56e871f7182c71bc7ce13` |
-| Candidate epoch | 10 |
-| Git commit | `7ede6ddefb6be81dbd2cff32c4c9b7ed2b8533e6` |
+| Artifact digest | `f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38` |
+| Identity digest | `df365e3329485d813afadf8d00b221393d86fea2caca4b74bfa3bc6c2ab9f6a3` |
+| Candidate epoch | 11 |
+| Git commit | `3e8cebf206ae884e3cb1fba5305d000fa3a482fd` |
 | Branch | main |
 
 Each component of the identity, measured from the artifact this sweep built:
 
 | Component | Digest |
 |---|---|
-| Binary | `0f2471966669c90f501d5ab6a76afe4a8878a8168efb2bd81628602cca88332f` |
+| Binary | `f14cd345df8568de02059b2fe0249dad53f44a12d20442b1d743cecd84504b38` |
 | Migrations | `3d4917b14857d46e0cdccc730ebe3d13cb7f5de52e9c5d7d17e5deacbdd51c68` |
-| Content | `ba795c12708bc4bf176689c3df3b7fd17403d7ea5ebfe7ab3fea0df212dc1381` |
+| Content | `56efc839ff6def97f6389736cb541d881bdf8283c3199d80228614877dcf6c66` |
 | Sbom | `dec2bd5a18d47b4d830c715a5fd6a62f61a0d4ed4da79699a5cdc410e82dbf42` |
 | Licenses | `538ff28fbbe8a73fdd3c6e34ee8a244ba39719bd0103650c0ca57529278f59f8` |
-| GitSha | `0196fc6f57e32aa9c2413daf511228609d6584eee37258b9e30de9bba9805294` |
+| GitSha | `0f17202979409a905be20084973d4ac9f3b7176e117f896eecbb92ee0cbd8618` |
 
 ## Gates executed in this run
 
@@ -84,7 +84,7 @@ Definition of Done by status:
 
 ## Evidence
 
-603 evidence files, each with a recorded content hash, in
+606 evidence files, each with a recorded content hash, in
 `EVIDENCE_INDEX.json`.
 
 ## Limitations of this report

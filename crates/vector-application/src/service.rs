@@ -89,6 +89,46 @@ pub struct MasteryDto {
     pub uncertainty: f64,
 }
 
+/// Move a drill that teaches a prerequisite ahead of the drill that requires it.
+///
+/// The move is stable and conservative: it only ever pulls a prerequisite earlier, never
+/// pushes a dependent one later past something else, and it leaves the plan alone when the
+/// prerequisite is not in the plan at all -- a learner with fifteen minutes should not have
+/// their session stretched to reach a prerequisite they will meet tomorrow.
+///
+/// The reason is amended rather than replaced, because the planner's own reason (why this
+/// subtest, why this long) is still true; the prerequisite is added to it.
+fn order_by_prerequisites(drills: &mut Vec<DrillDto>, pairs: &[(String, String)]) {
+    if pairs.is_empty() || drills.len() < 2 {
+        return;
+    }
+    for (before, after) in pairs {
+        let (Some(before_at), Some(after_at)) = (
+            drills.iter().position(|drill| &drill.subtest == before),
+            drills.iter().position(|drill| &drill.subtest == after),
+        ) else {
+            continue;
+        };
+        if before_at < after_at {
+            continue;
+        }
+        let drill = drills.remove(before_at);
+        let after_at = drills
+            .iter()
+            .position(|drill| &drill.subtest == after)
+            .expect("the dependent drill is still in the plan");
+        drills.insert(after_at, drill);
+        // The prerequisite's own drill now runs first; saying so is what turns a reordering
+        // into something a learner can disagree with.
+        if let Some(prerequisite) = drills.iter_mut().find(|drill| &drill.subtest == before) {
+            let note = format!("; it is the prerequisite for {after} in this pack's curriculum");
+            if !prerequisite.reason.contains(&note) {
+                prerequisite.reason.push_str(&note);
+            }
+        }
+    }
+}
+
 /// A single planned drill.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct DrillDto {
@@ -609,18 +649,62 @@ impl<'a> Services<'a> {
             generate_plan(&estimates, &PlanGoal::Afqt(target_score), available_minutes)
                 .map_err(ServiceError::Invalid)?;
 
+        let mut drills: Vec<DrillDto> = plan
+            .drills
+            .iter()
+            .map(|d| DrillDto {
+                subtest: d.subtest.clone(),
+                minutes: d.minutes,
+                reason: format!("{:?}", d.reason).to_lowercase(),
+            })
+            .collect();
+
+        // The pack a learner has installed declares what has to come before what, and a plan
+        // that ignores it can spend the session on a subtest whose prerequisite is untouched.
+        // The order is the pack's, not this layer's: the plan is only moved so that a drill
+        // teaching a prerequisite comes first, and the reason says why.
+        let prerequisites = self.taught_prerequisites()?;
+        order_by_prerequisites(&mut drills, &prerequisites);
+
         Ok(PlanDto {
-            drills: plan
-                .drills
-                .iter()
-                .map(|d| DrillDto {
-                    subtest: d.subtest.clone(),
-                    minutes: d.minutes,
-                    reason: format!("{:?}", d.reason).to_lowercase(),
-                })
-                .collect(),
+            drills,
             total_minutes: plan.total_minutes,
         })
+    }
+
+    /// Which planned subtests unlock which, from the curriculum of the active pack.
+    ///
+    /// Pairs of `(prerequisite subtest, dependent subtest)` read out of the installed pack's
+    /// curriculum graph. A device with no pack installed has no declared curriculum and
+    /// therefore no ordering: an order invented here would be this code's opinion of the
+    /// subject rather than a statement the content arrived with.
+    fn taught_prerequisites(&self) -> Result<Vec<(String, String)>, ServiceError> {
+        let packs = crate::packs::installed_packs(self.db)?;
+        let Some(active) = packs.iter().find(|pack| pack.status == "active") else {
+            return Ok(Vec::new());
+        };
+        let subtest_of: std::collections::HashMap<&str, &str> = active
+            .objectives
+            .iter()
+            .map(|objective| (objective.objective_id.as_str(), objective.subtest.as_str()))
+            .collect();
+        let mut pairs: Vec<(String, String)> = Vec::new();
+        for objective in &active.objectives {
+            for prerequisite in &objective.prerequisites {
+                let (Some(before), Some(after)) = (
+                    subtest_of.get(prerequisite.as_str()),
+                    subtest_of.get(objective.objective_id.as_str()),
+                ) else {
+                    continue;
+                };
+                if before != after {
+                    pairs.push(((*before).to_string(), (*after).to_string()));
+                }
+            }
+        }
+        pairs.sort();
+        pairs.dedup();
+        Ok(pairs)
     }
 
     /// Estimate a readiness band (REQ-011).

@@ -124,6 +124,19 @@ export interface StubPack {
   item_count: number;
   created_at: string;
   signature_valid: boolean;
+  /** What the pack teaches, as the content manager lists it. */
+  objectives?: StubObjective[];
+}
+
+/** One objective a pack declares, with what it claims about its difficulty. */
+export interface StubObjective {
+  objective_id: string;
+  subtest: string;
+  title: string;
+  prerequisites: string[];
+  expected_correct: number | null;
+  responses: number | null;
+  basis: string | null;
 }
 
 /**

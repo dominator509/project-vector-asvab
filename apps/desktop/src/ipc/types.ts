@@ -260,6 +260,30 @@ export interface InstalledPackDto {
   item_count: number;
   created_at: string;
   signature_valid: boolean;
+  /**
+   * What the pack teaches, read out of the manifest it was installed with.
+   *
+   * Empty for a pack whose manifest predates the curriculum, which is why the view says
+   * "declares no curriculum" rather than rendering an empty list as if it were one.
+   */
+  objectives: PackObjectiveDto[];
+}
+
+/** One objective a pack teaches, and what it claims about its difficulty. */
+export interface PackObjectiveDto {
+  objective_id: string;
+  subtest: string;
+  title: string;
+  prerequisites: string[];
+  /**
+   * The declared share expected to answer correctly.
+   *
+   * `responses` is what says whether that figure was measured: zero means the pack declared it
+   * from the material rather than observing learners, and the view says so.
+   */
+  expected_correct: number | null;
+  responses: number | null;
+  basis: string | null;
 }
 
 /** What installing a pack delivered. */

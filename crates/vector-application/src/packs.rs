@@ -1085,6 +1085,27 @@ pub fn install_pack(
     })
 }
 
+/// One objective a pack teaches, as the content manager lists it.
+///
+/// The curriculum travels inside the pack's manifest, so this is what the interface can show
+/// without unpacking it: what the objective is, which subtest it belongs to, what has to come
+/// first, and what the pack claims about its difficulty -- carrying `responses` beside the
+/// estimate so a reader can tell a measured figure from a declared one.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct PackObjectiveDto {
+    pub objective_id: String,
+    pub subtest: String,
+    pub title: String,
+    #[serde(default)]
+    pub prerequisites: Vec<String>,
+    /// The declared share expected to answer correctly, when the pack calibrates this
+    /// objective.
+    pub expected_correct: Option<f64>,
+    /// How many responses the estimate rests on. Zero means it is a declaration.
+    pub responses: Option<u64>,
+    pub basis: Option<String>,
+}
+
 /// A pack as the interface lists it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct InstalledPackDto {
@@ -1100,6 +1121,13 @@ pub struct InstalledPackDto {
     /// Whether the signature still verifies against the key that signed it. A pack
     /// whose stored identity no longer verifies is one a reader should not trust.
     pub signature_valid: bool,
+    /// What the pack teaches, read out of the manifest it was installed with.
+    ///
+    /// Empty for a pack built before the manifest carried a curriculum -- the field is
+    /// `#[serde(default)]` so those packs still parse, and the interface says "declares no
+    /// curriculum" rather than showing an empty list as if it were one.
+    #[serde(default)]
+    pub objectives: Vec<PackObjectiveDto>,
 }
 
 impl From<ContentPackRecord> for InstalledPackDto {
@@ -1118,6 +1146,7 @@ impl From<ContentPackRecord> for InstalledPackDto {
             })
             .map(|pack| pack.verify().is_ok())
             .unwrap_or(false);
+        let objectives = objectives_from_manifest(&record.manifest_json);
         Self {
             id: record.id,
             name: record.name,
@@ -1129,8 +1158,45 @@ impl From<ContentPackRecord> for InstalledPackDto {
             item_count: record.item_count,
             created_at: record.created_at,
             signature_valid,
+            objectives,
         }
     }
+}
+
+/// Read the objectives a stored manifest declares, with their calibration.
+///
+/// The registry stores the pack's *payload* -- the bytes the signature covers, without the
+/// signature itself -- so that is what this parses. A manifest that does not parse, or one
+/// written before the curriculum existed, yields an empty list: the pack registry is not the
+/// place to fail a read because a pack is older, and the interface distinguishes "declares
+/// nothing" from "cannot be read" by the pack's own schema version.
+fn objectives_from_manifest(manifest_json: &str) -> Vec<PackObjectiveDto> {
+    let Ok(payload) = serde_json::from_str::<PackPayload>(manifest_json) else {
+        return Vec::new();
+    };
+    let calibration: BTreeMap<&str, &CalibrationEntry> = payload
+        .calibration
+        .iter()
+        .map(|entry| (entry.objective_id.as_str(), entry))
+        .collect();
+    let mut objectives: Vec<PackObjectiveDto> = payload
+        .curriculum
+        .iter()
+        .map(|node| {
+            let entry = calibration.get(node.objective_id.as_str());
+            PackObjectiveDto {
+                objective_id: node.objective_id.clone(),
+                subtest: node.subtest.clone(),
+                title: node.title.clone(),
+                prerequisites: node.prerequisites.clone(),
+                expected_correct: entry.map(|entry| entry.expected_correct),
+                responses: entry.map(|entry| entry.responses),
+                basis: entry.map(|entry| entry.basis.clone()),
+            }
+        })
+        .collect();
+    objectives.sort_by(|a, b| a.objective_id.cmp(&b.objective_id));
+    objectives
 }
 
 /// Every pack the registry holds.

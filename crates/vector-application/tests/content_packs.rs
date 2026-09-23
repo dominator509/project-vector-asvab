@@ -705,3 +705,124 @@ fn a_pack_that_overlaps_the_corpus_installs_without_conflict() {
         "two packs of different names may both be active"
     );
 }
+
+/// What a pack teaches survives installation and reaches the interface.
+///
+/// The curriculum and the calibration live inside the manifest the installer stores, so the
+/// content manager can only show them if reading a pack back out of the registry carries them.
+/// The counts matter as much as the values: `responses` is what tells a reader whether a
+/// difficulty figure was measured or declared.
+#[test]
+fn an_installed_pack_reports_what_it_teaches() {
+    let dir = tempdir::TempDir::new("pack-objectives");
+    let mut db = Database::open(dir.path().join("vector.db")).expect("open");
+    MigrationManager::apply(&mut db, &migrations()).expect("migrate");
+    let source = EvidenceRepo::new(&db)
+        .put(&NewEvidence::new(
+            "https://archive.org/details/micro_IA41153156_0308",
+            "Tools and Their Uses (Internet Archive micro_IA41153156_0308)",
+            "sha256:tools-fixture",
+            "Public domain (US government work)",
+            "2026-09-22",
+            0.90,
+            "retrieved",
+        ))
+        .expect("record the source");
+    ContentPipeline::new(&db)
+        .generate_and_activate(&GenerateRequest {
+            subtest: "AR",
+            count: 6,
+            seed: 20_260_922,
+            source_id: &source,
+            reviewer: "content-reviewer",
+            generator: "factory",
+        })
+        .expect("generate");
+
+    // A curriculum with one prerequisite edge and one *measured* calibration entry, so the
+    // interface has both a graph and a measurement to show.
+    let base = build_pack(
+        &db,
+        &BuildPackRequest {
+            name: "core-asvab",
+            version: 1,
+            app_min: RUNNING_VERSION,
+            app_max: None,
+            curriculum: Vec::new(),
+            calibration: Vec::new(),
+        },
+        &key(),
+    )
+    .expect("build the base pack");
+    let mut objectives: Vec<(String, String)> = base
+        .curriculum()
+        .iter()
+        .map(|node| (node.objective_id.clone(), node.subtest.clone()))
+        .collect();
+    objectives.sort();
+    let curriculum: Vec<vector_application::packs::CurriculumNode> = objectives
+        .iter()
+        .enumerate()
+        .map(
+            |(index, (objective_id, subtest))| vector_application::packs::CurriculumNode {
+                objective_id: objective_id.clone(),
+                subtest: subtest.clone(),
+                title: format!("Objective {objective_id}"),
+                prerequisites: if index == 0 {
+                    Vec::new()
+                } else {
+                    vec![objectives[0].0.clone()]
+                },
+            },
+        )
+        .collect();
+    let calibration: Vec<vector_application::packs::CalibrationEntry> = objectives
+        .iter()
+        .map(
+            |(objective_id, _)| vector_application::packs::CalibrationEntry {
+                objective_id: objective_id.clone(),
+                expected_correct: 0.42,
+                responses: 900,
+                basis: "trial of 900 responses".to_string(),
+            },
+        )
+        .collect();
+
+    let document = build_pack(
+        &db,
+        &BuildPackRequest {
+            name: "core-asvab",
+            version: 1,
+            app_min: RUNNING_VERSION,
+            app_max: None,
+            curriculum,
+            calibration,
+        },
+        &key(),
+    )
+    .expect("build");
+    let bytes = pack_bytes(&document).expect("serialize");
+    install_pack(&db, &bytes, &trusted(), RUNNING_VERSION).expect("install");
+
+    let packs = installed_packs(&db).expect("list");
+    assert_eq!(packs.len(), 1);
+    let listed = &packs[0];
+    assert_eq!(listed.item_count as usize, document.items().len());
+    assert_eq!(listed.objectives.len(), objectives.len());
+    for objective in &listed.objectives {
+        assert_eq!(objective.expected_correct, Some(0.42));
+        assert_eq!(objective.responses, Some(900));
+        assert_eq!(objective.basis.as_deref(), Some("trial of 900 responses"));
+        assert_eq!(
+            objective.title,
+            format!("Objective {}", objective.objective_id)
+        );
+    }
+    // The graph's edge survived, and the first objective is a root.
+    let roots = listed
+        .objectives
+        .iter()
+        .filter(|objective| objective.prerequisites.is_empty())
+        .count();
+    assert_eq!(roots, 1, "{:?}", listed.objectives);
+}

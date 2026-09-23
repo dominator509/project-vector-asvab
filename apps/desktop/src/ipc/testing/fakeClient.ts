@@ -720,6 +720,28 @@ export function createFakeClient(options: FakeClientOptions = {}): FakeClient {
         item_count: items,
         created_at: "2026-09-22T00:00:00Z",
         signature_valid: true,
+        // What the stub pack teaches, in the shape a real manifest carries: one objective with
+        // a prerequisite, and a difficulty figure that says it rests on no responses.
+        objectives: [
+          {
+            objective_id: "OBJ-AR-RATE-01",
+            subtest: "AR",
+            title: "Rate problems",
+            prerequisites: [],
+            expected_correct: 0.62,
+            responses: 0,
+            basis: "declared from the items' difficulty scale",
+          },
+          {
+            objective_id: "OBJ-MK-ALGEBRA-01",
+            subtest: "MK",
+            title: "Linear equations",
+            prerequisites: ["OBJ-AR-RATE-01"],
+            expected_correct: 0.44,
+            responses: 120,
+            basis: "trial of 120 responses",
+          },
+        ],
       });
       return {
         name,
