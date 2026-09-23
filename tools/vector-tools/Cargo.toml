@@ -25,5 +25,5 @@ serde_json.workspace = true
 chrono.workspace = true
 # Pack building signs with the same Ed25519 implementation the domain layer
 # verifies with, so a pack this tool writes is one the application can install.
-ed25519-dalek = "2"
+ed25519-dalek = "3"
 uuid.workspace = true

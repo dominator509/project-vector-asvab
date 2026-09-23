@@ -22,7 +22,7 @@ tauri-build.workspace = true
 # signs with, so a test cannot pass against a different signature scheme.
 [dev-dependencies]
 vector-questions = { path = "../../../crates/vector-questions" }
-ed25519-dalek = "2"
+ed25519-dalek = "3"
 
 [dependencies]
 vector-application = { path = "../../../crates/vector-application" }

@@ -25,7 +25,7 @@ sha2.workspace = true
 # way that crate declares it. The pack engine loads a received signature into
 # `vector_domain::content::ContentPack` and asks that type to verify it, so the
 # signing payload has exactly one definition in the workspace.
-ed25519-dalek = "2"
+ed25519-dalek = "3"
 uuid.workspace = true
 
 [dev-dependencies]
