@@ -1192,8 +1192,13 @@ pub fn generate_one(subtest: &str, seed: u64) -> Option<GeneratedItem> {
 
 /// Generate `count` items for a subtest from a base seed.
 ///
-/// Items whose content hash repeats an earlier one are skipped rather than
-/// returned, so a batch contains no duplicate questions.
+/// Two items are the same question -- and one is dropped -- when their stem and
+/// answer agree, even if their options were shuffled differently. Deduplicating on
+/// the content hash alone missed that: the hash covers the options, so the same
+/// question with its wrong answers reordered hashed differently and both copies
+/// were returned. The pipeline already refuses the second copy as padding
+/// (`question_is_stored`), which is how a 60-item AR batch came back as 59 verified
+/// -- the shortfall showed up downstream instead of here, where it belongs.
 pub fn generate_many(subtest: &str, count: usize, base_seed: u64) -> Vec<GeneratedItem> {
     let mut out: Vec<GeneratedItem> = Vec::with_capacity(count);
     let mut seen = std::collections::HashSet::new();
@@ -1203,7 +1208,8 @@ pub fn generate_many(subtest: &str, count: usize, base_seed: u64) -> Vec<Generat
         attempts += 1;
         seed = seed.wrapping_add(0x9E37_79B9_7F4A_7C15);
         if let Some(item) = generate_one(subtest, seed) {
-            if seen.insert(item.content_hash()) {
+            let question = (item.stem.clone(), item.answer.clone());
+            if seen.insert(question) {
                 out.push(item);
             }
         }
