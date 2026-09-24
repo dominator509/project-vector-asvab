@@ -340,8 +340,17 @@ impl ExamSession {
 /// The built-in timing profiles.
 ///
 /// These are VECTOR's documented practice profiles. They are versioned and
-/// dated so a session's conditions are always attributable, and they are not
-/// presented as reconstructions of confidential official timing.
+/// dated so a session's conditions are always attributable.
+///
+/// `cat-standard` follows the published CAT-ASVAB per-subtest time limits
+/// recorded in `reference/asvab-test-specification.md` (AR 55, WK 9, PC 27,
+/// MK 31, GS 12 minutes). The test `cat_standard_matches_reference_spec`
+/// asserts this profile against those values, so code and reference cannot
+/// silently diverge again.
+///
+/// NOTE: VECTOR's simulator covers only five subtests (AR, WK, PC, MK, GS).
+/// It is not the full CAT-ASVAB battery — the remaining subtests (SI, EI, AI,
+/// MC, AO, and the other line-score contributors) are not modelled here.
 pub fn default_profiles() -> Vec<TimingProfile> {
     vec![
         TimingProfile {
@@ -349,14 +358,14 @@ pub fn default_profiles() -> Vec<TimingProfile> {
             version: 1,
             form: ExamForm::Cat,
             per_subtest_seconds: vec![
-                ("AR".to_string(), 39 * 60),
-                ("WK".to_string(), 11 * 60),
-                ("PC".to_string(), 22 * 60),
-                ("MK".to_string(), 20 * 60),
-                ("GS".to_string(), 11 * 60),
+                ("AR".to_string(), 55 * 60),
+                ("WK".to_string(), 9 * 60),
+                ("PC".to_string(), 27 * 60),
+                ("MK".to_string(), 31 * 60),
+                ("GS".to_string(), 12 * 60),
             ],
             pausable: false,
-            source_reviewed_on: "2026-09-01".to_string(),
+            source_reviewed_on: "2026-09-24".to_string(),
         },
         TimingProfile {
             id: "paper-standard".to_string(),
@@ -374,3 +383,11 @@ pub fn default_profiles() -> Vec<TimingProfile> {
         },
     ]
 }
+
+/// The subtest codes VECTOR's simulator models.
+pub const SIMULATED_SUBTESTS: [&str; 5] = ["AR", "WK", "PC", "MK", "GS"];
+
+/// Official published CAT-ASVAB per-subtest limits, in minutes, as recorded in
+/// `reference/asvab-test-specification.md`. Used to assert `cat-standard`.
+pub const CAT_STANDARD_SPEC_MINUTES: [(&str, u32); 5] =
+    [("AR", 55), ("WK", 9), ("PC", 27), ("MK", 31), ("GS", 12)];
