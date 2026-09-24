@@ -5,6 +5,7 @@
 //! occur throughout prose, figure labels that look like quantities, and sentences
 //! that are too long to serve as options.
 
+use vector_questions::dictionary::{parse_webster, Dictionary};
 use vector_questions::passages::{
     parse_gutenberg, split_sentences, verify, PcItem, PcVerificationFailure, Text,
     MAX_CLAUSE_WORDS, MIN_CLAUSE_WORDS, MIN_PASSAGE_WORDS,
@@ -43,6 +44,77 @@ This licence text must never become a passage about anything at all.
 
 fn fixture() -> Text {
     parse_gutenberg(FIXTURE, "test work")
+}
+
+/// A miniature Webster's file, with entries for words the fixture passages use.
+///
+/// The vocabulary builder needs a dictionary; this supplies real headwords and
+/// `Defn:` bodies for enough words in the fixture prose that classes of items can be
+/// built. Each entry's first `Defn:` body is what `sense_gloss` reads.
+const DICTIONARY_FIXTURE: &str = "\
+The Project Gutenberg eBook of Webster's Unabridged Dictionary
+
+*** START OF THE PROJECT GUTENBERG EBOOK ***
+
+Forest
+
+Forest (n.) Defn: A large tract of land covered with trees.
+
+Climate
+
+Climate (n.) Defn: The habitual weather conditions of a region.
+
+Timber
+
+Timber (n.) Defn: Wood prepared for building or for use in carpentry.
+
+Glacier
+
+Glacier (n.) Defn: A mass of ice moving slowly down a slope or valley.
+
+Volcano
+
+Volcano (n.) Defn: A mountain that vents molten rock and ash.
+
+Harbour
+
+Harbour (n.) Defn: A sheltered place where ships may lie at anchor.
+
+Canoe
+
+Canoe (n.) Defn: A light narrow boat moved by paddles.
+
+Vessel
+
+Vessel (n.) Defn: A hollow container for holding liquids; a ship.
+
+Mountain
+
+Mountain (n.) Defn: A large natural elevation of the earth's surface.
+
+Shelter
+
+Shelter (n.) Defn: A structure that protects from weather or danger.
+
+Snow
+
+Snow (n.) Defn: Water frozen in light white flakes and falling from the sky.
+
+Island
+
+Island (n.) Defn: A piece of land completely surrounded by water.
+
+Weather
+
+Weather (n.) Defn: The state of the atmosphere at a place and time.
+
+*** END OF THE PROJECT GUTENBERG EBOOK ***
+
+Licence text that must not become a definition.
+";
+
+fn dictionary() -> Dictionary {
+    parse_webster(DICTIONARY_FIXTURE)
 }
 
 fn accept_all(_: &str) -> bool {
@@ -189,44 +261,59 @@ fn a_caption_list_is_not_prose() {
 
 #[test]
 fn every_option_is_a_complete_sentence_within_the_band() {
-    let t = fixture();
+    let t = fixture().with_dictionary(dictionary());
     let items = t.build_items(20, 3, accept_all);
     assert!(!items.is_empty(), "the fixture should yield items");
     for item in &items {
         assert_eq!(item.options.len(), 4);
-        // The clause band and the complete-statement rule are DETAIL rules: a
-        // main-idea or vocabulary answer is a single word by design. Scoping the
-        // strict check to the kind it describes keeps it exactly as strict, while
-        // still holding every kind to its own shape.
-        if item.objective_id == "OBJ-PC-DETAIL-01" {
-            for option in &item.options {
-                let count = option.split_whitespace().count();
-                assert!(
-                    (MIN_CLAUSE_WORDS..=MAX_CLAUSE_WORDS).contains(&count),
-                    "{count} words is outside the option band: {option:?}"
-                );
-                // A complete statement ends with a terminator and has balanced brackets.
-                assert!(
-                    option.ends_with(['.', '!', '?']),
-                    "option is a fragment, not a statement: {option:?}"
-                );
-                assert_eq!(
-                    option.matches('(').count(),
-                    option.matches(')').count(),
-                    "unbalanced brackets in {option:?}"
-                );
+        // The clause band and the balanced-bracket rule are DETAIL rules. Each kind
+        // is held to its own shape: DETAIL options are complete short sentences,
+        // MAIN_IDEA options are complete sentences, VOCAB options are meaning phrases.
+        match item.objective_id.as_str() {
+            "OBJ-PC-DETAIL-01" => {
+                for option in &item.options {
+                    let count = option.split_whitespace().count();
+                    assert!(
+                        (MIN_CLAUSE_WORDS..=MAX_CLAUSE_WORDS).contains(&count),
+                        "{count} words is outside the option band: {option:?}"
+                    );
+                    assert!(
+                        option.ends_with(['.', '!', '?']),
+                        "option is a fragment, not a statement: {option:?}"
+                    );
+                    assert_eq!(
+                        option.matches('(').count(),
+                        option.matches(')').count(),
+                        "unbalanced brackets in {option:?}"
+                    );
+                }
             }
-        } else {
-            // A single-word kind: every option is one word, so they cannot be told
-            // apart by shape.
-            for option in &item.options {
-                assert_eq!(
-                    option.split_whitespace().count(),
-                    1,
-                    "a {:?} option must be one word: {option:?}",
-                    item.objective_id
-                );
+            "OBJ-PC-MAINIDEA-01" => {
+                // A main-idea option is a full sentence, never a bare topic word.
+                for option in &item.options {
+                    assert!(
+                        option.split_whitespace().count() >= MIN_CLAUSE_WORDS,
+                        "a main-idea option is a fragment, not a sentence: {option:?}"
+                    );
+                    assert!(
+                        option.ends_with(['.', '!', '?']),
+                        "a main-idea option is not a sentence: {option:?}"
+                    );
+                }
             }
+            "OBJ-PC-VOCAB-01" => {
+                // A vocabulary option is a meaning phrase, and the prompt quotes the
+                // context so the learner judges the word as used.
+                assert!(
+                    item.prompt.contains('"'),
+                    "a vocabulary prompt must quote the context: {}",
+                    item.prompt
+                );
+                for option in &item.options {
+                    assert!(!option.trim().is_empty(), "a meaning cannot be blank");
+                }
+            }
+            other => panic!("unexpected objective: {other}"),
         }
         assert!(item.passage.split_whitespace().count() >= MIN_PASSAGE_WORDS);
         assert_eq!(item.source_label, "test work");
@@ -244,7 +331,7 @@ fn all_three_kinds_are_produced_and_each_verifies() {
     // supported kinds actually appear, and that one seed's worth of items covers
     // more than a single objective -- a regression to the old single-kind build
     // would otherwise pass every other test here.
-    let t = fixture();
+    let t = fixture().with_dictionary(dictionary());
     let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     for seed in 0..40 {
         for item in t.build_items(12, seed, accept_all) {
@@ -258,6 +345,26 @@ fn all_three_kinds_are_produced_and_each_verifies() {
             "kind {kind} was never produced; saw {seen:?}"
         );
     }
+}
+
+#[test]
+fn vocabulary_items_are_built_only_when_a_dictionary_is_supplied() {
+    // Without a dictionary the vocabulary builder returns None rather than falling
+    // back to word-spotting, so a corpus built without one has no VOCAB items at
+    // all. That is an honest gap, and this pins it.
+    let t = fixture();
+    let mut saw_vocab = false;
+    for seed in 0..40 {
+        for item in t.build_items(12, seed, accept_all) {
+            if item.objective_id == "OBJ-PC-VOCAB-01" {
+                saw_vocab = true;
+            }
+        }
+    }
+    assert!(
+        !saw_vocab,
+        "vocabulary items were built without a dictionary"
+    );
 }
 
 #[test]
@@ -293,7 +400,7 @@ fn a_figure_label_is_not_treated_as_a_quantity() {
 
 #[test]
 fn every_built_item_passes_independent_verification() {
-    let t = fixture();
+    let t = fixture().with_dictionary(dictionary());
     for seed in 0..30 {
         for item in t.build_items(5, seed, accept_all) {
             if let Err(failure) = verify(&item) {
@@ -552,4 +659,172 @@ fn verification_refuses_a_main_idea_topic_the_passage_does_not_repeat() {
         Err(PcVerificationFailure::TopicNotRepeated { .. }) => {}
         other => panic!("expected a repetition refusal, got {other:?}"),
     }
+}
+
+/// One MAIN_IDEA item from whichever seed yields one first.
+fn main_idea_item(t: &Text) -> PcItem {
+    for seed in 0..60 {
+        if let Some(item) = t
+            .build_items(12, seed, accept_all)
+            .into_iter()
+            .find(|item| item.objective_id == "OBJ-PC-MAINIDEA-01")
+        {
+            return item;
+        }
+    }
+    panic!("the fixture yields no main-idea item");
+}
+
+/// One VOCAB_IN_CONTEXT item from whichever seed yields one first.
+fn vocab_item(t: &Text) -> PcItem {
+    for seed in 0..60 {
+        if let Some(item) = t
+            .build_items(12, seed, accept_all)
+            .into_iter()
+            .find(|item| item.objective_id == "OBJ-PC-VOCAB-01")
+        {
+            return item;
+        }
+    }
+    panic!("the fixture yields no vocabulary item");
+}
+
+/// Review point 2: a main-idea answer that is just the passage's own sentence is a
+/// detail restatement, and verification must refuse it.
+#[test]
+fn verification_refuses_a_main_idea_answer_that_is_passage_text() {
+    let t = fixture().with_dictionary(dictionary());
+    let mut item = main_idea_item(&t);
+    // Point the answer at a sentence the passage contains verbatim.
+    let sentence = t
+        .build_items(12, 0, accept_all)
+        .into_iter()
+        .find(|i| i.objective_id == "OBJ-PC-DETAIL-01")
+        .map(|i| i.supporting_clause)
+        .expect("the fixture yields a detail clause");
+    item.options[item.correct_index] = sentence;
+    match verify(&item) {
+        Err(PcVerificationFailure::MainIdeaOptionIsPassageText(_))
+        | Err(PcVerificationFailure::CorrectOptionNotInPassage(_)) => {}
+        other => panic!("expected a passage-text refusal, got {other:?}"),
+    }
+}
+
+/// Review point 2: a main-idea option that is not a full sentence must be refused.
+#[test]
+fn verification_refuses_a_main_idea_option_that_is_not_a_sentence() {
+    let t = fixture().with_dictionary(dictionary());
+    let mut item = main_idea_item(&t);
+    let wrong = (item.correct_index + 1) % item.options.len();
+    item.options[wrong] = "glaciers".to_string();
+    match verify(&item) {
+        Err(PcVerificationFailure::MainIdeaOptionNotASentence(_)) => {}
+        other => panic!("expected a sentence refusal, got {other:?}"),
+    }
+}
+
+/// Review point 1: a vocabulary distractor that is a bare word from the passage is
+/// word-spotting, not a meaning, and must be refused.
+#[test]
+fn verification_refuses_a_vocabulary_distractor_that_is_a_passage_word() {
+    let t = fixture().with_dictionary(dictionary());
+    let mut item = vocab_item(&t);
+    let wrong = (item.correct_index + 1) % item.options.len();
+    // A single word lifted from the passage is exactly the old word-spotting option.
+    let word = item
+        .passage
+        .split_whitespace()
+        .map(|w| w.trim_matches(|c: char| !c.is_alphabetic()).to_lowercase())
+        .find(|w| w.len() >= 5)
+        .expect("the passage has a content word");
+    item.options[wrong] = word;
+    match verify(&item) {
+        Err(PcVerificationFailure::VocabOptionAbsentFromPassage(_)) => {}
+        other => panic!("expected a word-spotting refusal, got {other:?}"),
+    }
+}
+
+/// Review point 1: the target word must really occur in the quoted context, or the
+/// item asks about a word the sentence does not use.
+#[test]
+fn verification_refuses_a_vocabulary_target_absent_from_its_context() {
+    let t = fixture().with_dictionary(dictionary());
+    let mut item = vocab_item(&t);
+    // Replace the quoted target with a word the context sentence does not contain.
+    let forged = "In the sentence \"The harbours are deep enough for the largest vessels.\" \
+                  the word \"azimuth\" most nearly means:"
+        .to_string();
+    item.prompt = forged;
+    match verify(&item) {
+        Err(PcVerificationFailure::VocabOptionAbsentFromPassage(_)) => {}
+        other => panic!("expected an absent-target refusal, got {other:?}"),
+    }
+}
+
+/// Review point 3: difficulty is derived from the item, so a value outside the
+/// probability range must be refused rather than stored.
+#[test]
+fn verification_refuses_a_difficulty_outside_the_probability_range() {
+    let t = fixture().with_dictionary(dictionary());
+    let mut item = detail_item(&t);
+    item.difficulty = 1.5;
+    match verify(&item) {
+        Err(PcVerificationFailure::DifficultyOutOfRange { .. }) => {}
+        other => panic!("expected a difficulty refusal, got {other:?}"),
+    }
+}
+
+/// Review point 3: difficulty is derived from the item, not stamped by kind. Two
+/// passages of very different length must not produce the same stored value, which a
+/// hard-coded constant would.
+#[test]
+fn difficulty_is_derived_from_the_item_not_stamped() {
+    // A short passage and a long one, both in band, each with dictionary words so
+    // all kinds can be built. If difficulty were a constant per kind, the two would
+    // agree; if it is derived, the longer passage scores higher.
+    let short = build_text_with(&[
+        "The island climate governs the weather of the coast. The island snow falls in \
+         winter. These island forests shelter the island vessels.",
+    ]);
+    let long = build_text_with(&[
+        "The island climate governs the weather of the coast in every season of the \
+         year. The island snow falls in winter and covers the island forests. The \
+         island forests shelter the island vessels from the weather. The island \
+         harbour holds the island vessels through the storm. Snow and weather together \
+         shape the island climate that the island forests depend upon entirely.",
+    ]);
+    let sd = mean_difficulty(&short);
+    let ld = mean_difficulty(&long);
+    assert!(
+        ld > sd,
+        "the longer passage did not score harder: short={sd}, long={ld}"
+    );
+}
+
+/// Difficulty of every item a text builds, averaged, so the assertion above is a
+/// statement about the derivation rather than about one draw.
+fn mean_difficulty(text: &Text) -> f64 {
+    let mut sum = 0.0;
+    let mut count = 0;
+    for seed in 0..20 {
+        for item in text.build_items(6, seed, accept_all) {
+            sum += item.difficulty;
+            count += 1;
+        }
+    }
+    if count == 0 {
+        0.0
+    } else {
+        sum / count as f64
+    }
+}
+
+/// A `Text` built from inline paragraphs, with the dictionary attached.
+fn build_text_with(paragraphs: &[&str]) -> Text {
+    let body = paragraphs.join("\n\n");
+    let file = format!(
+        "*** START OF THE PROJECT GUTENBERG EBOOK X ***\n\n{body}\n\n\
+         *** END OF THE PROJECT GUTENBERG EBOOK X ***\n"
+    );
+    parse_gutenberg(&file, "synthetic").with_dictionary(dictionary())
 }

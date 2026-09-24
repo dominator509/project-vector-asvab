@@ -3,6 +3,13 @@
 //! Usage:
 //!     cargo run -p vector-questions --example ingest_pc -- <label>=<path> [<label>=<path> ...] [count]
 //!
+//! A source may be marked with `dict=<path>` instead of a label to supply the
+//! public-domain dictionary that vocabulary-in-context items are built from. Without
+//! it, no vocabulary items are produced -- the builder refuses to emit a vocabulary
+//! question without a source-backed meaning -- so a full run should always pass the
+//! 1913 Webster's, which `scripts/fetch-sources.py` puts at
+//! `sources/webster-1913/pg29765.txt`.
+//!
 //! Each text is a Project Gutenberg work, public domain in the USA. The Gutenberg
 //! header and footer are stripped so their boilerplate cannot become a passage.
 //!
@@ -11,6 +18,7 @@
 
 use std::path::PathBuf;
 
+use vector_questions::dictionary::parse_webster;
 use vector_questions::passages::{parse_gutenberg, verify, Text};
 
 fn digest(text: &str) -> String {
@@ -23,9 +31,11 @@ fn digest(text: &str) -> String {
 fn main() {
     let mut args = std::env::args().skip(1);
     let mut sources: Vec<(String, PathBuf)> = Vec::new();
+    let mut dictionary_path: Option<PathBuf> = None;
     let mut count = 500usize;
     for argument in args.by_ref() {
         match argument.split_once('=') {
+            Some(("dict", path)) => dictionary_path = Some(PathBuf::from(path)),
             Some((label, path)) => sources.push((label.to_string(), PathBuf::from(path))),
             None => {
                 count = argument.parse().unwrap_or(500);
@@ -34,12 +44,28 @@ fn main() {
     }
     if sources.is_empty() {
         eprintln!(
-            "usage: ingest_pc <label>=<path> [...] [count]\n\
+            "usage: ingest_pc <label>=<path> [...] [dict=<webster.txt>] [count]\n\
              fetch a text with:\n  \
              curl -L -o sources/gutenberg/faraday-candle.txt \\\n    \
              https://www.gutenberg.org/cache/epub/14474/pg14474.txt"
         );
         std::process::exit(2);
+    }
+
+    // The dictionary is optional at the tool level but required in practice for
+    // vocabulary items; when it is absent the run is still honest and simply has no
+    // vocabulary questions.
+    let dictionary = dictionary_path.as_ref().map(|path| {
+        let text = std::fs::read_to_string(path)
+            .unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
+        parse_webster(&text)
+    });
+    if let Some(d) = &dictionary {
+        println!("\ndictionary        : {} headwords", d.len());
+    } else {
+        eprintln!(
+            "no dictionary supplied (dict=<path>): vocabulary-in-context items will not be built"
+        );
     }
 
     let mut total_paragraphs = 0usize;
@@ -52,7 +78,10 @@ fn main() {
     for (label, path) in &sources {
         let text = std::fs::read_to_string(path)
             .unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
-        let parsed: Text = parse_gutenberg(&text, label);
+        let mut parsed: Text = parse_gutenberg(&text, label);
+        if let Some(dictionary) = &dictionary {
+            parsed = parsed.with_dictionary(dictionary.clone());
+        }
         if parsed.is_empty() {
             eprintln!("{label}: no paragraphs parsed; the markers may have changed");
             continue;

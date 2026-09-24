@@ -11,39 +11,43 @@
 //! passage, and so nothing of Gutenberg's own trademark licence is carried into
 //! the corpus. What an item quotes is the underlying public-domain prose.
 //!
-//! ## The item type, and why it is this one
+//! ## The item types, and why they are these three
 //!
-//! A comprehension question has to be answerable *from the passage*, and the
-//! answer has to be checkable by a machine. Both are satisfied by asking which of
-//! four statements the passage makes:
+//! CAT-ASVAB PC asks four kinds of reading question. Three of them are
+//! machine-checkable from the passage and a public-domain dictionary, and this
+//! module builds all three, each with an independent verifier:
 //!
-//! * the correct option is a clause lifted verbatim from the passage, so it is
-//!   true by construction;
-//! * each distractor is that same clause with one detail -- a quantity or a name --
-//!   replaced by something that appears nowhere in the passage.
+//! * **DETAIL** (`OBJ-PC-DETAIL-01`) -- a clause the passage states, against
+//!   near-misses that each alter one quantity or name. The correct option occurs in
+//!   the passage; each distractor differs by a token the passage does not contain.
+//! * **MAIN_IDEA** (`OBJ-PC-MAINIDEA-01`) -- the option that sums up the passage,
+//!   against one option that is too narrow (a true detail), one too broad (a sweeping
+//!   claim the passage never makes), and one about a topic the passage never
+//!   discusses. Every option is a full sentence. The correct option names the
+//!   passage's dominant repeated topic, and the verifier re-derives that topic from
+//!   the passage rather than trusting the builder.
+//! * **VOCAB_IN_CONTEXT** (`OBJ-PC-VOCAB-01`) -- a word the passage uses, quoted in
+//!   the sentence it occurs in, with four candidate meanings drawn from a
+//!   public-domain dictionary. The correct meaning is the dictionary's own gloss for
+//!   the target; each distractor is a real meaning of a *different* word, so it is
+//!   wrong for this word in this context rather than simply absent.
 //!
-//! [`verify`] re-derives both facts from the passage text rather than trusting the
-//! builder: the correct option must occur in the passage, and neither a distractor
-//! nor its substituted token may occur at all.
+//! **INFERENCE is deliberately not built.** An item that asks what the author
+//! implies cannot be scored by any check this module can perform: the passage does
+//! not *state* the answer, so string containment cannot confirm it. Shipping an
+//! "inference" item scored by containment would mislabel a detail item, and the
+//! module has committed to saying what it measures rather than filling a type count.
 //!
-//! ## What this tests, stated honestly
+//! ## Difficulty is derived, not declared
 //!
-//! This is a **detail-location** item: the learner finds the statement in the
-//! passage and rejects three near-misses that differ by one number or name. It is
-//! not an inference question. Asking what an author implies cannot be verified by a
-//! machine from the text alone, and an item that claimed to test inference while
-//! being scored by string containment would be dishonest about what it measures.
-//!
-//! ## Why the distractors are good here when the thesaurus ones were not
-//!
-//! A Word Knowledge distractor was drawn from a 57,000-word pool, so `mammiform`
-//! sat beside `calm` and the answer was guessable without knowing the word. These
-//! distractors differ from the truth in exactly one detail, which is what a
-//! comprehension question is *for*: the learner locates the statement instead of
-//! recognising which option looks out of place.
+//! Every item's difficulty is computed from its own properties -- passage length and
+//! how often the target word recurs -- so it is a measurement of the item rather
+//! than a constant stamped on the kind. `verify` refuses a difficulty outside
+//! `0.0..=1.0`.
 
 use std::collections::{BTreeMap, HashSet};
 
+use crate::dictionary::Dictionary;
 use crate::factory::Rng;
 
 /// A parsed public-domain text.
@@ -53,6 +57,16 @@ pub struct Text {
     paragraphs: Vec<String>,
     /// Capitalised words appearing anywhere in the text, for name substitutions.
     proper_nouns: Vec<String>,
+    /// An optional public-domain dictionary.
+    ///
+    /// A vocabulary-in-context item needs a *meaning*, and the passage alone does
+    /// not carry one: a word being present says nothing about what it means there.
+    /// When a dictionary is supplied, the vocabulary builder draws its answer and
+    /// its distractors from real senses and refuses to emit an item otherwise. When
+    /// it is absent the builder returns `None` rather than falling back to the old
+    /// word-spotting question, so a corpus built without a dictionary simply has no
+    /// vocabulary items -- an honest gap, not a mislabelled detail item.
+    dictionary: Option<Dictionary>,
 }
 
 /// A Paragraph Comprehension item.
@@ -137,6 +151,27 @@ pub enum PcVerificationFailure {
         topic: String,
         occurrences: usize,
     },
+    /// A main-idea option is not a full sentence, so it states a fragment rather
+    /// than a claim about the passage.
+    MainIdeaOptionNotASentence(String),
+    /// A main-idea option is a sentence the passage itself contains verbatim, so it
+    /// is a detail restatement and not a summary.
+    MainIdeaOptionIsPassageText(String),
+    /// Two main-idea options are the same sentence, so the item has no single answer.
+    MainIdeaOptionsNotDistinct(String),
+    /// A vocabulary answer is a real meaning, but the dictionary has no source that
+    /// backs it, so the item asserts a meaning nothing supports.
+    VocabMeaningUnbacked {
+        word: String,
+        meaning: String,
+    },
+    /// A vocabulary option is a word the passage does not contain, so a learner
+    /// cannot judge it "in context".
+    VocabOptionAbsentFromPassage(String),
+    /// Difficulty was supplied out of band rather than derived from the item.
+    DifficultyOutOfRange {
+        difficulty: String,
+    },
 }
 
 impl std::fmt::Display for PcVerificationFailure {
@@ -183,6 +218,33 @@ impl std::fmt::Display for PcVerificationFailure {
                 "the main-idea topic {topic:?} occurs {occurrences} time(s) in the passage; a \
                  topic the passage does not repeat is not what it is mainly about"
             ),
+            PcVerificationFailure::MainIdeaOptionNotASentence(option) => write!(
+                f,
+                "main-idea option {option:?} is not a full sentence, so it states a fragment \
+                 rather than a claim about the passage"
+            ),
+            PcVerificationFailure::MainIdeaOptionIsPassageText(option) => write!(
+                f,
+                "main-idea option {option:?} is text the passage itself contains, so it \
+                 restates a detail instead of summarising the passage"
+            ),
+            PcVerificationFailure::MainIdeaOptionsNotDistinct(option) => write!(
+                f,
+                "main-idea option {option:?} is repeated, so the item has no single answer"
+            ),
+            PcVerificationFailure::VocabMeaningUnbacked { word, meaning } => write!(
+                f,
+                "the vocabulary answer {meaning:?} for {word:?} is not a meaning the \
+                 dictionary backs, so the item asserts something no source supports"
+            ),
+            PcVerificationFailure::VocabOptionAbsentFromPassage(option) => write!(
+                f,
+                "vocabulary option {option:?} does not occur in the passage, so it cannot be \
+                 judged in context"
+            ),
+            PcVerificationFailure::DifficultyOutOfRange { difficulty } => {
+                write!(f, "difficulty {difficulty} is outside 0.0..=1.0")
+            }
         }
     }
 }
@@ -464,6 +526,7 @@ pub fn parse_gutenberg(text: &str, label: &str) -> Text {
         label: label.to_string(),
         paragraphs,
         proper_nouns,
+        dictionary: None,
     }
 }
 
@@ -554,6 +617,14 @@ impl Text {
                 .any(|paragraph| normalize(paragraph).contains(&needle))
     }
 
+    /// Attach a public-domain dictionary so vocabulary-in-context items can be
+    /// built. Without one, `build_vocab_in_context` yields nothing: a vocabulary
+    /// item without a source-backed meaning is not a vocabulary item.
+    pub fn with_dictionary(mut self, dictionary: Dictionary) -> Self {
+        self.dictionary = Some(dictionary);
+        self
+    }
+
     /// Build up to `count` items.
     ///
     /// `accept` vets a candidate passage; the application layer uses it to reject
@@ -640,6 +711,22 @@ impl Text {
         // Highest count first; ties broken by the word itself so the pick is stable
         // across runs rather than depending on hash iteration order.
         ranked.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        // When a dictionary is present, prefer a word Webster's marks as a noun: the
+        // topic of a passage is a thing, and a bare adjective that happens to repeat
+        // (`different`, `continuous`) is not what the passage is *about*. This is a
+        // preference, not a hard filter -- a passage whose most-repeated noun is rare
+        // still builds -- so the first noun wins and any word is the fallback.
+        if let Some(dictionary) = &self.dictionary {
+            if let Some((word, count)) = ranked
+                .iter()
+                .find(|(word, _)| is_noun(dictionary, word))
+                .cloned()
+            {
+                if count >= 2 {
+                    return Some((word, count));
+                }
+            }
+        }
         let (word, count) = ranked.into_iter().next()?;
         // One mention is not a topic. Requiring a repeat is what makes "the passage
         // is mostly about X" a fact about the text rather than about one sentence.
@@ -674,60 +761,108 @@ impl Text {
         Some(pool[(rng.range(0, pool.len() as i64 - 1)) as usize].clone())
     }
 
-    /// MAIN_IDEA: "the passage is mostly about ___", the blank filled by the
-    /// passage's dominant repeated topic against three topics drawn from other
-    /// passages. Every distractor is *false here* by construction, not by taste.
+    /// MAIN_IDEA: a full-sentence question whose correct option sums up the passage.
+    ///
+    /// Every option is a complete sentence, per the review: a learner weighing a
+    /// one-word topic against a sentence is answering a shape question, not a
+    /// comprehension one. The options are built from the passage's own sentences so
+    /// they are grammatical, then classified by the three failure modes the real
+    /// test uses:
+    ///
+    /// * **too narrow** -- a specific detail sentence lifted from the passage. It is
+    ///   true, but it is one part of the passage, not its whole point.
+    /// * **too broad** -- a sentence naming the passage's topic but asserting
+    ///   something the passage never establishes (built by generalising the topic
+    ///   with a connector no passage sentence carries).
+    /// * **not supported** -- a sentence about a topic drawn from *another* passage,
+    ///   so the passage cannot support it at all.
+    ///
+    /// The correct option names the passage's dominant repeated topic and is a
+    /// summary sentence, not a lifted passage sentence; `verify` refuses an option
+    /// that is passage text verbatim, which is what keeps a "summary" from being a
+    /// second detail restatement.
     fn build_main_idea<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<PcItem>
     where
         F: FnMut(&str) -> bool,
     {
         let paragraph = self.pick_passage(rng, accept)?;
-        let (topic, _count) = self.dominant_topic(&paragraph)?;
-        let mut distractors: Vec<String> = Vec::new();
-        // Three distinct topics from elsewhere; `topic_from_elsewhere` excludes this
-        // passage's own words, so none of them can be the topic here.
-        for _ in 0..24 {
-            if distractors.len() == 3 {
-                break;
-            }
-            let Some(other) = self.topic_from_elsewhere(&paragraph, rng) else {
-                break;
-            };
-            if other != topic && !distractors.contains(&other) {
-                distractors.push(other);
-            }
-        }
-        if distractors.len() < 3 {
-            return None;
-        }
+        let (topic, occurrences) = self.dominant_topic(&paragraph)?;
 
-        let mut options: Vec<(String, bool)> = vec![(topic.clone(), true)];
-        for d in &distractors {
-            options.push((d.clone(), false));
-        }
+        // The correct option is a summary sentence, phrased by this builder rather
+        // than lifted, so it cannot be passage text. It names the passage's dominant
+        // repeated topic as the subject and says the passage is *about* it, which is
+        // the claim a main-idea answer makes. Capitalise the topic when it opens the
+        // sentence.
+        let topic_title = capitalise(&topic);
+        let correct = format!("The passage is mainly about {topic_title}.");
+
+        // Too narrow: a passage sentence that is a complete statement in the clause
+        // band. It is true, so it is a plausible distractor for a careless reader,
+        // and it is *not* the whole point.
+        let narrow = self
+            .passage_sentences(&paragraph)
+            .into_iter()
+            .find(|sentence| {
+                let count = sentence.split_whitespace().count();
+                (MIN_CLAUSE_WORDS..=MAX_CLAUSE_WORDS).contains(&count)
+                    && !self.repeats_topic_topically(sentence, &topic)
+            })?;
+
+        // Too broad: the topic, plus a sweeping claim the passage never makes. The
+        // phrasing is distinct from the answer's, so no two options share a frame and
+        // the item cannot be answered by shape.
+        let broad = format!(
+            "The passage argues that {topic_title} matters more than anything else it \
+             discusses."
+        );
+
+        // Not supported: a topic from another passage, asserted as this one's point.
+        // Phrased as its own sentence so it, too, is distinguishable only by reading.
+        let elsewhere = self.topic_from_elsewhere(&paragraph, rng)?;
+        let unsupported = format!(
+            "The passage is concerned chiefly with {}.",
+            capitalise(&elsewhere)
+        );
+
+        let mut options: Vec<(String, String)> = vec![
+            (correct.clone(), "sums up the passage".to_string()),
+            (
+                narrow.clone(),
+                "too narrow: this is one detail the passage states, not what it is mainly \
+                 about"
+                    .to_string(),
+            ),
+            (
+                broad.clone(),
+                "too broad: the passage names the topic but never ranks it above \
+                 everything else"
+                    .to_string(),
+            ),
+            (
+                unsupported.clone(),
+                "not supported: the passage never discusses this at all".to_string(),
+            ),
+        ];
         rng.shuffle(&mut options);
         let correct_index = options
             .iter()
-            .position(|(_, is_correct)| *is_correct)
+            .position(|(option, _)| option == &correct)
             .expect("the correct option is present");
 
         let mut distractor_rationales = BTreeMap::new();
-        for (index, (option, is_correct)) in options.iter().enumerate() {
-            if *is_correct {
+        for (index, (option, rationale)) in options.iter().enumerate() {
+            if index == correct_index {
                 continue;
             }
-            distractor_rationales.insert(
-                index,
-                format!(
-                    "{option:?} is the subject of another passage in this source, not of this one; \
-                     this passage repeats {topic:?}."
-                ),
-            );
+            distractor_rationales.insert(index, format!("{option:?} is {rationale}."));
         }
+
+        let passage = paragraph;
+        let difficulty = derive_difficulty(&passage, occurrences);
 
         Some(PcItem {
             objective_id: "OBJ-PC-MAINIDEA-01".to_string(),
-            passage: paragraph,
+            passage,
             prompt: "Which of the following best states what the passage is mainly about?"
                 .to_string(),
             options: options.into_iter().map(|(option, _)| option).collect(),
@@ -737,104 +872,199 @@ impl Text {
             // word; `verify` re-checks that it is present and repeated.
             supporting_clause: topic,
             source_label: self.label.clone(),
-            difficulty: 0.5,
+            difficulty,
             seed,
         })
     }
 
-    /// VOCAB_IN_CONTEXT: a word the passage actually uses, against three words the
-    /// passage does not contain. The correct answer is checkable by containment --
-    /// it is in the text -- and each distractor is checkable by *absence*, which is
-    /// the same discipline the detail items use.
+    /// The sentences of a passage that are complete statements.
+    fn passage_sentences(&self, passage: &str) -> Vec<String> {
+        split_sentences(passage)
+            .into_iter()
+            .filter(|sentence| sentence.trim().ends_with(['.', '!', '?']))
+            .collect()
+    }
+
+    /// Whether a sentence states the passage's topic as the passage's subject, as
+    /// opposed to merely containing the word. Used to keep the "too narrow" option
+    /// from accidentally being a summary.
+    fn repeats_topic_topically(&self, sentence: &str, topic: &str) -> bool {
+        let lowered = sentence.to_lowercase();
+        lowered.starts_with(topic) || lowered.starts_with(&format!("the {topic}"))
+    }
+
+    /// VOCAB_IN_CONTEXT: a real ASVAB-style vocabulary-in-context item.
     ///
-    /// This is a weaker item than a true synonym test: it asks which word appears in
-    /// the passage, which is recognition rather than meaning. It is offered here
-    /// because that is the strongest vocabulary claim a passage alone can support,
-    /// and the prompt is written to say exactly that rather than to claim more.
+    /// The review rejected the previous version, correctly: asking "which of these
+    /// words occurs in the passage?" is word-spotting, not meaning. This version
+    /// quotes a word as the passage uses it and asks what it most nearly means
+    /// *there*, with the answer and every distractor taken from the dictionary:
+    ///
+    /// * the **correct** option is a meaning phrase the dictionary gives for the
+    ///   target word (drawn from the target's own definition), backed by the source;
+    /// * the **distractors** are meaning phrases drawn from the definitions of
+    ///   *other* words the passage uses, so they are real meanings that are simply
+    ///   wrong for this word -- not words missing from the passage.
+    ///
+    /// This needs a dictionary. Without one the builder returns `None`, so a corpus
+    /// without a dictionary has no vocabulary items rather than mislabelled ones.
+    ///
+    /// ## The context window
+    ///
+    /// The prompt quotes the sentence the word occurs in, so the learner judges the
+    /// word *as used*. `verify` re-checks that the target word occurs in that quoted
+    /// context and that the backing definition actually contains the chosen sense.
     fn build_vocab_in_context<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<PcItem>
     where
         F: FnMut(&str) -> bool,
     {
+        let dictionary = self.dictionary.as_ref()?;
         let paragraph = self.pick_passage(rng, accept)?;
-        let present: Vec<String> = {
-            let mut set: Vec<String> = words(&paragraph)
-                .into_iter()
-                .filter(|w| w.len() >= 6 && !STOP_WORDS.contains(&w.as_str()))
-                .collect();
+
+        // The target must be a word the dictionary defines, so a real sense exists.
+        let targets: Vec<String> = {
+            let mut set: HashSet<String> = HashSet::new();
+            for sentence in self.passage_sentences(&paragraph) {
+                for word in words(&sentence) {
+                    // A vocabulary target is a content word with enough length to
+                    // carry a distinct sense, and one the dictionary actually has.
+                    if word.len() >= 5
+                        && !STOP_WORDS.contains(&word.as_str())
+                        && (dictionary.covers(&word) || dictionary.covers(&base_form(&word)))
+                    {
+                        // Only words with a definition rich enough to gloss belong.
+                        if sense_gloss(dictionary, &word).is_some() {
+                            set.insert(word);
+                        }
+                    }
+                }
+            }
+            let mut set: Vec<String> = set.into_iter().collect();
             set.sort();
-            set.dedup();
             set
         };
-        if present.is_empty() {
+        if targets.is_empty() {
             return None;
         }
-        let target = present[(rng.range(0, present.len() as i64 - 1)) as usize].clone();
-        let here: HashSet<String> = words(&paragraph).into_iter().collect();
+        let target = targets[(rng.range(0, targets.len() as i64 - 1)) as usize].clone();
 
-        // Three plausible words that do not occur in the passage, drawn from the rest
-        // of the source so they are the same register as the passage's own vocabulary.
-        let mut absent: Vec<String> = Vec::new();
-        for other in &self.paragraphs {
-            if other == &paragraph {
+        // The sentence the target occurs in is the context the learner reads.
+        let context = self
+            .passage_sentences(&paragraph)
+            .into_iter()
+            .find(|sentence| words(sentence).iter().any(|word| word == &target))?;
+
+        let answer = sense_gloss(dictionary, &target)?;
+
+        // Distractors: meaning phrases from *other* words in the same passage, so
+        // they are real senses of real words and wrong only for this target.
+        let context_words: Vec<String> = words(&context);
+        let mut others: Vec<String> = context_words
+            .into_iter()
+            .filter(|word| word != &target)
+            .filter(|word| word.len() >= 5 && !STOP_WORDS.contains(&word.as_str()))
+            .collect();
+        others.sort();
+        others.dedup();
+
+        let mut wrong_meanings: Vec<String> = Vec::new();
+        for word in &others {
+            let Some(gloss) = sense_gloss(dictionary, word) else {
                 continue;
+            };
+            // A distractor meaning must be distinct from the answer, or it would be
+            // a second right answer.
+            if normalize(&gloss) != normalize(&answer) && !wrong_meanings.contains(&gloss) {
+                wrong_meanings.push(gloss);
             }
-            for word in words(other) {
-                if word.len() >= 6 && !STOP_WORDS.contains(&word.as_str()) && !here.contains(&word)
-                {
-                    absent.push(word);
+            if wrong_meanings.len() == 3 {
+                break;
+            }
+        }
+        // Fall back to meanings from the wider paragraph and then the whole source
+        // when the context sentence does not yield three on its own. A distractor
+        // drawn from another paragraph is still a real meaning of a word the source
+        // uses, so it stays in register; it is simply wrong for *this* word.
+        if wrong_meanings.len() < 3 {
+            let mut wide: Vec<String> = words(&paragraph)
+                .into_iter()
+                .filter(|word| word != &target && word.len() >= 5)
+                .collect();
+            for other in &self.paragraphs {
+                if other == &paragraph {
+                    continue;
+                }
+                wide.extend(words(other).into_iter().filter(|word| word.len() >= 5));
+            }
+            wide.sort();
+            wide.dedup();
+            for word in &wide {
+                if wrong_meanings.len() == 3 {
+                    break;
+                }
+                if word == &target {
+                    continue;
+                }
+                let Some(gloss) = sense_gloss(dictionary, word) else {
+                    continue;
+                };
+                if normalize(&gloss) != normalize(&answer) && !wrong_meanings.contains(&gloss) {
+                    wrong_meanings.push(gloss);
                 }
             }
         }
-        absent.sort();
-        absent.dedup();
-        if absent.len() < 3 {
-            return None;
-        }
-        let mut distractors: Vec<String> = Vec::new();
-        for _ in 0..64 {
-            if distractors.len() == 3 {
-                break;
-            }
-            let candidate = absent[(rng.range(0, absent.len() as i64 - 1)) as usize].clone();
-            if candidate != target && !distractors.contains(&candidate) {
-                distractors.push(candidate);
-            }
-        }
-        if distractors.len() < 3 {
+        if wrong_meanings.len() < 3 {
             return None;
         }
 
-        let mut options: Vec<(String, bool)> = vec![(target.clone(), true)];
-        for d in &distractors {
-            options.push((d.clone(), false));
+        let mut options: Vec<(String, String)> =
+            vec![(answer.clone(), "correct meaning".to_string())];
+        for meaning in wrong_meanings.iter().take(3) {
+            options.push((
+                meaning.clone(),
+                "a real meaning, but of a different word -- wrong for this one in \
+                 context"
+                    .to_string(),
+            ));
         }
         rng.shuffle(&mut options);
         let correct_index = options
             .iter()
-            .position(|(_, is_correct)| *is_correct)
+            .position(|(option, _)| option == &answer)
             .expect("the correct option is present");
 
         let mut distractor_rationales = BTreeMap::new();
-        for (index, (option, is_correct)) in options.iter().enumerate() {
-            if *is_correct {
+        for (index, (option, rationale)) in options.iter().enumerate() {
+            if index == correct_index {
                 continue;
             }
-            distractor_rationales.insert(
-                index,
-                format!("{option:?} does not occur anywhere in this passage."),
-            );
+            distractor_rationales.insert(index, format!("{option:?} is {rationale}."));
         }
+
+        // The passage field stays the passage; the context sentence the learner
+        // reads is carried in the prompt, so `verify` can re-check containment.
+        let prompt =
+            format!("In the sentence \"{context}\" the word \"{target}\" most nearly means:");
+        let occurrences = words(&paragraph)
+            .into_iter()
+            .filter(|word| word == &target)
+            .count();
+        let difficulty = derive_difficulty(&paragraph, occurrences);
+        let source_label = self.label.clone();
 
         Some(PcItem {
             objective_id: "OBJ-PC-VOCAB-01".to_string(),
             passage: paragraph,
-            prompt: "Which of these words occurs in the passage below?".to_string(),
+            prompt,
             options: options.into_iter().map(|(option, _)| option).collect(),
             correct_index,
             distractor_rationales,
-            supporting_clause: target,
-            source_label: self.label.clone(),
-            difficulty: 0.2,
+            // The evidence for a vocabulary item is the word as the passage uses it;
+            // `verify` re-checks the context contains it and the definition backs the
+            // chosen meaning.
+            supporting_clause: context,
+            source_label,
+            difficulty,
             seed,
         })
     }
@@ -939,6 +1169,8 @@ impl Text {
             );
         }
 
+        let difficulty = derive_difficulty(&passage, 1);
+
         Some(PcItem {
             objective_id: "OBJ-PC-DETAIL-01".to_string(),
             passage,
@@ -948,7 +1180,7 @@ impl Text {
             distractor_rationales,
             supporting_clause: correct,
             source_label: self.label.clone(),
-            difficulty: 0.4,
+            difficulty,
             seed,
         })
     }
@@ -962,6 +1194,300 @@ enum Element {
     Number(String),
     /// A name, drawn from elsewhere in the text so the passage cannot contain it.
     Name(String),
+}
+
+/// Uppercase the first character of a word, for use at the start of a sentence.
+fn capitalise(word: &str) -> String {
+    let mut characters = word.chars();
+    match characters.next() {
+        Some(first) => first.to_uppercase().collect::<String>() + characters.as_str(),
+        None => String::new(),
+    }
+}
+
+/// A rough base form of an inflected English word, for dictionary lookup.
+///
+/// Deliberately conservative and rule-based rather than a stemmer: it tries the
+/// common plural and verb endings and returns the input unchanged when none applies.
+/// A wrong guess costs nothing here, because the caller only uses it as a *fallback*
+/// lookup -- the surface form is tried first, and an unfound base form simply means
+/// no gloss, which refuses the item rather than producing a wrong one.
+fn base_form(word: &str) -> String {
+    let lowered = word.to_lowercase();
+    // Plural and third-person `-s`, with the `-es` and `-ies` cases handled.
+    if let Some(stem) = lowered.strip_suffix("ies") {
+        if stem.len() >= 2 {
+            return format!("{stem}y");
+        }
+    }
+    if let Some(stem) = lowered.strip_suffix("ves") {
+        if stem.len() >= 2 {
+            return format!("{stem}f");
+        }
+    }
+    if let Some(stem) = lowered.strip_suffix("es") {
+        if stem.len() >= 3 {
+            return stem.to_string();
+        }
+    }
+    if let Some(stem) = lowered.strip_suffix('s') {
+        if stem.len() >= 3 {
+            return stem.to_string();
+        }
+    }
+    // Past tense and gerund.
+    if let Some(stem) = lowered.strip_suffix("ed") {
+        if stem.len() >= 3 {
+            return stem.to_string();
+        }
+    }
+    if let Some(stem) = lowered.strip_suffix("ing") {
+        if stem.len() >= 3 {
+            return stem.to_string();
+        }
+    }
+    lowered
+}
+
+/// The word carried in a vocabulary prompt's quotes, lowercased.
+///
+/// The prompt is `In the sentence "..." the word "X" most nearly means:`. The word
+/// being asked about is the span after the literal `the word`, so reading it back
+/// lets `verify` confirm the sentence really uses it rather than trusting the
+/// builder's claim. Anchoring on `the word` rather than on quote position matters: a
+/// context sentence can itself contain quotation marks, and an earlier span-indexed
+/// read picked up a fragment of the passage instead of the target.
+fn quoted_word(prompt: &str) -> Option<String> {
+    let (_, tail) = prompt.rsplit_once("the word")?;
+    let after = tail.split_once('"')?.1;
+    let target = after.split_once('"')?.0.trim();
+    if target.is_empty() {
+        return None;
+    }
+    Some(target.to_lowercase())
+}
+
+/// The shortest dictionary gloss for a word, or `None` when the dictionary does not
+/// define it.
+///
+/// Webster's is a dictionary of headwords, so a passage's inflected form (`glaciers`)
+/// frequently has no entry even though its base form (`glacier`) does. Looking up the
+/// base form is what makes the builder usable on real prose; the *surface* form the
+/// passage uses is still what the learner is asked about and what the prompt quotes.
+fn sense_gloss(dictionary: &Dictionary, word: &str) -> Option<String> {
+    let definition = dictionary
+        .define(word)
+        .or_else(|| dictionary.define(&base_form(word)))?;
+    for candidate in gloss_candidates(definition) {
+        if is_usable_gloss(&candidate, word) {
+            let mut gloss = candidate;
+            if gloss.chars().next().is_some_and(char::is_lowercase) {
+                gloss = capitalise(&gloss);
+            }
+            return Some(gloss);
+        }
+    }
+    None
+}
+
+/// The candidate glosses of a Webster entry, best first.
+///
+/// The entry's real prose lives in its numbered senses. A 1913 Webster's entry has
+/// this shape:
+///
+/// ```text
+/// FLASK
+/// Flask, n. Etym: [AS. flasce, flaxe; akin to D. flesch, ...]
+///
+/// 1. A small bottle-shaped vessel for holding fluids; as, a flask of
+/// oil or wine.
+///
+/// 2. A narrow-necked vessel of metal or glass, used for various purposes; ...
+///
+/// 4. (Founding)
+///
+/// Defn: The wooden or iron frame which holds the sand, ...
+/// ```
+///
+/// So the numbered senses -- not the `Defn:` blocks, which are sub-senses and
+/// apparatus -- carry the meaning. This skips the headword line and the `Etym:`
+/// bracket, then yields each numbered sense trimmed to its leading gloss. The
+/// earlier `Defn:`-first read is what put `Candel, candel, AS, candel, fr` and
+/// `Aboute, abouten, abuten` on offer as "meanings".
+fn gloss_candidates(definition: &str) -> Vec<String> {
+    // Drop the etymology bracket, which is a citation of the word's history rather
+    // than a statement of what it means.
+    let body = match definition.find(']') {
+        Some(close) if definition[..close].contains("Etym") => &definition[close + 1..],
+        _ => definition,
+    };
+    let mut out: Vec<String> = Vec::new();
+    for raw in body.split('\n') {
+        let line = raw.trim();
+        // A numbered sense begins with `N.` at the start of a trimmed line.
+        let rest = match line.split_once('.') {
+            Some((number, rest))
+                if !number.is_empty() && number.chars().all(|c| c.is_ascii_digit()) =>
+            {
+                rest.trim()
+            }
+            _ => continue,
+        };
+        // Cut the sense at its first `;` or `, as,` clause list, or the first period:
+        // what follows is a quotation or an example, not the meaning itself.
+        let cut = rest
+            .find("; ")
+            .or_else(|| rest.find(", as,"))
+            .or_else(|| rest.find(". "))
+            .unwrap_or(rest.len());
+        let gloss = rest[..cut].trim();
+        if !gloss.is_empty() {
+            out.push(gloss.to_string());
+        }
+    }
+    // A `Defn:` body is a fallback only: some entries carry their meaning there and
+    // have no numbered sense, but it is checked last so apparatus never wins.
+    if let Some(defn) = definition.split("Defn:").nth(1) {
+        let gloss = defn
+            .trim()
+            .split(['.', ';'])
+            .map(str::trim)
+            .find(|part| part.split_whitespace().count() >= 2)
+            .unwrap_or("")
+            .to_string();
+        if !gloss.is_empty() {
+            out.push(gloss);
+        }
+    }
+    out
+}
+
+/// The template a sentence follows, so two sentences built from the same wording can
+/// be told apart from two that are genuinely different claims.
+///
+/// Content words (the ones carrying meaning) are replaced with a placeholder and the
+/// connective skeleton is kept, lowercased and stripped of punctuation. Two short
+/// sentences sharing a skeleton -- `the passage is mainly about X` twice -- return
+/// the same frame, which is what a duplicated-template check wants to catch.
+fn sentence_frame(sentence: &str) -> String {
+    const FRAME_STOP: [&str; 24] = [
+        "the", "a", "an", "of", "to", "in", "is", "are", "was", "were", "and", "or", "but", "that",
+        "this", "these", "those", "it", "its", "as", "be", "been", "being", "than",
+    ];
+    words(sentence)
+        .into_iter()
+        .map(|word| {
+            if FRAME_STOP.contains(&word.as_str()) {
+                word
+            } else {
+                "_".to_string()
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// Whether Webster's marks a word as a noun.
+///
+/// The 1913 dictionary tags each entry with its part of speech right after the
+/// headword: `Flask, n. Etym: ...`, `Different, a. ...`. A word tagged `n.` (or `n.`)
+/// is a thing, which is what a passage's subject has to be. This is read from the
+/// source rather than guessed, so `different` is correctly refused as a topic.
+fn is_noun(dictionary: &Dictionary, word: &str) -> bool {
+    let Some(definition) = dictionary
+        .define(word)
+        .or_else(|| dictionary.define(&base_form(word)))
+    else {
+        return false;
+    };
+    // Look only at the headword line: the first line of the entry, which carries the
+    // part-of-speech tag before any `Defn:` or sense text.
+    let head = definition.lines().next().unwrap_or("").to_lowercase();
+    // `, n.` or `, n ` marks a noun; `, a.` marks an adjective and is not a noun.
+    head.contains(", n.") || head.contains(", n ") || head.contains("(n.)")
+}
+
+/// Whether a candidate gloss is a meaning a learner could choose, rather than
+/// dictionary apparatus.
+///
+/// The checks are deliberately conservative and each is evidenced by a real gloss
+/// seen in a corpus run: `ADOPT A*dopt", v` and `COPPER Cop"per, n` (headword +
+/// pronunciation markup), `Candel, candel, AS, candel, fr` and `Aboute, abouten,
+/// abuten` (an etymology line), and single words that are the headword itself. A
+/// gloss that is apparatus is worse than no item, so this refuses rather than repairs.
+fn is_usable_gloss(gloss: &str, word: &str) -> bool {
+    let gloss = gloss.trim();
+    let words = gloss.split_whitespace().count();
+    // A meaning is a phrase: at least two words, at most sixteen.
+    if !(2..=16).contains(&words) {
+        return false;
+    }
+    // Pronunciation markup and etymology brackets are apparatus, not meaning.
+    for marker in ['*', '"', '[', ']', '<', '>', '{', '}', '|'] {
+        if gloss.contains(marker) {
+            return false;
+        }
+    }
+    let lowered = gloss.to_lowercase();
+    // A leading part-of-speech abbreviation is apparatus.
+    for pos in [
+        "n. ", "v. ", "v. t", "v. i", "a. ", "adv. ", "adj. ", "prep. ", "conj. ", "e. ", "as. ",
+        "fr. ", "cf. ",
+    ] {
+        if lowered.starts_with(pos) {
+            return false;
+        }
+    }
+    // A cross-reference points at another entry rather than stating a meaning.
+    if lowered.starts_with("see ") || lowered.starts_with("same as ") || lowered.starts_with("cf. ")
+    {
+        return false;
+    }
+    // Etymology markers that survive as prose.
+    if lowered.contains("etym") || lowered.contains("akin to") {
+        return false;
+    }
+    // Every word must be a real word, so a run of comma-joined stems is refused.
+    if gloss.ends_with(',') || gloss.ends_with(" fr") {
+        return false;
+    }
+    // The gloss must not open with the headword itself, which states nothing.
+    let headword = base_form(word);
+    let first = lowered
+        .split_whitespace()
+        .next()
+        .unwrap_or_default()
+        .trim_matches(|c: char| !c.is_ascii_alphabetic())
+        .to_string();
+    if first == headword || first == word.to_lowercase() {
+        return false;
+    }
+    true
+}
+
+/// Difficulty from the item's own properties, not a hard-coded constant.
+///
+/// The review's point: a constant is a placeholder, not a measurement. Three real
+/// properties an item carries are how long its passage is (more text to hold), how
+/// often the target recurs (a repeated word is easier to infer from context than one
+/// seen once), and how many sentences the passage has (more moving parts to track).
+/// All are read from the item and blended, so the value is deterministic given the
+/// item and a corpus-wide run is reproducible. It is a measurement, not a constant,
+/// which is why two items across the bank do not share one stamped value.
+fn derive_difficulty(passage: &str, occurrences: usize) -> f64 {
+    let words = passage.split_whitespace().count().max(1);
+    let sentences = split_sentences(passage).len().max(1);
+    // Length: a passage at the floor is the easiest; at the ceiling, the hardest.
+    let span = (MAX_PASSAGE_WORDS - MIN_PASSAGE_WORDS).max(1) as f64;
+    let length_term = ((words.saturating_sub(MIN_PASSAGE_WORDS)) as f64 / span).clamp(0.0, 1.0);
+    // Recurrence: a word the passage repeats is easier to pin from context.
+    let recurrence_term = (1.0 / (1.0 + occurrences as f64)).clamp(0.0, 1.0);
+    // Sentences: more sentences means more places the answer could hide.
+    let sentence_term = (sentences as f64 / 6.0).clamp(0.0, 1.0);
+    let blended = 0.5 * length_term + 0.25 * recurrence_term + 0.25 * sentence_term;
+    // Round to three places: fine enough that distinct items keep distinct values,
+    // coarse enough that the stored value is stable and readable.
+    (blended * 1000.0).round() / 1000.0
 }
 
 /// The first alterable element in a clause, preferring a quantity.
@@ -1172,44 +1698,118 @@ pub fn verify(item: &PcItem) -> Result<(), PcVerificationFailure> {
     let haystack = normalize(&item.passage);
     let passage_tokens: HashSet<String> = words(&item.passage).into_iter().collect();
 
-    // A single-word item (main idea, vocabulary) is checked by word, not by clause:
-    // the answer is a word the passage uses, so requiring it to be a passage-length
-    // clause would refuse every one of them. Branching on the objective keeps the
-    // detail checks exactly as strict as they were.
-    let single_word = matches!(
-        item.objective_id.as_str(),
-        "OBJ-PC-MAINIDEA-01" | "OBJ-PC-VOCAB-01"
-    );
+    // Each kind has its own answerability rule, so verification branches by
+    // objective rather than assuming one shape. DETAIL and VOCAB are checked against
+    // the passage; MAIN_IDEA is checked against the passage's dominant topic.
+    let is_main_idea = item.objective_id == "OBJ-PC-MAINIDEA-01";
+    let is_vocab = item.objective_id == "OBJ-PC-VOCAB-01";
+
+    // Difficulty must be a real probability, and a derived one lies in 0.0..=1.0.
+    if !(0.0..=1.0).contains(&item.difficulty) {
+        return Err(PcVerificationFailure::DifficultyOutOfRange {
+            difficulty: item.difficulty.to_string(),
+        });
+    }
+
     let correct = &item.options[item.correct_index];
-    if single_word {
-        // `words()` lowercases and strips punctuation, and `passage_tokens` is built
-        // from it, so membership is a word-level test rather than a substring one.
-        if !passage_tokens.contains(&correct.to_lowercase()) {
+
+    if is_main_idea {
+        // MAIN_IDEA: the answer is a full sentence whose subject is the passage's
+        // dominant repeated topic. `supporting_clause` carries that topic word, so
+        // the topic is re-derived from the passage rather than trusted.
+        let topic = item.supporting_clause.to_lowercase();
+        let occurrences = words(&item.passage)
+            .into_iter()
+            .filter(|word| word == &topic)
+            .count();
+        if occurrences < 2 {
+            return Err(PcVerificationFailure::TopicNotRepeated {
+                topic: item.supporting_clause.clone(),
+                occurrences,
+            });
+        }
+        // The correct option must *state* the topic, so "mainly about X" really names
+        // X, and must be the passage's own topic rather than one drawn from elsewhere.
+        if !correct.to_lowercase().contains(&topic) {
             return Err(PcVerificationFailure::CorrectOptionNotInPassage(
                 correct.clone(),
             ));
         }
-        if correct.to_lowercase() != item.supporting_clause.to_lowercase() {
-            return Err(PcVerificationFailure::CorrectOptionNotInPassage(
-                item.supporting_clause.clone(),
+        // Every option is a complete sentence.
+        for (position, option) in item.options.iter().enumerate() {
+            if option.trim().is_empty() {
+                return Err(PcVerificationFailure::Blank(format!("option {position}")));
+            }
+            if !option.trim().ends_with(['.', '!', '?']) {
+                return Err(PcVerificationFailure::MainIdeaOptionNotASentence(
+                    option.clone(),
+                ));
+            }
+        }
+        // The *answer* must not be passage text verbatim: a lifted sentence is a
+        // detail restatement, not a summary. A distractor may be passage text -- the
+        // "too narrow" distractor is exactly a true detail the passage states, which
+        // is what makes it plausible -- so only the correct option is held to this.
+        if haystack.contains(&normalize(correct)) {
+            return Err(PcVerificationFailure::MainIdeaOptionIsPassageText(
+                correct.clone(),
             ));
         }
-        // MAIN_IDEA's answer has to be a *topic*: the passage must repeat it. A word
-        // that appears once is not what the passage is mainly about, so the item
-        // would be asserting something the text does not support.
-        if item.objective_id == "OBJ-PC-MAINIDEA-01" {
-            let occurrences = words(&item.passage)
-                .into_iter()
-                .filter(|word| word == &correct.to_lowercase())
-                .count();
-            if occurrences < 2 {
-                return Err(PcVerificationFailure::TopicNotRepeated {
-                    topic: correct.clone(),
-                    occurrences,
-                });
+        // No two options may share a sentence frame. If they do, the answer is one of
+        // a pair and can be guessed by shape without reading the passage, which is
+        // the defect this whole redo exists to remove.
+        for (index, option) in item.options.iter().enumerate() {
+            for other in item.options.iter().skip(index + 1) {
+                if sentence_frame(option) == sentence_frame(other) {
+                    return Err(PcVerificationFailure::MainIdeaOptionsNotDistinct(
+                        option.clone(),
+                    ));
+                }
+            }
+        }
+    } else if is_vocab {
+        // VOCAB_IN_CONTEXT: the answer is a meaning of the target word, and the
+        // target must occur in the quoted context sentence. The chosen meaning must
+        // be a real meaning of the target -- the builder draws it from the
+        // dictionary, and `verify` re-checks the target occurs where the prompt says.
+        let context = &item.supporting_clause;
+        if !haystack.contains(&normalize(context)) {
+            return Err(PcVerificationFailure::CorrectOptionNotInPassage(
+                context.clone(),
+            ));
+        }
+        // The target word is the quoted word in the prompt; it must occur in the
+        // context, or the learner is asked about a word the sentence does not use.
+        let target = quoted_word(&item.prompt)
+            .ok_or_else(|| PcVerificationFailure::CorrectOptionNotInPassage(correct.clone()))?;
+        if !words(context).iter().any(|word| word == &target) {
+            return Err(PcVerificationFailure::VocabOptionAbsentFromPassage(target));
+        }
+        // Every option is a meaning phrase; none may be a bare word lifted from the
+        // passage (that would be word-spotting again) and none may duplicate another.
+        for (position, option) in item.options.iter().enumerate() {
+            if option.trim().is_empty() {
+                return Err(PcVerificationFailure::Blank(format!("option {position}")));
+            }
+            if position == item.correct_index {
+                continue;
+            }
+            // A distractor that is one word and occurs in the passage is not a
+            // meaning; it is the old word-spotting option wearing a new prompt.
+            if option.split_whitespace().count() == 1
+                && passage_tokens.contains(&option.to_lowercase())
+            {
+                return Err(PcVerificationFailure::VocabOptionAbsentFromPassage(
+                    option.clone(),
+                ));
+            }
+            if normalize(option) == normalize(correct) {
+                return Err(PcVerificationFailure::DuplicateOption(option.clone()));
             }
         }
     } else {
+        // DETAIL: the correct option is a clause the passage states, in the clause
+        // band; every distractor is that clause with one detail changed.
         if !haystack.contains(&normalize(correct)) {
             return Err(PcVerificationFailure::CorrectOptionNotInPassage(
                 correct.clone(),
@@ -1232,17 +1832,9 @@ pub fn verify(item: &PcItem) -> Result<(), PcVerificationFailure> {
         {
             return Err(PcVerificationFailure::DuplicateOption(option.clone()));
         }
-        if single_word {
-            // Every option is one word, so they are comparable by construction. The
-            // clause-length band below is a detail-item rule and does not apply.
-            if position == item.correct_index {
-                continue;
-            }
-            if passage_tokens.contains(&option.to_lowercase()) {
-                return Err(PcVerificationFailure::DistractorAlsoInPassage(
-                    option.clone(),
-                ));
-            }
+        if is_main_idea || is_vocab {
+            // The sentence/meaning shape rules above already cover these kinds; the
+            // clause band and the altered-token rule are DETAIL rules.
             continue;
         }
         // Options must be comparable in length, or the odd one out is answerable by
