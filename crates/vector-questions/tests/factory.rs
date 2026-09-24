@@ -382,3 +382,60 @@ fn a_consistent_but_arithmetically_wrong_item_is_still_rejected() {
         other => panic!("an unprovable item must be rejected, got {other:?}"),
     }
 }
+
+// ---------------------------------------------------------------------------
+// Distractor quality (issue #8): no wrong option may be a number the stem prints
+// ---------------------------------------------------------------------------
+
+/// Collect the maximal digit-runs that appear as numbers anywhere in `text`.
+fn numbers_in(text: &str) -> std::collections::HashSet<String> {
+    let mut out = std::collections::HashSet::new();
+    let mut current = String::new();
+    for ch in text.chars() {
+        if ch.is_ascii_digit() {
+            current.push(ch);
+        } else {
+            if !current.is_empty() {
+                out.insert(std::mem::take(&mut current));
+            }
+        }
+    }
+    if !current.is_empty() {
+        out.insert(current);
+    }
+    out
+}
+
+/// A wrong option that is literally a number printed in the stem can be chosen
+/// without doing any arithmetic, so the item stops measuring the subtest's skill.
+///
+/// The defect this guards: templates shipped distractors built from the stem's own
+/// operands (`ar_average_sum` offered the average itself; `ar_percent_of` offered
+/// the whole plus the percentage; `mk_slope` offered the raw run and rise). This
+/// walks the whole bank and fails on any recurrence.
+#[test]
+fn no_wrong_option_is_a_number_printed_in_the_stem() {
+    for subtest in ["AR", "MK"] {
+        let items = all_items(subtest);
+        assert!(!items.is_empty(), "{subtest} produced no items to audit");
+        for item in &items {
+            let stem_numbers = numbers_in(&item.stem);
+            for (index, option) in item.options.iter().enumerate() {
+                if index == item.correct_index {
+                    continue;
+                }
+                let trimmed = option.trim();
+                if !trimmed.chars().all(|c| c.is_ascii_digit()) || trimmed.is_empty() {
+                    continue;
+                }
+                assert!(
+                    !stem_numbers.contains(trimmed),
+                    "{subtest} {} stem {:?} offers the stem-verbatim number {trimmed} as a \
+                     wrong option; a learner can copy it instead of computing",
+                    item.template_id,
+                    item.stem,
+                );
+            }
+        }
+    }
+}
