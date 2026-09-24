@@ -498,6 +498,19 @@ pub struct BuildPackRequest<'a> {
     pub calibration: Vec<CalibrationEntry>,
 }
 
+/// Round a derived expected-correct share to a stable, round-trip-safe precision.
+///
+/// The pack's content hash is computed over the serialized payload, and
+/// `verify_pack` recomputes it from what was parsed back off disk. A raw `f64`
+/// produced by a sigmoid is not guaranteed to survive that text round trip with
+/// identical bytes -- `0.24973989440488234` serializes to more digits than it
+/// parses back as -- so the recomputed hash can differ from the recorded one for a
+/// pack nobody tampered with. Six decimal places is finer than a declared,
+/// unmeasured estimate carries information, and it round-trips exactly.
+fn round_share(value: f64) -> f64 {
+    (value * 1_000_000.0).round() / 1_000_000.0
+}
+
 /// Assemble a pack from everything the store currently serves.
 ///
 /// Only `active` items are packed: a draft, a quarantined item or one that was
@@ -627,7 +640,15 @@ pub fn build_pack(
                 let mean = difficulties.iter().sum::<f64>() / difficulties.len() as f64;
                 CalibrationEntry {
                     objective_id,
-                    expected_correct: 1.0 / (1.0 + (-mean).exp()),
+                    // The content hash covers the serialized payload, and the pack is
+                    // verified by re-serializing what was parsed out of the file. A
+                    // raw sigmoid can print with more significant digits than it
+                    // re-parses to -- `0.24973989440488234` reads back as
+                    // `0.2497398944048823` -- which changes the bytes and makes the
+                    // hash disagree with itself. Rounding to a share with a fixed
+                    // decimal precision keeps build and verify byte-identical while
+                    // staying far finer than a declared, unmeasured estimate needs.
+                    expected_correct: round_share(1.0 / (1.0 + (-mean).exp())),
                     responses: 0,
                     basis: "declared from the items' difficulty scale; no responses recorded"
                         .to_string(),
