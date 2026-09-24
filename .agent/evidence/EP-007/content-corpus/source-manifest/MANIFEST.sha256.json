@@ -1,0 +1,482 @@
+{
+  "generated": "2026-09-24T15:21:56Z",
+  "records": [
+    {
+      "path": "sources/federal/army-shop-work.txt",
+      "url": "https://archive.org/download/TM11-453/TM11-453_djvu.txt",
+      "sha256": "e0e982d35aacfc0b90248219e207b4b0455446fdf183666f156782cae2d6a339",
+      "bytes": 211798,
+      "note": "TM 11-453 Shop Work (US Army)"
+    },
+    {
+      "path": "sources/federal/tm9-2700.txt",
+      "url": "https://archive.org/download/TM9-2700/TM9-2700_djvu.txt",
+      "sha256": "24c06aeea83f99fec63c5975f4a608a473327da5c0595e43ffc538906a57c3c6",
+      "bytes": 805249,
+      "note": "TM 9-2700 Principles of Automotive Vehicles (US Army)"
+    },
+    {
+      "path": "sources/federal/tm9-8000.txt",
+      "url": "https://archive.org/download/tm-9-8000-principles-of-automotive-vehicles-1985/TM9-8000_Principles_of_automotive_vehicles_1985_djvu.txt",
+      "sha256": "f40812ed1d1b9110c312b410455b3754d3b7f2864e2dfa12dc7ebfd992119d60",
+      "bytes": 1555752,
+      "note": "TM 9-8000 Principles of Automotive Vehicles (US Army, 1985)"
+    },
+    {
+      "path": "sources/federal/tools-and-uses.txt",
+      "url": "https://archive.org/download/micro_IA41153156_0308/micro_IA41153156_0308_djvu.txt",
+      "sha256": "ec5c10f87471deae564d5bad632db9fb4e1dc3a362190a2d9456c5938d6324c9",
+      "bytes": 446652,
+      "note": "Tools and Their Uses (US Army, 1971)"
+    },
+    {
+      "path": "sources/gutenberg/aec-direct-energy.txt",
+      "url": "https://www.gutenberg.org/cache/epub/66033/pg66033.txt",
+      "sha256": "651c25d0850f4c2d1be0c473b40614b3d9a2cfc53ab91090ef86a69bbd2c2202",
+      "bytes": 89443,
+      "note": "Direct Conversion of Energy"
+    },
+    {
+      "path": "sources/gutenberg/aec-savannah.txt",
+      "url": "https://www.gutenberg.org/cache/epub/63584/pg63584.txt",
+      "sha256": "3fea6280c4dc36a870aef8903359774983c830a5f8978cf7b5faea0ac124124f",
+      "bytes": 56910,
+      "note": "The Nuclear Ship Savannah"
+    },
+    {
+      "path": "sources/gutenberg/aec-science-fair.txt",
+      "url": "https://www.gutenberg.org/cache/epub/65893/pg65893.txt",
+      "sha256": "9d2f6a3de134db785468c29572eff49964893e4d35e4e5f72bdf988524185d31",
+      "bytes": 112739,
+      "note": "Atoms at the Science Fair: Exhibiting Nuclear Projects"
+    },
+    {
+      "path": "sources/gutenberg/agricola-de-re-metallica.txt",
+      "url": "https://www.gutenberg.org/cache/epub/38015/pg38015.txt",
+      "sha256": "fa7b8a2a7aa42a4a2c571595664d63748ddec98cf262ec3ab5ceabd75f075971",
+      "bytes": 1922600,
+      "note": "De Re Metallica, Translated from the First Latin Edition of 1556"
+    },
+    {
+      "path": "sources/gutenberg/austen-pride.txt",
+      "url": "https://www.gutenberg.org/cache/epub/1342/pg1342.txt",
+      "sha256": "3f6bb9d6f78e0293b56acd4714dd68cb7d6d1d293402031ce9d5a216bcaf9d75",
+      "bytes": 772386,
+      "note": "Pride and Prejudice"
+    },
+    {
+      "path": "sources/gutenberg/book-of-wonders.txt",
+      "url": "https://www.gutenberg.org/cache/epub/75948/pg75948.txt",
+      "sha256": "7706458b733a223a04a2eb2e4d5ff780f73d50339af9b6fc11a6541664252ae9",
+      "bytes": 1472727,
+      "note": "The book of wonders"
+    },
+    {
+      "path": "sources/gutenberg/candolle-cultivated-plants.txt",
+      "url": "https://www.gutenberg.org/cache/epub/45917/pg45917.txt",
+      "sha256": "14523950032bbe77f1acd5c8da306ce3481d35ba3d81d443b05b4fc8d119c374",
+      "bytes": 1086456,
+      "note": "Origin of Cultivated Plants"
+    },
+    {
+      "path": "sources/gutenberg/darwin-beagle.txt",
+      "url": "https://www.gutenberg.org/cache/epub/944/pg944.txt",
+      "sha256": "e13d57170a6dd9f7d97ddbc14cbde961dffbd95e8861ed199e5f00a525e7e52a",
+      "bytes": 1227345,
+      "note": "The Voyage of the Beagle"
+    },
+    {
+      "path": "sources/gutenberg/darwin-origin.txt",
+      "url": "https://www.gutenberg.org/cache/epub/1228/pg1228.txt",
+      "sha256": "ededa9c0bf8761efed092c303b46c1c92de956838cba6249a33bedfd6d7363b4",
+      "bytes": 970612,
+      "note": "On the Origin of Species By Means of Natural Selection"
+    },
+    {
+      "path": "sources/gutenberg/doe-nuclear-1.txt",
+      "url": "https://www.gutenberg.org/cache/epub/49819/pg49819.txt",
+      "sha256": "777fd73adecabb4710f0958c385144af0b2c015c97e5cca63e0ae1fca9237760",
+      "bytes": 98744,
+      "note": "Worlds Within Worlds: The Story of Nuclear Energy, Volume 1 (of 3)"
+    },
+    {
+      "path": "sources/gutenberg/doe-nuclear-2.txt",
+      "url": "https://www.gutenberg.org/cache/epub/49820/pg49820.txt",
+      "sha256": "fcf2533152051bcaff93c66739de7e105c16e1274d5ca156bc919d36b72241fa",
+      "bytes": 93163,
+      "note": "Worlds Within Worlds: The Story of Nuclear Energy, Volume 2 (of 3)"
+    },
+    {
+      "path": "sources/gutenberg/doe-nuclear-3.txt",
+      "url": "https://www.gutenberg.org/cache/epub/49821/pg49821.txt",
+      "sha256": "d044edce0e87580a24a3b19ca356be3c58d35f0c204ec113c77b0783e0ebacab",
+      "bytes": 114137,
+      "note": "Worlds Within Worlds: The Story of Nuclear Energy, Volume 3 (of 3)"
+    },
+    {
+      "path": "sources/gutenberg/doyle-holmes.txt",
+      "url": "https://www.gutenberg.org/cache/epub/1661/pg1661.txt",
+      "sha256": "922e2a12ccb43a4c9544c260b2166c6ad2097aeb5957faeee113f173bb857cd0",
+      "bytes": 607606,
+      "note": "The Adventures of Sherlock Holmes"
+    },
+    {
+      "path": "sources/gutenberg/elting-machines-at-work.txt",
+      "url": "https://www.gutenberg.org/cache/epub/55482/pg55482.txt",
+      "sha256": "235b310767bab8b4c25b110673cbe04b75c144beefdd76707c00845edd57d062",
+      "bytes": 84310,
+      "note": "Machines at Work"
+    },
+    {
+      "path": "sources/gutenberg/fabre-story-science.txt",
+      "url": "https://www.gutenberg.org/cache/epub/56795/pg56795.txt",
+      "sha256": "4fd46f40d6b1cd96d5752602d22456aa4e1352c0ed188d59ba7029ae507e2bb2",
+      "bytes": 565952,
+      "note": "The Story-book of Science"
+    },
+    {
+      "path": "sources/gutenberg/faraday-candle.txt",
+      "url": "https://www.gutenberg.org/cache/epub/14474/pg14474.txt",
+      "sha256": "c053ca4ae7880585a15001cd3ffdaf5f09cd08c3329b828ffd8c90ce335482b9",
+      "bytes": 246914,
+      "note": "The Chemical History of a Candle"
+    },
+    {
+      "path": "sources/gutenberg/graffigny-gas-petroleum-engines.txt",
+      "url": "https://www.gutenberg.org/cache/epub/59311/pg59311.txt",
+      "sha256": "007f1a8bd8f492880d09fde22fa6532321d225c2e3ffdda0f360b552a22c353a",
+      "bytes": 225097,
+      "note": "Gas and Petroleum Engines"
+    },
+    {
+      "path": "sources/gutenberg/kirby-entomology-3.txt",
+      "url": "https://www.gutenberg.org/cache/epub/43578/pg43578.txt",
+      "sha256": "6b54672749cbb04e9399b519fdc51b53ba3a811ec92ce47140a73a0c71de83b7",
+      "bytes": 1353634,
+      "note": "An Introduction to Entomology: Vol. 3"
+    },
+    {
+      "path": "sources/gutenberg/kirby-entomology-4.txt",
+      "url": "https://www.gutenberg.org/cache/epub/43579/pg43579.txt",
+      "sha256": "521522a7c80a0a2ebd05566267aacbc8e8cd084cc1460c182f151b1113372c92",
+      "bytes": 1320759,
+      "note": "An Introduction to Entomology: Vol. 4"
+    },
+    {
+      "path": "sources/gutenberg/mathot-gas-engines.txt",
+      "url": "https://www.gutenberg.org/cache/epub/38415/pg38415.txt",
+      "sha256": "d94e3ad49611258d414186d5acb741877307d754a76f64970940ed02728de6d0",
+      "bytes": 415396,
+      "note": "Gas-Engines and Producer-Gas Plants"
+    },
+    {
+      "path": "sources/gutenberg/maule-boys-book-inventions.txt",
+      "url": "https://www.gutenberg.org/cache/epub/46232/pg46232.txt",
+      "sha256": "48420938297420096684d444a13940fa9d231592c7ccda5e7d65fbc16feea671",
+      "bytes": 579604,
+      "note": "The Boy's Book of New Inventions"
+    },
+    {
+      "path": "sources/gutenberg/melville-moby.txt",
+      "url": "https://www.gutenberg.org/cache/epub/2701/pg2701.txt",
+      "sha256": "907420db6c4b68c70e2988cd2ad9c8cf79138667a01b63376d18dd17fef1a18b",
+      "bytes": 1276267,
+      "note": "Moby Dick; Or, The Whale"
+    },
+    {
+      "path": "sources/gutenberg/palmateer-lathe-practice.txt",
+      "url": "https://www.gutenberg.org/cache/epub/76925/pg76925.txt",
+      "sha256": "f0ca1baaee0efacffbe9da408fdc1e48667f47a27bca24d8d24eaa3fdc8407f1",
+      "bytes": 66909,
+      "note": "Elementary lathe practice"
+    },
+    {
+      "path": "sources/gutenberg/pliny-natural-history-2.txt",
+      "url": "https://www.gutenberg.org/cache/epub/60230/pg60230.txt",
+      "sha256": "a2b16e7a491062b59a27d1ae5b84d3f2269e5e7824a07833d58a7889b2549bfe",
+      "bytes": 1551653,
+      "note": "The Natural History of Pliny, Volume 2 (of 6)"
+    },
+    {
+      "path": "sources/gutenberg/pliny-natural-history-3.txt",
+      "url": "https://www.gutenberg.org/cache/epub/59131/pg59131.txt",
+      "sha256": "697bf75aa517edc38c47d6d181233f55f526604467077bf95cbe7c809cc51406",
+      "bytes": 1404186,
+      "note": "The Natural History of Pliny, Volume 3 (of 6)"
+    },
+    {
+      "path": "sources/gutenberg/precision-locating-dividing.txt",
+      "url": "https://www.gutenberg.org/cache/epub/69061/pg69061.txt",
+      "sha256": "e8a5f563848141da971d0ee0554b48822d31af4ea36b2b57e540c38fc4ce3c1e",
+      "bytes": 111462,
+      "note": "Precision locating and dividing methods"
+    },
+    {
+      "path": "sources/gutenberg/rathbun-gas-oil-steam-engines.txt",
+      "url": "https://www.gutenberg.org/cache/epub/56776/pg56776.txt",
+      "sha256": "9864170960b837aaf22d0148ba7d64f00202b5f9f5602042c267fe87b53e58a5",
+      "bytes": 756561,
+      "note": "Practical Hand Book of Gas, Oil and Steam Engines"
+    },
+    {
+      "path": "sources/gutenberg/richards-workshop-manipulation.txt",
+      "url": "https://www.gutenberg.org/cache/epub/57120/pg57120.txt",
+      "sha256": "3983eb7aebf4058e499fdb2092db7c1bcf6bde8dae9d8c4d41a3b462c988bfe0",
+      "bytes": 466423,
+      "note": "The Economy of Workshop Manipulation"
+    },
+    {
+      "path": "sources/gutenberg/runciman-gas-oil-engines.txt",
+      "url": "https://www.gutenberg.org/cache/epub/27286/pg27286.txt",
+      "sha256": "1190868a65210edf68935fda05d8b877e855c45c78632fb11ed196634535a7b7",
+      "bytes": 104287,
+      "note": "Gas and Oil Engines, Simply Explained"
+    },
+    {
+      "path": "sources/gutenberg/shearer-farm-mechanics.txt",
+      "url": "https://www.gutenberg.org/cache/epub/39791/pg39791.txt",
+      "sha256": "b4ab3fbe55b4d669f9bed8f6c240b085a41f9d9f091e000f7b28b75033d20e16",
+      "bytes": 344511,
+      "note": "Farm Mechanics: Machinery and Its Use to Save Hand Labor on the Farm."
+    },
+    {
+      "path": "sources/gutenberg/smith-nations.txt",
+      "url": "https://www.gutenberg.org/cache/epub/3300/pg3300.txt",
+      "sha256": "e91d52dca43fd0fd69baf7776b00a5d8e74b69675b6b608ca8a0378aaf3ae58d",
+      "bytes": 2468951,
+      "note": "An Inquiry into the Nature and Causes of the Wealth of Nations"
+    },
+    {
+      "path": "sources/gutenberg/thoreau-walden.txt",
+      "url": "https://www.gutenberg.org/cache/epub/205/pg205.txt",
+      "sha256": "2d9a76a2e3e8195c69430516ebd33c4d0757a53ad432ff6186b7b794e6fe99f9",
+      "bytes": 667957,
+      "note": "Walden, and On The Duty Of Civil Disobedience"
+    },
+    {
+      "path": "sources/gutenberg/thorndike-magic-science-1.txt",
+      "url": "https://www.gutenberg.org/cache/epub/67792/pg67792.txt",
+      "sha256": "2127813f27eb4e9b6f577800521baaded241528aacec0f12f747c48648d1181b",
+      "bytes": 2070330,
+      "note": "A History of Magic and Experimental Science, Volume 1 (of 2)"
+    },
+    {
+      "path": "sources/gutenberg/triumphs-wonders.txt",
+      "url": "https://www.gutenberg.org/cache/epub/55390/pg55390.txt",
+      "sha256": "974903b110d365af811459b060b2a8990cae60f22562a7547314f278b2f10f48",
+      "bytes": 1939280,
+      "note": "Triumphs and Wonders of the 19th Century: The True Mirror of a Phenomenal Era"
+    },
+    {
+      "path": "sources/gutenberg/whewell-inductive-sciences.txt",
+      "url": "https://www.gutenberg.org/cache/epub/68693/pg68693.txt",
+      "sha256": "f6a4c75efe6b613d667dc9f815b05d61099217b79307413b8a6a71f196fe4851",
+      "bytes": 2924729,
+      "note": "History of the inductive sciences, from the earliest to the present time"
+    },
+    {
+      "path": "sources/gutenberg/williams-how-it-works.txt",
+      "url": "https://www.gutenberg.org/cache/epub/28553/pg28553.txt",
+      "sha256": "f87350280ed9f5c7dff3b85d377082f4c2c3456bcb05361c2ce6115c5259298a",
+      "bytes": 463619,
+      "note": "How it Works"
+    },
+    {
+      "path": "sources/gutenberg/williams-modern-invention.txt",
+      "url": "https://www.gutenberg.org/cache/epub/41160/pg41160.txt",
+      "sha256": "37ae5dd2e6f18d847c95ae7d98921083f8c9de50d838bf619db8900709e23b94",
+      "bytes": 516317,
+      "note": "The Romance of Modern Invention"
+    },
+    {
+      "path": "sources/gutenberg/williams-modern-mechanism.txt",
+      "url": "https://www.gutenberg.org/cache/epub/46094/pg46094.txt",
+      "sha256": "8e717f0d0a4a96317d609b76d718dac13269b1ec46422217cbc0ad986768b581",
+      "bytes": 591289,
+      "note": "The Romance of Modern Mechanism"
+    },
+    {
+      "path": "sources/moby-thesaurus/words.txt",
+      "url": "https://www.gutenberg.org/files/3202/files/mthesaur.txt",
+      "sha256": "7c9742b1ed94435a893c0719b426725edb8a5242f8c526a75461bd6cee2dfd32",
+      "bytes": 24853275,
+      "note": "Moby Thesaurus II (Grady Ward), 30260 root lines"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_10_NAVEDTRA_14182A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2010%20NAVEDTRA%2014182A_djvu.txt",
+      "sha256": "bd9da68f943f267854b0028e55d21e95e20941539cd7b6aa67393245271738d6",
+      "bytes": 512481,
+      "note": "NEETS module: NEETS MOD 10 NAVEDTRA 14182A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_11_NAVEDTRA_14183A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2011%20NAVEDTRA%2014183A_djvu.txt",
+      "sha256": "693b22eec1d4ebb44e2d895c90314eeb2920be2d633cad1e5e755bd95240c49d",
+      "bytes": 292549,
+      "note": "NEETS module: NEETS MOD 11 NAVEDTRA 14183A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_12_NAVEDTRA_14184A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2012%20NAVEDTRA%2014184A_djvu.txt",
+      "sha256": "347176e3ab889e6c710f7e9a65252b5e89feed75d541f44c27a163c88db8dc6f",
+      "bytes": 351980,
+      "note": "NEETS module: NEETS MOD 12 NAVEDTRA 14184A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_13_NAVEDTRA_14185A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2013%20NAVEDTRA%2014185A_djvu.txt",
+      "sha256": "51acdf92639c5aa040949c2c63eb30093e9472efc802be3aa133d68216325163",
+      "bytes": 263372,
+      "note": "NEETS module: NEETS MOD 13 NAVEDTRA 14185A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_14_NAVEDTRA_14186_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2014%20NAVEDTRA%2014186_djvu.txt",
+      "sha256": "1cf7c6ecf54d47e17b0c4855d3b2484d57bb4d6e14f91dbacb886145ccc64ea7",
+      "bytes": 251619,
+      "note": "NEETS module: NEETS MOD 14 NAVEDTRA 14186_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_15_NAVEDTRA_14187A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2015%20NAVEDTRA%2014187A_djvu.txt",
+      "sha256": "d67b846cad09ba0bc7242e54cf544393656eb516e5526fe5344883f1174c02ec",
+      "bytes": 348201,
+      "note": "NEETS module: NEETS MOD 15 NAVEDTRA 14187A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_16_NAVEDTRA_14188A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2016%20NAVEDTRA%2014188A_djvu.txt",
+      "sha256": "21fd92a42a429224293d1ad95575c97b3e84a6a638c2312bd5440b531f6d3a72",
+      "bytes": 481939,
+      "note": "NEETS module: NEETS MOD 16 NAVEDTRA 14188A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_17_NAVEDTRA_14189A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2017%20NAVEDTRA%2014189A_djvu.txt",
+      "sha256": "7583a8d36103dcc862558b6051991ed0a4f3bd1538b059ebd5987444150e1a65",
+      "bytes": 383854,
+      "note": "NEETS module: NEETS MOD 17 NAVEDTRA 14189A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_18_NAVEDTRA_14190A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2018%20NAVEDTRA%2014190A_djvu.txt",
+      "sha256": "2db6d607a694eba63c7c5beed683253f00bbd1a6459479e61c41f671170148b4",
+      "bytes": 385084,
+      "note": "NEETS module: NEETS MOD 18 NAVEDTRA 14190A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_19_NAVEDTRA_14191_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2019%20NAVEDTRA%2014191_djvu.txt",
+      "sha256": "bbe389797c35cfc58de1557a39ebe9a31be710e1bcce92c16701d8a4a8da4c21",
+      "bytes": 265309,
+      "note": "NEETS module: NEETS MOD 19 NAVEDTRA 14191_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_1_NAVEDTRA_14173A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%201%20NAVEDTRA%2014173A_djvu.txt",
+      "sha256": "cee401fa412484c326809b4ab528568f03f75e8a0b3b3d6b2fcf0af0e822c7c2",
+      "bytes": 384460,
+      "note": "NEETS module: NEETS MOD 1 NAVEDTRA 14173A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_20_NAVEDTRA_14192_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2020%20NAVEDTRA%2014192_djvu.txt",
+      "sha256": "838cca61f6cc509fec8b3b9a316ac835a8dfb7f37448b9877c4c90bf111095f2",
+      "bytes": 235057,
+      "note": "NEETS module: NEETS MOD 20 NAVEDTRA 14192_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_21_NAVEDTRA_14193A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2021%20NAVEDTRA%2014193A_djvu.txt",
+      "sha256": "2c21cf2bde7731504431e6c2ff0d8cd6e1c2a1fca5dce86253ae08f037d8fee2",
+      "bytes": 402567,
+      "note": "NEETS module: NEETS MOD 21 NAVEDTRA 14193A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_22_NAVEDTRA_14194A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2022%20NAVEDTRA%2014194A_djvu.txt",
+      "sha256": "1c7a2c27d01cc62adf98105edb1e57d91ceb975db240b1608d03720598faf289",
+      "bytes": 318191,
+      "note": "NEETS module: NEETS MOD 22 NAVEDTRA 14194A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_23_NAVEDTRA_14195A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2023%20NAVEDTRA%2014195A_djvu.txt",
+      "sha256": "d491f2e16f6a21ac184ac24e39ca737f22f96178e4e541cd1f062b9065893fc0",
+      "bytes": 268647,
+      "note": "NEETS module: NEETS MOD 23 NAVEDTRA 14195A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_24_NAVEDTRA_14196A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%2024%20NAVEDTRA%2014196A_djvu.txt",
+      "sha256": "91090db482f47b69aa51180853c6493f3d255995758bdf0545f8d0e29afbe7d3",
+      "bytes": 503826,
+      "note": "NEETS module: NEETS MOD 24 NAVEDTRA 14196A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_2_NAVEDTRA_14174A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%202%20NAVEDTRA%2014174A_djvu.txt",
+      "sha256": "9a3c4aca4b2f0d29180c94b4cceca3e0fe2159bf740bd5a346e361f170815db6",
+      "bytes": 382643,
+      "note": "NEETS module: NEETS MOD 2 NAVEDTRA 14174A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_3_NAVEDTRA_14175A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%203%20NAVEDTRA%2014175A_djvu.txt",
+      "sha256": "e71efded0c61f23e882091a4a949736d23c8b97328d498d98f8a55a9d98f7ee3",
+      "bytes": 321170,
+      "note": "NEETS module: NEETS MOD 3 NAVEDTRA 14175A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_4_NAVEDTRA_14176A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%204%20NAVEDTRA%2014176A_djvu.txt",
+      "sha256": "3a584296368bd9e3c4512f587efb294cd9753f169d71d6bd903beee00fed1bcf",
+      "bytes": 255449,
+      "note": "NEETS module: NEETS MOD 4 NAVEDTRA 14176A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_5_NAVEDTRA_14177A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%205%20NAVEDTRA%2014177A_djvu.txt",
+      "sha256": "881eac1ddbe19ed0f58f2aed81b6b260cd03bcc098e2d5d84175dd09f9b32b70",
+      "bytes": 175412,
+      "note": "NEETS module: NEETS MOD 5 NAVEDTRA 14177A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_6_NAVEDTRA_14178A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%206%20NAVEDTRA%2014178A_djvu.txt",
+      "sha256": "a63d9a853227dcd5225ae3a35a744e5b533d768a1701dba2d03d26ded453b8cf",
+      "bytes": 389761,
+      "note": "NEETS module: NEETS MOD 6 NAVEDTRA 14178A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_7_NAVEDTRA_14179A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%207%20NAVEDTRA%2014179A_djvu.txt",
+      "sha256": "ee503cb71fb7ee5476b858a11c8e4c405ed00f415e068b840e40ad90905407b9",
+      "bytes": 487099,
+      "note": "NEETS module: NEETS MOD 7 NAVEDTRA 14179A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_8_NAVEDTRA_14180A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%208%20NAVEDTRA%2014180A_djvu.txt",
+      "sha256": "e2b0e693b5079ab68011fc3a6297ba87f5215e84d0f642f383d40b1f49a7d60b",
+      "bytes": 252775,
+      "note": "NEETS module: NEETS MOD 8 NAVEDTRA 14180A_djvu.txt"
+    },
+    {
+      "path": "sources/neets/NEETS_MOD_9_NAVEDTRA_14181A_djvu.txt",
+      "url": "https://archive.org/download/neetsmodules_202003/NEETS%20MOD%209%20NAVEDTRA%2014181A_djvu.txt",
+      "sha256": "34a2793c00c906b03a00eda99307c3862945a543b16d3478a90cf8cf7a344072",
+      "bytes": 420410,
+      "note": "NEETS module: NEETS MOD 9 NAVEDTRA 14181A_djvu.txt"
+    },
+    {
+      "path": "sources/webster-1913/pg29765.txt",
+      "url": "https://www.gutenberg.org/cache/epub/29765/pg29765.txt",
+      "sha256": "86fb9c28c32008ea288ca4bcf34f4f0d3d11ccf9e0898294d98b73671497f1d3",
+      "bytes": 28956350,
+      "note": "Webster's Unabridged Dictionary"
+    }
+  ],
+  "failures": []
+}
