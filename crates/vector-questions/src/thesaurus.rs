@@ -226,7 +226,9 @@ impl WkItem {
             self.headword, self.supporting_line
         );
         match &self.definition {
-            Some(definition) => format!("{} — {}", definition.trim(), evidence),
+            Some(definition) => {
+                format!("{}. {}", definition.trim().trim_end_matches('.'), evidence)
+            }
             None => evidence,
         }
     }

@@ -210,6 +210,25 @@ fn an_attached_definition_leads_the_explanation_and_still_quotes_the_source() {
 }
 
 #[test]
+fn the_definition_source_join_uses_a_plain_separator_not_an_em_dash() {
+    let t = fixture();
+    let mut items = t.build_items_configured(4, 5, 1, |_, _| true);
+    // A definition that ends in a full stop, as a dictionary entry does.
+    Thesaurus::attach_definitions(&mut items, |_| Some("a plain definition.".to_string()));
+    for item in &items {
+        let explanation = item.explanation();
+        assert!(
+            !explanation.contains('\u{2014}'),
+            "the join must be plain, not an em-dash: {explanation}"
+        );
+        assert!(
+            explanation.starts_with("a plain definition. The source lists"),
+            "the definition's own full stop must not double with the separator: {explanation}"
+        );
+    }
+}
+
+#[test]
 fn a_missing_definition_leaves_the_explanation_on_the_source_list_alone() {
     let t = fixture();
     let mut items = t.build_items_configured(4, 5, 1, |_, _| true);
