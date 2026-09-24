@@ -185,6 +185,64 @@ fn the_explanation_shows_the_source_list_rather_than_inventing_one() {
     );
 }
 
+#[test]
+fn an_attached_definition_leads_the_explanation_and_still_quotes_the_source() {
+    let t = fixture();
+    let mut items = t.build_items_configured(4, 5, 1, |_, _| true);
+    let headword = items.first().expect("an item").headword.clone();
+    let related = t.related_to(&headword).expect("known headword");
+
+    // A lookup that supplies a definition for every headword, standing in for
+    // Webster's. The definition must appear, and the source list must survive
+    // beneath it -- an explanation is evidence, not a replacement for it.
+    Thesaurus::attach_definitions(&mut items, |_| Some("a plain definition".to_string()));
+    let item = items.first().expect("an item");
+    let explanation = item.explanation();
+    assert!(
+        explanation.starts_with("a plain definition"),
+        "the definition must lead: {explanation}"
+    );
+    assert!(
+        explanation.contains(&related[0]),
+        "the source list must still be quoted: {explanation}"
+    );
+    assert!(explanation.contains(&item.headword));
+}
+
+#[test]
+fn a_missing_definition_leaves_the_explanation_on_the_source_list_alone() {
+    let t = fixture();
+    let mut items = t.build_items_configured(4, 5, 1, |_, _| true);
+    let naked: Vec<String> = items.iter().map(|i| i.explanation()).collect();
+
+    // The dictionary has no entry for the headword, so nothing is invented and
+    // the explanation is byte-for-byte what it was before.
+    Thesaurus::attach_definitions(&mut items, |_| None);
+    let after: Vec<String> = items.iter().map(|i| i.explanation()).collect();
+    assert_eq!(
+        naked, after,
+        "an absent definition must not change the text"
+    );
+    assert!(items.iter().all(|i| i.definition.is_none()));
+}
+
+#[test]
+fn attach_definitions_only_fills_the_headwords_the_lookup_knows() {
+    let t = fixture();
+    let mut items = t.build_items_configured(8, 3, 1, |_, _| true);
+    let known = items.first().expect("an item").headword.clone();
+    Thesaurus::attach_definitions(&mut items, |word| {
+        (word == known).then(|| "known definition".to_string())
+    });
+    for item in &items {
+        if item.headword == known {
+            assert_eq!(item.definition.as_deref(), Some("known definition"));
+        } else {
+            assert!(item.definition.is_none());
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Verification must be able to fail
 // ---------------------------------------------------------------------------
@@ -371,6 +429,7 @@ fn a_hand_built_item_with_a_wrong_answer_is_rejected() {
         related_count: 8,
         difficulty: 0.0,
         seed: 0,
+        definition: None,
     };
     match verify(&item, &t) {
         Err(WkVerificationFailure::CorrectOptionNotInSource { .. }) => {}

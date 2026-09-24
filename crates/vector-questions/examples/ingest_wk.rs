@@ -159,6 +159,26 @@ fn main() {
         "\nbuild times     : thesaurus-only {unfiltered_ms} ms, dictionary-linked {filtered_ms} ms"
     );
 
+    // Give every item its plain definition from Webster's, so the explanation
+    // teaches the word instead of only listing its neighbours. Items whose
+    // headword Webster's does not carry keep the source-list explanation.
+    let mut filtered = filtered;
+    Thesaurus::attach_definitions(&mut filtered, |word| {
+        dictionary.define(word).map(str::to_string)
+    });
+    let with_definition = filtered
+        .iter()
+        .filter(|item| item.definition.is_some())
+        .count();
+    if !filtered.is_empty() {
+        println!(
+            "plain definitions: {} of {} items carry a Webster's definition ({:.0}%)",
+            with_definition,
+            filtered.len(),
+            100.0 * with_definition as f64 / filtered.len() as f64
+        );
+    }
+
     // How much of the unfiltered corpus the dictionary refuses. This is the
     // measurement that justifies the second source.
     let endorsed = unfiltered

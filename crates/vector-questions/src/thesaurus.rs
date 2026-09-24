@@ -182,6 +182,17 @@ pub struct WkItem {
     pub related_count: usize,
     pub difficulty: f64,
     pub seed: u64,
+    /// A plain definition of the headword, quoted from the licensed Webster's
+    /// Unabridged Dictionary in the same corpus.
+    ///
+    /// The thesaurus list is the *evidence* for the synonym pair, but it is not
+    /// a definition: it is a comma-separated dump of near-neighbours, and a
+    /// learner who answers wrong learns nothing about what the word means. When
+    /// Webster's carries the headword, its own definition is attached here so
+    /// the explanation can teach the word rather than only cite the source.
+    /// `None` when the dictionary has no entry, in which case the explanation
+    /// falls back to the source list alone.
+    pub definition: Option<String>,
 }
 
 impl WkItem {
@@ -203,12 +214,30 @@ impl WkItem {
             .to_string()
     }
 
-    /// The explanation shown after answering: the source's own list.
+    /// The explanation shown after answering: the word's own definition when the
+    /// dictionary carries it, followed by the source's list as the evidence.
+    ///
+    /// The source list is always quoted, so the item never rests on text this
+    /// program invented -- but when a plain definition is available it leads, so
+    /// a wrong answer teaches the meaning instead of only a list of neighbours.
     pub fn explanation(&self) -> String {
-        format!(
+        let evidence = format!(
             "The source lists these terms with \"{}\": {}",
             self.headword, self.supporting_line
-        )
+        );
+        match &self.definition {
+            Some(definition) => format!("{} — {}", definition.trim(), evidence),
+            None => evidence,
+        }
+    }
+
+    /// Attach the headword's plain definition, quoted from the corpus dictionary.
+    ///
+    /// Kept separate from the builder so the builder stays source-agnostic and
+    /// callers that have no dictionary still produce a valid item.
+    pub fn with_definition(mut self, definition: Option<String>) -> Self {
+        self.definition = definition.map(|text| text.trim().to_string());
+        self
     }
 }
 
@@ -485,6 +514,22 @@ impl Thesaurus {
         self.build_items_configured(count, seed, MIN_DISTRACTOR_LINES, accept)
     }
 
+    /// Fill each item's plain definition from a lookup, e.g. the corpus dictionary.
+    ///
+    /// Kept as a post-pass rather than a builder parameter so the builder stays
+    /// source-agnostic and a caller with no dictionary is unaffected. The lookup
+    /// receives the headword and returns its definition text if the source has
+    /// one; `None` leaves the item's explanation on the source list alone.
+    pub fn attach_definitions<F>(items: &mut [WkItem], mut lookup: F)
+    where
+        F: FnMut(&str) -> Option<String>,
+    {
+        for item in items.iter_mut() {
+            let definition = lookup(&item.headword);
+            item.definition = definition.map(|text| text.trim().to_string());
+        }
+    }
+
     /// As [`Self::build_items_filtered`], with the distractor bar set explicitly.
     ///
     /// The threshold is a policy rather than a property of the source, so it is a
@@ -652,6 +697,9 @@ impl Thesaurus {
             related_count: entry.related.len(),
             difficulty: derive_difficulty(&entry.headword, entry.related.len()),
             seed,
+            // Filled by the caller through `with_definition` when a dictionary is
+            // available; the builder itself only knows the thesaurus.
+            definition: None,
         })
     }
 }
