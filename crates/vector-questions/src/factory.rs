@@ -487,6 +487,233 @@ fn ar_work_rate(rng: &mut Rng) -> Option<Candidate> {
     })
 }
 
+// ---------------------------------------------------------------------------
+// AR expansion: the breadth the ticket asks for. Every one of these carries an
+// executable expression proof, and every wrong option is a *derived* value -- a
+// plausible arithmetic misstep -- rather than a number the stem prints. Where a
+// misconception would collapse onto a printed number (or onto the answer) for a
+// drawn parameter, the template steers the draw instead of weakening the guard in
+// `assemble`, because that guard is the backstop for exactly this class of defect.
+// ---------------------------------------------------------------------------
+
+/// Distance equals rate times time. Includes the unit conversion the real subtest
+/// uses, so "forgot to convert" is a live misconception and the answer is not a
+/// restatement of the stem.
+fn ar_distance_rate(rng: &mut Rng) -> Option<Candidate> {
+    let speed = rng.range(30, 70);
+    let hours = rng.range(2, 6);
+    let extra_minutes = 30;
+    let total_minutes = hours * 60 + extra_minutes;
+    // Whole miles only: a fractional distance would not survive an exact-integer
+    // proof, and the misconception must be a value a learner could actually pick.
+    if (speed * total_minutes) % 60 != 0 {
+        return None;
+    }
+    let correct = speed * total_minutes / 60;
+    Some(Candidate {
+        stem: format!(
+            "A train travels at a constant {speed} miles per hour for {hours} hours \
+             and {extra_minutes} minutes. How many miles does it travel?"
+        ),
+        expression: format!("{speed} * ({hours} * 60 + {extra_minutes}) / 60"),
+        correct,
+        distractors: vec![
+            misconception(
+                speed * hours,
+                "Used only the whole hours and dropped the extra minutes.",
+            ),
+            misconception(
+                speed * total_minutes,
+                "Multiplied by the total time in minutes without converting back to hours.",
+            ),
+            misconception(
+                speed * (hours + 1),
+                "Rounded the extra minutes up to a full hour.",
+            ),
+        ],
+        difficulty: 0.3,
+    })
+}
+
+/// A percentage discount. The wrong options are the discount itself and two
+/// mis-scaled discounts -- all derived, none printed in the stem.
+fn ar_discount_price(rng: &mut Rng) -> Option<Candidate> {
+    let price = rng.range(4, 40) * 10;
+    // Only percentages whose discount is a whole number of dollars. The proof
+    // re-evaluates the expression exactly, so `price * percent / 100` must divide
+    // without truncation (15% of 150 is not a whole dollar); a draw that would
+    // truncate is skipped rather than silently rounded.
+    let percent = [15, 20, 25, 30, 40, 45][(rng.range(0, 5)) as usize];
+    if (price * percent) % 100 != 0 {
+        return None;
+    }
+    let discount = price * percent / 100;
+    let correct = price - discount;
+    if correct <= 0 {
+        return None;
+    }
+    Some(Candidate {
+        stem: format!(
+            "A jacket is priced at {price} dollars and is on sale at {percent} percent \
+             off. What is the sale price in dollars?"
+        ),
+        expression: format!("{price} - ({price} * {percent} / 100)"),
+        correct,
+        distractors: vec![
+            misconception(discount, "Reported the discount instead of the sale price."),
+            misconception(
+                price - percent,
+                "Subtracted the percentage as if it were a dollar amount.",
+            ),
+            misconception(
+                price - discount / 2,
+                "Halved the discount, giving too little off.",
+            ),
+        ],
+        difficulty: -0.4,
+    })
+}
+
+/// Unit conversion in the direction the real test asks: a large unit expressed in
+/// a smaller one.
+fn ar_unit_conversion(rng: &mut Rng) -> Option<Candidate> {
+    let hours = rng.range(2, 9);
+    let minutes = rng.range(2, 9) * 5;
+    let correct = hours * 60 + minutes;
+    Some(Candidate {
+        stem: format!("How many minutes are there in {hours} hours and {minutes} minutes?"),
+        expression: format!("{hours} * 60 + {minutes}"),
+        correct,
+        distractors: vec![
+            misconception(hours * 100 + minutes, "Treated each hour as 100 minutes."),
+            misconception(
+                hours * 60 - minutes,
+                "Subtracted the extra minutes instead of adding them.",
+            ),
+            misconception(hours + minutes, "Added the numbers as written."),
+        ],
+        difficulty: -1.1,
+    })
+}
+
+/// Multiplication in a rate context. The stem prints only two numbers, so the
+/// obvious distractors are derived misfactors rather than copies.
+fn ar_production_rate(rng: &mut Rng) -> Option<Candidate> {
+    let machines = rng.range(3, 12);
+    let hours = rng.range(2, 9);
+    let per_machine_per_hour = rng.range(4, 15);
+    let correct = machines * per_machine_per_hour * hours;
+    Some(Candidate {
+        stem: format!(
+            "A factory has {machines} machines. Each machine produces \
+             {per_machine_per_hour} parts per hour. How many parts do all the \
+             machines produce in {hours} hours?"
+        ),
+        expression: format!("{machines} * {per_machine_per_hour} * {hours}"),
+        correct,
+        distractors: vec![
+            misconception(
+                per_machine_per_hour * hours,
+                "Counted only one machine's output.",
+            ),
+            misconception(
+                machines * per_machine_per_hour,
+                "Counted one hour instead of the stated number of hours.",
+            ),
+            misconception(
+                machines * per_machine_per_hour * hours / 2,
+                "Halved the total, as if only half the machines ran.",
+            ),
+        ],
+        difficulty: -0.2,
+    })
+}
+
+/// A two-step proportion: work out the unit rate, then scale it. Both steps are in
+/// the expression, so the proof checks the whole chain rather than one product.
+fn ar_batch_proportion(rng: &mut Rng) -> Option<Candidate> {
+    let per_batch = rng.range(3, 12);
+    let batches = rng.range(3, 9);
+    let wanted = rng.range(2, 8);
+    if (per_batch * wanted) % batches != 0 {
+        return None;
+    }
+    let correct = per_batch * wanted / batches;
+    // All four options must be positive: `per_batch / batches` is the "found the
+    // unit rate and stopped" misconception, and it is only a real litre figure if
+    // the division leaves at least one litre. `per_batch < batches` truncates it to
+    // zero, which no learner would choose.
+    if correct == 0 || per_batch / batches == 0 {
+        return None;
+    }
+    Some(Candidate {
+        stem: format!(
+            "{batches} batches of a mixture require {per_batch} litres of solvent. \
+             How many litres do {wanted} batches require at the same rate?"
+        ),
+        expression: format!("{per_batch} * {wanted} / {batches}"),
+        correct,
+        distractors: vec![
+            misconception(
+                per_batch / batches,
+                "Found the solvent per batch and stopped there.",
+            ),
+            misconception(
+                per_batch + wanted,
+                "Added the batch counts instead of scaling the rate.",
+            ),
+            misconception(
+                per_batch * batches / wanted,
+                "Inverted the ratio, scaling in the wrong direction.",
+            ),
+        ],
+        difficulty: 0.6,
+    })
+}
+
+/// A percentage of an amount. `ar_percent_of` covers the direct form; this is the
+/// inverse wording a learner meets on a word problem, and the wrong options map to
+/// the two classic inverse mistakes.
+fn ar_percent_remaining(rng: &mut Rng) -> Option<Candidate> {
+    let total = rng.range(4, 40) * 5;
+    let percent = [10, 20, 25, 40, 50, 60][(rng.range(0, 5)) as usize];
+    // The proof re-evaluates the expression exactly, so the division must be whole.
+    // 25% and 40% of a multiple of 5 leave a remainder at some draws (8250 * 25 is
+    // not a multiple of 100), so the draw is skipped rather than truncated.
+    if (total * percent) % 100 != 0 {
+        return None;
+    }
+    let part = total * percent / 100;
+    let correct = total - part;
+    // Every option must be a plausible crate count. `total - percent` is the
+    // "subtracted the percentage as a number" misconception, and it is only a real
+    // answer if it is positive; a 25-crate shipment with 60% off would make it -5,
+    // which is not something a learner would pick.
+    if correct <= 0 || total - percent <= 0 {
+        return None;
+    }
+    Some(Candidate {
+        stem: format!(
+            "{percent} percent of a shipment of {total} crates is damaged. How many \
+             crates are not damaged?"
+        ),
+        expression: format!("{total} - ({total} * {percent} / 100)"),
+        correct,
+        distractors: vec![
+            misconception(part, "Reported the damaged crates instead of the rest."),
+            misconception(
+                total - percent,
+                "Subtracted the percentage as if it were a crate count.",
+            ),
+            misconception(
+                total + part,
+                "Added the damaged share to the shipment instead of removing it.",
+            ),
+        ],
+        difficulty: -0.3,
+    })
+}
+
 fn mk_linear_solve(rng: &mut Rng) -> Option<Candidate> {
     let coefficient = rng.range(2, 9);
     let solution = rng.range(2, 12);
@@ -987,6 +1214,42 @@ const TEMPLATES: &[Template] = &[
         subtest: "AR",
         objective_id: "OBJ-AR-RATE-02",
         build: ar_work_rate,
+    },
+    Template {
+        id: "ar.distance_rate",
+        subtest: "AR",
+        objective_id: "OBJ-AR-RATE-03",
+        build: ar_distance_rate,
+    },
+    Template {
+        id: "ar.discount_price",
+        subtest: "AR",
+        objective_id: "OBJ-AR-PERCENT-02",
+        build: ar_discount_price,
+    },
+    Template {
+        id: "ar.unit_conversion",
+        subtest: "AR",
+        objective_id: "OBJ-AR-MEASURE-01",
+        build: ar_unit_conversion,
+    },
+    Template {
+        id: "ar.production_rate",
+        subtest: "AR",
+        objective_id: "OBJ-AR-RATE-04",
+        build: ar_production_rate,
+    },
+    Template {
+        id: "ar.batch_proportion",
+        subtest: "AR",
+        objective_id: "OBJ-AR-PROPORTION-02",
+        build: ar_batch_proportion,
+    },
+    Template {
+        id: "ar.percent_remaining",
+        subtest: "AR",
+        objective_id: "OBJ-AR-PERCENT-03",
+        build: ar_percent_remaining,
     },
     Template {
         id: "mk.linear_solve",

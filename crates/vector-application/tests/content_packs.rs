@@ -233,6 +233,55 @@ fn a_built_pack_survives_a_round_trip_through_its_bytes() {
     verify_pack(&parsed, &trusted(), RUNNING_VERSION).expect("a fresh pack must verify");
 }
 
+/// The content hash is computed over the serialized payload, and `verify_pack`
+/// recomputes it from what was parsed back off the bytes. If any payload field does
+/// not survive serde's text round trip byte-for-byte -- a raw `f64` sigmoid was the
+/// actual offender, `0.24973989440488234` printing more digits than it parses back
+/// as -- then re-serializing a parsed pack yields different bytes and the pack
+/// refuses itself. AR carries the difficulty spread that produced that value, so it
+/// is the subtest most likely to catch a regression here.
+#[test]
+fn a_parsed_pack_re_serializes_to_identical_bytes() {
+    for subtest in ["AR", "MK"] {
+        let (_dir, db) = store_with_items(&format!("restable-{subtest}"), subtest, 24);
+        let bytes = build(&db, 1);
+        let parsed = parse_pack(&bytes).expect("parse");
+
+        // Timestamp, signature and the hash itself are outside the hashed payload's
+        // stability guarantee for a re-serialization test only in that they are
+        // recomputed; the payload they cover must be identical. Comparing the whole
+        // document is stronger, so blank the three fields that legitimately differ
+        // and compare the rest.
+        let scrub = |raw: &[u8]| -> String {
+            String::from_utf8_lossy(raw)
+                .lines()
+                .filter(|line| {
+                    !line.contains("created_at")
+                        && !line.contains("content_hash")
+                        && !line.contains("signature")
+                        && !line.contains("signer")
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+
+        let rebuilt = pack_bytes(&parsed).expect("re-serialize");
+        assert_eq!(
+            scrub(&bytes),
+            scrub(&rebuilt),
+            "{subtest}: the payload does not survive a text round trip, so the content \
+             hash a pack records can differ from the one verify_pack recomputes"
+        );
+        assert_eq!(
+            parsed.content_hash,
+            parsed.computed_content_hash(),
+            "{subtest}: the recorded hash must equal the recomputed one on the parsed pack"
+        );
+        verify_pack(&parsed, &trusted(), RUNNING_VERSION)
+            .unwrap_or_else(|e| panic!("{subtest}: re-serialized pack must still verify: {e}"));
+    }
+}
+
 #[test]
 fn building_a_pack_from_an_empty_store_is_refused() {
     let (_dir, db) = database("empty");
