@@ -308,6 +308,93 @@ fn ingested_items_are_reachable_through_the_serving_api() {
 }
 
 // ---------------------------------------------------------------------------
+// Plain definitions on the stored bank
+// ---------------------------------------------------------------------------
+
+/// The whole point of the plain-definitions change is that the *stored* bank
+/// carries the definition, not that a helper can produce one. This ingest path
+/// is the one `scripts/rebuild-corpus.py` reaches, so a rebuilt bank must show
+/// the definition in the stored explanation; a test of the helper alone would
+/// pass even if `ingest_wk` never called it.
+#[test]
+fn stored_wk_explanations_carry_the_plain_definition() {
+    let (_dir, db, thesaurus_source, dictionary_source) = database("definitions");
+    let pipeline = ContentPipeline::new(&db);
+    pipeline
+        .ingest_wk(
+            &parse_moby(THESAURUS),
+            &parse_webster(DICTIONARY),
+            &request(&thesaurus_source, &dictionary_source),
+        )
+        .expect("ingest");
+
+    let repo = ContentItemRepo::new(&db);
+    let servable = repo.servable("WK").expect("servable");
+    assert!(!servable.is_empty(), "the fixture should yield items");
+
+    // Every headword in the fixture is in the miniature Webster's, so every
+    // stored explanation must lead with that definition. The stem names the
+    // headword uppercased at the end ("... the same as BRAVE."), so the token
+    // before the final full stop is the headword. The definition is then joined
+    // to the source list by a plain ". ", never an em-dash.
+    let mut with_definition = 0usize;
+    for item in &servable {
+        let headword = item
+            .stem
+            .trim_end_matches('.')
+            .split_whitespace()
+            .last()
+            .expect("stem names a headword")
+            .trim_matches('"')
+            .to_lowercase();
+        assert!(
+            !item.explanation.is_empty(),
+            "{}: a stored explanation is required",
+            item.id
+        );
+        assert!(
+            !item.explanation.contains('\u{2014}'),
+            "{}: the definition/source join must be plain, not an em-dash: {}",
+            item.id,
+            item.explanation
+        );
+        if item.explanation.to_lowercase().starts_with(&headword)
+            || item
+                .explanation
+                .to_lowercase()
+                .contains(&format!("{headword}."))
+        {
+            with_definition += 1;
+        }
+    }
+    assert!(
+        with_definition > 0,
+        "at least one stored WK explanation must lead with the headword's definition"
+    );
+
+    // And the stored text must actually be Webster's definition, matched against
+    // the dictionary source rather than merely non-empty.
+    let dictionary = parse_webster(DICTIONARY);
+    let sampled = servable.iter().find_map(|item| {
+        let stem = item.stem.to_lowercase();
+        ["brave", "bold", "courageous", "valiant", "dauntless"]
+            .iter()
+            .find(|word| stem.contains(*word))
+            .and_then(|word| dictionary.define(word).map(|d| (*word, d.to_string())))
+    });
+    let Some((headword, definition)) = sampled else {
+        panic!("the fixture should contain at least one defined headword");
+    };
+    let leading = definition.trim().trim_end_matches('.');
+    assert!(
+        servable
+            .iter()
+            .any(|item| item.explanation.contains(leading)),
+        "the stored explanation must quote Webster's definition for {headword}: {leading}"
+    );
+}
+
+// ---------------------------------------------------------------------------
 // Reproducibility and refusal
 // ---------------------------------------------------------------------------
 

@@ -271,7 +271,15 @@ impl<'a> ContentPipeline<'a> {
         dictionary: &Dictionary,
         request: &WkIngestRequest<'_>,
     ) -> anyhow::Result<WkIngestReport> {
-        let items = thesaurus.build_items_configured(
+        // The plain definition is attached here, on the real ingest path, not
+        // only in the example binary: `ingest_wk` is what `rebuild-corpus.py`
+        // reaches through `vector-tools content ingest-wk`, so wiring it here is
+        // what makes a rebuilt bank carry definitions in its stored
+        // explanations. The dictionary passed in is the same one that supplies
+        // the link filter above, so a headword it defines is a headword it also
+        // links. A headword Webster's does not carry keeps the source-list
+        // explanation unchanged.
+        let mut items = thesaurus.build_items_configured(
             request.count,
             request.seed,
             request.min_distractor_lines,
@@ -279,6 +287,9 @@ impl<'a> ContentPipeline<'a> {
             // link is one Moby associated but never defined as synonymous.
             |head, candidate| dictionary.are_linked(head, candidate),
         );
+        Thesaurus::attach_definitions(&mut items, |head| {
+            dictionary.define(head).map(str::to_string)
+        });
 
         let mut report = WkIngestReport {
             built: items.len(),
