@@ -28,6 +28,14 @@ A sentence that is deliberately made extremely long so that it cannot serve as a
 
 As a proof of the equable climate even for 300 or 400 miles still further northward I may mention Chiloe. That island lies in latitude with the northern parts of Spain. Its gardens are watered by frequent rain throughout the year.
 
+The glaciers of the southern Andes descend almost to the water in many places along this coast. These glaciers are fed by the same heavy snow that falls throughout the long winter months. A glacier advancing slowly into the fjord breaks off at last in great masses of floating ice.
+
+Volcanoes are numerous along the whole length of this chain of mountains. Several volcanoes were seen in eruption during the survey of the neighbouring coast. The sailors reported that the volcanoes threw out fine ash for many days together.
+
+The harbours of the strait afford excellent shelter for shipping of every size. These harbours are deep enough for the largest vessels to anchor close inshore. A harbour on the eastern side is formed by a natural breakwater of rock.
+
+The tribes of this region build canoes of bark and of plank. A canoe is paddled by the women while the men manage the fire in the middle of the craft. The canoes are often kept afloat in weather that would swamp a larger boat.
+
 *** END OF THE PROJECT GUTENBERG EBOOK A TEST WORK ***
 
 This licence text must never become a passage about anything at all.
@@ -186,26 +194,69 @@ fn every_option_is_a_complete_sentence_within_the_band() {
     assert!(!items.is_empty(), "the fixture should yield items");
     for item in &items {
         assert_eq!(item.options.len(), 4);
-        for option in &item.options {
-            let count = option.split_whitespace().count();
-            assert!(
-                (MIN_CLAUSE_WORDS..=MAX_CLAUSE_WORDS).contains(&count),
-                "{count} words is outside the option band: {option:?}"
-            );
-            // A complete statement ends with a terminator and has balanced brackets.
-            assert!(
-                option.ends_with(['.', '!', '?']),
-                "option is a fragment, not a statement: {option:?}"
-            );
-            assert_eq!(
-                option.matches('(').count(),
-                option.matches(')').count(),
-                "unbalanced brackets in {option:?}"
-            );
+        // The clause band and the complete-statement rule are DETAIL rules: a
+        // main-idea or vocabulary answer is a single word by design. Scoping the
+        // strict check to the kind it describes keeps it exactly as strict, while
+        // still holding every kind to its own shape.
+        if item.objective_id == "OBJ-PC-DETAIL-01" {
+            for option in &item.options {
+                let count = option.split_whitespace().count();
+                assert!(
+                    (MIN_CLAUSE_WORDS..=MAX_CLAUSE_WORDS).contains(&count),
+                    "{count} words is outside the option band: {option:?}"
+                );
+                // A complete statement ends with a terminator and has balanced brackets.
+                assert!(
+                    option.ends_with(['.', '!', '?']),
+                    "option is a fragment, not a statement: {option:?}"
+                );
+                assert_eq!(
+                    option.matches('(').count(),
+                    option.matches(')').count(),
+                    "unbalanced brackets in {option:?}"
+                );
+            }
+        } else {
+            // A single-word kind: every option is one word, so they cannot be told
+            // apart by shape.
+            for option in &item.options {
+                assert_eq!(
+                    option.split_whitespace().count(),
+                    1,
+                    "a {:?} option must be one word: {option:?}",
+                    item.objective_id
+                );
+            }
         }
         assert!(item.passage.split_whitespace().count() >= MIN_PASSAGE_WORDS);
         assert_eq!(item.source_label, "test work");
-        assert_eq!(item.objective_id, "OBJ-PC-DETAIL-01");
+        assert!(
+            Text::KINDS.contains(&item.objective_id.as_str()),
+            "unexpected objective: {}",
+            item.objective_id
+        );
+    }
+}
+
+#[test]
+fn all_three_kinds_are_produced_and_each_verifies() {
+    // The builder used to stamp one stem on every PC item. This pins that the three
+    // supported kinds actually appear, and that one seed's worth of items covers
+    // more than a single objective -- a regression to the old single-kind build
+    // would otherwise pass every other test here.
+    let t = fixture();
+    let mut seen: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    for seed in 0..40 {
+        for item in t.build_items(12, seed, accept_all) {
+            seen.insert(item.objective_id.clone());
+            verify(&item).unwrap_or_else(|e| panic!("seed {seed} kind {}: {e}", item.objective_id));
+        }
+    }
+    for kind in Text::KINDS {
+        assert!(
+            seen.contains(kind),
+            "kind {kind} was never produced; saw {seen:?}"
+        );
     }
 }
 
@@ -288,10 +339,28 @@ fn the_explanation_quotes_the_passage() {
 // Verification must be able to fail
 // ---------------------------------------------------------------------------
 
+/// One DETAIL item from whichever seed yields one first.
+///
+/// The builder emits three kinds now; the negative tests below are all about the
+/// detail rules (clause band, altered token, passage length), so they need a detail
+/// item specifically rather than whatever `remove(0)` happens to draw.
+fn detail_item(t: &Text) -> PcItem {
+    for seed in 0..60 {
+        if let Some(item) = t
+            .build_items(12, seed, accept_all)
+            .into_iter()
+            .find(|item| item.objective_id == "OBJ-PC-DETAIL-01")
+        {
+            return item;
+        }
+    }
+    panic!("the fixture yields no detail item");
+}
+
 #[test]
 fn verification_refuses_a_correct_option_the_passage_does_not_state() {
     let t = fixture();
-    let mut item = t.build_items(3, 12, accept_all).remove(0);
+    let mut item = detail_item(&t);
     item.options[item.correct_index] =
         "The passage never says anything at all like this sentence.".to_string();
     match verify(&item) {
@@ -303,7 +372,7 @@ fn verification_refuses_a_correct_option_the_passage_does_not_state() {
 #[test]
 fn verification_refuses_a_distractor_the_passage_also_states() {
     let t = fixture();
-    let mut item = t.build_items(3, 13, accept_all).remove(0);
+    let mut item = detail_item(&t);
     let wrong = (item.correct_index + 1) % item.options.len();
     // Point a distractor at the correct sentence: then two options are true.
     item.options[wrong] = item.supporting_clause.clone();
@@ -317,7 +386,7 @@ fn verification_refuses_a_distractor_the_passage_also_states() {
 #[test]
 fn verification_refuses_a_distractor_whose_altered_token_is_in_the_passage() {
     let t = fixture();
-    let mut item = t.build_items(3, 14, accept_all).remove(0);
+    let mut item = detail_item(&t);
     let wrong = (item.correct_index + 1) % item.options.len();
     // Replace the altered quantity with one the passage states elsewhere, so the
     // passage does not rule the option out.
@@ -355,7 +424,7 @@ fn verification_refuses_a_distractor_whose_altered_token_is_in_the_passage() {
 #[test]
 fn verification_refuses_an_option_outside_the_length_band() {
     let t = fixture();
-    let mut item = t.build_items(3, 15, accept_all).remove(0);
+    let mut item = detail_item(&t);
     let wrong = (item.correct_index + 1) % item.options.len();
     item.options[wrong] = "Too short.".to_string();
     match verify(&item) {
@@ -367,7 +436,7 @@ fn verification_refuses_an_option_outside_the_length_band() {
 #[test]
 fn verification_refuses_a_passage_outside_the_length_band() {
     let t = fixture();
-    let mut item = t.build_items(3, 16, accept_all).remove(0);
+    let mut item = detail_item(&t);
     item.passage = "Far too short a passage.".to_string();
     match verify(&item) {
         Err(PcVerificationFailure::PassageLength { .. }) => {}
@@ -378,7 +447,7 @@ fn verification_refuses_a_passage_outside_the_length_band() {
 #[test]
 fn verification_refuses_incomplete_rationale_coverage() {
     let t = fixture();
-    let mut item = t.build_items(3, 17, accept_all).remove(0);
+    let mut item = detail_item(&t);
     let victim = *item
         .distractor_rationales
         .keys()
@@ -397,13 +466,18 @@ fn verification_refuses_incomplete_rationale_coverage() {
 #[test]
 fn a_hand_built_item_with_an_unsupported_answer_is_rejected() {
     let t = fixture();
+    // Take the passage from the source directly rather than from `build_items`: the
+    // builder now emits three kinds, and a main-idea or vocabulary item's passage
+    // may be shorter than the detail band this hand-built detail item must satisfy.
+    let passage = t
+        .paragraphs()
+        .iter()
+        .find(|p| (MIN_PASSAGE_WORDS..=220).contains(&p.split_whitespace().count()))
+        .expect("the fixture has a passage in band")
+        .clone();
     let item = PcItem {
         objective_id: "OBJ-PC-DETAIL-01".to_string(),
-        passage: t
-            .build_items(1, 18, accept_all)
-            .first()
-            .map(|built| built.passage.clone())
-            .unwrap_or_default(),
+        passage,
         prompt: "According to the passage, which of the following is stated?".to_string(),
         options: vec![
             "The passage does not contain this statement anywhere at all.".to_string(),
@@ -428,5 +502,54 @@ fn a_hand_built_item_with_an_unsupported_answer_is_rejected() {
     match verify(&item) {
         Err(PcVerificationFailure::CorrectOptionNotInPassage(_)) => {}
         other => panic!("an unsupported answer must be rejected, got {other:?}"),
+    }
+}
+
+/// A main-idea item whose "topic" the passage does not actually repeat must be
+/// refused: an item cannot claim a passage is about something the text mentions
+/// once.
+#[test]
+fn verification_refuses_a_main_idea_topic_the_passage_does_not_repeat() {
+    let t = fixture();
+    let mut item = None;
+    for seed in 0..40 {
+        if let Some(found) = t
+            .build_items(12, seed, accept_all)
+            .into_iter()
+            .find(|i| i.objective_id == "OBJ-PC-MAINIDEA-01")
+        {
+            item = Some(found);
+            break;
+        }
+    }
+    let mut item = item.expect("the fixture yields a main-idea item");
+    // Swap the answer for a word the passage contains exactly once, if any: the
+    // repetition rule is what must catch it, not mere presence.
+    let once = {
+        use std::collections::BTreeMap;
+        let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+        for word in item.passage.split_whitespace() {
+            let cleaned: String = word
+                .chars()
+                .filter(|c| c.is_ascii_alphabetic())
+                .collect::<String>()
+                .to_lowercase();
+            if cleaned.len() >= 5 {
+                *counts.entry(cleaned).or_insert(0) += 1;
+            }
+        }
+        counts
+            .into_iter()
+            .find(|(_, count)| *count == 1)
+            .map(|(word, _)| word)
+    };
+    let Some(once) = once else {
+        return; // fixture has no singleton content word; nothing to exercise here
+    };
+    item.options[item.correct_index] = once.clone();
+    item.supporting_clause = once.clone();
+    match verify(&item) {
+        Err(PcVerificationFailure::TopicNotRepeated { .. }) => {}
+        other => panic!("expected a repetition refusal, got {other:?}"),
     }
 }

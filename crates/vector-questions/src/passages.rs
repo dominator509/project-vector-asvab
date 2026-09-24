@@ -131,6 +131,12 @@ pub enum PcVerificationFailure {
         option: String,
         words: usize,
     },
+    /// A main-idea item names a topic the passage does not actually repeat, so the
+    /// item claims the passage is about something the text does not support.
+    TopicNotRepeated {
+        topic: String,
+        occurrences: usize,
+    },
 }
 
 impl std::fmt::Display for PcVerificationFailure {
@@ -171,6 +177,11 @@ impl std::fmt::Display for PcVerificationFailure {
                 f,
                 "option {option:?} is {words} words, outside the clause band, so it is \
                  answerable by shape"
+            ),
+            PcVerificationFailure::TopicNotRepeated { topic, occurrences } => write!(
+                f,
+                "the main-idea topic {topic:?} occurs {occurrences} time(s) in the passage; a \
+                 topic the passage does not repeat is not what it is mainly about"
             ),
         }
     }
@@ -238,6 +249,18 @@ const ABBREVIATIONS: [&str; 12] = [
 
 /// Punctuation that may close a sentence immediately after its terminator.
 const CLOSING_MARKS: [char; 7] = ['"', '\u{201d}', '\u{2019}', '\'', ')', ']', '\u{bb}'];
+
+/// Function words that are never the topic of a passage, and never a vocabulary
+/// target. Lowercase, because `words` lowercases before these are consulted.
+const STOP_WORDS: [&str; 63] = [
+    "about", "after", "again", "against", "because", "before", "being", "below", "between",
+    "could", "during", "every", "first", "found", "their", "there", "these", "thing", "those",
+    "through", "under", "until", "where", "which", "would", "other", "another", "should", "might",
+    "still", "since", "shall", "going", "above", "having", "never", "often", "always", "almost",
+    "alone", "along", "among", "around", "became", "become", "began", "begin", "called", "cannot",
+    "comes", "doing", "enough", "given", "great", "itself", "known", "large", "later", "little",
+    "made", "makes", "many", "while",
+];
 
 /// The character span of each sentence in a paragraph.
 ///
@@ -491,6 +514,31 @@ impl Text {
         self.paragraphs.is_empty()
     }
 
+    /// The comprehension types this builder can produce, and the only objective ids
+    /// it will ever stamp.
+    ///
+    /// CAT-ASVAB PC asks for four kinds of reading question. Two of them are
+    /// machine-checkable from the passage alone, and this module builds both:
+    ///
+    /// * **DETAIL** (`OBJ-PC-DETAIL-01`) - a clause the passage states, against
+    ///   near-misses that each alter one quantity or name.
+    /// * **MAIN_IDEA** (`OBJ-PC-MAINIDEA-01`) - the single option whose subject is
+    ///   the passage's dominant repeated topic. The correct option names a content
+    ///   word the passage repeats; every distractor names a content word taken from
+    ///   *another* passage in the same source, so it cannot be the topic of this one.
+    /// * **VOCAB_IN_CONTEXT** (`OBJ-PC-VOCAB-01`) - a word the passage uses, against
+    ///   three words the passage does not contain.
+    ///
+    /// **INFERENCE is deliberately not built.** An item that asks what the author
+    /// implies cannot be scored by any check this module can perform: the passage
+    /// does not *state* the answer, so string containment cannot confirm it, and a
+    /// wrong option is not wrong for a mechanical reason. Shipping an "inference"
+    /// item scored by containment would mislabel a detail item, and the module has
+    /// committed to saying what it measures rather than to filling a type count.
+    /// The gap is recorded here rather than papered over.
+    pub const KINDS: [&'static str; 3] =
+        ["OBJ-PC-DETAIL-01", "OBJ-PC-MAINIDEA-01", "OBJ-PC-VOCAB-01"];
+
     /// Whether this passage occurs in the source text.
     ///
     /// `verify` re-derives the facts from the item's own passage, which the builder
@@ -535,7 +583,263 @@ impl Text {
         items
     }
 
+    /// Build one item of any supported kind. The kind is drawn from `KINDS`, so a
+    /// corpus-wide run produces a mix of detail, main-idea and vocabulary items
+    /// rather than the single stem the builder used to stamp on every PC item.
     fn build_one<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<PcItem>
+    where
+        F: FnMut(&str) -> bool,
+    {
+        match Self::KINDS[(rng.range(0, Self::KINDS.len() as i64 - 1)) as usize] {
+            "OBJ-PC-MAINIDEA-01" => self.build_main_idea(rng, seed, accept),
+            "OBJ-PC-VOCAB-01" => self.build_vocab_in_context(rng, seed, accept),
+            _ => self.build_detail(rng, seed, accept),
+        }
+    }
+
+    /// A passage in the comprehension band that the caller accepts.
+    ///
+    /// `verify` refuses a passage outside `MIN_PASSAGE_WORDS..=MAX_PASSAGE_WORDS`, so
+    /// every builder must draw from that band rather than from the paragraph list.
+    /// The detail builder gets this from the clause band it also has to satisfy; the
+    /// main-idea and vocabulary builders have no clause band, so they check here.
+    fn pick_passage<F>(&self, rng: &mut Rng, accept: &mut F) -> Option<String>
+    where
+        F: FnMut(&str) -> bool,
+    {
+        for _ in 0..32 {
+            let paragraph = self
+                .paragraphs
+                .get(rng.range(0, self.paragraphs.len() as i64 - 1) as usize)?
+                .clone();
+            let count = paragraph.split_whitespace().count();
+            if (MIN_PASSAGE_WORDS..=MAX_PASSAGE_WORDS).contains(&count) && accept(&paragraph) {
+                return Some(paragraph);
+            }
+        }
+        None
+    }
+
+    /// The topic of a passage, as the content word it repeats most.
+    ///
+    /// Returned with the number of its occurrences, so a caller can refuse a passage
+    /// with no clearly dominant subject instead of inventing one. Function words and
+    /// anything under five letters are skipped: the topic of a passage is a noun, not
+    /// `the`.
+    fn dominant_topic(&self, passage: &str) -> Option<(String, usize)> {
+        let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+        for word in words(passage) {
+            // `words` lowercases and strips punctuation already. A short word or a
+            // stop word is never the subject of anything.
+            if word.len() < 5 || STOP_WORDS.contains(&word.as_str()) {
+                continue;
+            }
+            *counts.entry(word).or_insert(0) += 1;
+        }
+        let mut ranked: Vec<(String, usize)> = counts.into_iter().collect();
+        // Highest count first; ties broken by the word itself so the pick is stable
+        // across runs rather than depending on hash iteration order.
+        ranked.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        let (word, count) = ranked.into_iter().next()?;
+        // One mention is not a topic. Requiring a repeat is what makes "the passage
+        // is mostly about X" a fact about the text rather than about one sentence.
+        if count < 2 {
+            return None;
+        }
+        Some((word, count))
+    }
+
+    /// A topic word that appears in some *other* passage of this source, so it can be
+    /// used as a main-idea distractor: true of another passage, false of this one.
+    fn topic_from_elsewhere(&self, this_passage: &str, rng: &mut Rng) -> Option<String> {
+        let here: HashSet<String> = words(this_passage).into_iter().collect();
+        let mut pool: Vec<String> = Vec::new();
+        for paragraph in &self.paragraphs {
+            if paragraph == this_passage {
+                continue;
+            }
+            if let Some((topic, count)) = self.dominant_topic(paragraph) {
+                // It must be dominant elsewhere and absent here, or it is not a
+                // distractor for *this* passage's topic.
+                if count >= 2 && !here.contains(&topic) {
+                    pool.push(topic);
+                }
+            }
+        }
+        pool.sort();
+        pool.dedup();
+        if pool.is_empty() {
+            return None;
+        }
+        Some(pool[(rng.range(0, pool.len() as i64 - 1)) as usize].clone())
+    }
+
+    /// MAIN_IDEA: "the passage is mostly about ___", the blank filled by the
+    /// passage's dominant repeated topic against three topics drawn from other
+    /// passages. Every distractor is *false here* by construction, not by taste.
+    fn build_main_idea<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<PcItem>
+    where
+        F: FnMut(&str) -> bool,
+    {
+        let paragraph = self.pick_passage(rng, accept)?;
+        let (topic, _count) = self.dominant_topic(&paragraph)?;
+        let mut distractors: Vec<String> = Vec::new();
+        // Three distinct topics from elsewhere; `topic_from_elsewhere` excludes this
+        // passage's own words, so none of them can be the topic here.
+        for _ in 0..24 {
+            if distractors.len() == 3 {
+                break;
+            }
+            let Some(other) = self.topic_from_elsewhere(&paragraph, rng) else {
+                break;
+            };
+            if other != topic && !distractors.contains(&other) {
+                distractors.push(other);
+            }
+        }
+        if distractors.len() < 3 {
+            return None;
+        }
+
+        let mut options: Vec<(String, bool)> = vec![(topic.clone(), true)];
+        for d in &distractors {
+            options.push((d.clone(), false));
+        }
+        rng.shuffle(&mut options);
+        let correct_index = options
+            .iter()
+            .position(|(_, is_correct)| *is_correct)
+            .expect("the correct option is present");
+
+        let mut distractor_rationales = BTreeMap::new();
+        for (index, (option, is_correct)) in options.iter().enumerate() {
+            if *is_correct {
+                continue;
+            }
+            distractor_rationales.insert(
+                index,
+                format!(
+                    "{option:?} is the subject of another passage in this source, not of this one; \
+                     this passage repeats {topic:?}."
+                ),
+            );
+        }
+
+        Some(PcItem {
+            objective_id: "OBJ-PC-MAINIDEA-01".to_string(),
+            passage: paragraph,
+            prompt: "Which of the following best states what the passage is mainly about?"
+                .to_string(),
+            options: options.into_iter().map(|(option, _)| option).collect(),
+            correct_index,
+            distractor_rationales,
+            // The evidence for a main-idea item is the passage's own repeated topic
+            // word; `verify` re-checks that it is present and repeated.
+            supporting_clause: topic,
+            source_label: self.label.clone(),
+            difficulty: 0.5,
+            seed,
+        })
+    }
+
+    /// VOCAB_IN_CONTEXT: a word the passage actually uses, against three words the
+    /// passage does not contain. The correct answer is checkable by containment --
+    /// it is in the text -- and each distractor is checkable by *absence*, which is
+    /// the same discipline the detail items use.
+    ///
+    /// This is a weaker item than a true synonym test: it asks which word appears in
+    /// the passage, which is recognition rather than meaning. It is offered here
+    /// because that is the strongest vocabulary claim a passage alone can support,
+    /// and the prompt is written to say exactly that rather than to claim more.
+    fn build_vocab_in_context<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<PcItem>
+    where
+        F: FnMut(&str) -> bool,
+    {
+        let paragraph = self.pick_passage(rng, accept)?;
+        let present: Vec<String> = {
+            let mut set: Vec<String> = words(&paragraph)
+                .into_iter()
+                .filter(|w| w.len() >= 6 && !STOP_WORDS.contains(&w.as_str()))
+                .collect();
+            set.sort();
+            set.dedup();
+            set
+        };
+        if present.is_empty() {
+            return None;
+        }
+        let target = present[(rng.range(0, present.len() as i64 - 1)) as usize].clone();
+        let here: HashSet<String> = words(&paragraph).into_iter().collect();
+
+        // Three plausible words that do not occur in the passage, drawn from the rest
+        // of the source so they are the same register as the passage's own vocabulary.
+        let mut absent: Vec<String> = Vec::new();
+        for other in &self.paragraphs {
+            if other == &paragraph {
+                continue;
+            }
+            for word in words(other) {
+                if word.len() >= 6 && !STOP_WORDS.contains(&word.as_str()) && !here.contains(&word)
+                {
+                    absent.push(word);
+                }
+            }
+        }
+        absent.sort();
+        absent.dedup();
+        if absent.len() < 3 {
+            return None;
+        }
+        let mut distractors: Vec<String> = Vec::new();
+        for _ in 0..64 {
+            if distractors.len() == 3 {
+                break;
+            }
+            let candidate = absent[(rng.range(0, absent.len() as i64 - 1)) as usize].clone();
+            if candidate != target && !distractors.contains(&candidate) {
+                distractors.push(candidate);
+            }
+        }
+        if distractors.len() < 3 {
+            return None;
+        }
+
+        let mut options: Vec<(String, bool)> = vec![(target.clone(), true)];
+        for d in &distractors {
+            options.push((d.clone(), false));
+        }
+        rng.shuffle(&mut options);
+        let correct_index = options
+            .iter()
+            .position(|(_, is_correct)| *is_correct)
+            .expect("the correct option is present");
+
+        let mut distractor_rationales = BTreeMap::new();
+        for (index, (option, is_correct)) in options.iter().enumerate() {
+            if *is_correct {
+                continue;
+            }
+            distractor_rationales.insert(
+                index,
+                format!("{option:?} does not occur anywhere in this passage."),
+            );
+        }
+
+        Some(PcItem {
+            objective_id: "OBJ-PC-VOCAB-01".to_string(),
+            passage: paragraph,
+            prompt: "Which of these words occurs in the passage below?".to_string(),
+            options: options.into_iter().map(|(option, _)| option).collect(),
+            correct_index,
+            distractor_rationales,
+            supporting_clause: target,
+            source_label: self.label.clone(),
+            difficulty: 0.2,
+            seed,
+        })
+    }
+
+    fn build_detail<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<PcItem>
     where
         F: FnMut(&str) -> bool,
     {
@@ -866,19 +1170,58 @@ pub fn verify(item: &PcItem) -> Result<(), PcVerificationFailure> {
     }
 
     let haystack = normalize(&item.passage);
+    let passage_tokens: HashSet<String> = words(&item.passage).into_iter().collect();
+
+    // A single-word item (main idea, vocabulary) is checked by word, not by clause:
+    // the answer is a word the passage uses, so requiring it to be a passage-length
+    // clause would refuse every one of them. Branching on the objective keeps the
+    // detail checks exactly as strict as they were.
+    let single_word = matches!(
+        item.objective_id.as_str(),
+        "OBJ-PC-MAINIDEA-01" | "OBJ-PC-VOCAB-01"
+    );
     let correct = &item.options[item.correct_index];
-    if !haystack.contains(&normalize(correct)) {
-        return Err(PcVerificationFailure::CorrectOptionNotInPassage(
-            correct.clone(),
-        ));
-    }
-    if normalize(correct) != normalize(&item.supporting_clause) {
-        return Err(PcVerificationFailure::CorrectOptionNotInPassage(
-            item.supporting_clause.clone(),
-        ));
+    if single_word {
+        // `words()` lowercases and strips punctuation, and `passage_tokens` is built
+        // from it, so membership is a word-level test rather than a substring one.
+        if !passage_tokens.contains(&correct.to_lowercase()) {
+            return Err(PcVerificationFailure::CorrectOptionNotInPassage(
+                correct.clone(),
+            ));
+        }
+        if correct.to_lowercase() != item.supporting_clause.to_lowercase() {
+            return Err(PcVerificationFailure::CorrectOptionNotInPassage(
+                item.supporting_clause.clone(),
+            ));
+        }
+        // MAIN_IDEA's answer has to be a *topic*: the passage must repeat it. A word
+        // that appears once is not what the passage is mainly about, so the item
+        // would be asserting something the text does not support.
+        if item.objective_id == "OBJ-PC-MAINIDEA-01" {
+            let occurrences = words(&item.passage)
+                .into_iter()
+                .filter(|word| word == &correct.to_lowercase())
+                .count();
+            if occurrences < 2 {
+                return Err(PcVerificationFailure::TopicNotRepeated {
+                    topic: correct.clone(),
+                    occurrences,
+                });
+            }
+        }
+    } else {
+        if !haystack.contains(&normalize(correct)) {
+            return Err(PcVerificationFailure::CorrectOptionNotInPassage(
+                correct.clone(),
+            ));
+        }
+        if normalize(correct) != normalize(&item.supporting_clause) {
+            return Err(PcVerificationFailure::CorrectOptionNotInPassage(
+                item.supporting_clause.clone(),
+            ));
+        }
     }
 
-    let passage_tokens: HashSet<String> = words(&item.passage).into_iter().collect();
     for (position, option) in item.options.iter().enumerate() {
         if option.trim().is_empty() {
             return Err(PcVerificationFailure::Blank(format!("option {position}")));
@@ -888,6 +1231,19 @@ pub fn verify(item: &PcItem) -> Result<(), PcVerificationFailure> {
             .any(|earlier| normalize(earlier) == normalize(option))
         {
             return Err(PcVerificationFailure::DuplicateOption(option.clone()));
+        }
+        if single_word {
+            // Every option is one word, so they are comparable by construction. The
+            // clause-length band below is a detail-item rule and does not apply.
+            if position == item.correct_index {
+                continue;
+            }
+            if passage_tokens.contains(&option.to_lowercase()) {
+                return Err(PcVerificationFailure::DistractorAlsoInPassage(
+                    option.clone(),
+                ));
+            }
+            continue;
         }
         // Options must be comparable in length, or the odd one out is answerable by
         // shape rather than by reading the passage.
