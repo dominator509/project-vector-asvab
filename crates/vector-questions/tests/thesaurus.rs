@@ -377,3 +377,81 @@ fn a_hand_built_item_with_a_wrong_answer_is_rejected() {
         other => panic!("an unprovable item must be rejected, got {other:?}"),
     }
 }
+
+// ---------------------------------------------------------------------------
+// Difficulty (issue #9): derived from the source, not a flat constant
+// ---------------------------------------------------------------------------
+
+/// The builder must not ship one difficulty for every item.
+///
+/// The defect this guards: `difficulty: 0.2` was hardcoded, so the whole bank
+/// carried a single value and the scheduler had nothing to discriminate on.
+/// A build over the fixture, whose headwords have related-term lists of
+/// different lengths, must produce more than one distinct difficulty.
+#[test]
+fn difficulty_varies_across_items_rather_than_being_a_constant() {
+    let t = fixture();
+    let items = t.build_items_configured(200, 4, 1, |_, _| true);
+    assert!(
+        items.len() >= 2,
+        "need at least two items to test variation, built {}",
+        items.len()
+    );
+    let mut distinct: Vec<f64> = items.iter().map(|item| item.difficulty).collect();
+    distinct.sort_by(|a, b| a.partial_cmp(b).expect("no NaN difficulties"));
+    distinct.dedup();
+    assert!(
+        distinct.len() > 1,
+        "all {} items share difficulty {:?}; the score is not being derived",
+        items.len(),
+        distinct
+    );
+}
+
+/// The derivation must read `related_count`, so a headword with a longer
+/// related-term list is never scored easier than one with a shorter list.
+///
+/// This is the property the scheduler relies on, checked directly rather than
+/// through the item builder: it pins the ranking, not just the presence of
+/// variation.
+#[test]
+fn difficulty_is_monotone_in_related_count_for_equal_length_headwords() {
+    // `opaque` (8 listed terms) vs `sparse` (3) — both plain six-character words,
+    // so the length tilt is identical and breadth is the only difference.
+    let t = fixture();
+    let sparse = t.related_to("sparse").expect("sparse is a root word").len();
+    let opaque = t.related_to("opaque").expect("opaque is a root word").len();
+    assert!(
+        opaque > sparse,
+        "fixture must exercise both ends: opaque {opaque}, sparse {sparse}"
+    );
+
+    let items = t.build_items_configured(400, 1, 1, |_, _| true);
+    let sparse_item = items.iter().find(|i| i.headword == "sparse");
+    let opaque_item = items.iter().find(|i| i.headword == "opaque");
+    if let (Some(s), Some(o)) = (sparse_item, opaque_item) {
+        assert_eq!(s.related_count, sparse, "related_count is carried through");
+        assert_eq!(o.related_count, opaque, "related_count is carried through");
+        assert!(
+            o.difficulty >= s.difficulty,
+            "opaque ({opaque} terms, {}) must not score easier than sparse \
+             ({sparse} terms, {})",
+            o.difficulty,
+            s.difficulty
+        );
+    }
+}
+
+/// Every derived difficulty stays inside the declared band.
+#[test]
+fn derived_difficulty_stays_within_the_declared_band() {
+    let t = fixture();
+    for item in t.build_items_configured(300, 7, 1, |_, _| true) {
+        assert!(
+            (-1.0..=1.5).contains(&item.difficulty),
+            "difficulty {} for {:?} is outside [-1.0, 1.5]",
+            item.difficulty,
+            item.headword
+        );
+    }
+}

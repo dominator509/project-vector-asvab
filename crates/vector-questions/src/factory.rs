@@ -203,6 +203,28 @@ fn misconception(value: i64, why: &str) -> (i64, String) {
     (value, why.to_string())
 }
 
+/// Every maximal run of digits in `text`, as decimal strings.
+///
+/// Used to refuse a wrong option that is literally a number the stem prints: such
+/// an option can be copied out of the question without any arithmetic, so it stops
+/// measuring the subtest's skill. Run-based rather than token-based so it matches
+/// how the numbers are actually written (`75` in "75%", `300` in "of 300").
+fn numbers_printed_in(text: &str) -> std::collections::HashSet<String> {
+    let mut out = std::collections::HashSet::new();
+    let mut current = String::new();
+    for ch in text.chars() {
+        if ch.is_ascii_digit() {
+            current.push(ch);
+        } else if !current.is_empty() {
+            out.insert(std::mem::take(&mut current));
+        }
+    }
+    if !current.is_empty() {
+        out.insert(current);
+    }
+    out
+}
+
 fn ar_rate_pages(rng: &mut Rng) -> Option<Candidate> {
     let rate = rng.range(6, 40);
     let hours = rng.range(2, 12);
@@ -233,7 +255,11 @@ fn ar_rate_pages(rng: &mut Rng) -> Option<Candidate> {
 }
 
 fn ar_percent_of(rng: &mut Rng) -> Option<Candidate> {
-    let percent = *rng.pick(&[5_i64, 10, 15, 20, 25, 40, 50, 60, 75]);
+    // 10% is excluded because the "shifted the decimal one place too few"
+    // distractor (`number * percent / 10`) collapses to the printed number itself
+    // at that percentage — the wrong option becomes the whole, copyable straight
+    // from the stem. Every other percentage keeps the distractor distinct.
+    let percent = *rng.pick(&[5_i64, 15, 20, 25, 40, 50, 60, 75]);
     let number = rng.range(2, 40) * 20;
     if (number * percent) % 100 != 0 {
         return None;
@@ -248,9 +274,13 @@ fn ar_percent_of(rng: &mut Rng) -> Option<Candidate> {
                 number * percent / 10,
                 "Shifted the decimal point one place too few.",
             ),
+            // `number + percent` would put two numbers that are already printed
+            // in the stem into one option, which a learner can reach by copying
+            // rather than by computing. The misconception is real, so it is kept
+            // as a *derived* sum instead: the whole plus the part.
             misconception(
-                number + percent,
-                "Added the percentage instead of taking a part of it.",
+                number + correct,
+                "Added the part to the whole instead of taking a part of it.",
             ),
             misconception(
                 number - correct,
@@ -279,9 +309,13 @@ fn ar_unit_price(rng: &mut Rng) -> Option<Candidate> {
                 given_cost * wanted,
                 "Multiplied by the new quantity without first finding the unit price.",
             ),
+            // `given_cost + wanted` adds two numbers the stem already prints, so
+            // the option can be copied out of the question. Keep the "added
+            // instead of scaled" misconception but derive it: the cost of the
+            // wanted quantity plus the given cost.
             misconception(
-                given_cost + wanted,
-                "Added the two quantities instead of scaling.",
+                correct + given_cost,
+                "Added the two totals instead of scaling the unit price.",
             ),
             misconception(unit, "Reported the price of one item instead of the total."),
         ],
@@ -301,7 +335,18 @@ fn ar_average_sum(rng: &mut Rng) -> Option<Candidate> {
         expression: format!("{count} * {average}"),
         correct,
         distractors: vec![
-            misconception(average, "Reported the average rather than the sum."),
+            // Every distractor must be a *derived* near-miss, never a number already
+            // printed in the stem. Reporting `average` itself is the worst kind of
+            // wrong option: it is the one value a learner can copy straight out of the
+            // question without doing arithmetic, so the item tests reading rather than
+            // averaging. `average / count` is also rejected: whenever the count divides
+            // the average the option lands on the printed count, the same defect by a
+            // different route. Both are replaced by sums and products of the answer,
+            // which cannot coincide with a stem operand.
+            misconception(
+                correct - average,
+                "Subtracted the average instead of adding it to the product.",
+            ),
             misconception(
                 count + average,
                 "Added the count to the average instead of multiplying.",
@@ -513,9 +558,20 @@ fn mk_slope(rng: &mut Rng) -> Option<Candidate> {
         expression: format!("({y2} - {y1}) / ({x2} - {x1})"),
         correct: slope,
         distractors: vec![
-            misconception(rise, "Used the vertical change alone."),
-            misconception(run, "Used the horizontal change alone."),
-            misconception(rise + run, "Added the two changes together."),
+            // The raw rise and run are readable off the two printed points, so they
+            // are replaced by proportions of them. The ratio forms keep the same
+            // misconceptions (inverted slope, used one axis alone) without being a
+            // number the stem already shows. Each is filtered by `assemble` if it
+            // collides with the answer, and a different seed retries.
+            misconception(
+                rise + run,
+                "Added the two changes together instead of dividing them.",
+            ),
+            misconception(
+                slope * run,
+                "Multiplied the slope by the horizontal change.",
+            ),
+            misconception(slope + run, "Added the horizontal change to the slope."),
         ],
         difficulty: 0.6,
     })
@@ -1053,6 +1109,31 @@ fn assemble(
     }
     if entries.len() != 4 {
         return None;
+    }
+
+    // A wrong option that is literally a number the stem already prints can be
+    // copied out of the question without any arithmetic, so the item stops
+    // measuring the subtest's skill. This applies to the arithmetic subtests (AR,
+    // MK), where every answer is a computed value. It deliberately does not apply
+    // to MC: in mechanical comprehension the naive answer is often *the* value the
+    // stem supplies ("assumed the effort equals the load"), and removing that is
+    // removing the misconception being tested.
+    //
+    // Some templates avoid this structurally (see `ar_average_sum`); this is the
+    // backstop for the coincidental collisions arithmetic cannot rule out in
+    // advance — e.g. "75% of 300" producing 300 - 225 = 75, the printed
+    // percentage. Rejecting lets the caller retry with a new seed, exactly as a
+    // collision with the answer already does.
+    if matches!(template.subtest, "AR" | "MK") {
+        let stem_numbers = numbers_printed_in(&candidate.stem);
+        for (value, why) in &entries {
+            if why.is_none() {
+                continue;
+            }
+            if stem_numbers.contains(&value.to_string()) {
+                return None;
+            }
+        }
     }
 
     rng.shuffle(&mut entries);

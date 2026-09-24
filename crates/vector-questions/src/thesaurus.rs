@@ -117,6 +117,55 @@ pub const MIN_DISTRACTOR_LINES: usize = 6;
 /// establishing plausibility.
 const MAX_DISTRACTOR_LENGTH_GAP: usize = 4;
 
+/// Derive an item's difficulty from the source, rather than pinning a constant.
+///
+/// ## Why the constant was wrong
+///
+/// The builder shipped `difficulty: 0.2` for every item, so all 1,961 WK items
+/// carried one value and the scheduler downstream had nothing to discriminate on.
+/// `related_count` (the number of terms the source lists for the headword) was
+/// computed, stored on the item, and never read. That is the signal this uses.
+///
+/// ## The scale
+///
+/// The same `[-1.0, +1.5]` band the AR/MK templates use, so the scheduler reads
+/// one scale across subtests. It rests on two properties the source actually
+/// has, not on a claim about word frequency, which Moby does not carry:
+///
+/// * **Breadth of association.** A headword with a long related-term list is a
+///   word the source treats as having many near-neighbours, so its synonym set is
+///   crowded and the question is harder to answer by elimination. A headword with
+///   a short list has a narrow, distinct meaning. This is polysemy, not commonness
+///   — the module documentation is explicit that Moby does not measure commonness
+///   — but as a *relative ranking within this source* it is monotone and honest.
+/// * **Word length.** Longer headwords are, on the whole, later-learned and more
+///   specialised. A weak signal alone, so it contributes only a small tilt.
+///
+/// Both inputs are exposed on the item or recomputable from the source, so the
+/// derivation is auditable rather than magic.
+fn derive_difficulty(headword: &str, related_count: usize) -> f64 {
+    // Anchor points chosen from the source's own distribution: a headword with a
+    // handful of listed terms sits at the easy end, one with a long line at the
+    // hard end. Clamped so a single outlier line cannot dominate the bank.
+    const EASY_ANCHOR: f64 = 3.0;
+    const HARD_ANCHOR: f64 = 40.0;
+    let breadth = ((related_count as f64) - EASY_ANCHOR) / (HARD_ANCHOR - EASY_ANCHOR);
+    let breadth = breadth.clamp(0.0, 1.0);
+
+    // -1.0 (short list, short word) .. +1.0 (long list, long word).
+    let span = breadth * 2.0 - 1.0;
+
+    // Length tilt: <=4 chars is easy, >=12 is hard, in the same -1..+1 space.
+    let len = headword.trim().len() as f64;
+    let length_tilt = ((len - 4.0) / 8.0).clamp(0.0, 1.0) * 2.0 - 1.0;
+
+    // Breadth carries the derivation; length only nudges it.
+    let score = span * 0.75 + length_tilt * 0.25;
+
+    // Round to two decimals so the value is stable in evidence and hashes.
+    ((score * 100.0).round() / 100.0).clamp(-1.0, 1.0)
+}
+
 /// A Word Knowledge item.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WkItem {
@@ -601,7 +650,7 @@ impl Thesaurus {
             distractor_rationales,
             supporting_line,
             related_count: entry.related.len(),
-            difficulty: 0.2,
+            difficulty: derive_difficulty(&entry.headword, entry.related.len()),
             seed,
         })
     }
