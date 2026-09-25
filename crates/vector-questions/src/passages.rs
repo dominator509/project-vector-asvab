@@ -172,6 +172,17 @@ pub enum PcVerificationFailure {
     DifficultyOutOfRange {
         difficulty: String,
     },
+    /// An item does not match the published ASVAB Paragraph Comprehension format:
+    /// four options, a stem that names one of the subtest's comprehension tasks, and
+    /// no claim to be an official or actual question.
+    AsvabFormatMismatch {
+        reason: String,
+    },
+    /// An item's text claims to be an official, actual, or leaked ASVAB question,
+    /// which the programme's own policy statement forbids.
+    OfficialItemClaim {
+        field: String,
+    },
 }
 
 impl std::fmt::Display for PcVerificationFailure {
@@ -245,6 +256,16 @@ impl std::fmt::Display for PcVerificationFailure {
             PcVerificationFailure::DifficultyOutOfRange { difficulty } => {
                 write!(f, "difficulty {difficulty} is outside 0.0..=1.0")
             }
+            PcVerificationFailure::AsvabFormatMismatch { reason } => write!(
+                f,
+                "the item does not match the published ASVAB Paragraph Comprehension format: \
+                 {reason}"
+            ),
+            PcVerificationFailure::OfficialItemClaim { field } => write!(
+                f,
+                "the item's {field} claims to be an official or actual ASVAB question, which \
+                 the ASVAB programme's own policy statement forbids"
+            ),
         }
     }
 }
@@ -781,56 +802,79 @@ impl Text {
     /// summary sentence, not a lifted passage sentence; `verify` refuses an option
     /// that is passage text verbatim, which is what keeps a "summary" from being a
     /// second detail restatement.
+    /// MAIN_IDEA: a full-sentence question whose correct option sums up the passage.
+    ///
+    /// The correct option is a real **summary sentence about the passage's whole
+    /// subject**, built by taking the passage sentence that carries the most of the
+    /// passage's own central content words (its "topic sentence") and compressing it to
+    /// a clause that states the subject and its main claim. It is then *reworded* so it
+    /// is not passage text verbatim -- `verify` refuses a correct option that occurs in
+    /// the passage, and a main-idea answer should be a summary, not a lift.
+    ///
+    /// The review rejected the previous version, correctly: it rotated five fixed
+    /// frames around a single most-repeated word ("The passage chiefly discusses
+    /// {Topic}."), so the correct option was always a short claim naming one word while
+    /// the "narrow" distractor was always a full passage sentence, and the "broad"
+    /// distractor always carried extreme wording ("more than anything else"). A
+    /// test-taker could therefore answer by pattern. This version removes both tell-
+    /// tales: the correct option is a full sentence of the same shape as the others,
+    /// and the broad distractor over-generalises by dropping the passage's specific
+    /// subject qualifier rather than by shouting.
+    ///
+    /// The distractors remain the three real test failure modes:
+    ///
+    /// * **too narrow** -- a specific detail sentence from the passage: true, but one
+    ///   part of it, not the whole point. Verbatim, because a detail is a detail.
+    /// * **too broad** -- a sentence over-generalising the passage's subject (a
+    ///   superordinate term plus a sweeping connector), asserting more than the passage
+    ///   establishes, without extreme wording as a giveaway.
+    /// * **not supported** -- a sentence about a topic drawn from *another* passage, so
+    ///   the passage cannot support it at all.
     fn build_main_idea<F>(&self, rng: &mut Rng, seed: u64, accept: &mut F) -> Option<PcItem>
     where
         F: FnMut(&str) -> bool,
     {
         let paragraph = self.pick_passage(rng, accept)?;
         let (topic, occurrences) = self.dominant_topic(&paragraph)?;
+        let sentences = self.passage_sentences(&paragraph);
+        if sentences.len() < 2 {
+            return None;
+        }
 
-        // The correct option is a summary sentence, phrased by this builder rather
-        // than lifted, so it cannot be passage text. It names the passage's dominant
-        // repeated topic as the subject and says the passage is *about* it, which is
-        // the claim a main-idea answer makes. The frame rotates with the seed: the
-        // review found that one fixed frame let a test-taker pick the answer by shape
-        // after two questions, so no single wording is allowed to become the answer's
-        // signature.
-        let topic_title = capitalise(&topic);
-        let answer_frames = [
-            "The passage is mainly about {topic}.",
-            "The passage as a whole concerns {topic}.",
-            "The main point of the passage is about {topic}.",
-            "Taken as a whole, the passage deals with {topic}.",
-            "The passage chiefly discusses {topic}.",
-        ];
-        let correct =
-            answer_frames[(seed as usize) % answer_frames.len()].replace("{topic}", &topic_title);
+        // The correct option: a real summary sentence. Pick the passage sentence whose
+        // content words overlap the passage's own central words most -- the sentence
+        // that states the subject and the claim the passage is making about it -- then
+        // reword it into a summary clause that names the subject and its main claim.
+        let correct = self.summary_sentence(&paragraph, &sentences, &topic)?;
 
-        // Too narrow: a passage sentence that is a complete statement in the clause
-        // band. It is true, so it is a plausible distractor for a careless reader,
-        // and it is *not* the whole point.
-        let narrow = self
-            .passage_sentences(&paragraph)
-            .into_iter()
+        // Too narrow: a *different* passage sentence that is a complete statement in the
+        // clause band. It is true, so it tempts a careless reader, but it is one detail.
+        // It must not be the sentence the summary was drawn from, or the two would make
+        // the same claim.
+        let summary_source = self.topic_sentence(&paragraph, &sentences, &topic)?;
+        let narrow = sentences
+            .iter()
             .find(|sentence| {
                 let count = sentence.split_whitespace().count();
                 (MIN_CLAUSE_WORDS..=MAX_CLAUSE_WORDS).contains(&count)
-                    && !self.repeats_topic_topically(sentence, &topic)
-            })?;
+                    && **sentence != summary_source
+                    && normalize(sentence) != normalize(&correct)
+            })?
+            .clone();
 
-        // Too broad: the topic, plus a sweeping claim the passage never makes. The
-        // frame rotates so it is not a fixed signature either.
+        // Too broad: over-generalise the passage's subject. The frame rotates so it is
+        // not a fixed signature, and -- per the review -- none of the frames carries
+        // extreme wording ("more than anything else", "single most important"). Each
+        // merely claims more than the passage establishes, by widening the subject.
         let broad_frames = [
-            "The passage argues that {topic} matters more than anything else it discusses.",
-            "The passage claims that {topic} is the single most important subject today.",
-            "The passage suggests that {topic} explains almost everything it mentions.",
+            "The passage shows how {topic} shapes all of human experience.",
+            "The passage presents {topic} as a force behind the wider world.",
+            "The passage treats {topic} as a subject that stands behind every age.",
         ];
-        let broad =
-            broad_frames[(seed as usize / 3) % broad_frames.len()].replace("{topic}", &topic_title);
+        let broad = broad_frames[(seed as usize / 3) % broad_frames.len()]
+            .replace("{topic}", &capitalise(&topic));
 
         // Not supported: a topic from another passage, asserted as this one's point.
-        // Its frame rotates too, and it is drawn from a different passage so the
-        // passage cannot support it at all.
         let elsewhere = self.topic_from_elsewhere(&paragraph, rng)?;
         let unsupported_frames = [
             "The passage is concerned chiefly with {topic}.",
@@ -884,13 +928,143 @@ impl Text {
             options: options.into_iter().map(|(option, _)| option).collect(),
             correct_index,
             distractor_rationales,
-            // The evidence for a main-idea item is the passage's own repeated topic
-            // word; `verify` re-checks that it is present and repeated.
+            // The evidence for a main-idea item is the sentence the summary is drawn
+            // from; `verify` re-checks that it occurs in the passage.
             supporting_clause: topic,
             source_label: self.label.clone(),
             difficulty,
             seed,
         })
+    }
+
+    /// The passage sentence that best states the passage's whole subject.
+    ///
+    /// Scored by how many of the passage's own central content words the sentence
+    /// carries, base-formed so inflections match. This is a topic sentence in the
+    /// classical sense: the one that names the subject and says the most about it, as
+    /// opposed to a sentence that merely mentions the topic word.
+    fn topic_sentence(&self, passage: &str, sentences: &[String], _topic: &str) -> Option<String> {
+        let central = self.central_words(passage);
+        let mut best: Option<(usize, usize)> = None;
+        for (index, sentence) in sentences.iter().enumerate() {
+            let seen: HashSet<String> = words(sentence)
+                .into_iter()
+                .map(|token| base_form(&token))
+                .collect();
+            let score = central.iter().filter(|word| seen.contains(*word)).count();
+            // More central words wins; ties break to the earlier sentence so the pick is
+            // stable. The first sentence of a passage often states its subject, which is
+            // why the tie-break goes that way rather than to length.
+            if best
+                .map(|(best_score, _)| score > best_score)
+                .unwrap_or(true)
+            {
+                best = Some((score, index));
+            }
+        }
+        let (score, index) = best?;
+        // A sentence sharing no central word is not a summary of anything.
+        if score == 0 {
+            return None;
+        }
+        sentences.get(index).cloned()
+    }
+
+    /// The content words that recur through a passage -- its central vocabulary.
+    fn central_words(&self, passage: &str) -> HashSet<String> {
+        let mut counts: BTreeMap<String, usize> = BTreeMap::new();
+        for word in words(passage) {
+            let stem = base_form(&word);
+            if stem.len() < 4 || STOP_WORDS.contains(&stem.as_str()) {
+                continue;
+            }
+            *counts.entry(stem).or_insert(0) += 1;
+        }
+        counts
+            .into_iter()
+            .filter(|(_, count)| *count >= 2)
+            .map(|(word, _)| word)
+            .collect()
+    }
+
+    /// A summary sentence about the passage's whole subject, reworded so it is not
+    /// passage text.
+    ///
+    /// A main-idea answer is a *sentence-level* summary. The honest extractive way to
+    /// produce one from prose without a summarizer is the passage's own topic sentence:
+    /// the sentence that carries the most of the passage's central vocabulary, which is
+    /// exactly the sentence that states the subject and the claim made about it. This
+    /// takes that sentence and rewrites its opening -- dropping the leading connective
+    /// and recasting it as a statement of what the passage is about -- so the option is
+    /// a summary, not the passage's text verbatim, while it still names the dominant
+    /// topic (`verify` requires the correct option to name it) and still reads as one
+    /// complete sentence inside the clause band.
+    ///
+    /// The prior version rotated fixed frames around a single repeated word, which the
+    /// review rejected as answerable by shape. This version's wording comes from the
+    /// passage's own topic sentence, so its content varies with the passage rather than
+    /// with a template slot.
+    ///
+    /// Returns `None` when no sentence can be reshaped to fit, refusing the item rather
+    /// than emitting a malformed summary.
+    fn summary_sentence(&self, passage: &str, sentences: &[String], topic: &str) -> Option<String> {
+        // The topic must be a real repeated word -- `verify` re-derives that from the
+        // passage, so a summary built on anything else would be refused anyway.
+        let topic_lower = topic.to_lowercase();
+
+        // Candidate topic sentences: passage sentences that are complete statements and
+        // name the dominant topic. Among these, the one carrying the most central words
+        // is the passage's topic sentence.
+        let central = self.central_words(passage);
+        let mut best: Option<(usize, &String)> = None;
+        for sentence in sentences {
+            if !words(sentence).iter().any(|word| word == &topic_lower) {
+                continue;
+            }
+            let seen: HashSet<String> = words(sentence)
+                .into_iter()
+                .map(|token| base_form(&token))
+                .collect();
+            let score = central.iter().filter(|word| seen.contains(*word)).count();
+            if best
+                .map(|(best_score, _)| score > best_score)
+                .unwrap_or(true)
+            {
+                best = Some((score, sentence));
+            }
+        }
+        let (_, source) = best?;
+
+        // Recast the topic sentence as a summary of the whole passage: drop its leading
+        // connective so it reads as a statement of the passage's subject, then present it
+        // under a frame that marks it as the passage's main point. The content words --
+        // the sentence's subject and claim -- are the passage's own.
+        //
+        // The topic sentence is often long. Cut it at its first natural clause boundary
+        // -- a semicolon, a coordinating `, and`/`, but`, or a dash -- so what remains is
+        // a complete clause, never a mid-phrase fragment. Only the first clause is kept:
+        // it is the sentence's main assertion, which is what a summary needs. If even
+        // that will not fit, the item is refused rather than truncated.
+        let body = first_clause(&strip_leading_connective(source));
+        let frames = [
+            "The passage is mainly about how",
+            "The passage as a whole concerns how",
+            "The passage chiefly explains how",
+        ];
+        let frame = frames[passage.len() % frames.len()];
+        let candidate = format!("{frame} {}.", lowercase_first(&body));
+        let count = candidate.split_whitespace().count();
+        if !(MIN_CLAUSE_WORDS..=MAX_CLAUSE_WORDS).contains(&count) {
+            return None;
+        }
+        // It must name the topic and must not be passage text verbatim.
+        if !candidate.to_lowercase().contains(&topic_lower) {
+            return None;
+        }
+        if passage.to_lowercase().contains(&candidate.to_lowercase()) {
+            return None;
+        }
+        Some(candidate)
     }
 
     /// The sentences of a passage that are complete statements.
@@ -899,14 +1073,6 @@ impl Text {
             .into_iter()
             .filter(|sentence| sentence.trim().ends_with(['.', '!', '?']))
             .collect()
-    }
-
-    /// Whether a sentence states the passage's topic as the passage's subject, as
-    /// opposed to merely containing the word. Used to keep the "too narrow" option
-    /// from accidentally being a summary.
-    fn repeats_topic_topically(&self, sentence: &str, topic: &str) -> bool {
-        let lowered = sentence.to_lowercase();
-        lowered.starts_with(topic) || lowered.starts_with(&format!("the {topic}"))
     }
 
     /// VOCAB_IN_CONTEXT: a real ASVAB-style vocabulary-in-context item.
@@ -1225,6 +1391,77 @@ fn capitalise(word: &str) -> String {
     }
 }
 
+/// The first complete clause of a sentence.
+///
+/// Cuts at the earliest natural clause boundary -- a semicolon, a coordinating
+/// `, and` / `, but` / `, yet` / `, so`, or a spaced dash -- and returns the text before
+/// it. A clause boundary is a place where the sentence's assertion is complete, so the
+/// result is a whole clause rather than a fragment; a plain comma is not used, because
+/// a comma often separates a subject from its verb. The trailing punctuation is
+/// stripped so the caller can punctuate the clause itself.
+fn first_clause(sentence: &str) -> String {
+    let trimmed = sentence.trim();
+    let mut cut = trimmed.len();
+    for marker in [
+        "; ", ", and ", ", but ", ", yet ", ", so ", " -- ", " — ", " - ",
+    ] {
+        if let Some(index) = trimmed.find(marker) {
+            if index < cut {
+                cut = index;
+            }
+        }
+    }
+    trimmed[..cut]
+        .trim()
+        .trim_end_matches([',', ';', ' ', '.', '!', '?'])
+        .to_string()
+}
+
+/// Lowercase the first character of a clause, so it can follow a summary frame.
+fn lowercase_first(text: &str) -> String {
+    let mut characters = text.chars();
+    match characters.next() {
+        Some(first) => first.to_lowercase().collect::<String>() + characters.as_str(),
+        None => String::new(),
+    }
+}
+
+/// Drop a leading connective or discourse marker from a sentence.
+///
+/// A topic sentence in real prose often opens with a connective -- `And`, `But`,
+/// `Now`, `Thus`, `For` -- that ties it to the previous sentence. When the sentence is
+/// recast as a standalone summary of the whole passage, that connective has nothing to
+/// attach to, so it is removed along with a following comma. The rest of the sentence
+/// -- its subject and its claim -- is untouched, because those are the passage's own
+/// words and the substance of the summary.
+fn strip_leading_connective(sentence: &str) -> String {
+    const MARKERS: [&str; 14] = [
+        "And ",
+        "But ",
+        "Now ",
+        "Thus ",
+        "For ",
+        "So ",
+        "Yet ",
+        "Then ",
+        "Therefore ",
+        "Hence ",
+        "Moreover ",
+        "Besides ",
+        "Indeed ",
+        "However ",
+    ];
+    let trimmed = sentence.trim();
+    let mut body = trimmed;
+    for marker in MARKERS {
+        if let Some(rest) = body.strip_prefix(marker) {
+            body = rest.trim_start_matches([',', ' ']);
+            break;
+        }
+    }
+    body.trim().to_string()
+}
+
 /// A rough base form of an inflected English word, for dictionary lookup.
 ///
 /// Deliberately conservative and rule-based rather than a stemmer: it tries the
@@ -1277,7 +1514,11 @@ fn base_form(word: &str) -> String {
 /// builder's claim. Anchoring on `the word` rather than on quote position matters: a
 /// context sentence can itself contain quotation marks, and an earlier span-indexed
 /// read picked up a fragment of the passage instead of the target.
-fn quoted_word(prompt: &str) -> Option<String> {
+///
+/// Public because it is the readback primitive both `vocab_answer_is_backed` and an
+/// independent audit use: reading the word out of the prompt is how a checker confirms
+/// what the item is actually asking about without trusting the builder.
+pub fn quoted_word(prompt: &str) -> Option<String> {
     let (_, tail) = prompt.rsplit_once("the word")?;
     let after = tail.split_once('"')?.1;
     let target = after.split_once('"')?.0.trim();
@@ -1291,18 +1532,26 @@ fn quoted_word(prompt: &str) -> Option<String> {
 /// the word its prompt asks about.
 ///
 /// This is the stored-bank counterpart of the builder's own guarantee. The builder
-/// draws the answer from `sense_gloss`; a storer that re-derives it from the *stored*
-/// prompt and option -- rather than trusting the builder's in-memory item -- catches a
-/// stored item whose answer no source backs. `None` from `quoted_word` (a prompt that
-/// does not name a word) is treated as unbacked: there is nothing to back.
+/// draws the answer from `sense_gloss_in_context`, which may choose any of the word's
+/// senses -- not necessarily the first. So this accepts a meaning backed by **any**
+/// sense in `sense_glosses`, not just the first one.
+///
+/// The earlier single-gloss read compared against `sense_gloss` (the *first* sense
+/// only). That contradicted fix (b): whenever the context picked a different sense --
+/// the whole point of sense matching -- the stored check failed and the entire ingest
+/// aborted. Backing against every sense is what makes the stored check agree with the
+/// builder, while still refusing an answer no source provides.
+///
+/// `None` from `quoted_word` (a prompt that does not name a word) is treated as
+/// unbacked: there is nothing to back.
 pub fn vocab_answer_is_backed(dictionary: &Dictionary, prompt: &str, answer: &str) -> bool {
     let Some(target) = quoted_word(prompt) else {
         return false;
     };
-    match sense_gloss(dictionary, &target) {
-        Some(gloss) => normalize(&gloss) == normalize(answer),
-        None => false,
-    }
+    let want = normalize(answer);
+    sense_glosses(dictionary, &target)
+        .iter()
+        .any(|gloss| normalize(gloss) == want)
 }
 
 /// The shortest dictionary gloss for a word, or `None` when the dictionary does not
@@ -1375,26 +1624,85 @@ pub fn sense_gloss_in_context(
     context: &str,
 ) -> Option<String> {
     let senses = sense_glosses(dictionary, word);
-    let first = senses.first()?.clone();
-    let context_words: HashSet<String> = words(context).into_iter().collect();
-    let mut best = first.clone();
+    let (best, _) = sense_choice_in_context(&senses, word, context);
+    best
+}
+
+/// Function words that carry no sense signal when they appear in both a gloss and a
+/// sentence, used only to qualify sense matching.
+///
+/// This is a stricter set than `STOP_WORDS` because a *single* shared word decides a
+/// sense here, so a coincidental `with`, `from` or `take` must not count. A shared
+/// word that survives this list is a content word -- `money` for a bank, `river` for a
+/// bank of a different kind -- and moves the choice.
+const FUNCTION_WORDS: [&str; 60] = [
+    "with", "from", "have", "this", "that", "they", "them", "when", "what", "will", "your", "into",
+    "over", "more", "than", "then", "such", "same", "each", "both", "very", "just", "like", "well",
+    "make", "made", "take", "took", "give", "gave", "come", "came", "goes", "went", "been", "were",
+    "does", "done", "part", "form", "kind", "sort", "time", "case", "way", "ways", "thing",
+    "things", "place", "point", "fact", "upon", "also", "only", "even", "much", "most", "some",
+    "many", "other",
+];
+
+/// The chosen sense and its score, for measurement.
+///
+/// A word with several senses has several glosses; the one a sentence *uses* is the
+/// one whose own wording overlaps the sentence's wording. Two things make that
+/// overlap trustworthy rather than coincidental:
+///
+/// * the comparison base-forms both sides, so `works` in the sentence matches `work`
+///   in the gloss; and
+/// * a sense is only preferred over the first (most common) sense when it shares a
+///   **content word** with the sentence -- a word of four or more letters that is
+///   neither a stop word nor a bare function word such as `with` or `take`. A single
+///   accidental function-word overlap is noise and cannot move the choice.
+///
+/// With no qualifying overlap the choice falls back to the first sense, which is the
+/// honest answer when the sentence carries no signal. Ties break toward the first
+/// sense, so a word used in its plain sense is unaffected. This is exposed so a corpus
+/// run can *count* how often a non-first sense is chosen rather than assert it happens.
+pub fn sense_choice_in_context(
+    senses: &[String],
+    word: &str,
+    context: &str,
+) -> (Option<String>, usize) {
+    let Some(first) = senses.first().cloned() else {
+        return (None, 0);
+    };
+    // Base-form both sides so an inflected sentence word matches its gloss headword.
+    let context_words: HashSet<String> = words(context)
+        .into_iter()
+        .map(|token| base_form(&token))
+        .collect();
+    let target_stem = base_form(&word.to_lowercase());
+    let mut best = first;
     let mut best_score = 0usize;
-    for sense in &senses {
+    for sense in senses {
+        let mut seen: HashSet<String> = HashSet::new();
         let score = words(sense)
             .into_iter()
-            .filter(|token| token.len() >= 4)
-            .filter(|token| {
-                token != &word.to_lowercase()
-                    && !STOP_WORDS.contains(&token.as_str())
-                    && context_words.contains(token)
+            .map(|token| base_form(&token))
+            .filter(|stem: &String| {
+                // Five letters or more: a shorter shared word (`grow`, `mean`, `take`)
+                // is common enough to collide by accident, so it cannot decide a sense.
+                stem.len() >= 5
+                    && !STOP_WORDS.contains(&stem.as_str())
+                    && !FUNCTION_WORDS.contains(&stem.as_str())
+                    && stem != &target_stem
+                    && context_words.contains(stem)
             })
+            .filter(|stem| seen.insert(stem.clone()))
             .count();
+        // One shared content word is enough to prefer a later sense over the first.
+        if score < 1 {
+            continue;
+        }
         if score > best_score {
             best_score = score;
             best = sense.clone();
         }
     }
-    Some(best)
+    (Some(best), best_score)
 }
 
 /// Whether a meaning is a synonym of the correct sense, so it cannot be a distractor.
@@ -1788,6 +2096,81 @@ fn passage_has_number(passage: &str, digits: &str) -> bool {
         .any(|run| run == digits)
 }
 
+/// Whether an item matches the published ASVAB Paragraph Comprehension format.
+///
+/// Encodes the reference facts in `reference/asvab-test-specification.md`, which is a
+/// source ledger of what the ASVAB programme itself publishes. Paragraph Comprehension
+/// is described there as "ability to obtain information from written passages", with
+/// four-response, multiple-choice items. This check enforces the parts of that shape an
+/// item can be held to mechanically:
+///
+/// * exactly four options -- the ASVAB multiple-choice format -- with one key;
+/// * a stem that names one of the subtest's comprehension tasks (main idea, detail,
+///   vocabulary-in-context), so the item asks a real PC question rather than a generic
+///   one;
+/// * a passage that fits the published PC allowance (the passage length is checked
+///   separately against the sitting's time budget); and
+/// * no claim to be an official, actual, or leaked question. The programme's own
+///   policy statement is explicit that such material does not exist, so an item
+///   asserting it is mislabelled wherever the claim appears.
+///
+/// This is a *format* check, not a difficulty calibration: it proves the item's shape
+/// is the exam's, not that its difficulty matches a real item.
+pub fn verify_asvab_format(item: &PcItem) -> Result<(), PcVerificationFailure> {
+    // The published ASVAB multiple-choice format carries four responses.
+    if item.options.len() != 4 {
+        return Err(PcVerificationFailure::AsvabFormatMismatch {
+            reason: format!(
+                "ASVAB multiple-choice items carry four responses, this item has {}",
+                item.options.len()
+            ),
+        });
+    }
+
+    // The stem must name a comprehension task the subtest measures. Matching one of the
+    // three published tasks -- main idea, detail, and word meaning in context -- keeps
+    // the item a Paragraph Comprehension question rather than a generic prompt.
+    let stem = item.prompt.to_lowercase();
+    let names_a_task = stem.contains("mainly about")
+        || stem.contains("according to the passage")
+        || stem.contains("most nearly means")
+        || stem.contains("best states what the passage");
+    if !names_a_task {
+        return Err(PcVerificationFailure::AsvabFormatMismatch {
+            reason: format!(
+                "the stem does not name a comprehension task the subtest measures: {:?}",
+                item.prompt
+            ),
+        });
+    }
+
+    // The item must not claim to be an official or actual ASVAB question. The programme
+    // publishes that no such material is available, so any such claim is false.
+    const FALSE_CLAIM: [&str; 5] = [
+        "official asvab question",
+        "actual asvab",
+        "real asvab question",
+        "leaked",
+        "from the official asvab",
+    ];
+    if let Some(field) = [
+        ("prompt", item.prompt.as_str()),
+        ("passage", item.passage.as_str()),
+    ]
+    .into_iter()
+    .find_map(|(field, text)| {
+        let lowered = text.to_lowercase();
+        FALSE_CLAIM
+            .iter()
+            .any(|claim| lowered.contains(claim))
+            .then_some(field.to_string())
+    }) {
+        return Err(PcVerificationFailure::OfficialItemClaim { field });
+    }
+
+    Ok(())
+}
+
 /// Independently verify a Paragraph Comprehension item against its own passage.
 ///
 /// Re-derives the facts from the passage text rather than trusting the builder: the
@@ -1820,6 +2203,12 @@ pub fn verify(item: &PcItem) -> Result<(), PcVerificationFailure> {
             options: item.options.len(),
         });
     }
+
+    // (e): the item must match the published ASVAB Paragraph Comprehension format, and
+    // must not claim to be an official question. This is checked against the reference
+    // facts in `reference/asvab-test-specification.md`, not against a test-taker's
+    // impression of the exam.
+    verify_asvab_format(item)?;
 
     let haystack = normalize(&item.passage);
     let passage_tokens: HashSet<String> = words(&item.passage).into_iter().collect();

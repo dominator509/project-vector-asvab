@@ -8,8 +8,8 @@
 use vector_questions::dictionary::{parse_webster, Dictionary};
 use vector_questions::passages::{
     meaning_is_synonym_of, parse_gutenberg, sense_gloss_in_context, sense_glosses, sentence_frame,
-    split_sentences, verify, PcItem, PcVerificationFailure, Text, MAX_CLAUSE_WORDS,
-    MIN_CLAUSE_WORDS, MIN_PASSAGE_WORDS,
+    split_sentences, verify, verify_asvab_format, vocab_answer_is_backed, PcItem,
+    PcVerificationFailure, Text, MAX_CLAUSE_WORDS, MIN_CLAUSE_WORDS, MIN_PASSAGE_WORDS,
 };
 
 /// A miniature Gutenberg file with the header, body and licence a real one has.
@@ -934,5 +934,193 @@ fn main_idea_answer_frames_do_not_repeat_across_the_bank() {
     assert!(
         most * 2 <= items,
         "one frame carries more than half the bank ({most} of {items}): {frames:?}"
+    );
+}
+
+/// A stored vocabulary answer backed by a *non-first* sense must pass the stored check.
+///
+/// This is the regression test for the review's blocking defect 1. The builder keys
+/// the sense the sentence uses via `sense_gloss_in_context`, which can pick a sense
+/// that is not the first. The stored-bank check `vocab_answer_is_backed` must accept
+/// any sense the dictionary gives -- if it only accepted the first sense, the real
+/// ingest would abort on every item whose in-context sense differs, which is the whole
+/// point of sense matching.
+#[test]
+fn a_stored_answer_backed_by_a_non_first_sense_passes_the_check() {
+    let dictionary = parse_webster(AMBIGUOUS_DICTIONARY);
+    // `bank` sense 2 is the financial sense. The context makes that the sense in play,
+    // so the builder keys it; the stored check must back it even though it is not the
+    // first sense.
+    let financial = "She walked into the bank to deposit the money she had saved.";
+    let answer = sense_gloss_in_context(&dictionary, "bank", financial).expect("a gloss");
+    assert!(
+        answer.to_lowercase().contains("money") || answer.to_lowercase().contains("custody"),
+        "the financial sense should be chosen, got {answer:?}"
+    );
+
+    let senses = sense_glosses(&dictionary, "bank");
+    let non_first = senses
+        .iter()
+        .skip(1)
+        .any(|sense| sense == &answer || normalize_for_test(sense) == normalize_for_test(&answer));
+    assert!(
+        non_first,
+        "the answer {answer:?} should be a non-first sense of bank: {senses:?}"
+    );
+
+    let prompt = format!("In the sentence \"{financial}\" the word \"bank\" most nearly means:");
+    assert!(
+        vocab_answer_is_backed(&dictionary, &prompt, &answer),
+        "a non-first sense the builder chose must still be backed by the stored check"
+    );
+    // And an invented meaning is still refused.
+    assert!(
+        !vocab_answer_is_backed(&dictionary, &prompt, "A tool for cutting wood."),
+        "a meaning no sense of the word provides must still be refused"
+    );
+}
+
+/// A main-idea correct answer must not be distinguishable by shape from its distractors.
+///
+/// This is the regression test for the review's blocking defect 3. Two pattern tells
+/// are checked across the built bank:
+///   1. no option anywhere may carry an extreme giveaway phrase ("more than anything
+///      else", "single most important", "almost everything"), which let a test-taker
+///      spot the "too broad" distractor by wording; and
+///   2. the correct answer must be in the same word-count band as the distractors, so
+///      a short summary does not stand out from the sentence-length wrong options.
+#[test]
+fn main_idea_options_carry_no_shape_giveaway() {
+    const GIVEAWAYS: [&str; 10] = [
+        "more than anything else",
+        "single most important",
+        "almost everything",
+        "explains nearly all",
+        "key to understanding",
+        "governs the wider world",
+        "governs everything",
+        "explains the whole of",
+        "nothing else matters",
+        "above all other",
+    ];
+    let t = fixture().with_dictionary(dictionary());
+    let mut items = 0usize;
+
+    for seed in 0..200 {
+        for item in t.build_items(8, seed, accept_all) {
+            if item.objective_id != "OBJ-PC-MAINIDEA-01" {
+                continue;
+            }
+            items += 1;
+
+            for option in &item.options {
+                let lowered = option.to_lowercase();
+                for phrase in GIVEAWAYS {
+                    assert!(
+                        !lowered.contains(phrase),
+                        "an option carries the giveaway {phrase:?}: {option:?}"
+                    );
+                }
+            }
+
+            // The correct option must be a full sentence in the clause band, like the
+            // distractors -- not a short one-word-topic claim.
+            let answer = &item.options[item.correct_index];
+            let answer_words = answer.split_whitespace().count();
+            assert!(
+                answer_words >= MIN_CLAUSE_WORDS,
+                "the correct option is too short to be a summary sentence \
+                 ({answer_words} words): {answer:?}"
+            );
+            for option in &item.options {
+                let wrong_words = option.split_whitespace().count();
+                assert!(
+                    wrong_words <= MAX_CLAUSE_WORDS,
+                    "an option exceeds the clause band ({wrong_words} words): {option:?}"
+                );
+            }
+        }
+    }
+
+    assert!(
+        items >= 8,
+        "the bank should yield main-idea items, got {items}"
+    );
+}
+
+/// Normalise a gloss the same way the production check does, for test comparison.
+fn normalize_for_test(text: &str) -> String {
+    text.split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_lowercase()
+}
+
+/// Review point (e): an item must match the published ASVAB format, and a mislabelled
+/// item must be refused in both directions.
+///
+/// Every item the builder produces must carry exactly four options and a stem that
+/// names a comprehension task. The refusals then prove the check is load-bearing: a
+/// five-option item, a stem that asks nothing, and an item claiming to be an official
+/// question must each be rejected.
+#[test]
+fn asvab_format_is_enforced_on_built_items_and_on_mislabelled_ones() {
+    let t = fixture().with_dictionary(dictionary());
+    let mut checked = 0usize;
+    for seed in 0..40 {
+        for item in t.build_items(8, seed, accept_all) {
+            checked += 1;
+            assert_eq!(
+                item.options.len(),
+                4,
+                "an ASVAB item must carry four responses: {:?}",
+                item.options
+            );
+            assert!(
+                verify_asvab_format(&item).is_ok(),
+                "a built item failed the format check: {:?}",
+                verify_asvab_format(&item)
+            );
+            assert!(
+                verify(&item).is_ok(),
+                "a built item failed verify: {item:?}"
+            );
+        }
+    }
+    assert!(checked > 0, "the fixture must yield items to check");
+
+    // A five-option item is not the ASVAB format.
+    let mut five = vocab_item(&t);
+    five.options
+        .push("A fifth meaning of something entirely different.".to_string());
+    assert!(
+        matches!(
+            verify_asvab_format(&five),
+            Err(PcVerificationFailure::AsvabFormatMismatch { .. })
+        ),
+        "a five-option item must fail the format check"
+    );
+
+    // A stem that names no comprehension task is not a Paragraph Comprehension item.
+    let mut vague = vocab_item(&t);
+    vague.prompt = "Which of the following is true?".to_string();
+    assert!(
+        matches!(
+            verify_asvab_format(&vague),
+            Err(PcVerificationFailure::AsvabFormatMismatch { .. })
+        ),
+        "a stem that names no comprehension task must fail the format check"
+    );
+
+    // An item claiming to be an official question is mislabelled: the programme states
+    // no such material exists.
+    let mut fake = vocab_item(&t);
+    fake.prompt = format!("{} This is an actual ASVAB question.", fake.prompt);
+    assert!(
+        matches!(
+            verify_asvab_format(&fake),
+            Err(PcVerificationFailure::OfficialItemClaim { .. })
+        ),
+        "an item claiming to be an actual ASVAB question must be refused"
     );
 }

@@ -711,6 +711,14 @@ impl<'a> ContentPipeline<'a> {
         passages::verify(item)
             .map_err(|failure| anyhow::anyhow!("item failed source verification: {failure}"))?;
 
+        // (e): the stored item must match the published ASVAB format. `verify` runs this
+        // too, but calling it here with its own message makes a stored format defect
+        // legible in the ingest report rather than folded into the source-verification
+        // line.
+        passages::verify_asvab_format(item).map_err(|failure| {
+            anyhow::anyhow!("item does not match the published ASVAB format: {failure}")
+        })?;
+
         // Stored-bank VOCAB test. `build_vocab_in_context` already refuses to emit a
         // vocabulary item without a dictionary-backed meaning, but that is the
         // builder checking itself. This re-checks the *stored* item against the

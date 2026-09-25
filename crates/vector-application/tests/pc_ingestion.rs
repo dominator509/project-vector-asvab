@@ -529,3 +529,37 @@ fn storing_refuses_a_vocabulary_answer_the_dictionary_does_not_back() {
         "the refusal should name the missing backing: {error}"
     );
 }
+
+/// The stored path refuses an item that does not match the published ASVAB format.
+///
+/// Review point (e): an item must be the exam's shape. This doctors a stored item to
+/// carry five responses -- not the ASVAB multiple-choice format -- and proves the format
+/// check refuses it at store time, not merely in the builder.
+#[test]
+fn storing_refuses_an_item_that_is_not_the_asvab_format() {
+    let (_dir, db, source) = database("asvab-format");
+    let pipeline = ContentPipeline::new(&db);
+    let dictionary = dictionary();
+
+    let text = parse_gutenberg(WORK, "A Test Work").with_dictionary(dictionary.clone());
+    let mut item = text
+        .build_items(200, 20_260_922, |_| true)
+        .into_iter()
+        .find(|item| item.objective_id == "OBJ-PC-VOCAB-01")
+        .expect("the dictionary fixture must yield a vocabulary item");
+
+    // Five responses is not the ASVAB multiple-choice format.
+    item.options
+        .push("A fifth meaning of something entirely different".to_string());
+
+    let mut request = request(&source);
+    request.dictionary = Some(&dictionary);
+    let error = pipeline
+        .store_pc_verified(&text, &request, &item)
+        .expect_err("an item outside the ASVAB format must be refused");
+    assert!(
+        error.to_string().contains("published ASVAB")
+            && error.to_string().contains("four responses"),
+        "the refusal should name the format defect: {error}"
+    );
+}
