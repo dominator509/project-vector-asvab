@@ -482,6 +482,12 @@ enum ContentCommands {
         seed: u64,
         #[arg(long, default_value = "content-reviewer")]
         reviewer: String,
+        /// Webster's Unabridged 1913 text. Vocabulary-in-context items cannot be
+        /// built without it: a vocabulary question needs a source-backed meaning,
+        /// and the passage alone does not supply one. Without it the run is still
+        /// honest and simply has no vocabulary items.
+        #[arg(long)]
+        dictionary: Option<PathBuf>,
         /// Write a JSON report here as well as printing it.
         #[arg(long)]
         out: Option<PathBuf>,
@@ -690,6 +696,7 @@ fn main() -> Result<()> {
                 count,
                 seed,
                 reviewer,
+                dictionary,
                 out,
             } => {
                 let started = std::time::Instant::now();
@@ -697,12 +704,24 @@ fn main() -> Result<()> {
                     .iter()
                     .map(|work| content::parse_work(work))
                     .collect::<Result<Vec<_>>>()?;
-                let outcome = content::ingest_pc(&db, &parsed, count, seed, &reviewer)?;
+                let outcome = content::ingest_pc(
+                    &db,
+                    &parsed,
+                    count,
+                    seed,
+                    &reviewer,
+                    dictionary.as_deref(),
+                )?;
 
                 let report = serde_json::json!({
                     "database": db.display().to_string(),
                     "requested_per_work": count,
                     "seed": seed,
+                    "dictionary": {
+                        "path": dictionary.as_ref().map(|p| p.display().to_string()),
+                        "sha256": outcome.dictionary_hash,
+                        "entries": outcome.dictionary_entries,
+                    },
                     "works": outcome.works.iter().map(|w| serde_json::json!({
                         "ebook": w.ebook_id,
                         "title": w.title,
