@@ -711,6 +711,26 @@ impl<'a> ContentPipeline<'a> {
         passages::verify(item)
             .map_err(|failure| anyhow::anyhow!("item failed source verification: {failure}"))?;
 
+        // Stored-bank VOCAB test. `build_vocab_in_context` already refuses to emit a
+        // vocabulary item without a dictionary-backed meaning, but that is the
+        // builder checking itself. This re-checks the *stored* item against the
+        // request's dictionary -- an independent path, since the builder derived the
+        // item from the same dictionary but this compares the serialized options a
+        // reviewer would see. Without a dictionary the run has no vocabulary items to
+        // check, so the test is skipped rather than passed vacuously.
+        if let Some(dictionary) = request.dictionary {
+            if item.objective_id == "OBJ-PC-VOCAB-01" {
+                let answer = &item.options[item.correct_index];
+                if !passages::vocab_answer_is_backed(dictionary, &item.prompt, answer) {
+                    anyhow::bail!(
+                        "vocabulary answer {answer:?} is not backed by the request's \
+                         dictionary for the word in its prompt, so the stored item asserts \
+                         a meaning no source supports"
+                    );
+                }
+            }
+        }
+
         if !text.contains_passage(&item.passage) {
             anyhow::bail!(
                 "the item's passage does not occur in {:?}, so the item is not source-backed",
@@ -1585,6 +1605,14 @@ pub struct PcIngestRequest<'a> {
     /// How many items to attempt from this text.
     pub count: usize,
     pub seed: u64,
+    /// The public-domain dictionary vocabulary-in-context items are built from.
+    ///
+    /// Optional because a caller may ingest works without one; without it the run
+    /// simply has no vocabulary items rather than mislabelled detail items. The
+    /// stored-bank VOCAB test below uses it to refuse a vocabulary item whose
+    /// answer the dictionary cannot back, so a corpus built with a dictionary is
+    /// checked against the same source the builder drew from.
+    pub dictionary: Option<&'a Dictionary>,
     /// Named reviewer recorded on activation (REQ-056).
     pub reviewer: &'a str,
     /// Actor recorded in the audit trail for the machine steps.

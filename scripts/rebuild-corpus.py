@@ -193,6 +193,11 @@ def steps(tools: list[str], db: str) -> list[tuple[str, list[str]]]:
         "--count", "400",
         "--seed", SEED,
         "--reviewer", REVIEWER,
+        # Vocabulary-in-context items need a source-backed meaning, so the same
+        # Webster's the vocabulary builder draws from is passed here. Without it the
+        # run has no vocabulary items -- an honest gap, but a PC corpus that should
+        # carry all four CAT kinds would be missing one.
+        "--dictionary", DICTIONARY,
         "--out", str(EVIDENCE / "ingest-pc.json"),
     ] + repeated("--work", gutenberg_works())
 

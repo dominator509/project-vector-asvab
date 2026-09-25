@@ -1267,6 +1267,24 @@ fn quoted_word(prompt: &str) -> Option<String> {
     Some(target.to_lowercase())
 }
 
+/// Whether a vocabulary item's stated answer is a meaning the dictionary gives for
+/// the word its prompt asks about.
+///
+/// This is the stored-bank counterpart of the builder's own guarantee. The builder
+/// draws the answer from `sense_gloss`; a storer that re-derives it from the *stored*
+/// prompt and option -- rather than trusting the builder's in-memory item -- catches a
+/// stored item whose answer no source backs. `None` from `quoted_word` (a prompt that
+/// does not name a word) is treated as unbacked: there is nothing to back.
+pub fn vocab_answer_is_backed(dictionary: &Dictionary, prompt: &str, answer: &str) -> bool {
+    let Some(target) = quoted_word(prompt) else {
+        return false;
+    };
+    match sense_gloss(dictionary, &target) {
+        Some(gloss) => normalize(&gloss) == normalize(answer),
+        None => false,
+    }
+}
+
 /// The shortest dictionary gloss for a word, or `None` when the dictionary does not
 /// define it.
 ///

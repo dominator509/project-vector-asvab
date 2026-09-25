@@ -114,6 +114,7 @@ fn request<'a>(source: &'a str) -> PcIngestRequest<'a> {
         source_id: source,
         count: 12,
         seed: 20_260_922,
+        dictionary: None,
         reviewer: "content-reviewer",
         generator: "pc-ingester",
     }
@@ -399,5 +400,132 @@ fn storing_refuses_an_item_whose_passage_is_not_in_the_source() {
             .expect("servable")
             .len(),
         0
+    );
+}
+
+/// A miniature Webster's, in the real file's shape, carrying the fixture work's
+/// content words so the vocabulary builder can gloss a word the passage uses.
+///
+/// `Defn:` bodies are what `sense_gloss` reads (the numbered-sense form needs
+/// newlines `parse_webster` joins away), so each entry states its meaning there.
+const DICTIONARY: &str = "\
+Front matter that is not an entry.
+
+*** START OF THE PROJECT GUTENBERG EBOOK ***
+
+Laboratory
+
+Laboratory (n.) Defn: A room fitted for scientific experiments and research.
+
+Shelf
+
+Shelf (n.) Defn: A flat board fixed to a wall for holding objects.
+
+Cooling
+
+Cooling (n.) Defn: The process of making something become less hot.
+
+Tower
+
+Tower (n.) Defn: A tall narrow structure standing above its surroundings.
+
+Bridge
+
+Bridge (n.) Defn: A structure carrying a road across an obstacle.
+
+Reactor
+
+Reactor (n.) Defn: An apparatus for the controlled release of nuclear energy.
+
+Process
+
+Process (n.) Defn: A series of actions directed toward a particular result.
+
+Engineer
+
+Engineer (n.) Defn: A person trained to design and build structures.
+
+Gauge
+
+Gauge (n.) Defn: An instrument for measuring a quantity or dimension.
+
+*** END OF THE PROJECT GUTENBERG EBOOK ***
+
+Licence text that must not become a definition.
+";
+
+fn dictionary() -> vector_questions::dictionary::Dictionary {
+    vector_questions::dictionary::parse_webster(DICTIONARY)
+}
+
+/// A dictionary-backed ingestion has vocabulary items, and the stored-bank test passes
+/// them because they are genuinely backed.
+///
+/// This is the (a) fix's positive half: with the dictionary threaded to both the builder
+/// and the request, a vocabulary item is emitted *and* re-checked at store time against
+/// the same dictionary.
+#[test]
+fn a_dictionary_backed_run_stores_vocabulary_items_that_pass_the_stored_bank_test() {
+    let (_dir, db, source) = database("vocab-backed");
+    let pipeline = ContentPipeline::new(&db);
+    let dictionary = dictionary();
+
+    let text = parse_gutenberg(WORK, "A Test Work").with_dictionary(dictionary.clone());
+    let mut request = request(&source);
+    request.count = 200;
+    request.dictionary = Some(&dictionary);
+
+    let report = pipeline.ingest_pc(&text, &request).expect("ingest");
+    assert!(report.activated > 0, "the fixture should store items");
+
+    // At least one stored item must be a vocabulary item, or the run silently had no
+    // vocabulary items while claiming a dictionary -- the gap this fix closes.
+    let vocab: Vec<String> = ContentItemRepo::new(&db)
+        .servable("PC")
+        .expect("servable")
+        .into_iter()
+        .filter(|item| item.objective_id == "OBJ-PC-VOCAB-01")
+        .map(|item| item.id)
+        .collect();
+    assert!(
+        !vocab.is_empty(),
+        "a dictionary-backed run must store vocabulary-in-context items"
+    );
+}
+
+/// The stored-bank VOCAB test refuses a vocabulary item whose answer the request's
+/// dictionary cannot back.
+///
+/// The builder refuses an unbacked meaning when it builds, so a stored item cannot
+/// normally carry one. This doctored item is the only way to reach the refusal, and it
+/// is what makes the test independent of the builder: the check is on the *stored*
+/// option, re-derived from the prompt's quoted word.
+#[test]
+fn storing_refuses_a_vocabulary_answer_the_dictionary_does_not_back() {
+    let (_dir, db, source) = database("vocab-unbacked");
+    let pipeline = ContentPipeline::new(&db);
+    let dictionary = dictionary();
+
+    let text = parse_gutenberg(WORK, "A Test Work").with_dictionary(dictionary.clone());
+    let mut item = text
+        .build_items(200, 20_260_922, |_| true)
+        .into_iter()
+        .find(|item| item.objective_id == "OBJ-PC-VOCAB-01")
+        .expect("the dictionary fixture must yield a vocabulary item");
+
+    // Replace the correct option with a meaning no entry in the dictionary states. The
+    // item still verifies structurally -- it is a phrase, not a bare passage word -- so
+    // only the dictionary-backed check can refuse it.
+    let correct = item.correct_index;
+    item.options[correct] = "A meaning no dictionary in this corpus supplies".to_string();
+
+    let mut request = request(&source);
+    request.dictionary = Some(&dictionary);
+    let error = pipeline
+        .store_pc_verified(&text, &request, &item)
+        .expect_err("an answer the dictionary does not back must be refused");
+    assert!(
+        error.to_string().contains("not backed"),
+        "the refusal should name the missing backing: {error}"
     );
 }

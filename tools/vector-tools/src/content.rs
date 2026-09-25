@@ -492,6 +492,11 @@ pub struct PcOutcome {
     pub total_activated: usize,
     pub total_already_present: usize,
     pub total_rejected: usize,
+    /// Dictionary entries vocabulary-in-context items were built against, and its digest.
+    /// Zero and empty when no dictionary was supplied, in which case the run has no
+    /// vocabulary items and the report says so rather than implying one was used.
+    pub dictionary_entries: usize,
+    pub dictionary_hash: String,
 }
 
 /// Ingest Paragraph Comprehension items from Project Gutenberg works.
@@ -505,6 +510,7 @@ pub fn ingest_pc(
     count: usize,
     seed: u64,
     reviewer: &str,
+    dictionary_path: Option<&Path>,
 ) -> Result<PcOutcome> {
     if let Some(parent) = db_path.parent() {
         if !parent.as_os_str().is_empty() {
@@ -518,6 +524,32 @@ pub fn ingest_pc(
         &PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../migrations"),
     )?;
     MigrationManager::apply(&mut db, &migrations)?;
+
+    // The dictionary is optional at the tool level, but vocabulary-in-context items
+    // cannot be built without one: a vocabulary question needs a *meaning*, and the
+    // passage alone does not supply one. Without it the run is still honest and simply
+    // has no vocabulary items. When it *is* supplied, the same dictionary is handed to
+    // the builder (via `with_dictionary`) and carried in the request so the stored-bank
+    // VOCAB test re-checks each stored meaning against it, rather than trusting the
+    // builder's in-memory guarantee.
+    let (dictionary, dictionary_entries, dictionary_hash) = match dictionary_path {
+        Some(path) => {
+            let bytes = read_source(path, "the dictionary")?;
+            let hash = digest(&bytes);
+            let text = String::from_utf8(bytes)
+                .context("the dictionary is not valid UTF-8, so it cannot be parsed as ASCII")?;
+            let parsed = parse_webster(&text);
+            if parsed.is_empty() {
+                anyhow::bail!(
+                    "{} parsed to no entries; refusing to build items the dictionary cannot corroborate",
+                    path.display()
+                );
+            }
+            let entries = parsed.len();
+            (Some(parsed), entries, hash)
+        }
+        None => (None, 0, String::new()),
+    };
 
     let pipeline = ContentPipeline::new(&db);
     let mut outcomes = Vec::new();
@@ -536,7 +568,10 @@ pub fn ingest_pc(
             )
         })?;
 
-        let parsed = parse_gutenberg(&text, &title);
+        let mut parsed = parse_gutenberg(&text, &title);
+        if let Some(dictionary) = &dictionary {
+            parsed = parsed.with_dictionary(dictionary.clone());
+        }
         if parsed.is_empty() {
             anyhow::bail!(
                 "{} parsed to no paragraphs; the file's markers may have changed",
@@ -552,6 +587,7 @@ pub fn ingest_pc(
             // Offset per work so two works do not draw the same substitution
             // sequence from an identical passage shape.
             seed: seed.wrapping_add(index as u64),
+            dictionary: dictionary.as_ref(),
             reviewer,
             generator: "pc-ingester",
         };
@@ -599,6 +635,8 @@ pub fn ingest_pc(
         total_already_present: outcomes.iter().map(|w| w.already_present).sum(),
         total_rejected: outcomes.iter().map(|w| w.rejected).sum(),
         works: outcomes,
+        dictionary_entries,
+        dictionary_hash,
     })
 }
 

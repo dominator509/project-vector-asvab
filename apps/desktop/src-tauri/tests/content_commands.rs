@@ -688,6 +688,7 @@ fn an_ingested_comprehension_item_is_served_with_its_passage() {
                 source_id: &source,
                 count: 6,
                 seed: 20_260_922,
+                dictionary: None,
                 reviewer: "content-reviewer",
                 generator: "pc-ingester",
             },
