@@ -7,8 +7,9 @@
 
 use vector_questions::dictionary::{parse_webster, Dictionary};
 use vector_questions::passages::{
-    parse_gutenberg, split_sentences, verify, PcItem, PcVerificationFailure, Text,
-    MAX_CLAUSE_WORDS, MIN_CLAUSE_WORDS, MIN_PASSAGE_WORDS,
+    meaning_is_synonym_of, parse_gutenberg, sense_gloss_in_context, sense_glosses, sentence_frame,
+    split_sentences, verify, PcItem, PcVerificationFailure, Text, MAX_CLAUSE_WORDS,
+    MIN_CLAUSE_WORDS, MIN_PASSAGE_WORDS,
 };
 
 /// A miniature Gutenberg file with the header, body and licence a real one has.
@@ -827,4 +828,111 @@ fn build_text_with(paragraphs: &[&str]) -> Text {
          *** END OF THE PROJECT GUTENBERG EBOOK X ***\n"
     );
     parse_gutenberg(&file, "synthetic").with_dictionary(dictionary())
+}
+
+// ---------------------------------------------------------------------------
+// Review point (b): the dictionary sense must fit the quoted sentence.
+// ---------------------------------------------------------------------------
+
+/// A dictionary with a word that has two numbered senses, the *second* one being the
+/// sense a sentence can support. A first-sense reader would key the river-bank sense
+/// for every use of `bank`; the context-aware reader must pick the financial one for a
+/// financial sentence.
+const AMBIGUOUS_DICTIONARY: &str = "\
+*** START OF THE PROJECT GUTENBERG EBOOK ***\n\n\
+Bank\n\n\
+Bank (n.)\n\n\
+1. A mound or ridge of earth raised along a river.\n\n\
+2. An establishment for the custody and lending of money.\n\n\
+River\n\n\
+River (n.)\n\n\
+1. A large natural stream of water flowing across land.\n\n\
+Money\n\n\
+Money (n.)\n\n\
+1. A medium of exchange in the form of coins and notes.\n\n\
+Stream\n\n\
+Stream (n.)\n\n\
+1. A large natural flow of water moving across land.\n\n\
+*** END OF THE PROJECT GUTENBERG EBOOK ***\n";
+
+#[test]
+fn the_sense_is_chosen_to_fit_the_quoted_sentence_not_the_first_sense() {
+    let dictionary = parse_webster(AMBIGUOUS_DICTIONARY);
+    // The quoted context uses `bank` in its financial sense. The first Webster's sense
+    // is the river-bank sense, so a first-sense reader would key the wrong meaning.
+    let financial = "She walked into the bank to deposit the money she had saved.";
+    let gloss = sense_gloss_in_context(&dictionary, "bank", financial).expect("a gloss");
+    assert!(
+        gloss.to_lowercase().contains("money") || gloss.to_lowercase().contains("custody"),
+        "the financial sense should be chosen for a financial sentence, got {gloss:?}"
+    );
+
+    // The phrase is a usable gloss either way, so this is a real disambiguation and
+    // not a case of the wrong sense being refused outright.
+    let first = sense_glosses(&dictionary, "bank");
+    assert!(first.len() >= 2, "the fixture must carry two senses");
+}
+
+/// A distractor that is a synonym of the correct sense is a second right answer and
+/// must be detectable as such, not merely as a different string.
+#[test]
+fn a_meaning_that_is_a_synonym_of_the_answer_is_detected() {
+    let dictionary = parse_webster(AMBIGUOUS_DICTIONARY);
+    // `River` is defined with `stream`, and `Water` with `stream` too: two different
+    // glosses that share a sense word, so exact equality would miss them.
+    let a = "A large natural stream of water flowing across land.";
+    let b = "A large natural stream of water flowing across land";
+    assert!(
+        meaning_is_synonym_of(&dictionary, a, b),
+        "a meaning of the same sense must be flagged as a synonym"
+    );
+    // A meaning of an unrelated word is not a synonym.
+    let c = "An establishment for the custody and lending of money.";
+    assert!(
+        !meaning_is_synonym_of(&dictionary, c, a),
+        "an unrelated meaning must not be flagged as a synonym"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Review point (c): main-idea options must not be answerable by shape.
+// ---------------------------------------------------------------------------
+
+/// Across the whole built bank, no single option frame may dominate.
+///
+/// The review's point: if the correct option is always the same sentence frame, a
+/// test-taker learns the frame after two questions and stops reading. This builds many
+/// main-idea items across seeds and asserts that (i) the bank uses more than one frame
+/// for the correct option, and (ii) no frame is used by more than half the items -- a
+/// single-frame bank would fail both.
+#[test]
+fn main_idea_answer_frames_do_not_repeat_across_the_bank() {
+    let t = fixture().with_dictionary(dictionary());
+    let mut frames: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
+    let mut items = 0usize;
+
+    for seed in 0..200 {
+        for item in t.build_items(8, seed, accept_all) {
+            if item.objective_id != "OBJ-PC-MAINIDEA-01" {
+                continue;
+            }
+            items += 1;
+            let answer = &item.options[item.correct_index];
+            *frames.entry(sentence_frame(answer)).or_insert(0) += 1;
+        }
+    }
+
+    assert!(
+        items >= 8,
+        "the bank should yield main-idea items, got {items}"
+    );
+    assert!(
+        frames.len() > 1,
+        "every main-idea answer used one frame: {frames:?}"
+    );
+    let most = *frames.values().max().expect("at least one frame");
+    assert!(
+        most * 2 <= items,
+        "one frame carries more than half the bank ({most} of {items}): {frames:?}"
+    );
 }

@@ -146,8 +146,16 @@ pub fn parse_webster(text: &str) -> Dictionary {
         }
 
         if let Some((_, body)) = current.as_mut() {
+            // Preserve line boundaries. `gloss_candidates` reads a Webster entry's
+            // numbered senses off their own lines (`1. ...`, `2. ...`); joining every
+            // line with a space collapsed them into one line whose leading token is
+            // the headword, so the sense reader never saw a numbered sense and every
+            // multi-sense entry fell back to its first or its `Defn:` body. Keeping
+            // the newline is what makes the numbered senses visible.
+            if !body.is_empty() {
+                body.push('\n');
+            }
             body.push_str(line);
-            body.push(' ');
         }
 
         previous_blank = line.trim().is_empty();

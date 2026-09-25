@@ -791,10 +791,20 @@ impl Text {
         // The correct option is a summary sentence, phrased by this builder rather
         // than lifted, so it cannot be passage text. It names the passage's dominant
         // repeated topic as the subject and says the passage is *about* it, which is
-        // the claim a main-idea answer makes. Capitalise the topic when it opens the
-        // sentence.
+        // the claim a main-idea answer makes. The frame rotates with the seed: the
+        // review found that one fixed frame let a test-taker pick the answer by shape
+        // after two questions, so no single wording is allowed to become the answer's
+        // signature.
         let topic_title = capitalise(&topic);
-        let correct = format!("The passage is mainly about {topic_title}.");
+        let answer_frames = [
+            "The passage is mainly about {topic}.",
+            "The passage as a whole concerns {topic}.",
+            "The main point of the passage is about {topic}.",
+            "Taken as a whole, the passage deals with {topic}.",
+            "The passage chiefly discusses {topic}.",
+        ];
+        let correct =
+            answer_frames[(seed as usize) % answer_frames.len()].replace("{topic}", &topic_title);
 
         // Too narrow: a passage sentence that is a complete statement in the clause
         // band. It is true, so it is a plausible distractor for a careless reader,
@@ -809,20 +819,26 @@ impl Text {
             })?;
 
         // Too broad: the topic, plus a sweeping claim the passage never makes. The
-        // phrasing is distinct from the answer's, so no two options share a frame and
-        // the item cannot be answered by shape.
-        let broad = format!(
-            "The passage argues that {topic_title} matters more than anything else it \
-             discusses."
-        );
+        // frame rotates so it is not a fixed signature either.
+        let broad_frames = [
+            "The passage argues that {topic} matters more than anything else it discusses.",
+            "The passage claims that {topic} is the single most important subject today.",
+            "The passage suggests that {topic} explains almost everything it mentions.",
+        ];
+        let broad =
+            broad_frames[(seed as usize / 3) % broad_frames.len()].replace("{topic}", &topic_title);
 
         // Not supported: a topic from another passage, asserted as this one's point.
-        // Phrased as its own sentence so it, too, is distinguishable only by reading.
+        // Its frame rotates too, and it is drawn from a different passage so the
+        // passage cannot support it at all.
         let elsewhere = self.topic_from_elsewhere(&paragraph, rng)?;
-        let unsupported = format!(
-            "The passage is concerned chiefly with {}.",
-            capitalise(&elsewhere)
-        );
+        let unsupported_frames = [
+            "The passage is concerned chiefly with {topic}.",
+            "The passage's central subject is {topic}.",
+            "The passage is mostly a discussion of {topic}.",
+        ];
+        let unsupported = unsupported_frames[(seed as usize / 7) % unsupported_frames.len()]
+            .replace("{topic}", &capitalise(&elsewhere));
 
         let mut options: Vec<(String, String)> = vec![
             (correct.clone(), "sums up the passage".to_string()),
@@ -954,7 +970,7 @@ impl Text {
             .into_iter()
             .find(|sentence| words(sentence).iter().any(|word| word == &target))?;
 
-        let answer = sense_gloss(dictionary, &target)?;
+        let answer = sense_gloss_in_context(dictionary, &target, &context)?;
 
         // Distractors: meaning phrases from *other* words in the same passage, so
         // they are real senses of real words and wrong only for this target.
@@ -972,9 +988,13 @@ impl Text {
             let Some(gloss) = sense_gloss(dictionary, word) else {
                 continue;
             };
-            // A distractor meaning must be distinct from the answer, or it would be
-            // a second right answer.
-            if normalize(&gloss) != normalize(&answer) && !wrong_meanings.contains(&gloss) {
+            // A distractor meaning must be distinct from the answer, and must not be a
+            // synonym of it: a different wording of the same sense is a second right
+            // answer, not a distractor.
+            if normalize(&gloss) != normalize(&answer)
+                && !meaning_is_synonym_of(dictionary, &gloss, &answer)
+                && !wrong_meanings.contains(&gloss)
+            {
                 wrong_meanings.push(gloss);
             }
             if wrong_meanings.len() == 3 {
@@ -1308,6 +1328,94 @@ fn sense_gloss(dictionary: &Dictionary, word: &str) -> Option<String> {
     None
 }
 
+/// Every usable gloss of a word, best sense first, normalised.
+///
+/// A Webster's entry carries several senses and only one is the sense a given
+/// sentence uses. The single-gloss reader above cannot tell them apart, which is how
+/// a keyed answer could be the right *word* and the wrong *sense*. Returning all the
+/// senses lets the caller pick the one the context supports.
+pub fn sense_glosses(dictionary: &Dictionary, word: &str) -> Vec<String> {
+    let Some(definition) = dictionary
+        .define(word)
+        .or_else(|| dictionary.define(&base_form(word)))
+    else {
+        return Vec::new();
+    };
+    let mut out: Vec<String> = Vec::new();
+    for candidate in gloss_candidates(definition) {
+        if !is_usable_gloss(&candidate, word) {
+            continue;
+        }
+        let mut gloss = candidate;
+        if gloss.chars().next().is_some_and(char::is_lowercase) {
+            gloss = capitalise(&gloss);
+        }
+        if !out
+            .iter()
+            .any(|existing| normalize(existing) == normalize(&gloss))
+        {
+            out.push(gloss);
+        }
+    }
+    out
+}
+
+/// The gloss of `word` whose own wording best matches the sentence the word occurs in.
+///
+/// A word with several senses has several glosses; the one a sentence *uses* is the
+/// one whose words overlap the sentence's words. `The process works best when the air
+/// is dry` supports `A series of actions toward a result` over an unrelated sense, so
+/// scoring each candidate by shared content words picks the sense in play. Ties break
+/// toward the first (most common) sense, so a word used in its plain sense is
+/// unaffected. Falls back to the first sense when no candidate overlaps, which is the
+/// honest answer when the sentence carries no signal.
+pub fn sense_gloss_in_context(
+    dictionary: &Dictionary,
+    word: &str,
+    context: &str,
+) -> Option<String> {
+    let senses = sense_glosses(dictionary, word);
+    let first = senses.first()?.clone();
+    let context_words: HashSet<String> = words(context).into_iter().collect();
+    let mut best = first.clone();
+    let mut best_score = 0usize;
+    for sense in &senses {
+        let score = words(sense)
+            .into_iter()
+            .filter(|token| token.len() >= 4)
+            .filter(|token| {
+                token != &word.to_lowercase()
+                    && !STOP_WORDS.contains(&token.as_str())
+                    && context_words.contains(token)
+            })
+            .count();
+        if score > best_score {
+            best_score = score;
+            best = sense.clone();
+        }
+    }
+    Some(best)
+}
+
+/// Whether a meaning is a synonym of the correct sense, so it cannot be a distractor.
+///
+/// A distractor that means the *same* thing as the answer is a second right answer
+/// wearing different words. Comparing the glosses' own headwords through the
+/// dictionary's `are_linked` catches a synonym pair (`A light narrow boat` versus
+/// `A small vessel for travel on water`) that exact-text equality misses.
+pub fn meaning_is_synonym_of(dictionary: &Dictionary, meaning: &str, answer: &str) -> bool {
+    let head = |text: &str| -> Option<String> {
+        words(text)
+            .into_iter()
+            .filter(|token| token.len() >= 4)
+            .find(|token| !STOP_WORDS.contains(&token.as_str()))
+    };
+    match (head(meaning), head(answer)) {
+        (Some(a), Some(b)) => normalize(&a) == normalize(&b) || dictionary.are_linked(&a, &b),
+        _ => false,
+    }
+}
+
 /// The candidate glosses of a Webster entry, best first.
 ///
 /// The entry's real prose lives in its numbered senses. A 1913 Webster's entry has
@@ -1387,7 +1495,7 @@ fn gloss_candidates(definition: &str) -> Vec<String> {
 /// connective skeleton is kept, lowercased and stripped of punctuation. Two short
 /// sentences sharing a skeleton -- `the passage is mainly about X` twice -- return
 /// the same frame, which is what a duplicated-template check wants to catch.
-fn sentence_frame(sentence: &str) -> String {
+pub fn sentence_frame(sentence: &str) -> String {
     const FRAME_STOP: [&str; 24] = [
         "the", "a", "an", "of", "to", "in", "is", "are", "was", "were", "and", "or", "but", "that",
         "this", "these", "those", "it", "its", "as", "be", "been", "being", "than",
