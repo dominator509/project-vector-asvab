@@ -1,19 +1,18 @@
 {
-  "prior_epoch": 26,
-  "prior_git_sha": "c4a14c732a5a4cca7449b4f2115b04de3f8518a0",
-  "prior_artifact_digest": "b6a2315e2155c1c474232205542d35251ef140f50ed8687cd787fae9299b849b",
-  "new_epoch": 27,
-  "new_git_sha": "349cd8fd56613816123598d7797e9fa05c5f78f9",
-  "new_artifact_digest": "b33833c541bafbf6ca9e4bedb24b2c76c7f97c7fce191a30696e8de283f3c053",
+  "prior_epoch": 27,
+  "prior_git_sha": "349cd8fd56613816123598d7797e9fa05c5f78f9",
+  "prior_artifact_digest": "b33833c541bafbf6ca9e4bedb24b2c76c7f97c7fce191a30696e8de283f3c053",
+  "new_epoch": 28,
+  "new_git_sha": "b74f61a03ef9285c4fdb13e00318fe8307887fce",
+  "new_artifact_digest": "970e8937452722e394b4ab70d965d010f1ffa944b7f3d133b3c0cb731c4b2507",
   "committed_changes": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
     ".agent/evidence/EP-004/provider-probe.json",
-    ".agent/evidence/EP-009/ROUND-35-REPORT.md",
+    ".agent/evidence/EP-007/content-corpus/source-manifest/MANIFEST.sha256.json",
+    ".agent/evidence/EP-007/content-corpus/source-manifest/README.md",
+    ".agent/evidence/EP-009/CLOSURE-REPORT.md",
     ".agent/evidence/EP-009/artifact_identity.json",
-    ".agent/evidence/EP-009/commit-message-round35.txt",
-    ".agent/evidence/EP-009/packaged-journey/ATTEMPT.md",
-    ".agent/evidence/EP-009/packaged-journey/attempt.json",
-    ".agent/evidence/EP-009/packaged-journey/journey.json",
+    ".agent/state/LEDGER.md",
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
     ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
     ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
@@ -24,9 +23,14 @@
     ".agent/verification/state/EPOCHS.jsonl",
     ".agent/verification/state/EVIDENCE_INDEX.json",
     ".agent/verification/state/RUN_MANIFEST.json",
-    "COMMANDS.md",
     "apps/desktop/e2e-results.json",
-    "scripts/probes/packaged-journey.py",
+    "crates/vector-application/src/packs.rs",
+    "crates/vector-application/tests/content_packs.rs",
+    "crates/vector-questions/src/factory.rs",
+    "crates/vector-questions/src/thesaurus.rs",
+    "crates/vector-questions/tests/factory.rs",
+    "crates/vector-questions/tests/thesaurus.rs",
+    "scripts/fetch-sources.py",
     "scripts/release-state.py"
   ],
   "uncommitted_changes": [
@@ -36,24 +40,21 @@
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
     ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
     ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
-    ".agent/verification/reports/RESIDUAL_RISK_AND_EXTERNAL_GATES.md",
     ".agent/verification/state/DOD_STATUS.jsonl",
     ".agent/verification/state/EPOCHS.jsonl",
     ".agent/verification/state/EVIDENCE_INDEX.json",
     ".agent/verification/state/RUN_MANIFEST.json",
     ".agent/verification/state/gate-results.jsonl",
-    "apps/desktop/e2e-results.json",
-    "scripts/release-state.py"
+    "apps/desktop/e2e-results.json"
   ],
   "changed_paths": [
     ".agent/evidence/EP-001/desktop-live-fire.json",
     ".agent/evidence/EP-004/provider-probe.json",
-    ".agent/evidence/EP-009/ROUND-35-REPORT.md",
+    ".agent/evidence/EP-007/content-corpus/source-manifest/MANIFEST.sha256.json",
+    ".agent/evidence/EP-007/content-corpus/source-manifest/README.md",
+    ".agent/evidence/EP-009/CLOSURE-REPORT.md",
     ".agent/evidence/EP-009/artifact_identity.json",
-    ".agent/evidence/EP-009/commit-message-round35.txt",
-    ".agent/evidence/EP-009/packaged-journey/ATTEMPT.md",
-    ".agent/evidence/EP-009/packaged-journey/attempt.json",
-    ".agent/evidence/EP-009/packaged-journey/journey.json",
+    ".agent/state/LEDGER.md",
     ".agent/verification/FUNCTIONAL_PROOF_MATRIX.csv",
     ".agent/verification/reports/CLAIM_TO_RELEASE_TRACEABILITY.csv",
     ".agent/verification/reports/FINAL_PRODUCTION_READINESS_REPORT.md",
@@ -65,9 +66,14 @@
     ".agent/verification/state/EVIDENCE_INDEX.json",
     ".agent/verification/state/RUN_MANIFEST.json",
     ".agent/verification/state/gate-results.jsonl",
-    "COMMANDS.md",
     "apps/desktop/e2e-results.json",
-    "scripts/probes/packaged-journey.py",
+    "crates/vector-application/src/packs.rs",
+    "crates/vector-application/tests/content_packs.rs",
+    "crates/vector-questions/src/factory.rs",
+    "crates/vector-questions/src/thesaurus.rs",
+    "crates/vector-questions/tests/factory.rs",
+    "crates/vector-questions/tests/thesaurus.rs",
+    "scripts/fetch-sources.py",
     "scripts/release-state.py"
   ],
   "surfaces": {
@@ -90,28 +96,44 @@
         "release-state"
       ]
     },
-    "documentation": {
+    "application": {
       "paths": [
-        "COMMANDS.md"
+        "crates/vector-application/src/packs.rs",
+        "crates/vector-application/tests/content_packs.rs"
       ],
-      "gates": []
+      "gates": [
+        "lint",
+        "test-integration",
+        "test-unit"
+      ]
+    },
+    "content-generation": {
+      "paths": [
+        "crates/vector-questions/src/factory.rs",
+        "crates/vector-questions/src/thesaurus.rs",
+        "crates/vector-questions/tests/factory.rs",
+        "crates/vector-questions/tests/thesaurus.rs"
+      ],
+      "gates": [
+        "lint",
+        "test-integration",
+        "test-unit"
+      ]
     },
     "evidence": {
       "paths": [
         ".agent/evidence/EP-001/desktop-live-fire.json",
         ".agent/evidence/EP-004/provider-probe.json",
-        ".agent/evidence/EP-009/ROUND-35-REPORT.md",
-        ".agent/evidence/EP-009/artifact_identity.json",
-        ".agent/evidence/EP-009/commit-message-round35.txt",
-        ".agent/evidence/EP-009/packaged-journey/ATTEMPT.md",
-        ".agent/evidence/EP-009/packaged-journey/attempt.json",
-        ".agent/evidence/EP-009/packaged-journey/journey.json"
+        ".agent/evidence/EP-007/content-corpus/source-manifest/MANIFEST.sha256.json",
+        ".agent/evidence/EP-007/content-corpus/source-manifest/README.md",
+        ".agent/evidence/EP-009/CLOSURE-REPORT.md",
+        ".agent/evidence/EP-009/artifact_identity.json"
       ],
       "gates": []
     },
     "harness": {
       "paths": [
-        "scripts/probes/packaged-journey.py",
+        "scripts/fetch-sources.py",
         "scripts/release-state.py"
       ],
       "gates": [
@@ -127,6 +149,12 @@
         "test-unit",
         "typecheck"
       ]
+    },
+    "ledger": {
+      "paths": [
+        ".agent/state/LEDGER.md"
+      ],
+      "gates": []
     }
   },
   "rerun_list": [
@@ -135,20 +163,22 @@
     "build",
     "change-invalidation",
     "dependency-graph",
+    "lint",
     "live-fire",
     "proof-matrix-stamp",
     "release-state",
     "smoke-test",
     "test-e2e",
+    "test-integration",
     "test-unit",
     "typecheck"
   ],
   "evidence_hashes": {
     "gate-results.jsonl": "1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6",
-    "RUN_MANIFEST.json": "e0c819ed08b541ef77b1c5c9cc0fd20bab39979988848af1a42198e37748ef8a",
-    "DOD_STATUS.jsonl": "afca00fa33623a43ba0abda3ff5062c6db61c80af0c05db70ee8eddcc1eee994",
+    "RUN_MANIFEST.json": "7fffdcd229c111e5da1ba0b7a90747549d8b93f74c143cd30951319f8aded63f",
+    "DOD_STATUS.jsonl": "d0e40a069682d7cab102761a1bc428a5859f86d1756ed9cfc6424a827c78ce66",
     "DEPENDENCY_BLOCKER_GRAPH.json": "96d32c37e1125d60bcb5ebf7192a6c291850faecee1c310a0f6576a5a508e352",
-    "artifact_identity": "ea16970712f02a47aa148ab4193683c1083a9dedc9448d6c823138c3609d0d1c"
+    "artifact_identity": "f251c02de8898366b4e2ca269f635b0a2034d259b8267bd4d5efd61e39b6ddcc"
   },
   "violations": []
 }

@@ -5,30 +5,32 @@ candidate's diff. DOD-040: a change to code, dependencies, schema, configuration
 build, a test oracle or the artifact invalidates every downstream result that rested
 on the old bytes.
 
-- prior epoch: 26 at `c4a14c73`
-- new epoch: 27 at `349cd8fd`
-- artifact: `b33833c541bafbf6ca9e4bedb24b2c76c7f97c7fce191a30696e8de283f3c053`
-- changed paths: 23 (22 committed, 14 uncommitted)
+- prior epoch: 27 at `349cd8fd`
+- new epoch: 28 at `b74f61a0`
+- artifact: `970e8937452722e394b4ab70d965d010f1ffa944b7f3d133b3c0cb731c4b2507`
+- changed paths: 27 (26 committed, 12 uncommitted)
 
 ## Surfaces and what they invalidate
 
 - **accounting** (11 path(s)): gates dependency-graph, release-state
-- **documentation** (1 path(s)): gates none
-- **evidence** (8 path(s)): gates none
+- **application** (2 path(s)): gates lint, test-integration, test-unit
+- **content-generation** (4 path(s)): gates lint, test-integration, test-unit
+- **evidence** (6 path(s)): gates none
 - **harness** (2 path(s)): gates anti-gaming-scan
 - **interface** (1 path(s)): gates test-e2e, test-unit, typecheck
+- **ledger** (1 path(s)): gates none
 
 ## Rerun list
 
-`anti-gaming-scan`, `artifact-identity`, `build`, `change-invalidation`, `dependency-graph`, `live-fire`, `proof-matrix-stamp`, `release-state`, `smoke-test`, `test-e2e`, `test-unit`, `typecheck`
+`anti-gaming-scan`, `artifact-identity`, `build`, `change-invalidation`, `dependency-graph`, `lint`, `live-fire`, `proof-matrix-stamp`, `release-state`, `smoke-test`, `test-e2e`, `test-integration`, `test-unit`, `typecheck`
 
 ## Evidence hashes at this epoch
 
 - `gate-results.jsonl`: `1c9ba08d830a19ce5b37d146002a9c25ccccec17e1db10201e17f521feca23b6`
-- `RUN_MANIFEST.json`: `e0c819ed08b541ef77b1c5c9cc0fd20bab39979988848af1a42198e37748ef8a`
-- `DOD_STATUS.jsonl`: `afca00fa33623a43ba0abda3ff5062c6db61c80af0c05db70ee8eddcc1eee994`
+- `RUN_MANIFEST.json`: `7fffdcd229c111e5da1ba0b7a90747549d8b93f74c143cd30951319f8aded63f`
+- `DOD_STATUS.jsonl`: `d0e40a069682d7cab102761a1bc428a5859f86d1756ed9cfc6424a827c78ce66`
 - `DEPENDENCY_BLOCKER_GRAPH.json`: `96d32c37e1125d60bcb5ebf7192a6c291850faecee1c310a0f6576a5a508e352`
-- `artifact_identity`: `ea16970712f02a47aa148ab4193683c1083a9dedc9448d6c823138c3609d0d1c`
+- `artifact_identity`: `f251c02de8898366b4e2ca269f635b0a2034d259b8267bd4d5efd61e39b6ddcc`
 
 ## Violations
 
